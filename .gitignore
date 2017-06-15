@@ -1,0 +1,4 @@
+*.pro.user
+build-Analyse_DLCA-*
+build-Analyse_Projections2D-*
+build-Generateur_DLCA-*

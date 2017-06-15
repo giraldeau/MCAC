@@ -1,0 +1,56 @@
+Guide d’installation de l’environnement DLCA
+
+1    Installer une version récente de QtCreator
+
+
+2	Décompresser la librairie de diagonalisation Eigen dans un répertoire à créer : "C:\Program Files (x86)\Eigen\" dans lequel nous retrouverons divers sous-repertoires.
+
+3	Installer OpenCV (se référer à la notice d'installation de OpenCV avec Qt).
+
+
+
+Adaptation des sources au nouvel environnement
+Tout d'abord, effacer tous les répértoirs build***
+
+
+A	Pour le programme de génération, aller dans le repertoire "Generateur_DLCA", effacer le fichier DLCA.user puis ouvrir DLCA.pro avec Qt creator.
+Refuser de charger le fichier de configuration.
+Cliquer sur Configurer.
+
+Executer le programme (flèche verte) une première fois. des repertoires sont ainsi créés tel que "DLCA_sous_Qt\Images_a_placer_dans_les_builds" dans lequel vous devez copier les images présentes dans le répertoire "DLCA_sous_Qt\Images_a_placer_dans_les_builds". Ceci sera à faire pour les trois programmes du code DLCA.
+
+Une nouvelle execution contiendra les images. Ce programme s'exécutera à l'aide d'un fichier contenant les paramètres utiles à l'exécution tel que celui déposé dans le répertoire "\DLCA_sous_Qt\params.txt".
+
+B	Pour le programme de Post traitement, aller dans le repertoire "Analyse_DLCA", effacer Analyse_DLCA.user puis ouvrir analyse_DLCA.pro avec Qt creator.
+Cliquer sur Configurer.
+Une fenetre apparait, elle permet de définir le répertoire dans lequel l'exécutable sera généré*. 
+Accepter. 
+Pour exécuter le source appuyer sur la flèche verte en bas à gauche. Il faut à nouveau indiquer le fichier de paramètres utilisé en A.
+
+C	Pour le programme d'Analyse des agrégats et d'export de ces derniers, aller dans le repertoire "Analyse_Projections2D", effacer analyse_Projection2D.user puis ouvrir analyse_Projection2D.pro avec Qt creator.
+Accepter le backup.
+Refuser de charger le fichier de configuration.
+Une fenetre apparait, elle permet de définir le répertoire dans lequel l'exécutable sera généré*.
+Accepter.
+Il faut maintenant vérifier l'accessibilité aux librairies. Pour cela double cliquer sur analyse_Projection2D.pro sur le bandeau vertical sur la gauche. 
+Pour OpenCV, les chemins doivent être (à adapter par rapport aux installations précédentes):
+INCLUDEPATH += "C:\opencv-mingw\install\include"
+INCLUDEPATH += "C:\opencv-mingw\install\include\opencv"
+INCLUDEPATH += "C:\opencv-mingw\install\include\opencv2"
+LIBS += -L"C:\opencv-mingw\install\x86\mingw\bin"
+LIBS += -lopencv_core2413 -lopencv_highgui2413 -lopencv_imgproc2413
+
+Pour Eigen, le chemin est :
+INCLUDEPATH += "C:\Program Files (x86)\Eigen\eigen-eigen-6e7488e20373\Eigen"
+
+Pour exécuter le source appuyer sur la flèche verte en bas à gauche. 
+Si un message d'erreur apparait, il se peut qu'un fichier ou plusieurs dll ne soient pas trouvés. 
+Pour savoir lequel, il faut exécuter manuellement l'exécutable compilé par exemple à l'adresse :
+"C:\Users\nomdelutilisateur\Desktop\DLCA_sous_Qt\analyse_Projection2D-build-desktop\debug\analyse_DLCA.exe" et rechercher sur le disque ce(s) dll (à priori lié à Open CV). Le(s) placer à la racine de windows : "C:\Windows".
+Recommencer l'exécution via Qt (flèche verte).
+
+Ce programme permet la génération de fichiers df3 pouvant être visualisés avec POVRAY ou ImageJ.
+Le programme ImageJ est disponible sur http://rsbweb.nih.gov/ij/download.html
+Il faut ajouter un plugin pour la lecture des fichiers df3 (http://fly.mpi-cbg.de/~saalfeld/Projects/df3.html) le plugin correspond au fichier DF3_.jar que l'on peut trouver sous "DLCA_sous_Qt\Librairies\DF3\DF3_.jar".
+Pour le rendre actif, copier le répertoire DF3 ci-dessus et son contenu dans la racine du programme imagej : du type "C:\Program Files (x86)\ImageJ\plugins\DF3..."
+Exécuter imagej.
