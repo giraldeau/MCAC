@@ -1,3 +1,5 @@
 *.pro.user
 build-*
 cas_test/TEST
+Doxygen/docs/
+Doxygen/*_flowdoc

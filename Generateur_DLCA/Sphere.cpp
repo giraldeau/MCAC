@@ -60,6 +60,11 @@ double Sphere::Intersection(Sphere c, double* vd,double distmax,double& distance
         sinon  : il peut y avoir contact. La sphère courante doit être déplacée
         de (dist) en suivant (vd) pour toucher la sphère (c)
 */
+  /*! 
+   *  \image html cCSphereFIntersectionCSphereddd.png
+   */
+
+
     double A, B, C;
     double dx, dy, dz;
     double DELTA;
@@ -70,10 +75,18 @@ double Sphere::Intersection(Sphere c, double* vd,double distmax,double& distance
     dy = c.pos[2] - pos[2];
     dz = c.pos[3] - pos[3];
 
+    //$ Compute signed distance for contact between two spheres
     distance_contact = sqrt(dx*dx+dy*dy+dz*dz)-r-c.r;
-    if (distance_contact <= 0) dist = -1;
+
+    if (distance_contact <= 0)
+    {
+       //$ There is contact between these two spheres
+       dist = -1;
+    }
     else
     {
+       //$ Computing distance before contact
+
         dist = 1;
         K = -1;
         A = vd[1]*vd[1]+vd[2]*vd[2]+vd[3]*vd[3];
