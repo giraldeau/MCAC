@@ -63,8 +63,6 @@ double Sphere::Intersection(Sphere c, double* vd,double distmax,double& distance
   /*! 
    *  \image html cCSphereFIntersectionCSphereddd.png
    */
-
-
     double A, B, C;
     double dx, dy, dz;
     double DELTA;
