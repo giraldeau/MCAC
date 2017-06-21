@@ -26,9 +26,9 @@ using namespace std;
 
 const double PI = atan(1.0)*4; // 3.14159
 double T, X, FV, L, Mu, K, P, Rho; // Ture, Paramètre de taille de la boîte, Fraction volumique de suie, longueur de la boîte, ?, ?, ?, Masse volumique
-double Asurfgrowth; // ?
+double Asurfgrowth; // surface growth coefficient
 double dfe, kfe; // dimension fractale et préfacteur fractal
-double xsurfgrowth, coeffB; // N, Bêta
+double xsurfgrowth, coeffB; // surface growth parameter, Bêta
 int puissancep;
 double lambda, Dpeqmass, rpeqmass, gamma_; // libre parcours moyen d'une sphère
 double Dpm, sigmaDpm; //
@@ -453,6 +453,7 @@ void MonTri(int n, double arr[], int index[])
 {
     int i, j, id;
     double a;
+    //$ TOTO
 
     for (i = 1; i <= n; i++)
         index[i] = i;
@@ -559,7 +560,7 @@ double Distance_Aggregate(int s, int nmonoi, double lpm)
 }
 //###############################################################################################################################
 
-//########################################## Détermination des contacts inter-agrégats ##########################################
+//########################################## Determination of the contacts between agrgates ##########################################
 void CalculDistance(int id, double &distmin, int &aggcontact)
 {
     double lpm,dist;
@@ -569,33 +570,40 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     int npossible;
     int dx,dy,dz;
 
-    lpm = Aggregate[id][4]; // libre parcours moyen de l'agrégat n° id
+    lpm = Aggregate[id][4]; // mean free path of the agregate labeled id
     npossible = 0;
     aggcontact = 0;
     distmin = 1.0;
 
-    //+++++++++++++++++++++++++++++++++ Détermination des contacts inter-agrégats possibles +++++++++++++++++++++++++++++++++++++++++++++++++++
-    s1.Update(PosiGravite[id], Aggregate[id][6]);
+    //+++++++++++++++++++++++++++++++++ Determination of the potential contacts (= in this part, we're considering aggreghates as spheres  with a diameter of Aggregate[6],+++++++++++++++++
+    //+++++++++++++++++++++++++++++++++ the distance between the center of gravity of the aggregate and the furthest sphere in the agregate +++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    //$ Find potential contacts between agregates
+    s1.Update(PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
     for (dx = -1;dx <= 1; dx++)
     {
         for (dy = -1; dy <= 1; dy++)
         {
             for (dz = -1; dz <= 1; dz++)
             {
+                //$ search in the 27 boxes
                 for (i = 1;i <= NAgg; i++)
                 {
                     if (i != id)
                     {
-                        s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //Envisage les autres objets ...
-                        dist = s1.Intersection(s2, Vectdir, lpm, dc);                                                       //... et leurs images par translation
+
+                        s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
+                        //$ Intersection check between agregates
+                        dist = s1.Intersection(s2, Vectdir, lpm, dc);                                                       // checks if the two spheres will be in contact while
+                                                                                                                            //... the first one is moving
 
                         if (dist <= lpm)
                         {
-                            npossible++;
-                            IdPossible[npossible][1] = i;  //Label d'un agrégat potentiellement contactable
-                            IdPossible[npossible][2] = dx; //Prise en compte d'un décalage spatial de l'agrégat suivant x
-                            IdPossible[npossible][3] = dy; //Prise en compte d'un décalage spatial de l'agrégat suivant y
-                            IdPossible[npossible][4] = dz; //Prise en compte d'un décalage spatial de l'agrégat suivant z
+                            npossible++; // Number of aggregates that could be hit
+                            IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
+                            IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
+                            IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
+                            IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
                         }
                     }
                 }
@@ -603,12 +611,12 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
         }
     }
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+    //$ Contacts ?
     if (npossible > 0)
     {
-        nmonoi = SelectLabelEgal(id, Monoi); //Liste des monomères qui constituent l'agrégat id
-
-        for (s = 1; s <= npossible; s++) //Pour tous les contacts inter-agrégats possibles
+        nmonoi = SelectLabelEgal(id, Monoi); //Liste of the monomeres in the aggregate id
+        //$ loop on the agregates potentially in contact
+        for (s = 1; s <= npossible; s++) //For every aggregate that could be in contact
         {
             dist = Distance_Aggregate(s, nmonoi, lpm);
             if (dist != -1 && dist < distmin)
@@ -1068,12 +1076,14 @@ void MainWindow::Calcul() //Coeur du programme
     contact=true;
 
     printf("\n");
-
+    //$ Loop on the N monomeres
     while (NAgg > N*5/1000) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
     {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
         time(&t);
         secondes = t-t0;
+
+        // -- Generating a random direction --
 
         thetarandom = Random()*PI*2;
         phirandom = acos(1-2*Random());
@@ -1081,13 +1091,20 @@ void MainWindow::Calcul() //Coeur du programme
         Vectdir[2] = sin(phirandom)*sin(thetarandom);
         Vectdir[3] = cos(phirandom);
 
+        // -- --
+
+
+
         if (ActiveModulephysique)
         {
-            NumAgg = Probabilite(contact, deltatemps);
-            temps = temps + deltatemps;
+            //$ Choice of an aggregate according to his MFP
+            NumAgg = Probabilite(contact, deltatemps);// Choice of an agrgegate, the probability of said agrgegate to be chosen proportionnal to his lpm
+            temps = temps + deltatemps; // Time incrementation with a value given by Probabilite
+
 
             if (ActiveVariationTempo)
             {
+                //$ ?
                 finfichiersuivitempo = rechercheValTab();
                 if (finmem != finfichiersuivitempo)
                 {
@@ -1097,10 +1114,16 @@ void MainWindow::Calcul() //Coeur du programme
                 finmem = finfichiersuivitempo;
             }
 
+            //$ Surface Growth
+
             CroissanceSurface(deltatemps);
+
+            //$ Aggregates parameter update
 
             for (i = 1; i<= NAgg; i++)
                 ParametresAgg(i);
+
+            //$ looking for potential contacts
 
             CalculDistance(NumAgg, distmin, aggcontact);
             lpm = Aggregate[NumAgg][4];
@@ -1108,9 +1131,13 @@ void MainWindow::Calcul() //Coeur du programme
         }
         else
         {
+            //$ Random Choice of an aggregate
             NumAgg = int(Random()*(double)NAgg)+1;
             deltatemps = 0.0;
             temps = temps + 1E-9;
+
+            //$ looking for potential contacts
+
             CalculDistance(NumAgg, distmin, aggcontact);
             lpm = Dpm*1E-9; //On fixe le lpm au Dpm
             contact = (aggcontact != 0);
@@ -1118,15 +1145,23 @@ void MainWindow::Calcul() //Coeur du programme
 
         if (contact)
         {
+            //$ Translation of the aggregate
             for (i = 1; i <= 3; i++)
                 Translate[i] = Vectdir[i]*distmin;
 
+
+            //$ The aggregate in cotnact is moved to the right box
+
+            //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
+            //It gets in box on one side, then has to go out on the other one.
             for (j = 1; j <= N; j++)
                 if (spheres[j].Label == IdPossible[aggcontact][1])
                 {
                     spheres[j].Update(spheres[j].pos[1]+IdPossible[aggcontact][2]*L,spheres[j].pos[2]+IdPossible[aggcontact][3]*L,spheres[j].pos[3]+IdPossible[aggcontact][4]*L,spheres[j].r);
                 }
 
+
+            //$ Aggregates in contact are reunited
             newnumagg = Reunit(NumAgg, IdPossible[aggcontact][1], err);
             ParametresAgg(newnumagg);
             temps = temps-deltatemps*(1-distmin/lpm);
@@ -1142,6 +1177,7 @@ void MainWindow::Calcul() //Coeur du programme
         }
         else
         {
+            //$ Translation of the aggregate on his full lpm distance
             for (i = 1; i <= 3; i++)
                 Translate[i] = Vectdir[i]*lpm;
             for (i = 1; i <= N; i++)
