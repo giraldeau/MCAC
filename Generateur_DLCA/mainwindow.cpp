@@ -18,29 +18,29 @@ QString pathParam = "___";
 QString FichierSuiviTempo = "___";
 QString pathSuiviTempo = "___";
 
-int N, ActiveModulephysique, ActiveVariationTempo;
+int N, ActiveModulephysique, ActiveVariationTempo;// Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
 char CheminSauve[500];
 char commentaires[500];
 
 using namespace std;
 
-const double PI = atan(1.0)*4;
-double T, X, FV, L, Mu, K, P, Rho;
-double Asurfgrowth;
-double dfe, kfe;
-double xsurfgrowth, coeffB;
+const double PI = atan(1.0)*4; // 3.14159
+double T, X, FV, L, Mu, K, P, Rho; // Ture, Paramètre de taille de la boîte, Fraction volumique de suie, longueur de la boîte, ?, ?, ?, Masse volumique
+double Asurfgrowth; // ?
+double dfe, kfe; // dimension fractale et préfacteur fractal
+double xsurfgrowth, coeffB; // N, Bêta
 int puissancep;
-double lambda, Dpeqmass, rpeqmass, gamma_;
-double Dpm, sigmaDpm;
+double lambda, Dpeqmass, rpeqmass, gamma_; // libre parcours moyen d'une sphère
+double Dpm, sigmaDpm; //
 double temps;
-double* Vectdir;
+double* Vectdir; // direction aléatoire
 double* TriCum;
 double* Translate;
 double* DistTab;
 double* NombreAlea;
 double* TpT;
-double** PosiGravite;
-double** Aggregate;
+double** PosiGravite; // Position du centre de gravité
+double** Aggregate; // Tableau des aggrégats
 double** tab;
 int DeltaSauve;
 int NSauve;
@@ -49,11 +49,11 @@ int NumAgg;
 int compteur;
 int nb_line;
 int secondes;
-int NAgg;
+int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
 int iValTab=0;
-int* Monoi;
-int* MonoSel;
-int* MonoRep;
+int* Monoi; //
+int* MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
+int* MonoRep; //
 double** IdPossible;
 int* IdDistTab;
 int* IndexPourTri;
@@ -80,6 +80,7 @@ double Random()
 
 double Maxi2D(int colonne, int nmax)
 {
+    //Maximum of a column in the Aggregate table
     int i;
     double m = Aggregate[1][colonne];
 
@@ -91,6 +92,7 @@ double Maxi2D(int colonne, int nmax)
 
 double MinEtIndex(double* tableau, int size, int& position)
 {
+    //Minimum of a table
     int i;
     double m;
     position = 1;
@@ -225,7 +227,7 @@ double ConvertRg2Dm(double np, double rg)
 {
     return  Dichotomie (np, rg)*2; //Retourne le diamètre de mobilité
 }
-//###############################################################################################################################
+//################################################## Recherche de sphères #############################################################################
 
 int SelectLabelEgal(int id, int* resu)
 {
