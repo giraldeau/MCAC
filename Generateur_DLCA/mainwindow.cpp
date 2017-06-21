@@ -476,22 +476,37 @@ void MonTri(int n, double arr[], int index[])
 
 int Probabilite(bool trier,double &deltatemps)
 {
+  /*! 
+   *  \image html cFProbabilitebd.png
+   */
+
+
     double valAlea,max;
     int i,n,nret;
+
+    //$ Get the maximum timestep
     max = Maxi2D(5,NAgg);
 
     if (trier)
     {
+	//$ Sort the timesteps
         for (i=1; i <= NAgg; i++)
             TpT[i] = max/Aggregate[i][5];
 
-        MonTri(NAgg, TpT, IndexPourTri);
-        TriCum[1] = TpT[1];
+        MonTri(NAgg, TpT, IndexPourTri); //$
 
+	//$ Accumulate the timesteps
+        TriCum[1] = TpT[1];
         for (i=2; i <= NAgg; i++)
             TriCum[i] = TriCum[i-1]+TpT[i];
     }
+    else
+    {
+	//$ ERROR : TriCum is not defined
+	exit(1);
+    }
 
+    //$ Pick a random sphere
     valAlea=Random()*TriCum[NAgg];
     n = 0;
     for (i=1; i<= NAgg; i++)
