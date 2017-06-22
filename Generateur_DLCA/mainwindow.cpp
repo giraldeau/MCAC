@@ -68,7 +68,8 @@ void InitRandom()
 {
     time_t t;
     time(&t);
-    srand(t);
+    //srand(t);
+    srand(0);
 }
 
 double Random()
@@ -500,8 +501,7 @@ int Probabilite(bool trier,double &deltatemps)
     }
     else
     {
-	//$ ERROR : TriCum is not defined
-	exit(1);
+    //$ Keep previously sorted TriCum
     }
 
     //$ Pick a random sphere
@@ -1064,10 +1064,14 @@ void MainWindow::Calcul() //Coeur du programme
     temps=0;
     time(&t0);
     contact=true;
+    int end = fmax(1,N/200);
+
+    end = 5;
 
     printf("\n");
+    printf("Ending calcul when there is less than %d aggregats\n", N*5/1000);
 
-    while (NAgg > N*5/1000) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
+    while (NAgg > end) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
     {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
         time(&t);
@@ -1168,14 +1172,24 @@ void MainWindow::Calcul() //Coeur du programme
             SauveASCII(NSauve++, newnumagg);
     }
 
-    //printf("Nombre total de superpositions : %d\n",superpo);
-    /*
+    printf("Nombre total d'aggregats' : %d\n",NAgg);
+/*
     cout << "L=" << L*1E9
          <<"     lambda=" << lambda*1E9
          <<"     Dpeqmass=" << Dpeqmass
          <<"     rpeqmass=" << rpeqmass*1E9
          <<"     gamma=" << gamma <<endl;
-    */
+
+*/
+    for (i = 1; i <= NAgg; i++)
+    {
+        printf("%d\t", i);
+        for (j = 1; j <= 3; j++)
+            printf("%10.3f\t", PosiGravite[i][j]*1E9);
+        printf("\n");
+    }
+    this->close();
+    exit(0);
 }
 
 void LectureParams()

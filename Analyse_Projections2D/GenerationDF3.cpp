@@ -135,7 +135,7 @@ void Agg::ProgGenerationDF3(float DensiteDipolaire, float Cov, float alphagangue
     //Ecriture du fichier shape.txt pour autres exports
     sprintf(NomFinal, "%s_shape.txt", NomFichier);
     g2=fopen(NomFinal, "w"); // ouverture fichier pour generer un fichier de donnees pour représenter les agrégats sans necking
-    fprintf(g2,"X\tY\t\Z\tR   (agregat sans necking)\n");
+    fprintf(g2,"X\tY\tZ\tR   (agregat sans necking)\n");
     for (i = 0; i < Np3D; i++)
     {
         CloneX[i] = CloneX[i] - Xmin + decal;
