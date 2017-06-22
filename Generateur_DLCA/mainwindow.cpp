@@ -12,6 +12,7 @@
 #include <qdir.h>
 #include <QString>
 #include <stdio.h>
+#include <string>
 
 QString FichierParam = "___";
 QString pathParam = "___";
@@ -59,7 +60,9 @@ int* IdDistTab;
 int* IndexPourTri;
 bool* Select;
 char com[500];
+bool with_dots;
 
+MainWindow* GUI;
 
 Sphere* spheres;
 Sphere s1,s2;
@@ -1017,7 +1020,111 @@ void SauveASCII(int value, int id)
     }
 }
 
-void MainWindow::Calcul() //Coeur du programme
+
+void test_locale()
+{
+    double testfloat = 1.5;
+    char* teststr1 = "1.5";
+    char* teststr2 = "1,5";
+    double test1=atof(teststr1);
+    double test2=atof(teststr2);
+
+    if (fabs(test1-testfloat)<1e-3)
+        with_dots = true;
+    else if (fabs(test2-testfloat)<1e-3)
+            with_dots = false;
+    else
+    {
+        printf("What locale are you using ?\n");
+        exit(1);
+    }
+}
+
+double latof(const char* string)
+{
+    std::string mystring = string;
+    if (!with_dots)
+    {
+        int f = mystring.find(".");
+        printf("dot %d\n",f);
+        if (f>0)
+            mystring.replace(f, 1, ",");
+    }
+    return atof(mystring.c_str());
+}
+
+
+void LectureParams()
+{
+    FILE* f;
+    char sauve[500];
+
+    //char t[500] ;
+    f = fopen(qPrintable(FichierParam), "rt");
+    QDir lDir;
+    if (f == NULL)
+    {
+        N = 2500;
+        T = 1500;
+        Dpm = 30;
+        sigmaDpm = 0.0;
+        FV = 3E-3;
+        Rho = 1.8E3;
+        P = 101300;
+        Mode = 1;
+        DeltaSauve = 0;
+        sprintf(sauve, "%s", "DATA");
+    }
+    else
+    {
+
+        test_locale();
+
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        N=atoi(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        T=latof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        Dpm=latof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        sigmaDpm=latof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        FV=latof(commentaires)*1E-6;
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        P=latof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        Rho=latof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        Mode=atoi(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        DeltaSauve=atoi(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",sauve,com);
+        fclose(f);
+    }
+    if (Mode == 1)
+        X = pow(N*PI/6.0/FV*(1.0+3.0*sigmaDpm*sigmaDpm/Dpm/Dpm),1.0/3.0); //Loi normale
+    else
+        X = pow(N*PI/6.0/FV*exp(9.0/2.0*log(sigmaDpm)*log(sigmaDpm)),1.0/3.0); //Loi log-normale
+
+    strcat(CheminSauve,qPrintable(pathParam));
+    strcat(CheminSauve,"//");
+    strcat(CheminSauve,sauve);
+    lDir.mkdir(CheminSauve);
+
+    sprintf(commentaires, "N=%d \nT=%1.3f \nDpm=%1.3f \nsigmaDpm=%1.3f \nFV=%1.3e\nX=%1.3f \nP=%1.3f\nMode=%d\nRho=%1.3f \nDeltaSauve=%d\nCheminSauve=%s\n", N, T, Dpm, sigmaDpm, FV, X, P, Mode, Rho, DeltaSauve, CheminSauve);
+}
+
+void Calcul() //Coeur du programme
 {
     double deltatemps, distmin, lpm;
     double thetarandom, phirandom;
@@ -1028,40 +1135,62 @@ void MainWindow::Calcul() //Coeur du programme
     time_t t, t0;
 
 
-    if (ui->ActModulePhysique->isChecked())     ActiveModulephysique = 1;
-    else    ActiveModulephysique = 0;
-
-    if (ui->SuiviTempo->isChecked())    ActiveVariationTempo = 1;
-    else    ActiveVariationTempo = 0;
-
     if (ActiveModulephysique)
     {
         sprintf(commentaires, "Le module physique est activé.\n");
-        ui->AfficheurRep->append(commentaires);
+        if (GUI == NULL)
+            printf(commentaires);
+        else
+            GUI->print(commentaires);
     }
     else
     {
         sprintf(commentaires, "Le module physique n'est pas activé.\n");
-        ui->AfficheurRep->append(commentaires);
+        if (GUI == NULL)
+            printf(commentaires);
+        else
+            GUI->print(commentaires);
     }
 
     if (ActiveVariationTempo)
     {
         LectureSuiviTempo();
         sprintf(commentaires, "Le fichier de données de suivi temporel est lu.\n");
-        ui->AfficheurRep->append(commentaires);
+        if (GUI == NULL)
+            printf(commentaires);
+        else
+            GUI->print(commentaires);
     }
     else
     {
         sprintf(commentaires, "Le fichier de données sélectionné est le fichier 'params.txt'.\n");
-        ui->AfficheurRep->append(commentaires);
+        if (GUI == NULL)
+            printf(commentaires);
+        else
+            GUI->print(commentaires);
     }
+
+    sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n", dfe, kfe, coeffB, xsurfgrowth);
+    if (GUI == NULL)
+        printf(commentaires);
+    else
+        GUI->print(commentaires);
+
+    Asurfgrowth = coeffB*1E-3;
+    sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
+    if (GUI == NULL)
+        printf(commentaires);
+    else
+        GUI->print(commentaires);
+
+    InitRandom();
 
     Init();
     co=0;
     //superpo=0;
     NSauve=0;
     temps=0;
+    deltatemps=0;
     time(&t0);
     contact=true;
     int end = fmax(1,N/200);
@@ -1069,7 +1198,7 @@ void MainWindow::Calcul() //Coeur du programme
     end = 5;
 
     printf("\n");
-    printf("Ending calcul when there is less than %d aggregats\n", N*5/1000);
+    printf("Ending calcul when there is less than %d aggregats\n", end);
 
     while (NAgg > end) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
     {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
@@ -1094,7 +1223,10 @@ void MainWindow::Calcul() //Coeur du programme
                 if (finmem != finfichiersuivitempo)
                 {
                     sprintf(commentaires, "Attention le suivi temporel est plus long que celui du fichier lu.\n");
-                    ui->AfficheurRep->append(commentaires);
+                    if (GUI == NULL)
+                        printf(commentaires);
+                    else
+                        GUI->print(commentaires);
                 }
                 finmem = finfichiersuivitempo;
             }
@@ -1140,7 +1272,9 @@ void MainWindow::Calcul() //Coeur du programme
             */
              printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec\t\n", NAgg, temps*1E6, secondes);
 
-             ui->progressBar->setValue(N-NAgg+1);
+             if (!(GUI == NULL)            )
+                GUI->progress(N-NAgg+1);
+
         }
         else
         {
@@ -1188,75 +1322,25 @@ void MainWindow::Calcul() //Coeur du programme
             printf("%10.3f\t", PosiGravite[i][j]*1E9);
         printf("\n");
     }
-    this->close();
-    exit(0);
+
+    Fermeture();
+    if (GUI == NULL)
+        printf(CheminSauve);
+    else
+        GUI->print(CheminSauve);
+
+    sprintf(commentaires,"\nFin du calcul  ...\n");
+    if (GUI == NULL)
+        printf(commentaires);
+    else
+        GUI->print(commentaires);
 }
 
-void LectureParams()
-{
-    FILE* f;
-    char sauve[500];
-    //char t[500] ;
-    f = fopen(qPrintable(FichierParam), "rt");
-    QDir lDir;
-    if (f == NULL)
-    {
-        N = 2500;
-        T = 1500;
-        Dpm = 30;
-        sigmaDpm = 0.0;
-        FV = 3E-3;
-        Rho = 1.8E3;
-        P = 101300;
-        Mode = 1;
-        DeltaSauve = 0;
-        sprintf(sauve, "%s", "DATA");
-    }
-    else
-    {
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        N=atoi(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        T=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        Dpm=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        sigmaDpm=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        FV=atof(commentaires)*1E-6;
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        P=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        Rho=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        Mode=atoi(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        DeltaSauve=atoi(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",sauve,com);
-        fclose(f);
-    }
-    if (Mode == 1)
-        X = pow(N*PI/6.0/FV*(1.0+3.0*sigmaDpm*sigmaDpm/Dpm/Dpm),1.0/3.0); //Loi normale
-    else
-        X = pow(N*PI/6.0/FV*exp(9.0/2.0*log(sigmaDpm)*log(sigmaDpm)),1.0/3.0); //Loi log-normale
 
-    strcat(CheminSauve,qPrintable(pathParam));
-    strcat(CheminSauve,"//");
-    strcat(CheminSauve,sauve);
-    lDir.mkdir(CheminSauve);
 
-    sprintf(commentaires, "N=%d \nT=%1.3f \nDpm=%1.3f \nsigmaDpm=%1.3f \nFV=%1.3e\nX=%1.3f \nP=%1.3f\nMode=%d\nRho=%1.3f \nDeltaSauve=%d\nCheminSauve=%s\n", N, T, Dpm, sigmaDpm, FV, X, P, Mode, Rho, DeltaSauve, CheminSauve);
-}
+
+
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1268,6 +1352,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->BoutonExecDLCA, SIGNAL(clicked()), this, SLOT(ExecuterDLCA()));
     connect(ui->ActModulePhysique, SIGNAL(clicked()), this, SLOT(ModulePhysique()));
     connect(ui->SuiviTempo, SIGNAL(clicked()), this, SLOT(BoutonRechercheSuiviTempo()));
+    GUI = this;
 }
 
 MainWindow::~MainWindow()
@@ -1327,26 +1412,53 @@ void MainWindow::ModulePhysique()
 
 void MainWindow::ExecuterDLCA()
 {
-    coeffB = ui->doubleSpinBoxCoeffCroissance->value();
-    xsurfgrowth = ui->doubleSpinBoxPuissancex->value();
-    dfe = ui->doubleSpinBoxDimFractale->value();
-    kfe = ui->doubleSpinBoxPrefFractal->value();
-    sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n", dfe, kfe, coeffB, xsurfgrowth);
-    ui->AfficheurRep->append(commentaires);
-
-    Asurfgrowth = coeffB*1E-3;
-    sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
-    ui->AfficheurRep->append(commentaires);
-
-    InitRandom();
 
     ui->progressBar->setMaximum(N);
     ui->progressBar->setVisible(true);
     ui->progressBar->setValue(0);
+
+    coeffB = ui->doubleSpinBoxCoeffCroissance->value();
+    xsurfgrowth = ui->doubleSpinBoxPuissancex->value();
+    dfe = ui->doubleSpinBoxDimFractale->value();
+    kfe = ui->doubleSpinBoxPrefFractal->value();
+
+    if (ui->ActModulePhysique->isChecked())     ActiveModulephysique = 1;
+    else    ActiveModulephysique = 0;
+
+    if (ui->SuiviTempo->isChecked())    ActiveVariationTempo = 1;
+    else    ActiveVariationTempo = 0;
+
     Calcul();
-    Fermeture();
+
     ui->progressBar->setVisible(false);
-    ui->AfficheurRep->append(CheminSauve);
-    sprintf(commentaires,"\nFin du calcul  ...\n");
-    ui->AfficheurRep->append(commentaires);
 }
+
+void MainWindow::print(char* str){
+    ui->AfficheurRep->append(str);
+}
+void MainWindow::progress(int value){
+    ui->progressBar->setValue(value);
+}
+
+
+
+
+
+int No_GUI(int argc, char *argv[]){
+    FichierParam = argv[1];
+    QFileInfo tmp2 = FichierParam;
+    pathParam = tmp2.absolutePath(); //Cette variable ne retient que le chemin du fichier param
+    LectureParams();
+
+    coeffB = 1.0;
+    xsurfgrowth = 2.0;
+    dfe = 1.80;
+    kfe = 1.40;
+    ActiveModulephysique = 1;
+    ActiveVariationTempo = 0;
+
+    Calcul();
+
+    exit(0);
+}
+
