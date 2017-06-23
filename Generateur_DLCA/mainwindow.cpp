@@ -61,7 +61,7 @@ int* IndexPourTri;
 bool* Select;
 char com[500];
 bool with_dots;
-char* TS[105];
+char* TS[150];
 int* Tprof;
 int TestClock;
 
@@ -200,12 +200,14 @@ double ModeleBeta(double rm, double np, double rg)
 
 double Dichotomie (double np, double rg)
 {
+    Tprof[110]=clock();
     double 	rmin, rmax, rmed, frmed, frmin, frmax, precision;
 
     rmin = 0.0;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
     rmax = 5E-6; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
     precision = 0.01E-9; //Précision recherchée
 
+    T
     frmin = ModeleBeta(rmin, np, rg);
     frmax = ModeleBeta(rmax, np, rg);
 
@@ -226,13 +228,16 @@ double Dichotomie (double np, double rg)
             frmin = frmed;
         }
     }
-
+    Tprof[17]+=clock()-Tprof[110];
     return rmed;
 }
 
 double ConvertRg2Dm(double np, double rg)
 {
+    Tprof[110]=clock();
     return  Dichotomie (np, rg)*2; //Retourne le diamètre de mobilité
+
+    TS[17]="Dichotomey";
 }
 //################################################## Recherche de sphères #############################################################################
 
@@ -382,18 +387,24 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void ParametresAgg(int Agg)
-{
+{   Tprof[105]=clock();
+    ;
     int i, np, Nc;
     double masse, dm, cc, diff, vit, lpm, Tv, cov, rmax, rg, rpmoy, rpmoy2, rpmoy3;
     double volAgregat, surfAgregat;
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
-
+    Tprof[106]=clock();
     rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat, PosiGravite);
+    Tprof[107]=clock();
+    Tprof[13]+=Tprof[107]-Tprof[106];
+    TS[13]="Rayon Giration";
 
     masse = Rho*volAgregat; //Masse réelle de l'agrégat n°Agg
 
     np = SelectLabelEgal(Agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
+
+    Tprof[106]=clock();
 
     for (i = 1; i <= N; i++)
     {
@@ -404,15 +415,27 @@ void ParametresAgg(int Agg)
             rpmoy3 = rpmoy3 + pow(spheres[i].r, 3.0);
         }
     }
+
+
     rpmoy = rpmoy/((double)np);   //Calcul du rayon moyen de l'agrégat n°Agg
     rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
     rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
+
+    Tprof[107]=clock();
+    Tprof[14]+=Tprof[107]-Tprof[106];
+    TS[14]="Calcul des rayons";
+
+    Tprof[106]=clock();
 
     dm = ConvertRg2Dm(np,rg);
     cc = Cunningham(dm/2);
     diff = K*T/3/PI/Mu/dm*cc;
     vit = sqrt(8*K*T/PI/masse);
     lpm = 8*diff/PI/vit;
+
+    Tprof[107]=clock();
+    Tprof[15]+=Tprof[107]-Tprof[106];
+    TS[15]="Calcul dm,Cc,diff,vit,lpm";
 
     Aggregate[Agg][0] = rg; //Rayon de giration
     Aggregate[Agg][1] = np; //Nombre de spherules par aggregat
@@ -436,6 +459,9 @@ void ParametresAgg(int Agg)
     Aggregate[Agg][9] = 4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
     Aggregate[Agg][10] = cov;          //Paramètre de recouvrement
     Aggregate[Agg][11] = 4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+    Tprof[107]=clock();
+    Tprof[12]+=Tprof[107]-Tprof[105];
+    TS[12]="Temps Total ParamAGG";
 }
 //###############################################################################################################################
 
@@ -1212,11 +1238,11 @@ void Calcul() //Coeur du programme
     {
         TS[i]=new char[50];
     }
-    for (i=0;i<105;i++)
+    for (i=0;i<150;i++)
     {
         Tprof[i]=0;
     }
-    TS[1]="Début du programme";
+    TS[1]="Temps total Calcul";
 
     if (ActiveModulephysique)
     {
@@ -1511,17 +1537,43 @@ void Calcul() //Coeur du programme
         printf(commentaires);
     else
         GUI->print(commentaires);
-    Tprof[11]=clock()-Tprof[0];
-    TS[11]="Fin de Calcul";
+    Tprof[1]=clock()-Tprof[0];
+
     printf("\n\n\n");
     printf("-------------------------- Profiling -------------------------\n");
     printf("Fonction         Durée Cumulée             Pourcentage \n");
-    for (i=1; i<=11;i++)
+    for (i=1; i<=17;i++)
     {
-        double percent = 100.*(double)Tprof[i]/(double)Tprof[11];
-        printf("%s",TS[i]);
-        printf("\t%d",Tprof[i]);
-        printf("\t%f\n",percent);
+        if (i<11)
+        {
+            double percent = 100.*(double)Tprof[i]/(double)Tprof[1];
+            printf("%s",TS[i]);
+            printf("\t%d",Tprof[i]);
+            printf("\t%f\n",percent);
+        }
+        else
+        {if (i>11 && i<16)
+        {
+            double percent = 100.*(double)Tprof[i]/(double)Tprof[12];
+            printf("%s",TS[i]);
+            printf("\t%d",Tprof[i]);
+            printf("\t%f\n",percent);
+        }
+         else
+        {
+                if (i>16)
+                {
+                    double percent = 100.*(double)Tprof[i]/(double)Tprof[17];
+                    printf("%s",TS[i]);
+                    printf("\t%d",Tprof[i]);
+                    printf("\t%f\n",percent);
+                }
+                else
+                {
+                    printf("Changement de fonction--------------------- \n");
+                }
+        }
+        }
     }
 }
 
