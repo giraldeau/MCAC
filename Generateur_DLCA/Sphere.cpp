@@ -123,20 +123,36 @@ double Sphere::VolumeCalotteij(Sphere c)
 
     Ri = r;
     Rj = c.r;
-
+    //$ Determination of the distance between the center of the 2 aggregates
     d = sqrt(pow(pos[1]-c.pos[1],2.0) + pow(pos[2]-c.pos[2],2.0) + pow(pos[3]-c.pos[3],2.0));
-
+    //$ Check if they aren't in contact
     if (d >= Ri + Rj)
-        Volcal = 0.0;
-    else if ((0 <= d) && (d < Ri - Rj))
-        Volcal = 4.0*PI*pow(Rj,3.0)/3.0;
-    else if ((0 <= d) && (d < Rj - Ri))
-        Volcal = 4.0*PI*pow(Ri,3.0)/3.0;
-    else
     {
-        h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
-        Volcal = PI*pow(h,2.0)*(3*Ri-h)/3.0;
+        //$ Volcal = 0
+
+        return 0.0;
     }
+
+
+    //$ Check if j is completely absorbed by i
+    if ((0 <= d) && (d < Ri - Rj))
+    {
+        //$ Volcal = VolJ
+        return 4.0*PI*pow(Rj,3.0)/3.0;
+
+    }
+
+    //$ Check if i is completely in j
+
+    if ((0 <= d) && (d < Rj - Ri))
+    {
+        //$ Volcal = Voli
+        return 4.0*PI*pow(Ri,3.0)/3.0;
+    }
+
+    //$ Volume of the intersection is returned
+    h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
+
 /*
     double Rmax = fmax(Ri,Rj);
     double Rmin = fmin(Ri,Rj);
@@ -153,17 +169,14 @@ double Sphere::VolumeCalotteij(Sphere c)
     }
 
     printf("%10.3f %10.3f\n", Volcal,newVolcal);
+*/
 
-    if (Volcal > 0)
-    {
-        printf("Volcal %e %e %e %e %e %e\n", Volcal, d,Ri,Rj, Ri + Rj, Ri - Rj);
-    }
-    */
-    return Volcal;
+    return PI*pow(h,2.0)*(3*Ri-h)/3.0;
+
 }
 
 //Calcul de la surface de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-double Sphere::SurfaceCalotteij(Sphere c)
+double Sphere::SurfaceCalotteij(Sphere c) // Works exactly the same way as VolumeCalotte, the only things that changes is the formulas
 {
     double Surfcal, d, h;
     double Ri, Rj;
@@ -184,8 +197,6 @@ double Sphere::SurfaceCalotteij(Sphere c)
         h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
         Surfcal = 2*PI*Ri*h;
     }
-
-    //printf("Surfcal %10.3f\n", Surfcal);
 
     return Surfcal;
 }
