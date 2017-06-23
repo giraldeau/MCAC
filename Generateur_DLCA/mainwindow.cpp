@@ -360,14 +360,11 @@ void ParametresAgg(int Agg)
 
     np = SelectLabelEgal(Agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
 
-    for (i = 1; i <= N; i++)
+    for (i = 1; i <= np; i++)
     {
-        if (spheres[i].Label == Agg)
-        {
-            rpmoy = rpmoy + spheres[i].r; //Somme des rayons des sphérules de l'agrégat n°Agg
-            rpmoy2 = rpmoy2 + pow(spheres[i].r, 2.0);
-            rpmoy3 = rpmoy3 + pow(spheres[i].r, 3.0);
-        }
+        rpmoy = rpmoy + spheres[MonoSel[i]].r; //Somme des rayons des sphérules de l'agrégat n°Agg
+        rpmoy2 = rpmoy2 + pow(spheres[MonoSel[i]].r, 2.0);
+        rpmoy3 = rpmoy3 + pow(spheres[MonoSel[i]].r, 3.0);
     }
     rpmoy = rpmoy/((double)np);   //Calcul du rayon moyen de l'agrégat n°Agg
     rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
@@ -398,9 +395,9 @@ void ParametresAgg(int Agg)
     Aggregate[Agg][6] = rmax;          //Rayon de la sphere qui contient l'agregat
     Aggregate[Agg][7] = volAgregat;    //Estimation du volume de l'agrégat
     Aggregate[Agg][8] = surfAgregat;   //Estimation de la surface libre de l'agrégat
-    Aggregate[Agg][9] = 4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
+    Aggregate[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
     Aggregate[Agg][10] = cov;          //Paramètre de recouvrement
-    Aggregate[Agg][11] = 4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+    Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
 }
 //###############################################################################################################################
 
@@ -1024,10 +1021,10 @@ void SauveASCII(int value, int id)
 void test_locale()
 {
     double testfloat = 1.5;
-    char* teststr1 = "1.5";
-    char* teststr2 = "1,5";
-    double test1=atof(teststr1);
-    double test2=atof(teststr2);
+    string teststr1 = "1.5";
+    string teststr2 = "1,5";
+    double test1=atof(teststr1.c_str());
+    double test2=atof(teststr2.c_str());
 
     if (fabs(test1-testfloat)<1e-3)
         with_dots = true;
@@ -1046,7 +1043,6 @@ double latof(const char* string)
     if (!with_dots)
     {
         int f = mystring.find(".");
-        printf("dot %d\n",f);
         if (f>0)
             mystring.replace(f, 1, ",");
     }
@@ -1139,7 +1135,7 @@ void Calcul() //Coeur du programme
     {
         sprintf(commentaires, "Le module physique est activé.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
@@ -1147,7 +1143,7 @@ void Calcul() //Coeur du programme
     {
         sprintf(commentaires, "Le module physique n'est pas activé.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
@@ -1157,7 +1153,7 @@ void Calcul() //Coeur du programme
         LectureSuiviTempo();
         sprintf(commentaires, "Le fichier de données de suivi temporel est lu.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
@@ -1165,21 +1161,21 @@ void Calcul() //Coeur du programme
     {
         sprintf(commentaires, "Le fichier de données sélectionné est le fichier 'params.txt'.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
 
     sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n", dfe, kfe, coeffB, xsurfgrowth);
     if (GUI == NULL)
-        printf(commentaires);
+        printf("%s",commentaires);
     else
         GUI->print(commentaires);
 
     Asurfgrowth = coeffB*1E-3;
     sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
     if (GUI == NULL)
-        printf(commentaires);
+        printf("%s",commentaires);
     else
         GUI->print(commentaires);
 
@@ -1224,7 +1220,7 @@ void Calcul() //Coeur du programme
                 {
                     sprintf(commentaires, "Attention le suivi temporel est plus long que celui du fichier lu.\n");
                     if (GUI == NULL)
-                        printf(commentaires);
+                        printf("%s",commentaires);
                     else
                         GUI->print(commentaires);
                 }
@@ -1319,19 +1315,19 @@ void Calcul() //Coeur du programme
     {
         printf("%d\t", i);
         for (j = 1; j <= 3; j++)
-            printf("%10.3f\t", PosiGravite[i][j]*1E9);
-        printf("\n");
+            printf("%e\t", PosiGravite[i][j]*1E9);
+        printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
     }
 
     Fermeture();
     if (GUI == NULL)
-        printf(CheminSauve);
+        printf("%s",CheminSauve);
     else
         GUI->print(CheminSauve);
 
     sprintf(commentaires,"\nFin du calcul  ...\n");
     if (GUI == NULL)
-        printf(commentaires);
+        printf("%s",commentaires);
     else
         GUI->print(commentaires);
 }

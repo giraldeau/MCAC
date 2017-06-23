@@ -76,32 +76,69 @@ double* nTab;
 FILE* f;
 FILE* f1;
 FILE* f2;
+bool with_dots;
+
+
+void test_locale()
+{
+    double testfloat = 1.5;
+    char* teststr1 = "1.5";
+    char* teststr2 = "1,5";
+    double test1=atof(teststr1);
+    double test2=atof(teststr2);
+
+    if (fabs(test1-testfloat)<1e-3)
+        with_dots = true;
+    else if (fabs(test2-testfloat)<1e-3)
+            with_dots = false;
+    else
+    {
+        printf("What locale are you using ?\n");
+        exit(1);
+    }
+}
+
+double latof(const char* string)
+{
+    std::string mystring = string;
+    if (!with_dots)
+    {
+        int f = mystring.find(".");
+        if (f>0)
+            mystring.replace(f, 1, ",");
+    }
+    return atof(mystring.c_str());
+}
+
 
 void LectureParam()
 {   
     char t1[500], com[500];
     f = fopen(qPrintable(FichierParam), "rt"); //Lecture du fichier des paramètres
+
+    test_locale();
+
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
     N = atoi(t1);
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
-    T = atof(t1);
+    T = latof(t1);
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
-    Dpm = atof(t1);
+    Dpm = latof(t1);
     fgets(com,500,f);
     sscanf(com, "%s  %s", t1, com);
-    sigmaDpm = atof(t1);
+    sigmaDpm = latof(t1);
     fgets(com, 500 ,f);
     sscanf(com, "%s  %s", t1, com);
-    FV = atof(t1)*1E-6;
+    FV = latof(t1)*1E-6;
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
-    P = atof(t1);
+    P = latof(t1);
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
-    Rho = atof(t1);
+    Rho = latof(t1);
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
     Mode = atoi(t1);

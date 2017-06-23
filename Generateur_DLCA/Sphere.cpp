@@ -153,7 +153,12 @@ double Sphere::VolumeCalotteij(Sphere c)
     }
 
     printf("%10.3f %10.3f\n", Volcal,newVolcal);
-*/
+
+    if (Volcal > 0)
+    {
+        printf("Volcal %e %e %e %e %e %e\n", Volcal, d,Ri,Rj, Ri + Rj, Ri - Rj);
+    }
+    */
     return Volcal;
 }
 
@@ -179,6 +184,8 @@ double Sphere::SurfaceCalotteij(Sphere c)
         h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
         Surfcal = 2*PI*Ri*h;
     }
+
+    //printf("Surfcal %10.3f\n", Surfcal);
 
     return Surfcal;
 }
