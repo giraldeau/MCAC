@@ -152,12 +152,26 @@ double Sphere::VolumeCalotteij(Sphere c)
 
     //$ Volume of the intersection is returned
     h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
+
+/*
+    double Rmax = fmax(Ri,Rj);
+    double Rmin = fmin(Ri,Rj);
+    double newVolcal;
+
+    if (d >= Ri + Rj)
+        newVolcal = 0.0;
+    else if ((0 <= d) && (d < Rmax - Rmin))
+        newVolcal = 4.0*PI*pow(Rmin,3.0)/3.0;
+    else
+    {
+        h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
+        newVolcal = PI*pow(h,2.0)*(3*Ri-h)/3.0;
+    }
+
+    printf("%10.3f %10.3f\n", Volcal,newVolcal);
+*/
+
     return PI*pow(h,2.0)*(3*Ri-h)/3.0;
-
-
-
-
-
 
 }
 

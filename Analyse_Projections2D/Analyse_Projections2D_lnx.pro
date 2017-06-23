@@ -25,3 +25,6 @@ LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc
 
 RESOURCES += \
     mainwindow.qrc
+
+#unix:LIBS += -L/usr/local/lib -lmath
+#win32:LIBS += c:/mylibs/math.lib
