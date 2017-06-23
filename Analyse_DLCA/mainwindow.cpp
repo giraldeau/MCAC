@@ -331,6 +331,8 @@ void  MainWindow::ProgAnalyse()
     TabSurfsurVol = new double[N+1];
     nTab = new double[N+1];
 
+    std::locale::global(std::locale("C"));
+
     sprintf(commentaires,"________________________\n");
     ui->AfficheurRep->append(commentaires);
 

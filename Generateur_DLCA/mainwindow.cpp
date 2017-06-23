@@ -960,6 +960,8 @@ void SauveASCII(int value, int id)
     char NomComplet[500];
     FILE *f;
 
+    std::locale::global(std::locale("C"));
+
     sprintf(NomComplet, "%s/Sphere%05d.txt", CheminSauve, value);
     f = fopen(NomComplet, "w");
     fprintf(f, "%d  N_[]\n", N);
