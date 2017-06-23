@@ -1199,7 +1199,7 @@ void Calcul() //Coeur du programme
     Tprof = new int[105];
     TestClock=clock();
 
-    Tprof[50]=clock();
+    Tprof[0]=clock();
     double deltatemps, distmin, lpm;
     double thetarandom, phirandom;
     int aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
@@ -1211,6 +1211,10 @@ void Calcul() //Coeur du programme
     for (i=0;i<100;i++)
     {
         TS[i]=new char[50];
+    }
+    for (i=0;i<105;i++)
+    {
+        Tprof[i]=0;
     }
     TS[1]="Début du programme";
 
@@ -1379,12 +1383,13 @@ void Calcul() //Coeur du programme
         {
             //$ Translation of the aggregate
             for (i = 1; i <= 3; i++)
+            {
                 Tprof[101]=clock();
                 Translate[i] = Vectdir[i]*distmin;
                 Tprof[102]=clock();
                 TS[9]="Translate";
                 Tprof[9]+=Tprof[102]-Tprof[101];
-
+            }
             //$ The aggregate in contact is moved to the right box
 
             //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
@@ -1506,14 +1511,17 @@ void Calcul() //Coeur du programme
         printf(commentaires);
     else
         GUI->print(commentaires);
-    Tprof[11]=clock()-Tprof[50];
+    Tprof[11]=clock()-Tprof[0];
     TS[11]="Fin de Calcul";
     printf("\n\n\n");
     printf("-------------------------- Profiling -------------------------\n");
     printf("Fonction         Durée Cumulée             Pourcentage \n");
     for (i=1; i<=11;i++)
     {
-        printf("%s           %d           %lf\n",TS[i],Tprof[i],Tprof[i]/Tprof[11]);
+        double percent = 100.*(double)Tprof[i]/(double)Tprof[11];
+        printf("%s",TS[i]);
+        printf("\t%d",Tprof[i]);
+        printf("\t%f\n",percent);
     }
 }
 
