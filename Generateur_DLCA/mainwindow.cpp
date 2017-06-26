@@ -321,8 +321,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     for (i = 1; i <= nmonoi; i++) //Pour les i sphérules constituant l'agrégat n°id
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 3.0)/3.0; //Calculation of the volume of i
-        tabSurf[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 2.0);    //Calculation of the surface of i
+        tabVol[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 3)/3.0; //Calculation of the volume of i
+        tabSurf[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 2);    //Calculation of the surface of i
 
         for (j = 1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
         {
@@ -354,7 +354,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         volAgregat = volAgregat + tabVol[i];    //Total Volume of Agg id
         surfAgregat = surfAgregat + tabSurf[i]; //Total Surface of Agg id
 
-        terme = terme + tabVol[i]/pow(spheres[Monoi[i]].r, 3.0);
+        terme = terme + tabVol[i]/pow(spheres[Monoi[i]].r, 3);
 
         Tv = 1 - (3.0/(4.0*nmonoi*PI))*terme;
         //$ Calculation of the position of the center of mass
@@ -396,8 +396,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
             rmax = r;
         }
         //$ Calculation of Rg
-        Arg = Arg + tabVol[i]*pow(li, 2.0);
-        Brg = Brg + tabVol[i]*pow(spheres[Monoi[i]].r, 2.0);
+        Arg = Arg + tabVol[i]*pow(li, 2);
+        Brg = Brg + tabVol[i]*pow(spheres[Monoi[i]].r, 2);
     }
 
     delete[] tabVol;
@@ -427,15 +427,11 @@ void ParametresAgg(int Agg)
     np = SelectLabelEgal(Agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
 
     Tprof[106]=clock();
-
-    for (i = 1; i <= N; i++)
+    for (i = 1; i <= np; i++)
     {
-        if (spheres[i].Label == Agg)
-        {
-            rpmoy = rpmoy + spheres[i].r; //Somme des rayons des sphérules de l'agrégat n°Agg
-            rpmoy2 = rpmoy2 + pow(spheres[i].r, 2.0);
-            rpmoy3 = rpmoy3 + pow(spheres[i].r, 3.0);
-        }
+        rpmoy = rpmoy + spheres[MonoSel[i]].r; //Somme des rayons des sphérules de l'agrégat n°Agg
+        rpmoy2 = rpmoy2 + pow(spheres[MonoSel[i]].r, 2);
+        rpmoy3 = rpmoy3 + pow(spheres[MonoSel[i]].r, 3);
     }
 
 
@@ -478,9 +474,9 @@ void ParametresAgg(int Agg)
     Aggregate[Agg][6] = rmax;          //Rayon de la sphere qui contient l'agregat
     Aggregate[Agg][7] = volAgregat;    //Estimation du volume de l'agrégat
     Aggregate[Agg][8] = surfAgregat;   //Estimation de la surface libre de l'agrégat
-    Aggregate[Agg][9] = 4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
+    Aggregate[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
     Aggregate[Agg][10] = cov;          //Paramètre de recouvrement
-    Aggregate[Agg][11] = 4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+    Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
     Tprof[107]=clock();
     Tprof[12]+=Tprof[107]-Tprof[105];
     TS[12]="Temps Total ParamAGG";
@@ -575,7 +571,7 @@ void MonTri(int n, double arr[], int index[])
 
 int Probabilite(bool trier,double &deltatemps)
 {
-  /*! 
+  /*!
    *  \image html cFProbabilitebd.png
    */
 
@@ -588,13 +584,13 @@ int Probabilite(bool trier,double &deltatemps)
 
     if (trier)
     {
-	//$ Sort the timesteps
+    //$ Sort the timesteps
         for (i=1; i <= NAgg; i++)
             TpT[i] = max/Aggregate[i][5];
 
         MonTri(NAgg, TpT, IndexPourTri); //$
 
-	//$ Accumulate the timesteps
+    //$ Accumulate the timesteps
         TriCum[1] = TpT[1];
         for (i=2; i <= NAgg; i++)
             TriCum[i] = TriCum[i-1]+TpT[i];
@@ -1060,8 +1056,8 @@ void Init()
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        masse = Rho*PI*pow(Dp,3.0)/6;
-        surface = PI*pow(Dp,2.0);
+        masse = Rho*PI*pow(Dp,3)/6;
+        surface = PI*pow(Dp,2);
         Cc = Cunningham(Dp/2);
         Diff = K*T/3/PI/Mu/Dp*Cc;
         Vit = sqrt(8*K*T/PI/masse);
@@ -1079,9 +1075,9 @@ void Init()
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
             Aggregate[i][7] = masse/Rho;            //Volume estimé de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface estimée de l'agrégat réunifié
-            Aggregate[i][9] = PI*pow(Dp, 3.0)/6; //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
+            Aggregate[i][9] = PI*pow(Dp, 3)/6; //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            Aggregate[i][11] = PI*pow(Dp, 2.0); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
+            Aggregate[i][11] = PI*pow(Dp, 2); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
         }
         else
         {
@@ -1094,9 +1090,9 @@ void Init()
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
             Aggregate[i][7] = masse/Rho;            //Volume de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface de l'agrégat réunifié
-            Aggregate[i][9] = PI*pow(Dp, 3.0);//Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
+            Aggregate[i][9] = PI*pow(Dp, 3);//Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            Aggregate[i][11] = PI*pow(Dp, 2.0); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
+            Aggregate[i][11] = PI*pow(Dp, 2); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
         }
     }
 
@@ -1128,6 +1124,8 @@ void SauveASCII(int value, int id)
     int i,j;
     char NomComplet[500];
     FILE *f;
+
+    std::locale::global(std::locale("C"));
 
     sprintf(NomComplet, "%s/Sphere%05d.txt", CheminSauve, value);
     f = fopen(NomComplet, "w");
@@ -1190,10 +1188,10 @@ void SauveASCII(int value, int id)
 void test_locale()
 {
     double testfloat = 1.5;
-    char* teststr1 = "1.5";
-    char* teststr2 = "1,5";
-    double test1=atof(teststr1);
-    double test2=atof(teststr2);
+    string teststr1 = "1.5";
+    string teststr2 = "1,5";
+    double test1=atof(teststr1.c_str());
+    double test2=atof(teststr2.c_str());
 
     if (fabs(test1-testfloat)<1e-3)
         with_dots = true;
@@ -1212,7 +1210,6 @@ double latof(const char* string)
     if (!with_dots)
     {
         int f = mystring.find(".");
-        printf("dot %d\n",f);
         if (f>0)
             mystring.replace(f, 1, ",");
     }
@@ -1318,7 +1315,7 @@ void Calcul() //Coeur du programme
     {
         sprintf(commentaires, "Le module physique est activé.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
@@ -1326,7 +1323,7 @@ void Calcul() //Coeur du programme
     {
         sprintf(commentaires, "Le module physique n'est pas activé.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
@@ -1336,7 +1333,7 @@ void Calcul() //Coeur du programme
         LectureSuiviTempo();
         sprintf(commentaires, "Le fichier de données de suivi temporel est lu.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
@@ -1344,21 +1341,21 @@ void Calcul() //Coeur du programme
     {
         sprintf(commentaires, "Le fichier de données sélectionné est le fichier 'params.txt'.\n");
         if (GUI == NULL)
-            printf(commentaires);
+            printf("%s",commentaires);
         else
             GUI->print(commentaires);
     }
 
     sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n", dfe, kfe, coeffB, xsurfgrowth);
     if (GUI == NULL)
-        printf(commentaires);
+        printf("%s",commentaires);
     else
         GUI->print(commentaires);
 
     Asurfgrowth = coeffB*1E-3;
     sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
     if (GUI == NULL)
-        printf(commentaires);
+        printf("%s",commentaires);
     else
         GUI->print(commentaires);
 
@@ -1424,7 +1421,7 @@ void Calcul() //Coeur du programme
                 {
                     sprintf(commentaires, "Attention le suivi temporel est plus long que celui du fichier lu.\n");
                     if (GUI == NULL)
-                        printf(commentaires);
+                        printf("%s",commentaires);
                     else
                         GUI->print(commentaires);
                 }
@@ -1592,19 +1589,19 @@ void Calcul() //Coeur du programme
     {
         printf("%d\t", i);
         for (j = 1; j <= 3; j++)
-            printf("%10.3f\t", PosiGravite[i][j]*1E9);
-        printf("\n");
+            printf("%e\t", PosiGravite[i][j]*1E9);
+        printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
     }
 
     Fermeture();
     if (GUI == NULL)
-        printf(CheminSauve);
+        printf("%s",CheminSauve);
     else
         GUI->print(CheminSauve);
 
     sprintf(commentaires,"\nFin du calcul  ...\n");
     if (GUI == NULL)
-        printf(commentaires);
+        printf("%s",commentaires);
     else
         GUI->print(commentaires);
     Tprof[1]=clock()-Tprof[0];

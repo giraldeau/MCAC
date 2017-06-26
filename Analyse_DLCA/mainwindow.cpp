@@ -49,6 +49,41 @@ FILE* f;
 FILE* f1;
 FILE* f2;
 FILE* f3;
+bool with_dots;
+
+
+void test_locale()
+{
+    double testfloat = 1.5;
+    char* teststr1 = "1.5";
+    char* teststr2 = "1,5";
+    double test1=atof(teststr1);
+    double test2=atof(teststr2);
+
+    if (fabs(test1-testfloat)<1e-3)
+        with_dots = true;
+    else if (fabs(test2-testfloat)<1e-3)
+            with_dots = false;
+    else
+    {
+        printf("What locale are you using ?\n");
+        exit(1);
+    }
+}
+
+double latof(const char* string)
+{
+    std::string mystring = string;
+    if (!with_dots)
+    {
+        int f = mystring.find(".");
+        if (f>0)
+            mystring.replace(f, 1, ",");
+    }
+    return atof(mystring.c_str());
+}
+
+
 
 struct TabTri
 {
@@ -72,6 +107,9 @@ struct TabTri
 void LectureParam()
 {
     char t1[500], com[500];
+
+    test_locale();
+
 
     f = fopen(qPrintable(FichierParam), "rt"); //Lecture du fichier de paramètres
     fgets(com, 500 ,f);
@@ -127,7 +165,7 @@ void LectureSphere(int numfichier)
     fgets(com, 500, f);
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
-    X = atof(t1); //Lecture du paramètre X
+    X = latof(t1); //Lecture du paramètre X
     L = X*Dpm*1E-9; //Largeur de la boite en m
     fgets(com, 500, f);
     fgets(com, 500, f);
@@ -136,18 +174,18 @@ void LectureSphere(int numfichier)
     Nagg = atoi(t1); //Lecture du nombre d'agrégats
     fgets(com, 500, f);
     sscanf(com, "%s  %s", t1, com);
-    temps = atof(t1)*1E-6; //Instant considéré
+    temps = latof(t1)*1E-6; //Instant considéré
     fgets(com, 500, f);
 
     for (i = 1; i <= N; i++)
     {
         fgets(com,500,f);
         sscanf(com, "%s %s %s %s %s", t1, t2, t3, t4, t5);
-        TabLabel[i] = atof(t1);
-        TabDp[i] = atof(t2)*2E-9;
-        Tabposx[i] = atof(t3)*1E-9;
-        Tabposy[i] = atof(t4)*1E-9;
-        Tabposz[i] = atof(t5)*1E-9;
+        TabLabel[i] = latof(t1);
+        TabDp[i] = latof(t2)*2E-9;
+        Tabposx[i] = latof(t3)*1E-9;
+        Tabposy[i] = latof(t4)*1E-9;
+        Tabposz[i] = latof(t5)*1E-9;
     }
 
     fclose(f);
@@ -175,21 +213,21 @@ void LectureAggregat(int numfichier)
     {
         fgets(com, 500, f);
         sscanf(com, "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s", t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15);
-        TabRg[i] = atof(t1)*1E-9;
-        TabNp[i] = atof(t2);
-        TabNc[i] = atof(t3);
-        TabDm[i] = atof(t4)*1E-9;
-        Tablpm[i] = atof(t5)*1E-9;
-        Tabdeltat[i] = atof(t6)*1E-6;
-        TabRgeo[i] = atof(t7)*1E-9;
-        TabXg[i] = atof(t8)*1E-9;
-        TabYg[i] = atof(t9)*1E-9;
-        TabZg[i] = atof(t10)*1E-9;
-        TabVolume[i] = atof(t11)*1E-25;
-        TabSurface[i] = atof(t12)*1E-16;
-        TabTv[i] = atof(t13);
-        Tabcov[i] = atof(t14);
-        TabSurfsurVol[i] = atof(t15)*1E9;
+        TabRg[i] = latof(t1)*1E-9;
+        TabNp[i] = latof(t2);
+        TabNc[i] = latof(t3);
+        TabDm[i] = latof(t4)*1E-9;
+        Tablpm[i] = latof(t5)*1E-9;
+        Tabdeltat[i] = latof(t6)*1E-6;
+        TabRgeo[i] = latof(t7)*1E-9;
+        TabXg[i] = latof(t8)*1E-9;
+        TabYg[i] = latof(t9)*1E-9;
+        TabZg[i] = latof(t10)*1E-9;
+        TabVolume[i] = latof(t11)*1E-25;
+        TabSurface[i] = latof(t12)*1E-16;
+        TabTv[i] = latof(t13);
+        Tabcov[i] = latof(t14);
+        TabSurfsurVol[i] = latof(t15)*1E9;
     }
 
     fclose(f);
@@ -255,7 +293,7 @@ double Calculmoycritere(double* Tab, int nbelem, double* TabCritere, double crit
 void Calculdensimonomeres(double* nTab, int Nagg, int N)
 {
     int i;
-    for (i = 1; i <= N+1; i++)      nTab[i] = 0.0; //Initialisation du tableau de densité
+    for (i = 1; i <= N; i++)      nTab[i] = 0.0; //Initialisation du tableau de densité
     for (i = 1; i <= Nagg; i++)     nTab[(int)(TabNp[i])] = nTab[(int)(TabNp[i])]+1.0;
 }
 
@@ -292,6 +330,8 @@ void  MainWindow::ProgAnalyse()
     //TabTs = new double[N+1];
     TabSurfsurVol = new double[N+1];
     nTab = new double[N+1];
+
+    std::locale::global(std::locale("C"));
 
     sprintf(commentaires,"________________________\n");
     ui->AfficheurRep->append(commentaires);

@@ -124,7 +124,7 @@ double Sphere::VolumeCalotteij(Sphere c)
     Ri = r;
     Rj = c.r;
     //$ Determination of the distance between the center of the 2 aggregates
-    d = sqrt(pow(pos[1]-c.pos[1],2.0) + pow(pos[2]-c.pos[2],2.0) + pow(pos[3]-c.pos[3],2.0));
+    d = sqrt(pow(pos[1]-c.pos[1],2) + pow(pos[2]-c.pos[2],2) + pow(pos[3]-c.pos[3],2));
     //$ Check if they aren't in contact
     if (d >= Ri + Rj)
     {
@@ -138,7 +138,7 @@ double Sphere::VolumeCalotteij(Sphere c)
     if ((0 <= d) && (d < Ri - Rj))
     {
         //$ Volcal = VolJ
-        return 4.0*PI*pow(Rj,3.0)/3.0;
+        return 4.0*PI*pow(Rj,3)/3.0;
 
     }
 
@@ -147,11 +147,11 @@ double Sphere::VolumeCalotteij(Sphere c)
     if ((0 <= d) && (d < Rj - Ri))
     {
         //$ Volcal = Voli
-        return 4.0*PI*pow(Ri,3.0)/3.0;
+        return 4.0*PI*pow(Ri,3)/3.0;
     }
 
     //$ Volume of the intersection is returned
-    h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
+    h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
 
 /*
     double Rmax = fmax(Ri,Rj);
@@ -171,7 +171,7 @@ double Sphere::VolumeCalotteij(Sphere c)
     printf("%10.3f %10.3f\n", Volcal,newVolcal);
 */
 
-    return PI*pow(h,2.0)*(3*Ri-h)/3.0;
+    return PI*pow(h,2)*(3*Ri-h)/3.0;
 
 }
 
@@ -184,17 +184,17 @@ double Sphere::SurfaceCalotteij(Sphere c) // Works exactly the same way as Volum
     Ri = r;
     Rj = c.r;
 
-    d = sqrt(pow(pos[1]-c.pos[1], 2.0)+pow(pos[2]-c.pos[2], 2.0)+pow(pos[3]-c.pos[3], 2.0));
+    d = sqrt(pow(pos[1]-c.pos[1], 2)+pow(pos[2]-c.pos[2], 2)+pow(pos[3]-c.pos[3], 2));
 
     if (d >= Ri + Rj)
         Surfcal = 0.0;
     else if ((0 <= d) && (d < Ri - Rj))
-        Surfcal = 4.0*PI*pow(Rj, 2.0);
+        Surfcal = 4.0*PI*pow(Rj, 2);
     else if ((0 <= d) && (d < Rj - Ri))
-        Surfcal = 4.0*PI*pow(Ri, 2.0);
+        Surfcal = 4.0*PI*pow(Ri, 2);
     else
     {
-        h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
+        h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
         Surfcal = 2*PI*Ri*h;
     }
 

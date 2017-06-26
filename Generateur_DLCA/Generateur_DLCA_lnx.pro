@@ -27,4 +27,6 @@ RESOURCES += \
 
 #QMAKE_CXXFLAGS_RELEASE = -Ofast -falign-functions=16 -ansi-alias -fstrict-aliasing -xHost -static -no-prec-div
 #QMAKE_CXXFLAGS_RELEASE += -lto
-#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback -fno-inline-functions
+#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback -fno-inline-functions -p -pg  -fno-omit-frame-pointer -DNDEBUG  -fno-inline-functions-called-once -fno-optimize-sibling-calls  -fno-default-inline    -fno-inline
+#QMAKE_LFLAGS_RELEASE += -g -p -pg
+
