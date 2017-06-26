@@ -25,7 +25,12 @@ RESOURCES += \
 
 #CONFIG += warn_on
 
-#QMAKE_CXXFLAGS_RELEASE = -Ofast -falign-functions=16 -ansi-alias -fstrict-aliasing -xHost -static -no-prec-div
+#QMAKE_CXXFLAGS_RELEASE = -Ofast -falign-functions=16 -ansi-alias -fstrict-aliasing -xHost -static -no-prec-div -DNDEBUG
+
+## When not profiling
 #QMAKE_CXXFLAGS_RELEASE += -lto
-#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback -fno-inline-functions# -p -pg
-#QMAKE_LFLAGS_RELEASE += -p -pg
+
+## When profiling
+#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback -fno-inline-functions -p -pg  -fno-omit-frame-pointer  -fno-inline-functions-called-once -fno-optimize-sibling-calls  -fno-default-inline    -fno-inline
+#QMAKE_LFLAGS_RELEASE += -g -p -pg
+
