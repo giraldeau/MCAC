@@ -61,9 +61,6 @@ int* IndexPourTri;
 bool* Select;
 char com[500];
 bool with_dots;
-char* TS[150];
-int* Tprof;
-int TestClock;
 int* TamponValeurs;
 int** AggLabels;
 
@@ -205,7 +202,6 @@ double ModeleBeta(double rm, double np, double rg)
 
 double Dichotomie (double np, double rg)
 {
-    Tprof[110]=clock();
     double 	rmin, rmax, rmed, frmed, frmin, frmax, precision;
 
     rmin = 0.0;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
@@ -232,16 +228,12 @@ double Dichotomie (double np, double rg)
             frmin = frmed;
         }
     }
-    Tprof[17]+=clock()-Tprof[110];
     return rmed;
 }
 
 double ConvertRg2Dm(double np, double rg)
 {
-    Tprof[110]=clock();
     return  Dichotomie (np, rg)*2; //Retourne le diamètre de mobilité
-
-    TS[17]="Dichotomey";
 }
 //################################################## Recherche de sphères #############################################################################
 
@@ -250,47 +242,50 @@ int SelectLabelEgal(int id, int* resu)
     int i, n;
 
     n = 0;
-
-//    for (i = 1; i <= N; i++)
-//        if (spheres[i].Label == id)
-//        {
-//            n++;
-//            resu[n] = i;
-//        }
-
+/*
+    for (i = 1; i <= N; i++)
+        if (spheres[i].Label == id)
+        {
+            n++;
+            resu[n] = i;
+        }
+*/
     for(i=1;i<=AggLabels[id][0];i++)
     {
         resu[i]=AggLabels[id][i];
     }
-    n=AggLabels[id][0]+;
+    n=AggLabels[id][0];
 
     return n;
 }
 
 int SelectLabelSuperieur(int id, int* resu)
 {
-    int i,j, n;
-    n = 0;
+    int i,j;
+    /*
+    int n = 0;
+    for (i = 1;i <= N; i++)
+        if (spheres[i].Label > id)
+        {
+            n++;
+            resu[n] = i;
+        }
 
-//    for (i = 1;i <= N; i++)
-//        if (spheres[i].Label > id)
-//        {
-//            n++;
-//            resu[n] = i;
-//        }
+    return n
+    */
+    int m = 0;
 
-    for(i=id+1;i<=NAgg;i++)
+    for(i=id;i<=NAgg;i++)
     {
 
         for(j=1;j<=AggLabels[i][0];j++)
         {
 
-            resu[n+j]=AggLabels[i][j];
+            resu[m+j]=AggLabels[i][j];
         }
-        n+=AggLabels[i][0];
+        m+=AggLabels[i][0];
     }
-
-    return n;
+    return m;
 }
 
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
@@ -409,24 +404,18 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void ParametresAgg(int Agg)
-{   Tprof[105]=clock();
-    ;
+{
     int i, np, Nc;
     double masse, dm, cc, diff, vit, lpm, Tv, cov, rmax, rg, rpmoy, rpmoy2, rpmoy3;
     double volAgregat, surfAgregat;
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
-    Tprof[106]=clock();
     rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat, PosiGravite);
-    Tprof[107]=clock();
-    Tprof[13]+=Tprof[107]-Tprof[106];
-    TS[13]="Rayon Giration";
 
     masse = Rho*volAgregat; //Masse réelle de l'agrégat n°Agg
 
     np = SelectLabelEgal(Agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
 
-    Tprof[106]=clock();
     for (i = 1; i <= np; i++)
     {
         rpmoy = rpmoy + spheres[MonoSel[i]].r; //Somme des rayons des sphérules de l'agrégat n°Agg
@@ -439,21 +428,11 @@ void ParametresAgg(int Agg)
     rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
     rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
 
-    Tprof[107]=clock();
-    Tprof[14]+=Tprof[107]-Tprof[106];
-    TS[14]="Calcul des rayons";
-
-    Tprof[106]=clock();
-
     dm = ConvertRg2Dm(np,rg);
     cc = Cunningham(dm/2);
     diff = K*T/3/PI/Mu/dm*cc;
     vit = sqrt(8*K*T/PI/masse);
     lpm = 8*diff/PI/vit;
-
-    Tprof[107]=clock();
-    Tprof[15]+=Tprof[107]-Tprof[106];
-    TS[15]="Calcul dm,Cc,diff,vit,lpm";
 
     Aggregate[Agg][0] = rg; //Rayon de giration
     Aggregate[Agg][1] = np; //Nombre de spherules par aggregat
@@ -477,9 +456,6 @@ void ParametresAgg(int Agg)
     Aggregate[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
     Aggregate[Agg][10] = cov;          //Paramètre de recouvrement
     Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
-    Tprof[107]=clock();
-    Tprof[12]+=Tprof[107]-Tprof[105];
-    TS[12]="Temps Total ParamAGG";
 }
 //###############################################################################################################################
 
@@ -711,7 +687,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                         s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
 
                         dist = s1.Intersection(s2, Vectdir, lpm, dc);
-                        printf("dist %lf, nmonoi %d, npossible %d \n",dist,nmonoi,npossible);
+                        //printf("dist %lf, nmonoi %d, npossible %d \n",dist,nmonoi,npossible);
                         // checks if the two spheres will be in contact while
                          //... the first one is moving
                         //$ Intersection check between agregates
@@ -1289,10 +1265,6 @@ void LectureParams()
 
 void Calcul() //Coeur du programme
 {
-    Tprof = new int[105];
-    TestClock=clock();
-
-    Tprof[0]=clock();
     double deltatemps, distmin, lpm;
     double thetarandom, phirandom;
     int aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
@@ -1300,16 +1272,6 @@ void Calcul() //Coeur du programme
     int i, j, co, err;
     bool contact;
     time_t t, t0;
-
-    for (i=0;i<100;i++)
-    {
-        TS[i]=new char[50];
-    }
-    for (i=0;i<150;i++)
-    {
-        Tprof[i]=0;
-    }
-    TS[1]="Temps total Calcul";
 
     if (ActiveModulephysique)
     {
@@ -1362,12 +1324,8 @@ void Calcul() //Coeur du programme
     InitRandom();
 
 
-    Tprof[1]=clock()-Tprof[0];
-    Tprof[100]=clock();
     Init();
-    Tprof[101]=clock();
-    TS[2]="Init";
-    Tprof[2]=Tprof[101]-Tprof[100];
+
     co=0;
     //superpo=0;
     NSauve=0;
@@ -1377,7 +1335,7 @@ void Calcul() //Coeur du programme
     contact=true;
     int end = fmax(1,N/200);
 
-    end = 5;
+    end = 10;
 
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats\n", end);
@@ -1389,7 +1347,6 @@ void Calcul() //Coeur du programme
         time(&t);
         secondes = t-t0;
 
-        Tprof[100]=clock();
         // -- Generating a random direction --
 
         thetarandom = Random()*PI*2;
@@ -1405,13 +1362,9 @@ void Calcul() //Coeur du programme
         if (ActiveModulephysique)
         {
             //$ Choice of an aggregate according to his MFP
-            Tprof[101]=clock();
             NumAgg = Probabilite(contact, deltatemps);// Choice of an agrgegate, the probability of said agrgegate to be chosen proportionnal to his lpm
-            Tprof[102]=clock();
-            TS[3]="Probabilite";
-            Tprof[3]+=Tprof[102]-Tprof[101];
-            temps = temps + deltatemps; // Time incrementation with a value given by Probabilite
 
+            temps = temps + deltatemps; // Time incrementation with a value given by Probabilite
 
             if (ActiveVariationTempo)
             {
@@ -1429,27 +1382,16 @@ void Calcul() //Coeur du programme
             }
 
             //$ Surface Growth
-            Tprof[101]=clock();
             CroissanceSurface(deltatemps);
-            Tprof[102]=clock();
-            TS[4]="CroissanceSurface";
-            Tprof[4]+=Tprof[102]-Tprof[101];
+
             //$ Aggregates parameter update
 
             for (i = 1; i<= NAgg; i++)
             {
-                Tprof[101]=clock();
                 ParametresAgg(i);
-                Tprof[102]=clock();
-                TS[5]="ParametresAgg";
-                Tprof[5]+=Tprof[102]-Tprof[101];
             }
             //$ looking for potential contacts
-            Tprof[101]=clock();
             CalculDistance(NumAgg, distmin, aggcontact);
-            Tprof[102]=clock();
-            TS[6]="CalculDistance";
-            Tprof[6]+=Tprof[102]-Tprof[101];
             lpm = Aggregate[NumAgg][4];
             contact = (aggcontact != 0);
         }
@@ -1462,11 +1404,7 @@ void Calcul() //Coeur du programme
 
             //$ looking for potential contacts
 
-            Tprof[101]=clock();
             CalculDistance(NumAgg, distmin, aggcontact);
-            Tprof[102]=clock();
-            TS[6]="CalculDistance";
-            Tprof[6]+=Tprof[102]-Tprof[101];
 
             lpm = Dpm*1E-9; //On fixe le lpm au Dpm
             contact = (aggcontact != 0);
@@ -1477,11 +1415,7 @@ void Calcul() //Coeur du programme
             //$ Translation of the aggregate
             for (i = 1; i <= 3; i++)
             {
-                Tprof[101]=clock();
                 Translate[i] = Vectdir[i]*distmin;
-                Tprof[102]=clock();
-                TS[9]="Translate";
-                Tprof[9]+=Tprof[102]-Tprof[101];
             }
             //$ The aggregate in contact is moved to the right box
 
@@ -1490,27 +1424,14 @@ void Calcul() //Coeur du programme
             for (j = 1; j <= N; j++)
                 if (spheres[j].Label == IdPossible[aggcontact][1])
                 {
-                    Tprof[101]=clock();
                     spheres[j].Update(spheres[j].pos[1]+IdPossible[aggcontact][2]*L,spheres[j].pos[2]+IdPossible[aggcontact][3]*L,spheres[j].pos[3]+IdPossible[aggcontact][4]*L,spheres[j].r);
-                    Tprof[102]=clock();
-                    TS[7]="Update";
-                    Tprof[7]+=Tprof[102]-Tprof[101];
                 }
 
 
             //$ Aggregates in contact are reunited
-            Tprof[101]=clock();
             newnumagg = Reunit(NumAgg, IdPossible[aggcontact][1], err);
-            Tprof[102]=clock();
-            TS[8]="Reunit";
-            Tprof[8]+=Tprof[102]-Tprof[101];
 
-            Tprof[101]=clock();
             ParametresAgg(newnumagg);
-            Tprof[102]=clock();
-
-            Tprof[5]+=Tprof[102]-Tprof[101];
-
 
             temps = temps-deltatemps*(1-distmin/lpm);
             /*
@@ -1529,38 +1450,22 @@ void Calcul() //Coeur du programme
         {
             //$ Translation of the aggregate on his full lpm distance
             for (i = 1; i <= 3; i++)
-            {Tprof[101]=clock();
                 Translate[i] = Vectdir[i]*lpm;
-                Tprof[102]=clock();
-                TS[9]="Translate";
-                Tprof[9]+=Tprof[102]-Tprof[101];}
             for (i = 1; i <= N; i++)
             {
                 if (spheres[i].Label == NumAgg)
                 {
-                    Tprof[101]=clock();
                     spheres[i].Translate(Translate);
-                    Tprof[102]=clock();
-                    TS[9]="Translate";
-                    Tprof[9]+=Tprof[102]-Tprof[101];
                 }
             }
             for (j = 1; j <= 3; j++)
-            {   Tprof[101]=clock();
+            {
                 PosiGravite[NumAgg][j] = PosiGravite[NumAgg][j] + Translate[j];
-                Tprof[102]=clock();
-                TS[9]="Translate";
-                Tprof[9]+=Tprof[102]-Tprof[101];
             }
 
             newnumagg = NumAgg;
         }
-        Tprof[101]=clock();
         ReplacePosi(newnumagg);
-        Tprof[102]=clock();
-        TS[10]="ReplacePosi";
-        Tprof[10]+=Tprof[102]-Tprof[101];
-
         if (DeltaSauve>0)
         {
             co++;
@@ -1604,44 +1509,6 @@ void Calcul() //Coeur du programme
         printf("%s",commentaires);
     else
         GUI->print(commentaires);
-    Tprof[1]=clock()-Tprof[0];
-
-    printf("\n\n\n");
-    printf("-------------------------- Profiling -------------------------\n");
-    printf("Fonction         Durée Cumulée             Pourcentage \n");
-    for (i=1; i<=17;i++)
-    {
-        if (i<11)
-        {
-            double percent = 100.*(double)Tprof[i]/(double)Tprof[1];
-            printf("%s",TS[i]);
-            printf("\t%d",Tprof[i]);
-            printf("\t%f\n",percent);
-        }
-        else
-        {if (i>11 && i<16)
-        {
-            double percent = 100.*(double)Tprof[i]/(double)Tprof[12];
-            printf("%s",TS[i]);
-            printf("\t%d",Tprof[i]);
-            printf("\t%f\n",percent);
-        }
-         else
-        {
-                if (i>16)
-                {
-                    double percent = 100.*(double)Tprof[i]/(double)Tprof[17];
-                    printf("%s",TS[i]);
-                    printf("\t%d",Tprof[i]);
-                    printf("\t%f\n",percent);
-                }
-                else
-                {
-                    printf("Changement de fonction--------------------- \n");
-                }
-        }
-        }
-    }
 }
 
 
