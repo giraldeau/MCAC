@@ -1002,6 +1002,14 @@ void Init()
 
 void Fermeture()
 {
+
+    for (int i = 0; i <= N; i++)
+    {
+        delete[] PosiGravite[i];
+        delete[] Aggregate[i];
+        delete[] IdPossible[i];
+
+    }
     delete[] spheres;
     delete[] Translate;
     delete[] Vectdir;
@@ -1259,7 +1267,7 @@ void Calcul() //Coeur du programme
     contact=true;
     int end = fmax(1,N/200);
 
-    end = 5;
+    end = 10;
 
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats\n", end);
@@ -1552,6 +1560,6 @@ int No_GUI(int argc, char *argv[]){
 
     Calcul();
 
-    exit(0);
+    return 0;
 }
 

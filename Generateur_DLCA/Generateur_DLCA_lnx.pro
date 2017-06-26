@@ -31,6 +31,7 @@ RESOURCES += \
 #QMAKE_CXXFLAGS_RELEASE += -lto
 
 ## When profiling
-#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback -fno-inline-functions -p -pg  -fno-omit-frame-pointer  -fno-inline-functions-called-once -fno-optimize-sibling-calls  -fno-default-inline    -fno-inline
-#QMAKE_LFLAGS_RELEASE += -g -p -pg
+#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback #-fno-inline-functions -p -pg  -fno-omit-frame-pointer  -fno-optimize-sibling-calls   -fno-inline
+#QMAKE_LFLAGS_RELEASE += -g #-p -pg
+#LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
 

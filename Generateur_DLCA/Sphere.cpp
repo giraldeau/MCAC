@@ -14,9 +14,10 @@ Sphere::Sphere(void)
 
 Sphere::~Sphere(void)
 {
+    if (pos!=NULL) delete[] pos;
 }
 
-void Sphere::Update(double newx, double newy, double newz, double newr)
+void Sphere::Update(const double newx,const double newy,const double newz,const double newr)
 {
     pos[1] = newx;
     pos[2] = newy;
@@ -24,31 +25,41 @@ void Sphere::Update(double newx, double newy, double newz, double newr)
     r = newr;
 }
 
-void Sphere::SetLabel(int value)
+void Sphere::Update(const double* newp,const double newr)
 {
-    Label = value;
-}
-
-void Sphere::Aff(double coef)
-{
-    printf("%8.3f %8.3f %8.3f %8.3f\n", pos[1]*coef, pos[2]*coef, pos[3]*coef, r*coef);
-}
-
-void Sphere::Update(double* newp, double newr)
-{	
-	// newp: position double[4] pour compatibilité....
+    // newp: position double[4] pour compatibilité....
     pos[1] = newp[1];
     pos[2] = newp[2];
     pos[3] = newp[3];
     r = newr;
 }
 
-double Sphere::Distance(Sphere c)
+
+void Sphere::SetLabel(int value)
 {
-	return sqrt(pow(pos[1]-c.pos[1],2)+pow(pos[2]-c.pos[2],2)+pow(pos[3]-c.pos[3],2));
+    Label = value;
 }
 
-double Sphere::Intersection(Sphere c, double* vd,double distmax,double& distance_contact)
+void Sphere::Translate(const double* trans)
+{
+    for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans[i];
+}
+
+void Sphere::Translate(const double trans)
+{
+    for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans;
+}
+
+void Sphere::Aff(const double coef) const
+{
+    printf("%8.3f %8.3f %8.3f %8.3f\n", pos[1]*coef, pos[2]*coef, pos[3]*coef, r*coef);
+}
+double Sphere::Distance(const Sphere& c) const
+{
+    return sqrt(pow(pos[1]-c.pos[1],2)+pow(pos[2]-c.pos[2],2)+pow(pos[3]-c.pos[3],2));
+}
+
+double Sphere::Intersection(const Sphere& c,const  double* vd,const double distmax,double& distance_contact) const
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
@@ -60,7 +71,7 @@ double Sphere::Intersection(Sphere c, double* vd,double distmax,double& distance
         sinon  : il peut y avoir contact. La sphère courante doit être déplacée
         de (dist) en suivant (vd) pour toucher la sphère (c)
 */
-  /*! 
+  /*!
    *  \image html cCSphereFIntersectionCSphereddd.png
    */
     double A, B, C;
@@ -105,18 +116,8 @@ double Sphere::Intersection(Sphere c, double* vd,double distmax,double& distance
     return dist;
 }
 
-void Sphere::Translate(double* trans)
-{
-    for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans[i];
-}
-
-void Sphere::Translate(double trans)
-{
-    for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans;
-}
-
 //Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-double Sphere::VolumeCalotteij(Sphere c)
+double Sphere::VolumeCalotteij(const Sphere& c) const
 {
     double Volcal, d, h;
     double Ri, Rj;
@@ -176,7 +177,7 @@ double Sphere::VolumeCalotteij(Sphere c)
 }
 
 //Calcul de la surface de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-double Sphere::SurfaceCalotteij(Sphere c) // Works exactly the same way as VolumeCalotte, the only things that changes is the formulas
+double Sphere::SurfaceCalotteij(const Sphere& c) const // Works exactly the same way as VolumeCalotte, the only things that changes is the formulas
 {
     double Surfcal, d, h;
     double Ri, Rj;
