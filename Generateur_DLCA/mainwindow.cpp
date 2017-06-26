@@ -687,7 +687,6 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                         s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
 
                         dist = s1.Intersection(s2, Vectdir, lpm, dc);
-                        //printf("dist %lf, nmonoi %d, npossible %d \n",dist,nmonoi,npossible);
                         // checks if the two spheres will be in contact while
                          //... the first one is moving
                         //$ Intersection check between agregates
@@ -1051,9 +1050,9 @@ void Init()
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
             Aggregate[i][7] = masse/Rho;            //Volume estimé de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface estimée de l'agrégat réunifié
-            Aggregate[i][9] = PI*pow(Dp, 3)/6; //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
+            Aggregate[i][9] = PI*pow(Dp, 3)/6;      //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            Aggregate[i][11] = PI*pow(Dp, 2); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
+            Aggregate[i][11] = PI*pow(Dp, 2);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
         }
         else
         {
@@ -1066,9 +1065,9 @@ void Init()
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
             Aggregate[i][7] = masse/Rho;            //Volume de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface de l'agrégat réunifié
-            Aggregate[i][9] = PI*pow(Dp, 3);//Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
+            Aggregate[i][9] = PI*pow(Dp, 3);        //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            Aggregate[i][11] = PI*pow(Dp, 2); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
+            Aggregate[i][11] = PI*pow(Dp, 2);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
         }
     }
 
@@ -1077,6 +1076,14 @@ void Init()
 
 void Fermeture()
 {
+
+    for (int i = 0; i <= N; i++)
+    {
+        delete[] PosiGravite[i];
+        delete[] Aggregate[i];
+        delete[] IdPossible[i];
+
+    }
     delete[] spheres;
     delete[] Translate;
     delete[] Vectdir;
@@ -1634,6 +1641,6 @@ int No_GUI(int argc, char *argv[]){
 
     Calcul();
 
-    exit(0);
+    return 0;
 }
 

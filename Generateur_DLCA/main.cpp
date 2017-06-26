@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
     if(argc>1)
     {
-        No_GUI(argc, argv);
+        return No_GUI(argc, argv);
     }
     else
     {
@@ -16,4 +16,6 @@ int main(int argc, char *argv[])
 
         return a.exec();
     }
+
+    return 1;
 }

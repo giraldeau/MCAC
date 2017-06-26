@@ -12,14 +12,14 @@ public:
 	Sphere(void);
 	~Sphere(void);
 	
-	void Update(double newx, double newy, double newz, double newr);
-	void Update(double* newp, double newr);
-	void SetLabel(int value);
-	void Aff(double coef);
-	double Intersection(Sphere c, double* vd, double  distmax,double& distance_contact);
-	void Translate(double* trans);
-	void Translate(double trans);
-	double Distance(Sphere c);
-    double VolumeCalotteij(Sphere c);
-    double SurfaceCalotteij(Sphere c);
+    void Update(const double newx, const double newy, const double newz, const double newr);
+    void Update(const double* newp, const double newr);
+    void SetLabel(const int value);
+    void Translate(const double* trans);
+    void Translate(const double trans);
+    void Aff(const double coef) const;
+    double Distance(const Sphere& c) const;
+    double Intersection(const Sphere& c, const double* vd,const  double  distmax,double& distance_contact) const;
+    double VolumeCalotteij(const Sphere& c) const;
+    double SurfaceCalotteij(const Sphere& c) const;
 };
