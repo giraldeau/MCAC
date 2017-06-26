@@ -298,8 +298,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     for (i = 1; i <= nmonoi; i++) //Pour les i sphérules constituant l'agrégat n°id
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 3.0)/3.0; //Calculation of the volume of i
-        tabSurf[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 2.0);    //Calculation of the surface of i
+        tabVol[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 3)/3.0; //Calculation of the volume of i
+        tabSurf[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 2);    //Calculation of the surface of i
 
         for (j = 1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
         {
@@ -331,7 +331,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         volAgregat = volAgregat + tabVol[i];    //Total Volume of Agg id
         surfAgregat = surfAgregat + tabSurf[i]; //Total Surface of Agg id
 
-        terme = terme + tabVol[i]/pow(spheres[Monoi[i]].r, 3.0);
+        terme = terme + tabVol[i]/pow(spheres[Monoi[i]].r, 3);
 
         Tv = 1 - (3.0/(4.0*nmonoi*PI))*terme;
         //$ Calculation of the position of the center of mass
@@ -373,8 +373,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
             rmax = r;
         }
         //$ Calculation of Rg
-        Arg = Arg + tabVol[i]*pow(li, 2.0);
-        Brg = Brg + tabVol[i]*pow(spheres[Monoi[i]].r, 2.0);
+        Arg = Arg + tabVol[i]*pow(li, 2);
+        Brg = Brg + tabVol[i]*pow(spheres[Monoi[i]].r, 2);
     }
 
     delete[] tabVol;
@@ -407,8 +407,8 @@ void ParametresAgg(int Agg)
     for (i = 1; i <= np; i++)
     {
         rpmoy = rpmoy + spheres[MonoSel[i]].r; //Somme des rayons des sphérules de l'agrégat n°Agg
-        rpmoy2 = rpmoy2 + pow(spheres[MonoSel[i]].r, 2.0);
-        rpmoy3 = rpmoy3 + pow(spheres[MonoSel[i]].r, 3.0);
+        rpmoy2 = rpmoy2 + pow(spheres[MonoSel[i]].r, 2);
+        rpmoy3 = rpmoy3 + pow(spheres[MonoSel[i]].r, 3);
     }
 
 
@@ -535,7 +535,7 @@ void MonTri(int n, double arr[], int index[])
 
 int Probabilite(bool trier,double &deltatemps)
 {
-  /*! 
+  /*!
    *  \image html cFProbabilitebd.png
    */
 
@@ -548,13 +548,13 @@ int Probabilite(bool trier,double &deltatemps)
 
     if (trier)
     {
-	//$ Sort the timesteps
+    //$ Sort the timesteps
         for (i=1; i <= NAgg; i++)
             TpT[i] = max/Aggregate[i][5];
 
         MonTri(NAgg, TpT, IndexPourTri); //$
 
-	//$ Accumulate the timesteps
+    //$ Accumulate the timesteps
         TriCum[1] = TpT[1];
         for (i=2; i <= NAgg; i++)
             TriCum[i] = TriCum[i-1]+TpT[i];
@@ -985,8 +985,8 @@ void Init()
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        masse = Rho*PI*pow(Dp,3.0)/6;
-        surface = PI*pow(Dp,2.0);
+        masse = Rho*PI*pow(Dp,3)/6;
+        surface = PI*pow(Dp,2);
         Cc = Cunningham(Dp/2);
         Diff = K*T/3/PI/Mu/Dp*Cc;
         Vit = sqrt(8*K*T/PI/masse);
@@ -1004,9 +1004,9 @@ void Init()
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
             Aggregate[i][7] = masse/Rho;            //Volume estimé de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface estimée de l'agrégat réunifié
-            Aggregate[i][9] = PI*pow(Dp, 3.0)/6; //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
+            Aggregate[i][9] = PI*pow(Dp, 3)/6; //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            Aggregate[i][11] = PI*pow(Dp, 2.0); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
+            Aggregate[i][11] = PI*pow(Dp, 2); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
         }
         else
         {
@@ -1019,9 +1019,9 @@ void Init()
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
             Aggregate[i][7] = masse/Rho;            //Volume de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface de l'agrégat réunifié
-            Aggregate[i][9] = PI*pow(Dp, 3.0);//Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
+            Aggregate[i][9] = PI*pow(Dp, 3);//Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            Aggregate[i][11] = PI*pow(Dp, 2.0); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
+            Aggregate[i][11] = PI*pow(Dp, 2); //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
         }
     }
 
