@@ -64,6 +64,11 @@ bool with_dots;
 char* TS[150];
 int* Tprof;
 int TestClock;
+int* TamponValeurs;
+int** AggLabels;
+
+
+
 
 MainWindow* GUI;
 
@@ -207,7 +212,6 @@ double Dichotomie (double np, double rg)
     rmax = 5E-6; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
     precision = 0.01E-9; //Précision recherchée
 
-    T
     frmin = ModeleBeta(rmin, np, rg);
     frmax = ModeleBeta(rmax, np, rg);
 
@@ -244,29 +248,47 @@ double ConvertRg2Dm(double np, double rg)
 int SelectLabelEgal(int id, int* resu)
 {
     int i, n;
+
     n = 0;
 
-    for (i = 1; i <= N; i++)
-        if (spheres[i].Label == id)
-        {
-            n++;
-            resu[n] = i;
-        }
+//    for (i = 1; i <= N; i++)
+//        if (spheres[i].Label == id)
+//        {
+//            n++;
+//            resu[n] = i;
+//        }
+
+    for(i=1;i<=AggLabels[id][0];i++)
+    {
+        resu[i]=AggLabels[id][i];
+    }
+    n=AggLabels[id][0]+;
 
     return n;
 }
 
 int SelectLabelSuperieur(int id, int* resu)
 {
-    int i, n;
+    int i,j, n;
     n = 0;
 
-    for (i = 1;i <= N; i++)
-        if (spheres[i].Label > id)
+//    for (i = 1;i <= N; i++)
+//        if (spheres[i].Label > id)
+//        {
+//            n++;
+//            resu[n] = i;
+//        }
+
+    for(i=id+1;i<=NAgg;i++)
+    {
+
+        for(j=1;j<=AggLabels[i][0];j++)
         {
-            n++;
-            resu[n] = i;
+
+            resu[n+j]=AggLabels[i][j];
         }
+        n+=AggLabels[i][0];
+    }
 
     return n;
 }
@@ -277,7 +299,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 {
     double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
     int i, j, k, nmonoi;
-    double* tabVol;
+    double * tabVol;
     double* tabSurf;
 
     cov = 0.0;
@@ -289,8 +311,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     //$ Identification of the spheres in Agg id
     nmonoi = SelectLabelEgal(id, Monoi);
 
-    tabVol = new double [nmonoi+1];
-    tabSurf = new double [nmonoi+1];
+    tabVol = new double[nmonoi+1];
+    tabSurf = new double[nmonoi+1];
 
     for (k = 1; k <= 3; k++)    PosiGravite[id][k] = 0.0; //Initialisation
 
@@ -507,7 +529,20 @@ void SupprimeLigne(int ligne)
             Aggregate[i-1][j] = Aggregate[i][j];
         for (j = 1; j<= 3; j++)
             PosiGravite[i-1][j] = PosiGravite[i][j];
+
     }
+
+    for (i=ligne+1;i<=NAgg;i++)
+    {
+        delete[] AggLabels[i-1];
+        AggLabels[i-1]=new int[AggLabels[i][0]+1];
+        for (j=0;j<=AggLabels[i][0];j++)
+        {
+            AggLabels[i-1][j]=AggLabels[i][j];
+        }
+    }
+
+
 
     NAgg--;
 }
@@ -650,7 +685,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     int i,s;
     int npossible;
     int dx,dy,dz;
-
+    nmonoi =0;
     lpm = Aggregate[id][4]; // mean free path of the agregate labeled id
     npossible = 0;
     aggcontact = 0;
@@ -680,6 +715,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                         s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
 
                         dist = s1.Intersection(s2, Vectdir, lpm, dc);
+                        printf("dist %lf, nmonoi %d, npossible %d \n",dist,nmonoi,npossible);
                         // checks if the two spheres will be in contact while
                          //... the first one is moving
                         //$ Intersection check between agregates
@@ -739,14 +775,36 @@ int Reunit(int AggI, int AggJ, int &err)
         numreject = AggI;
     }
 
+    TamponValeurs= new int[AggLabels[AggI][0]+AggLabels[AggJ][0]+1];
+    TamponValeurs[0]=AggLabels[AggI][0]+AggLabels[AggJ][0];
+    for(i=1;i<=AggLabels[AggI][0];i++)
+    {
+        TamponValeurs[i]= AggLabels[AggI][i];
+    }
+    for(i=AggLabels[AggI][0]+1;i<=AggLabels[AggJ][0]+AggLabels[AggI][0];i++)
+    {
+        TamponValeurs[i]=AggLabels[AggJ][i-AggLabels[AggI][0]];
+    }
+
+    delete[] AggLabels[numstudy];
+    AggLabels[numstudy] = new int [TamponValeurs[0]+1];
+    for (i=0;i<=TamponValeurs[0];i++)
+    {
+        AggLabels[numstudy][i]=TamponValeurs[i];
+    }
+
+
+
     nselect = SelectLabelEgal(numreject, MonoSel);
 
     for (i = 1; i <= nselect; i++)
     {
         spheres[MonoSel[i]].Label = numstudy;
+
     }
 
     SupprimeLigne(numreject);
+    delete[] TamponValeurs;
 
     nselect = SelectLabelSuperieur(numreject, MonoSel);
 
@@ -940,6 +998,18 @@ void Init()
     TpT = new double[N+1];
     IndexPourTri = new int[N+1];
 
+    AggLabels= new int*[N+1];
+
+    for (i=1;i<=N;i++)
+    {
+        AggLabels[i]= new int[2];
+        AggLabels[i][0]=1;
+        AggLabels[i][1]=i;
+
+    }
+    AggLabels[0]=new int[2];
+    AggLabels[0][0]=0;
+    AggLabels[0][1]=0;
 
     for (i = 1; i <= N; i++)
     {

@@ -22,3 +22,4 @@ FORMS += mainwindow.ui
 
 RESOURCES += \
     mainwindow.qrc
+
