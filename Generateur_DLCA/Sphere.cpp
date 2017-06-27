@@ -159,7 +159,7 @@ double Sphere::VolumeCalotteij(const Sphere& c) const
 }
 
 //Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-double Sphere::Intersection(const Sphere& c,double vol1, double vol2, double surf1, double surf2 ) const
+double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
 {
     double d, h;
     double Ri, Rj;
