@@ -311,39 +311,70 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 
     for (k = 1; k <= 3; k++)    PosiGravite[id][k] = 0.0; //Initialisation
 
+    for (i = 1; i <= nmonoi; i++)
+    {
+        tabVol[i] =0.;
+        tabSurf[i] =0.;
+    }
 
 
     for (i = 1; i <= nmonoi; i++) //Pour les i sphérules constituant l'agrégat n°id
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 3)/3.0; //Calculation of the volume of i
-        tabSurf[i] = 4.0*PI*pow(spheres[Monoi[i]].r, 2);    //Calculation of the surface of i
+        tabVol[i] += 4.0*PI*pow(spheres[Monoi[i]].r, 3)/3.0; //Calculation of the volume of i
+        tabSurf[i] += 4.0*PI*pow(spheres[Monoi[i]].r, 2);    //Calculation of the surface of i
 
-        for (j = 1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
+        for (j = i+1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
         {
 
+            double voli, volj, surfi, surfj;
+            voli = volj = surfi = surfj = 0.;
 
-            if (i != j) //Can't check if i is covering i...
+            //$ Calculation of the intersection between the spheres i and j
+            dist = spheres[Monoi[i]].Intersection(spheres[Monoi[j]],voli,volj,surfi,surfj);
+
+
+            double distref,vol1ref,vol2ref,surf1ref,surf2ref;
+            distref = spheres[Monoi[i]].Distance(spheres[Monoi[j]]);  //Distance between the center of the spheres i and j
+            vol1ref = spheres[Monoi[i]].VolumeCalotteij(spheres[Monoi[j]]);
+            vol2ref = spheres[Monoi[j]].VolumeCalotteij(spheres[Monoi[i]]);
+            surf1ref = spheres[Monoi[i]].SurfaceCalotteij(spheres[Monoi[j]]);
+            surf2ref = spheres[Monoi[j]].SurfaceCalotteij(spheres[Monoi[i]]);
+            /*
+            printf("dist : %e\n",dist-distref);
+            printf("vol1 : %e\n",voli-vol1ref);
+            printf("vol2 : %e\n",volj-vol2ref);
+            printf("surf1 : %e\n",surfi-surf1ref);
+            printf("surf2 : %e\n",surfj-surf2ref);
+            */
+            //dist=distref;
+            voli = vol1ref;
+            volj = vol2ref;
+            //surfi = surf1ref;
+            //surfj = surf2ref;
+
+            rpmoy = (spheres[Monoi[i]].r+spheres[Monoi[j]].r)/2.0; //Mean Radius between i and j monomeres
+            dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
+            //$ Check if i is covering j
+            //$ [dbordabord <= 1]
+            if ((int)dbordabord <= 1)
             {
-                //$ Calculation of the distance between i and j
-                dist = spheres[Monoi[i]].Distance(spheres[Monoi[j]]);  //Distance between the center of the spheres i and j
-                rpmoy = (spheres[Monoi[i]].r+spheres[Monoi[j]].r)/2.0; //Mean Radius between i and j monomeres
-                dbordabord = ((dist-(spheres[Monoi[i]].r+spheres[Monoi[j]].r))/(spheres[Monoi[i]].r+spheres[Monoi[j]].r))*1E6; //distance between the two particles
-                //$ Check if i is covering j
-                //$ [dbordabord <= 1]
-                if ((int)dbordabord <= 1)
-                {
-                    //$ Calculation of the Number of contacts
-                    cov = cov + ((2.0*rpmoy-dist)/(2.0*rpmoy)); //Coefficient of total Covering of Agg id
-                    Nc = Nc + 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
-                }
-
-                //$ The volume and surface covered by j is substracted from those of i
-                tabVol[i] = tabVol[i] - spheres[Monoi[i]].VolumeCalotteij(spheres[Monoi[j]]);    //Calcul du volume de la sphérule i moins le volume de
-                                                                                                 //la calotte due à la sphérule j
-                tabSurf[i] = tabSurf[i] - spheres[Monoi[i]].SurfaceCalotteij(spheres[Monoi[j]]); //Calcul de la surface de la sphérule i moins la surface de
-                                                                                                 //la calotte due à la sphérule j
+                //$ Calculation of the Number of contacts
+                cov = cov - dbordabord; //Coefficient of total Covering of Agg id
+                Nc = Nc + 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
             }
+
+            //$ The volume and surface covered by j is substracted from those of i
+            tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
+                                             //la calotte due à la sphérule j
+            tabSurf[i] = tabSurf[i] - surfi; //Calcul de la surface de la sphérule i moins la surface de
+                                             //la calotte due à la sphérule j
+
+            //$ The volume and surface covered by i is substracted from those of j
+            tabVol[j] = tabVol[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
+                                             //la calotte due à la sphérule i
+            tabSurf[j] = tabSurf[j] - surfj; //Calcul de la surface de la sphérule j moins la surface de
+                                             //la calotte due à la sphérule i
         }
         //$ Calculation of the total volume and surface of the aggregate
         volAgregat = volAgregat + tabVol[i];    //Total Volume of Agg id
@@ -384,12 +415,10 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         li = Distance(spheres[Monoi[i]].pos, PosiGravite[id]); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
 
         r = li + spheres[Monoi[i]].r;
-        //$ [r > rmax]
-        if (r > rmax)
-        {
-            //$ rmax is updated
-            rmax = r;
-        }
+
+        //$ Calculation of rmax
+        rmax=fmax(rmax,r);
+
         //$ Calculation of Rg
         Arg = Arg + tabVol[i]*pow(li, 2);
         Brg = Brg + tabVol[i]*pow(spheres[Monoi[i]].r, 2);
@@ -622,7 +651,7 @@ double Distance_Aggregate(int s, int nmonoi, double lpm)
 
                 k=Monoi[knum];
                 //$ Check if j and k are contact and if not, what is the distance between them
-                dist=spheres[k].Intersection(spheredecale, Vectdir, lpm, dc);
+                dist=spheres[k].Collision(spheredecale, Vectdir, lpm, dc);
                 //$ [dist == -1]
                 if (dist == -1)
                 {   //$ There is contact between the 2 aggregates
@@ -686,7 +715,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
                         s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
 
-                        dist = s1.Intersection(s2, Vectdir, lpm, dc);
+                        dist = s1.Collision(s2, Vectdir, lpm, dc);
                         // checks if the two spheres will be in contact while
                          //... the first one is moving
                         //$ Intersection check between agregates
@@ -1340,9 +1369,7 @@ void Calcul() //Coeur du programme
     deltatemps=0;
     time(&t0);
     contact=true;
-    int end = fmax(1,N/200);
-
-    end = 10;
+    int end = fmax(5,N/200);
 
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats\n", end);

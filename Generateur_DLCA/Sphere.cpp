@@ -59,7 +59,7 @@ double Sphere::Distance(const Sphere& c) const
     return sqrt(pow(pos[1]-c.pos[1],2)+pow(pos[2]-c.pos[2],2)+pow(pos[3]-c.pos[3],2));
 }
 
-double Sphere::Intersection(const Sphere& c,const  double* vd,const double distmax,double& distance_contact) const
+double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,double& distance_contact) const
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
@@ -152,28 +152,67 @@ double Sphere::VolumeCalotteij(const Sphere& c) const
     }
 
     //$ Volume of the intersection is returned
-    h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
-
-/*
-    double Rmax = fmax(Ri,Rj);
-    double Rmin = fmin(Ri,Rj);
-    double newVolcal;
-
-    if (d >= Ri + Rj)
-        newVolcal = 0.0;
-    else if ((0 <= d) && (d < Rmax - Rmin))
-        newVolcal = 4.0*PI*pow(Rmin,3.0)/3.0;
-    else
-    {
-        h = (pow(Rj,2.0)-pow((Ri-d),2.0))/(2.0*d);
-        newVolcal = PI*pow(h,2.0)*(3*Ri-h)/3.0;
-    }
-
-    printf("%10.3f %10.3f\n", Volcal,newVolcal);
-*/
+        h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
 
     return PI*pow(h,2)*(3*Ri-h)/3.0;
 
+}
+
+//Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
+double Sphere::Intersection(const Sphere& c,double vol1, double vol2, double surf1, double surf2 ) const
+{
+    double d, h;
+    double Ri, Rj;
+
+    vol1 = vol2 = 0.;
+    surf1 = surf2 = 0.;
+
+    Ri = r;
+    Rj = c.r;
+
+    //$ Determination of the distance between the center of the 2 aggregates
+    d = sqrt(pow(pos[1]-c.pos[1],2) + pow(pos[2]-c.pos[2],2) + pow(pos[3]-c.pos[3],2));
+
+    //$ Check if they aren't in contact
+    if (d >= Ri + Rj)
+    {
+        //$ Intersection is empty
+
+        vol1 = vol2 = 0.;
+        surf1 = surf2 = 0.;
+    }
+
+    //$ Check if j is completely absorbed by i
+    else if (d < Ri - Rj)
+    {
+        //$ Volcal = VolJ
+        vol1 = vol2 = 4.0*PI*pow(Rj,3)/3.0;
+        surf1 = surf2 = 4.0*PI*pow(Rj,2);
+
+    }
+
+    //$ Check if i is completely in j
+
+    else if (d < Rj - Ri)
+    {
+        //$ Volcal = Voli
+        vol1 = vol2 = 4.0*PI*pow(Ri,3)/3.0;
+        surf1 = surf2 = 4.0*PI*pow(Ri,2);
+    }
+
+    //$ Volume of the intersection is returned
+
+    else
+    {
+        h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
+        vol1= PI*pow(h,2)*(3*Ri-h)/3.0;
+        surf1 = 2*PI*Ri*h;
+        h = (pow(Ri,2)-pow((Rj-d),2))/(2.0*d);
+        vol2= PI*pow(h,2)*(3*Rj-h)/3.0;
+        surf2 = 2*PI*Rj*h;
+    }
+
+    return d;
 }
 
 //Calcul de la surface de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
