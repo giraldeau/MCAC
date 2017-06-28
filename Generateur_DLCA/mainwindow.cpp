@@ -539,26 +539,6 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
             //$ Calculation of the intersection between the spheres i and j
             dist = spheres[Monoi[i]].Intersection(spheres[Monoi[j]],voli,volj,surfi,surfj);
 
-
-            double distref,vol1ref,vol2ref,surf1ref,surf2ref;
-            distref = spheres[Monoi[i]].Distance(spheres[Monoi[j]]);  //Distance between the center of the spheres i and j
-            vol1ref = spheres[Monoi[i]].VolumeCalotteij(spheres[Monoi[j]]);
-            vol2ref = spheres[Monoi[j]].VolumeCalotteij(spheres[Monoi[i]]);
-            surf1ref = spheres[Monoi[i]].SurfaceCalotteij(spheres[Monoi[j]]);
-            surf2ref = spheres[Monoi[j]].SurfaceCalotteij(spheres[Monoi[i]]);
-            /*
-            printf("dist : %e\n",dist-distref);
-            printf("vol1 : %e\n",voli-vol1ref);
-            printf("vol2 : %e\n",volj-vol2ref);
-            printf("surf1 : %e\n",surfi-surf1ref);
-            printf("surf2 : %e\n",surfj-surf2ref);
-            */
-            //dist=distref;
-            voli = vol1ref;
-            volj = vol2ref;
-            //surfi = surf1ref;
-            //surfj = surf2ref;
-
             rpmoy = (spheres[Monoi[i]].r+spheres[Monoi[j]].r)/2.0; //Mean Radius between i and j monomeres
             dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
             //$ Check if i is covering j
@@ -1344,6 +1324,8 @@ void SauveASCII(int value, int id)
     FILE *f;
 
     std::locale::global(std::locale("C"));
+
+    return;
 
     sprintf(NomComplet, "%s/Sphere%05d.txt", CheminSauve, value);
     f = fopen(NomComplet, "w");
