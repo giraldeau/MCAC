@@ -63,8 +63,9 @@ char com[500];
 bool with_dots;
 int* TamponValeurs;
 int** AggLabels;
-
-
+int compteurNewton;
+int compteurDicho;
+double rdeb=5E-9;
 
 
 MainWindow* GUI;
@@ -185,6 +186,9 @@ double Cunningham(double R) //Facteur correctif de Cunningham
     return 1+A*lambda/R+B*lambda/R*exp(-C*R/lambda);
 }
 
+
+
+
 //######################################## Fonctions pour le calcul du diamètre de mobilité #####################################
 
 /*
@@ -198,15 +202,151 @@ double ModeleBeta(double rm, double np, double rg)
     //double kf = 1.47; //pow(5./3.,df/2.0);
 
     return rg/rm*Cunningham(rm) - pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass);
+    //return 1-rm*rm;
 }
 
-double Dichotomie (double np, double rg)
+
+double Beta(double rm, double np, double rpmoy)
+{
+    return 2*rm/Cunningham(rm)-2*rpmoy*pow(np,gamma_/dfe)/Cunningham(rpmoy);
+}
+
+double InvDeriveeModeleBete(double rm,double np,double rg)
+{
+    double A = 1.142;
+    double B = 0.558;
+    double C = 0.999;
+    double dF;
+    //dF= -rg*(-A*lambda/(rm*rm)-B*lambda/(rm*rm)*exp(-C*rm/lambda)-B*C/rm*exp(-C*rm/lambda)/(rm*pow((A*lambda/rm+B*lambda/rm*exp(-C*rm/lambda)+1),2))+1/(rm*rm*(A*lambda/rm+B*lambda/rm*exp(-C*rm/lambda)+1)));
+    dF= -pow((A*lambda*exp((C*rm)/lambda) + B*lambda + rm*exp((C*rm)/lambda)),2)/(exp((C*rm)/lambda)*(exp((C*rm)/lambda) - B*C));
+
+    return dF;
+}
+double Newton(double np, double rg)
+{
+    double r,alpha;
+    double precision;
+
+    r =rdeb;
+    alpha=ModeleBeta(r,np,rg)*InvDeriveeModeleBete(r,np,rg);
+    precision=0.01E-9;
+
+    while (fabs(alpha)>precision)
+    {
+
+        r=r-alpha;
+        alpha=ModeleBeta(r,np,rg)*InvDeriveeModeleBete(r,np,rg);
+
+    }
+    r=r-alpha;
+
+    rdeb=r;
+
+    return r;
+
+}
+
+double Brent(double np, double rg)
+{
+    double 	s,tampon,a, b, c,d, fb, fc, fa,fs, precision;
+    int mflag,ite;
+    ite=0;
+    mflag=1;
+    a = 1E-10;
+    b= 5E-6;
+    precision=0.01E-12;
+
+    fb = ModeleBeta(b, np, rg);
+    fa = ModeleBeta(a, np, rg);
+
+    if (fb*fa>=0) {printf("Intervalle incorrect.\n"); return -1;} //Intervalle incorrect
+
+    c=a;
+
+    if (fabs(fb)>fabs(fa))
+    {
+        tampon=a;
+        a=b;
+        b=tampon;
+        tampon=fa;
+        fa=fb;
+        fb=tampon;
+    }
+
+    while((fb!=0) && (fabs(a-b)>precision) && (ite<50000))
+    {
+        fc=ModeleBeta(c,np,rg);
+
+        if((fa!=fc) && (fb!=fc))
+        {
+            s=(a*fc*fb)/((fa-fb)*(fa-fc))+b*fa*fc/((fb-fa)*(fb-fc))+c*fa*fb/((fc-fa)*(fc-fb));
+            //printf("inter a %e b %e s %e\n",a,b,s);
+
+        }
+        else
+        {
+            s=b-fb*(b-a)/(fb-fa);
+            //printf("sec a %e b %e s %e fa  %e  fb %e  b-a %e  fb-fa  %e\n",a,b,s,fa,fb,(b-a),(fb-fa));
+        }
+        int test1=!(((3*a+b)/4<=s) && (s<=b));
+        int test2=!(((3*a+b)/4>=s) && (s>=b));
+        int test3=((mflag==1)&&(fabs(s-b)>=fabs(b-c)/2));
+        int test4=((mflag==0)&&(fabs(s-b)>=fabs(c-d)/2));
+        //printf("%d  %d  %d  %d  fa %e  fb %e  fc %e\n",test1,test2,test3,test4,fa,fb,fc);
+/*
+        if ((test1 || test2)||(test3)||(test4))
+        {
+            s=(a+b)/2;
+            mflag=1;
+        }
+        else
+        {
+            printf("RENTRE");
+            exit(1);
+            mflag=0;
+        }
+*/
+        fs=ModeleBeta(s,np,rg);
+
+        d=c;
+        c=b;
+
+        if (fa*fs<0)
+        {
+            b=s;
+            fb=fs;
+        }
+        else
+
+        {
+            a=s;
+            fa=fs;
+        }
+
+        if (fabs(fb)>fabs(fa))
+        {
+            tampon=a;
+            a=b;
+            b=tampon;
+            tampon=fa;
+            fa=fb;
+            fb=tampon;
+        }
+        ite++;
+
+
+    }
+    printf(" Brent %d \n",ite);
+    return b;
+}
+
+double Dichotomie (double np, double rg,double rpmoy)
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax, precision;
-
-    rmin = 0.0;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    rmax = 5E-6; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-    precision = 0.01E-9; //Précision recherchée
+    int ite=0;
+    rmin = 0;//rpmoy*pow(np,gamma_/dfe)/8;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    rmax = 5e-6;//2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    precision = 1E-15; //Précision recherchée
 
     frmin = ModeleBeta(rmin, np, rg);
     frmax = ModeleBeta(rmax, np, rg);
@@ -214,6 +354,7 @@ double Dichotomie (double np, double rg)
     if (frmin*frmax>=0) {printf("Intervalle incorrect.\n"); return -1;} //Intervalle incorrect
     while (rmax-rmin>precision)
     {
+
         rmed = (rmin+rmax)/2 ;
         frmed = ModeleBeta(rmed, np, rg);
         if (frmed==0)   break; //zero trouvé
@@ -227,13 +368,78 @@ double Dichotomie (double np, double rg)
             rmin = rmed;
             frmin = frmed;
         }
+        ite++;
     }
+    //printf("Dicho  %d\n",ite);
     return rmed;
 }
 
-double ConvertRg2Dm(double np, double rg)
+double Secante(double np,double rg,double rpmoy)
 {
-    return  Dichotomie (np, rg)*2; //Retourne le diamètre de mobilité
+    double 	x,x0,fx0,x1, x2, fx1, precision;
+    int ite=0;
+    x = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    precision = 1E-10; //Précision recherchée
+
+    x1=x+8.0*precision;
+    x0=x+4.0*precision;
+
+    fx0 = ModeleBeta(x0, np, rg);
+
+
+
+    //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
+
+    //printf("it : %d x0= %e , fx0 = %e\n",ite,x,fx0);
+    while (ite==0 ||(fabs(fx0)>precision  && ite<50))
+    {
+
+        x2=x1;
+        x1=x0;
+        x0=x;
+        fx1=fx0;
+        fx0=ModeleBeta(x0,np,rg);
+        x=x0-(x0-x1)*fx0/(fx0-fx1);
+
+        ite++;
+        //printf("it : %d x= %e , fx0 = %e\n",ite,x,fx0);
+
+
+    }
+    //printf("Secante %d\n",ite);
+    //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
+    if(ite>=49 || x<0.)
+    {
+        //printf("Secante dit not converge, using dichotomy\n");
+        return Dichotomie(np,rg,rpmoy);
+    }
+    else
+    {
+        //printf("Secante converged in %d\n",ite);
+        return x;
+    }
+}
+
+double ConvertRg2Dm(double np, double rg,double rpmoy)
+{
+    double Test;
+    double resdico,ressecante;
+    resdico=Dichotomie(np,rg,rpmoy);
+    ressecante = Secante(np,rg,rpmoy);
+
+//    printf("Dicho %e     Secante %e\n",resdico,ressecante);
+//    printf("Dicho %e     Secante %e\n",ModeleBeta(resdico,np,rg),ModeleBeta(ressecante,np,rg));
+
+    if(fabs(resdico-ressecante)>1e-15)
+    {
+        exit(42);
+    }
+
+
+
+
+
+    return  resdico*2; //Retourne le diamètre de mobilité
 }
 //################################################## Recherche de sphères #############################################################################
 
@@ -456,8 +662,8 @@ void ParametresAgg(int Agg)
     rpmoy = rpmoy/((double)np);   //Calcul du rayon moyen de l'agrégat n°Agg
     rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
     rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
-
-    dm = ConvertRg2Dm(np,rg);
+    printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
+    dm = ConvertRg2Dm(np,rg,rpmoy);
     cc = Cunningham(dm/2);
     diff = K*T/3/PI/Mu/dm*cc;
     vit = sqrt(8*K*T/PI/masse);
