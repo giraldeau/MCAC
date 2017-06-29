@@ -343,21 +343,22 @@ double Brent(double np, double rg)
 double Dichotomie (double np, double rg,double rpmoy)
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax, precision;
-    int ite=0;
-    rmin = 1e-10;//rpmoy*pow(np,gamma_/dfe)/8;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    rmax = 5e-6;//2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-    precision = 1E-15; //Précision recherchée
+    int ite=1;
+    rmin = rpmoy*pow(np,gamma_/dfe)/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    rmax = 2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    precision = 1E-6; //Précision recherchée
 
     frmin = ModeleBeta(rmin, np, rg);
     frmax = ModeleBeta(rmax, np, rg);
 
-    if (frmin*frmax>=0) {printf("Intervalle incorrect.\n"); return -1;} //Intervalle incorrect
-    while (rmax-rmin>precision)
+    if (frmin*frmax>=0) {printf("Intervalle incorrect : %e %e \n",frmin,frmax); return -1;} //Intervalle incorrect
+
+    rmed = (rmin+rmax)/2 ;
+    frmed = ModeleBeta(rmed, np, rg);
+
+    while (fabs(frmed)>precision)
     {
 
-        rmed = (rmin+rmax)/2 ;
-        frmed = ModeleBeta(rmed, np, rg);
-        if (frmed==0)   break; //zero trouvé
         if (frmin*frmed < 0)
         {
             rmax = rmed;
@@ -368,6 +369,8 @@ double Dichotomie (double np, double rg,double rpmoy)
             rmin = rmed;
             frmin = frmed;
         }
+        rmed = (rmin+rmax)/2 ;
+        frmed = ModeleBeta(rmed, np, rg);
         ite++;
     }
     //printf("Dicho  %d\n",ite);
@@ -377,21 +380,16 @@ double Dichotomie (double np, double rg,double rpmoy)
 double Secante(double np,double rg,double rpmoy)
 {
     double 	x,x0,fx0,x1, x2, fx1, precision;
-    int ite=0;
+    int ite=1;
     x = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-    precision = 1E-10; //Précision recherchée
+    precision = 1E-6; //Précision recherchée
 
-    x1=x+8.0*precision;
-    x0=x+4.0*precision;
+    x1=x+8.e-13;
+    x0=x+4.e-13;
 
     fx0 = ModeleBeta(x0, np, rg);
 
-
-
-    //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
-
-    //printf("it : %d x0= %e , fx0 = %e\n",ite,x,fx0);
-    while (ite==0 ||(fabs(fx0)>precision  && ite<50 && x>0.))
+    while ((fabs(fx0)>precision  && ite<50 && x>0.))
     {
 
         x2=x1;
@@ -399,28 +397,17 @@ double Secante(double np,double rg,double rpmoy)
         x0=x;
         fx1=fx0;
         fx0=ModeleBeta(x0,np,rg);
+
         x=x0-(x0-x1)*fx0/(fx0-fx1);
 
         ite++;
-        //printf("it : %d x= %e , fx0 = %e\n",ite,x,fx0);
-
-
     }
-    //printf("Secante %d\n",ite);
-    //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
-    if(ite>=49 )
+    if(ite>=49 || x<0.)
     {
-        //printf("Secante dit not converge, using dichotomy\n");
-        return Dichotomie(np,rg,rpmoy);
-    }
-    if(x<0.)
-    {
-        //printf("Secante found a false solution, using dichotomy\n");
         return Dichotomie(np,rg,rpmoy);
     }
     else
     {
-        //printf("Secante converged in %d\n",ite);
         return x;
     }
 }
@@ -429,20 +416,30 @@ double ConvertRg2Dm(double np, double rg,double rpmoy)
 {
     double Test;
     double resdico,ressecante;
-    resdico=Dichotomie(np,rg,rpmoy);
-    ressecante = Secante(np,rg,rpmoy);
+    //resdico=Dichotomie(np,rg,rpmoy);
 
-//    printf("Dicho %e     Secante %e\n",resdico,ressecante);
-//    printf("Dicho %e     Secante %e\n",ModeleBeta(resdico,np,rg),ModeleBeta(ressecante,np,rg));
+    //ressecante = Secante(np,rg,rpmoy);
+    ressecante = Dichotomie(np,rg,rpmoy);
 
-    if(fabs(resdico-ressecante)>1e-15)
+/*
+    if(fabs((resdico-ressecante))>1e-15)
     {
+        printf("Dicho %e     Secante %e   Erreur %e\n",resdico,ressecante,fabs((resdico-ressecante)));
+        printf("Dicho %e     Secante %e\n",ModeleBeta(resdico,np,rg),ModeleBeta(ressecante,np,rg));
         exit(42);
     }
 
 
+    if(fabs((resdico-ressecante)/resdico)>1e-14)
+    {
+        printf("Dicho %e     Secante %e   Erreur %e\n",resdico,ressecante,fabs((resdico-ressecante)/resdico));
+        printf("Dicho %e     Secante %e\n",ModeleBeta(resdico,np,rg),ModeleBeta(ressecante,np,rg));
+        exit(43);
+    }
+*/
 
 
+//    return  resdico*2; //Retourne le diamètre de mobilité
     return  ressecante*2; //Retourne le diamètre de mobilité
 }
 //################################################## Recherche de sphères #############################################################################
@@ -1563,6 +1560,7 @@ void Calcul() //Coeur du programme
     contact=true;
     int end = fmax(5,N/200);
 
+    end = 20;
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats\n", end);
 
