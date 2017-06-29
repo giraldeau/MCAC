@@ -344,7 +344,7 @@ double Dichotomie (double np, double rg,double rpmoy)
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax, precision;
     int ite=0;
-    rmin = 0;//rpmoy*pow(np,gamma_/dfe)/8;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    rmin = 1e-10;//rpmoy*pow(np,gamma_/dfe)/8;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
     rmax = 5e-6;//2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
     precision = 1E-15; //Précision recherchée
 
@@ -391,7 +391,7 @@ double Secante(double np,double rg,double rpmoy)
     //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
 
     //printf("it : %d x0= %e , fx0 = %e\n",ite,x,fx0);
-    while (ite==0 ||(fabs(fx0)>precision  && ite<50))
+    while (ite==0 ||(fabs(fx0)>precision  && ite<50 && x>0.))
     {
 
         x2=x1;
@@ -408,9 +408,14 @@ double Secante(double np,double rg,double rpmoy)
     }
     //printf("Secante %d\n",ite);
     //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
-    if(ite>=49 || x<0.)
+    if(ite>=49 )
     {
         //printf("Secante dit not converge, using dichotomy\n");
+        return Dichotomie(np,rg,rpmoy);
+    }
+    if(x<0.)
+    {
+        //printf("Secante found a false solution, using dichotomy\n");
         return Dichotomie(np,rg,rpmoy);
     }
     else
@@ -438,8 +443,7 @@ double ConvertRg2Dm(double np, double rg,double rpmoy)
 
 
 
-
-    return  resdico*2; //Retourne le diamètre de mobilité
+    return  ressecante*2; //Retourne le diamètre de mobilité
 }
 //################################################## Recherche de sphères #############################################################################
 
@@ -577,7 +581,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
     //$ Check if there is more than one monomere in the aggregate
     //$ [nmonoi == 1]
-    if (nmonoi == 1)
+    if (nmonoi == 1 || Nc == 0)
     {
         //$ Cov = 0
         cov = 0;
@@ -642,7 +646,7 @@ void ParametresAgg(int Agg)
     rpmoy = rpmoy/((double)np);   //Calcul du rayon moyen de l'agrégat n°Agg
     rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
     rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
-    printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
+    //printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
     dm = ConvertRg2Dm(np,rg,rpmoy);
     cc = Cunningham(dm/2);
     diff = K*T/3/PI/Mu/dm*cc;

@@ -25,13 +25,31 @@ RESOURCES += \
 
 #CONFIG += warn_on
 
-#QMAKE_CXXFLAGS_RELEASE = -Ofast -falign-functions=16 -ansi-alias -fstrict-aliasing -xHost -static -no-prec-div -DNDEBUG
+#### INTEL ###
+#QMAKE_CXXFLAGS_DEBUG += -fp-trap=common -ansi-alias-check -check=conversions,stack,uninit -fp-stack-check -fstack-security-check -ftrapuv -par-runtime-control=3 -vec-guard-write  -Wcheck
+#QMAKE_CXXFLAGS_DEBUG += -check-pointers=rw -check-pointers-dangling=all -check-pointers-narrowing -check-pointers-undimensioned
+#LIBS += -lchkp -lchkpwrap
 
-## When not profiling
-#QMAKE_CXXFLAGS_RELEASE += -lto
+#QMAKE_CXXFLAGS_RELEASE = -Ofast -falign-functions=16 -ansi-alias -xHost -static -no-prec-div -DNDEBUG
 
-## When profiling
+### When not profiling
+##QMAKE_CXXFLAGS_RELEASE += -lto
+
+### When profiling
 #QMAKE_CXXFLAGS_RELEASE +=  -g -traceback #-fno-inline-functions -p -pg  -fno-omit-frame-pointer  -fno-optimize-sibling-calls   -fno-inline
 #QMAKE_LFLAGS_RELEASE += -g #-p -pg
 #LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
 
+#### GNU ###
+#QMAKE_CXXFLAGS_DEBUG += -fp-trap=common -ansi-alias-check -check=conversions,stack,uninit -fp-stack-check -fstack-security-check -ftrapuv -par-runtime-control=3 -vec-guard-write  -Wcheck
+#QMAKE_CXXFLAGS_DEBUG += -check-pointers=rw -check-pointers-dangling=all -check-pointers-narrowing -check-pointers-undimensioned
+#LIBS += -lchkp -lchkpwrap
+
+#QMAKE_CXXFLAGS_RELEASE = -Ofast -march=native -falign-functions=16 -static -ffast-math -DNDEBUG -Wno-unused-variable -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-unused-result
+### When not profiling
+##QMAKE_CXXFLAGS_RELEASE += -lto
+
+### When profiling
+#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback #-fno-inline-functions -p -pg  -fno-omit-frame-pointer  -fno-optimize-sibling-calls   -fno-inline
+#QMAKE_LFLAGS_RELEASE += -g #-p -pg
+#LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
