@@ -63,10 +63,10 @@ char com[500];
 bool with_dots;
 int* TamponValeurs;
 int** AggLabels;
-int compteurNewton;
+int compteurSecante;
 int compteurDicho;
 double rdeb=5E-9;
-
+double precision;
 
 MainWindow* GUI;
 
@@ -371,6 +371,7 @@ double Dichotomie (double np, double rg,double rpmoy)
         ite++;
     }
     //printf("Dicho  %d\n",ite);
+    compteurDicho++;
     return rmed;
 }
 
@@ -404,7 +405,7 @@ double Secante(double np,double rg,double rpmoy)
         ite++;
         //printf("it : %d x= %e , fx0 = %e\n",ite,x,fx0);
 
-
+        compteurSecante++;
     }
     //printf("Secante %d\n",ite);
     //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
@@ -430,20 +431,20 @@ double ConvertRg2Dm(double np, double rg,double rpmoy)
     double Test;
     double resdico,ressecante;
     resdico=Dichotomie(np,rg,rpmoy);
-    ressecante = Secante(np,rg,rpmoy);
+    //ressecante = Secante(np,rg,rpmoy);
 
 //    printf("Dicho %e     Secante %e\n",resdico,ressecante);
 //    printf("Dicho %e     Secante %e\n",ModeleBeta(resdico,np,rg),ModeleBeta(ressecante,np,rg));
 
-    if(fabs(resdico-ressecante)>1e-15)
-    {
-        exit(42);
-    }
+//    if(fabs(resdico-ressecante)>1e-15)
+//    {
+//        exit(42);
+//    }
 
 
 
 
-    return  ressecante*2; //Retourne le diamètre de mobilité
+    return  resdico*2; //Retourne le diamètre de mobilité
 }
 //################################################## Recherche de sphères #############################################################################
 
@@ -1162,6 +1163,8 @@ void Init()
     double x, masse, surface, Dp, Cc, Diff, Vit, lpm, rg, dist;
 
     compteur = 0;
+    compteurDicho=0;
+    compteurSecante=0;
     testmem = 0;
     L = X*Dpm*1E-9;
     Mu = 18.203E-6*(293.15+110)/(T+110)*pow(T/293.15,1.5);
@@ -1723,6 +1726,9 @@ void Calcul() //Coeur du programme
             printf("%e\t", PosiGravite[i][j]*1E9);
         printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
     }
+
+    printf("Appels de Secante  :  %d",compteurSecante);
+    printf("Appels Dicho  :  %d,  Pourcentage : %e",compteurDicho,(double)compteurDicho/compteurSecante);
 
     Fermeture();
     if (GUI == NULL)
