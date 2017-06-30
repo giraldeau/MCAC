@@ -203,6 +203,12 @@ double ModeleBeta(double rm, double np, double rg)
     return rg/rm*Cunningham(rm) - Cunningham_rpeqmass;
 }
 
+
+double Beta(double rm, double np, double rpmoy)
+{
+    return 2*rm/Cunningham(rm)-2*rpmoy*pow(np,gamma_/dfe)/Cunningham(rpmoy);
+}
+
 double Dichotomie (double np, double rg,double rpmoy)
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax;
@@ -237,6 +243,144 @@ double Dichotomie (double np, double rg,double rpmoy)
     }
     return rmed;
 }
+
+/*
+double InvDeriveeModeleBete(double rm,double np,double rg)
+{
+    double A = 1.142;
+    double B = 0.558;
+    double C = 0.999;
+    double dF;
+    //dF= -rg*(-A*lambda/(rm*rm)-B*lambda/(rm*rm)*exp(-C*rm/lambda)-B*C/rm*exp(-C*rm/lambda)/(rm*pow((A*lambda/rm+B*lambda/rm*exp(-C*rm/lambda)+1),2))+1/(rm*rm*(A*lambda/rm+B*lambda/rm*exp(-C*rm/lambda)+1)));
+    //dF= -pow((A*lambda*exp((C*rm)/lambda) + B*lambda + rm*exp((C*rm)/lambda)),2)/(exp((C*rm)/lambda)*(exp((C*rm)/lambda) - B*C));
+    dF = (-pow(np, (-gamma_ + 1)/dfe)*pow(kfe, -1/dfe)*(A*lambda/rpeqmass + B*lambda*exp(-C*rpeqmass/lambda)/rpeqmass + 1) + rg/(rm*(A*lambda/rm + B*lambda*exp(-C*rm/lambda)/rm + 1)));
+    dF /= (rg*(A*lambda/pow(rm, 2)+ B*C*exp(-C*rm/lambda)/rm + B*lambda*exp(-C*rm/lambda)/pow(rm, 2))/(rm*pow(A*lambda/rm + B*lambda*exp(-C*rm/lambda)/rm + 1, 2)) - rg/(pow(rm, 2)*(A*lambda/rm + B*lambda*exp(-C*rm/lambda)/rm + 1)));
+return 1./dF;
+}
+
+double Newton(double np, double rg,double rpmoy)
+{
+    double r,alpha,fx0;
+    int ite=1;
+
+    r = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    fx0=ModeleBeta(r,np,rg);
+
+    while (fabs(fx0)>precision && r>0. && ite<500)
+    {
+        alpha=fx0*InvDeriveeModeleBete(r,np,rg);
+        r=r-alpha;
+        fx0=ModeleBeta(r,np,rg);
+        ite++;
+        //printf("Newton %d %e %e\n",ite,r,fx0);
+    }
+
+    if(ite>=499 || r<0.)
+    {
+        printf("Newton %d %e %e\n",ite,r,fx0);
+        return Dichotomie(np,rg,rpmoy);
+    }
+    else
+    {
+        printf("Newton %d %e %e\n",ite,r,fx0);
+        return r;
+    }
+}
+
+double Brent(double np, double rg,double rpmoy)
+{
+    double 	s,tampon,a, b, c,d, fb, fc, fa,fs, precision;
+    int mflag,ite;
+    ite=0;
+    mflag=1;
+    a = 1E-10;
+    b= 5E-6;
+    precision=0.01E-12;
+
+    fb = ModeleBeta(b, np, rg);
+    fa = ModeleBeta(a, np, rg);
+
+    if (fb*fa>=0) {printf("Intervalle incorrect.\n"); return -1;} //Intervalle incorrect
+
+    c=a;
+
+    if (fabs(fb)>fabs(fa))
+    {
+        tampon=a;
+        a=b;
+        b=tampon;
+        tampon=fa;
+        fa=fb;
+        fb=tampon;
+    }
+
+    while((fabs(fb)>precision) && (ite<50000))
+    {
+        fc=ModeleBeta(c,np,rg);
+
+        if((fa!=fc) && (fb!=fc))
+        {
+            s=(a*fc*fb)/((fa-fb)*(fa-fc))+b*fa*fc/((fb-fa)*(fb-fc))+c*fa*fb/((fc-fa)*(fc-fb));
+            //printf("inter a %e b %e s %e\n",a,b,s);
+
+        }
+        else
+        {
+            s=b-fb*(b-a)/(fb-fa);
+            //printf("sec a %e b %e s %e fa  %e  fb %e  b-a %e  fb-fa  %e\n",a,b,s,fa,fb,(b-a),(fb-fa));
+        }
+        int test1=!(((3*a+b)/4<=s) && (s<=b));
+        int test2=!(((3*a+b)/4>=s) && (s>=b));
+        int test3=((mflag==1)&&(fabs(s-b)>=fabs(b-c)/2));
+        int test4=((mflag==0)&&(fabs(s-b)>=fabs(c-d)/2));
+        //printf("%d  %d  %d  %d  fa %e  fb %e  fc %e\n",test1,test2,test3,test4,fa,fb,fc);
+
+        if ((test1 || test2)||(test3)||(test4))
+        {
+            s=(a+b)/2;
+            mflag=1;
+        }
+        else
+        {
+            printf("RENTRE");
+            exit(1);
+            mflag=0;
+        }
+
+        fs=ModeleBeta(s,np,rg);
+
+        d=c;
+        c=b;
+
+        if (fa*fs<0)
+        {
+            b=s;
+            fb=fs;
+        }
+        else
+
+        {
+            a=s;
+            fa=fs;
+        }
+
+        if (fabs(fb)>fabs(fa))
+        {
+            tampon=a;
+            a=b;
+            b=tampon;
+            tampon=fa;
+            fa=fb;
+            fb=tampon;
+        }
+        ite++;
+
+
+    }
+    printf(" Brent %d \n",ite);
+    return b;
+}
+*/
 
 double Secante(double np,double rg,double rpmoy)
 {
