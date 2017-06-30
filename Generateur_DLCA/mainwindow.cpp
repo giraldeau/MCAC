@@ -63,10 +63,12 @@ char com[500];
 bool with_dots;
 int* TamponValeurs;
 int** AggLabels;
-int compteurSecante;
-int compteurDicho;
-double rdeb=5E-9;
-double precision;
+bool root_dicho = false;
+bool root_sec = true;
+//double precision = 1E-1; //Précision recherchée
+double precision = 1E-6; //Précision recherchée
+//double precision = 1E-12; //Précision recherchée
+double Cunningham_rpeqmass;
 
 MainWindow* GUI;
 
@@ -186,9 +188,6 @@ double Cunningham(double R) //Facteur correctif de Cunningham
     return 1+A*lambda/R+B*lambda/R*exp(-C*R/lambda);
 }
 
-
-
-
 //######################################## Fonctions pour le calcul du diamètre de mobilité #####################################
 
 /*
@@ -201,8 +200,7 @@ double ModeleBeta(double rm, double np, double rg)
     //double df = 1.72;
     //double kf = 1.47; //pow(5./3.,df/2.0);
 
-    return rg/rm*Cunningham(rm) - pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass);
-    //return 1-rm*rm;
+    return rg/rm*Cunningham(rm) - Cunningham_rpeqmass;
 }
 
 
@@ -211,6 +209,43 @@ double Beta(double rm, double np, double rpmoy)
     return 2*rm/Cunningham(rm)-2*rpmoy*pow(np,gamma_/dfe)/Cunningham(rpmoy);
 }
 
+double Dichotomie (double np, double rg,double rpmoy)
+{// Numerical method used to find Rm | ModeleBeta(Rm)=0 if Secante() didn't work
+    double 	rmin, rmax, rmed, frmed, frmin, frmax;
+    int ite=1;
+    //$ Determination of the initial interval
+    rmin = rpmoy*pow(np,gamma_/dfe)/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    rmax = 2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+
+    frmin = ModeleBeta(rmin, np, rg);
+    frmax = ModeleBeta(rmax, np, rg);
+
+    if (frmin*frmax>=0) {printf("Intervalle incorrect : %e %e \n",frmin,frmax); return -1;} //Intervalle incorrect
+
+    rmed = (rmin+rmax)/2 ;
+    frmed = ModeleBeta(rmed, np, rg);
+
+    while (fabs(frmed)>precision)
+    {
+
+        if (frmin*frmed < 0)
+        {
+            rmax = rmed;
+            frmax = frmed;
+        }
+        else
+        {
+            rmin = rmed;
+            frmin = frmed;
+        }
+        rmed = (rmin+rmax)/2 ;
+        frmed = ModeleBeta(rmed, np, rg);
+        ite++;
+    }
+    return rmed;
+}
+
+/*
 double InvDeriveeModeleBete(double rm,double np,double rg)
 {
     double A = 1.142;
@@ -218,35 +253,42 @@ double InvDeriveeModeleBete(double rm,double np,double rg)
     double C = 0.999;
     double dF;
     //dF= -rg*(-A*lambda/(rm*rm)-B*lambda/(rm*rm)*exp(-C*rm/lambda)-B*C/rm*exp(-C*rm/lambda)/(rm*pow((A*lambda/rm+B*lambda/rm*exp(-C*rm/lambda)+1),2))+1/(rm*rm*(A*lambda/rm+B*lambda/rm*exp(-C*rm/lambda)+1)));
-    dF= -pow((A*lambda*exp((C*rm)/lambda) + B*lambda + rm*exp((C*rm)/lambda)),2)/(exp((C*rm)/lambda)*(exp((C*rm)/lambda) - B*C));
-
-    return dF;
+    //dF= -pow((A*lambda*exp((C*rm)/lambda) + B*lambda + rm*exp((C*rm)/lambda)),2)/(exp((C*rm)/lambda)*(exp((C*rm)/lambda) - B*C));
+    dF = (-pow(np, (-gamma_ + 1)/dfe)*pow(kfe, -1/dfe)*(A*lambda/rpeqmass + B*lambda*exp(-C*rpeqmass/lambda)/rpeqmass + 1) + rg/(rm*(A*lambda/rm + B*lambda*exp(-C*rm/lambda)/rm + 1)));
+    dF /= (rg*(A*lambda/pow(rm, 2)+ B*C*exp(-C*rm/lambda)/rm + B*lambda*exp(-C*rm/lambda)/pow(rm, 2))/(rm*pow(A*lambda/rm + B*lambda*exp(-C*rm/lambda)/rm + 1, 2)) - rg/(pow(rm, 2)*(A*lambda/rm + B*lambda*exp(-C*rm/lambda)/rm + 1)));
+return 1./dF;
 }
-double Newton(double np, double rg)
+
+double Newton(double np, double rg,double rpmoy)
 {
-    double r,alpha;
-    double precision;
+    double r,alpha,fx0;
+    int ite=1;
 
-    r =rdeb;
-    alpha=ModeleBeta(r,np,rg)*InvDeriveeModeleBete(r,np,rg);
-    precision=0.01E-9;
+    r = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    fx0=ModeleBeta(r,np,rg);
 
-    while (fabs(alpha)>precision)
+    while (fabs(fx0)>precision && r>0. && ite<500)
     {
-
+        alpha=fx0*InvDeriveeModeleBete(r,np,rg);
         r=r-alpha;
-        alpha=ModeleBeta(r,np,rg)*InvDeriveeModeleBete(r,np,rg);
-
+        fx0=ModeleBeta(r,np,rg);
+        ite++;
+        //printf("Newton %d %e %e\n",ite,r,fx0);
     }
-    r=r-alpha;
 
-    rdeb=r;
-
-    return r;
-
+    if(ite>=499 || r<0.)
+    {
+        printf("Newton %d %e %e\n",ite,r,fx0);
+        return Dichotomie(np,rg,rpmoy);
+    }
+    else
+    {
+        printf("Newton %d %e %e\n",ite,r,fx0);
+        return r;
+    }
 }
 
-double Brent(double np, double rg)
+double Brent(double np, double rg,double rpmoy)
 {
     double 	s,tampon,a, b, c,d, fb, fc, fa,fs, precision;
     int mflag,ite;
@@ -273,7 +315,7 @@ double Brent(double np, double rg)
         fb=tampon;
     }
 
-    while((fb!=0) && (fabs(a-b)>precision) && (ite<50000))
+    while((fabs(fb)>precision) && (ite<50000))
     {
         fc=ModeleBeta(c,np,rg);
 
@@ -293,7 +335,7 @@ double Brent(double np, double rg)
         int test3=((mflag==1)&&(fabs(s-b)>=fabs(b-c)/2));
         int test4=((mflag==0)&&(fabs(s-b)>=fabs(c-d)/2));
         //printf("%d  %d  %d  %d  fa %e  fb %e  fc %e\n",test1,test2,test3,test4,fa,fb,fc);
-/*
+
         if ((test1 || test2)||(test3)||(test4))
         {
             s=(a+b)/2;
@@ -305,7 +347,7 @@ double Brent(double np, double rg)
             exit(1);
             mflag=0;
         }
-*/
+
         fs=ModeleBeta(s,np,rg);
 
         d=c;
@@ -339,60 +381,22 @@ double Brent(double np, double rg)
     printf(" Brent %d \n",ite);
     return b;
 }
-
-double Dichotomie (double np, double rg,double rpmoy)
-{
-    double 	rmin, rmax, rmed, frmed, frmin, frmax, precision;
-    int ite=0;
-    rmin = 1e-10;//rpmoy*pow(np,gamma_/dfe)/8;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    rmax = 5e-6;//2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-    precision = 1E-15; //Précision recherchée
-
-    frmin = ModeleBeta(rmin, np, rg);
-    frmax = ModeleBeta(rmax, np, rg);
-
-    if (frmin*frmax>=0) {printf("Intervalle incorrect.\n"); return -1;} //Intervalle incorrect
-    while (rmax-rmin>precision)
-    {
-
-        rmed = (rmin+rmax)/2 ;
-        frmed = ModeleBeta(rmed, np, rg);
-        if (frmed==0)   break; //zero trouvé
-        if (frmin*frmed < 0)
-        {
-            rmax = rmed;
-            frmax = frmed;
-        }
-        else
-        {
-            rmin = rmed;
-            frmin = frmed;
-        }
-        ite++;
-    }
-    //printf("Dicho  %d\n",ite);
-    compteurDicho++;
-    return rmed;
-}
-
+*/
 double Secante(double np,double rg,double rpmoy)
-{
-    double 	x,x0,fx0,x1, x2, fx1, precision;
-    int ite=0;
-    x = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-    precision = 1E-10; //Précision recherchée
+{// Numerical method, used to find Rm | ModeleBeta(Rm)=0
 
-    x1=x+8.0*precision;
-    x0=x+4.0*precision;
+    double 	x,x0,fx0,x1, x2, fx1;
+    //$ Determinations of the first rm
+    //this is done by calculating ModeleBeta considering Cc=1
+    x = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+
+
+    x1=x+8.e-13;
+    x0=x+4.e-13;
 
     fx0 = ModeleBeta(x0, np, rg);
-
-
-
-    //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
-
-    //printf("it : %d x0= %e , fx0 = %e\n",ite,x,fx0);
-    while (ite==0 ||(fabs(fx0)>precision  && ite<50 && x>0.))
+    //$ Approximation of ModeleBeta()=0 using the Secant numericalMethod
+    while ((fabs(fx0)>precision && x>0.))
     {
 
         x2=x1;
@@ -400,90 +404,63 @@ double Secante(double np,double rg,double rpmoy)
         x0=x;
         fx1=fx0;
         fx0=ModeleBeta(x0,np,rg);
+
         x=x0-(x0-x1)*fx0/(fx0-fx1);
 
-        ite++;
-        //printf("it : %d x= %e , fx0 = %e\n",ite,x,fx0);
-
-        compteurSecante++;
     }
-    //printf("Secante %d\n",ite);
-    //printf("Secante %d %e %e %e %e\n",ite,x1,x2,fx1,fx2);
-    if(ite>=49 )
-    {
-        //printf("Secante dit not converge, using dichotomy\n");
-        return Dichotomie(np,rg,rpmoy);
-    }
+    //$ Check if x is positive
     if(x<0.)
     {
-        //printf("Secante found a false solution, using dichotomy\n");
+        //$ If not we use Dichotomy to find a fitting valuer
         return Dichotomie(np,rg,rpmoy);
     }
     else
     {
-        //printf("Secante converged in %d\n",ite);
+        //$ Else we return the value determined With Secante()
         return x;
     }
 }
 
 double ConvertRg2Dm(double np, double rg,double rpmoy)
-{
-    double Test;
-    double resdico,ressecante;
-    resdico=Dichotomie(np,rg,rpmoy);
-    //ressecante = Secante(np,rg,rpmoy);
+{// This function will determine Rm using the ModeleBeta() and return Dm
+    //$ Determination of CC(Rpeqmass)
+    Cunningham_rpeqmass = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass);
 
-//    printf("Dicho %e     Secante %e\n",resdico,ressecante);
-//    printf("Dicho %e     Secante %e\n",ModeleBeta(resdico,np,rg),ModeleBeta(ressecante,np,rg));
+    //$ Choice between Numerical Methods
+    // In this function, we can use two numerical methods, Secante() has better results than
+    // Dichotomy(bissection) but it doesn't always converge and will sometime return a negative
+    // value. What we do here is that by default, we use Secante() and check if it converged and if
+    // the value is positive. If not, we use Dichotomy.
 
-//    if(fabs(resdico-ressecante)>1e-15)
-//    {
-//        exit(42);
-//    }
+    if (root_dicho) return Dichotomie(np,rg,rpmoy)*2;
+    if (root_sec) return Secante(np,rg,rpmoy)*2;
 
-
-
-
-    return  resdico*2; //Retourne le diamètre de mobilité
+    return  Dichotomie(np,rg,rpmoy)*2;
 }
 //################################################## Recherche de sphères #############################################################################
 
+/* Those functions use an array named AggLabels wich stocks the labels of the monomeres composing each Aggregate
+Thus, all they have to do is read in Agglabels[id] the informations that they need. Agglabels[id][0] is the number of
+monomeres that compose Agg Id.
+*/
 int SelectLabelEgal(int id, int* resu)
-{
+{// This function wil return the number of monomeres in Agg Id, and also completes the array resu, resu stocks the labels of the spheres in Agg Id
     int i, n;
 
     n = 0;
-/*
-    for (i = 1; i <= N; i++)
-        if (spheres[i].Label == id)
-        {
-            n++;
-            resu[n] = i;
-        }
-*/
     for(i=1;i<=AggLabels[id][0];i++)
     {
         resu[i]=AggLabels[id][i];
     }
-    n=AggLabels[id][0];
+    n=AggLabels[id][0]; // n is the number of monomeres if Agg Id
 
     return n;
 }
 
 int SelectLabelSuperieur(int id, int* resu)
-{
+{//This function will return the number of monomeres in the Aggregates that have an index superior to Id in the arrays Agglabels and Aggregates
+    // it also completes the array resu, wich stocks the albels of all the spheres contained in the aggregates indexed after Id.
     int i,j;
-    /*
-    int n = 0;
-    for (i = 1;i <= N; i++)
-        if (spheres[i].Label > id)
-        {
-            n++;
-            resu[n] = i;
-        }
-
-    return n
-    */
     int m = 0;
 
     for(i=id;i<=NAgg;i++)
@@ -494,7 +471,7 @@ int SelectLabelSuperieur(int id, int* resu)
 
             resu[m+j]=AggLabels[i][j];
         }
-        m+=AggLabels[i][0];
+        m+=AggLabels[i][0];// for each aggregate, m is incremented by its number of monomeres.
     }
     return m;
 }
@@ -502,23 +479,29 @@ int SelectLabelSuperieur(int id, int* resu)
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
 double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat, double** PosiGravite)
-{
+{// This function determines the Gyration Radius of the Aggregate Id.
     double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
     int i, j, k, nmonoi;
     double * tabVol;
     double* tabSurf;
 
-    cov = 0.0;
-    Nc = 0;
-    volAgregat = surfAgregat = terme = 0.0;
-    rmax = 0.0;
-    Arg = Brg = 0.0;
+    cov = 0.0;// Coeficient of mean covering
+    Nc = 0; // Number of contacts
+    volAgregat = surfAgregat = terme = 0.0; // Volume and surface of Agg Id
+    rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
+                // It is used to assimilate the aggregate to a sphere when checking for intersections
+    Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
     Tv = 0.0;
     //$ Identification of the spheres in Agg id
+
+    //$ Determination of the monomeres in Agg Id
     nmonoi = SelectLabelEgal(id, Monoi);
 
     tabVol = new double[nmonoi+1];
     tabSurf = new double[nmonoi+1];
+
+
+    //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
 
     for (k = 1; k <= 3; k++)    PosiGravite[id][k] = 0.0; //Initialisation
 
@@ -529,7 +512,9 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     }
 
 
-    for (i = 1; i <= nmonoi; i++) //Pour les i sphérules constituant l'agrégat n°id
+
+    //$ For the Spheres i in Agg Id
+    for (i = 1; i <= nmonoi; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
         tabVol[i] += 4.0*PI*pow(spheres[Monoi[i]].r, 3)/3.0; //Calculation of the volume of i
@@ -624,45 +609,55 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void ParametresAgg(int Agg)
-{
+{// This function will update the parameter of Agg
     int i, np, Nc;
     double masse, dm, cc, diff, vit, lpm, Tv, cov, rmax, rg, rpmoy, rpmoy2, rpmoy3;
     double volAgregat, surfAgregat;
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
+    //$ Determination of the Radius of gyration of Agg using RayonGiration()
     rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat, PosiGravite);
 
-    masse = Rho*volAgregat; //Masse réelle de l'agrégat n°Agg
+    masse = Rho*volAgregat; //Determination of the real mass of Agg
+    //$Determination of the spheres in Agg
+    np = SelectLabelEgal(Agg, MonoSel);
 
-    np = SelectLabelEgal(Agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
-
+    //$ Determination of the mean radius of degrees 1,2,3 of Agg
     for (i = 1; i <= np; i++)
     {
-        rpmoy = rpmoy + spheres[MonoSel[i]].r; //Somme des rayons des sphérules de l'agrégat n°Agg
+        rpmoy = rpmoy + spheres[MonoSel[i]].r; //Sum of the radius of each sphere in Agg
         rpmoy2 = rpmoy2 + pow(spheres[MonoSel[i]].r, 2);
         rpmoy3 = rpmoy3 + pow(spheres[MonoSel[i]].r, 3);
     }
 
 
-    rpmoy = rpmoy/((double)np);   //Calcul du rayon moyen de l'agrégat n°Agg
-    rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
-    rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
-    //printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
+    rpmoy = rpmoy/((double)np);
+    rpmoy2 = rpmoy2/((double)np);
+    rpmoy3 = rpmoy3/((double)np);
+
+
+    //$ Determination of Dm using ConvertRg2Dm
     dm = ConvertRg2Dm(np,rg,rpmoy);
+    //$ Determination of CC(Dm)
     cc = Cunningham(dm/2);
+
+    //$Calculation fo it's mean free path, speed, and diff
+
     diff = K*T/3/PI/Mu/dm*cc;
-    vit = sqrt(8*K*T/PI/masse);
+    vit = sqrt(8*K*T/PI/masse);// Speed of Agg
     lpm = 8*diff/PI/vit;
 
-    Aggregate[Agg][0] = rg; //Rayon de giration
-    Aggregate[Agg][1] = np; //Nombre de spherules par aggregat
-    Aggregate[Agg][2] = Nc; //Nombre de coordination
-    Aggregate[Agg][3] = dm; //Diametre de mobilité
+
+    //$ Update of Aggregate[] with the parameters
+    Aggregate[Agg][0] = rg; //Gyration Radius
+    Aggregate[Agg][1] = np; //Number of spheres in Agg
+    Aggregate[Agg][2] = Nc; //Cumber of contacts
+    Aggregate[Agg][3] = dm; //Mobility Diameter
 
     if (ActiveModulephysique == 1)
     {
-        Aggregate[Agg][4] = lpm;     //Libre parcours moyen
-        Aggregate[Agg][5] = lpm/vit; //Durée du deplacement
+        Aggregate[Agg][4] = lpm;     //Mean Free Path
+        Aggregate[Agg][5] = lpm/vit; //Displacement duration
     }
     else
     {
@@ -670,29 +665,33 @@ void ParametresAgg(int Agg)
         Aggregate[Agg][5] = 1E-6;
     }
 
-    Aggregate[Agg][6] = rmax;          //Rayon de la sphere qui contient l'agregat
-    Aggregate[Agg][7] = volAgregat;    //Estimation du volume de l'agrégat
-    Aggregate[Agg][8] = surfAgregat;   //Estimation de la surface libre de l'agrégat
-    Aggregate[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
-    Aggregate[Agg][10] = cov;          //Paramètre de recouvrement
-    Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+    Aggregate[Agg][6] = rmax;          //Radius of the sphere containing Agg
+    Aggregate[Agg][7] = volAgregat;    //Etimation of the Aggregate's volume
+    Aggregate[Agg][8] = surfAgregat;   //Estimation of the sufrace of the aggregate
+    Aggregate[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
+    Aggregate[Agg][10] = cov;          //Covering Parameter
+    Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
 }
 //###############################################################################################################################
 
 //############################################# Conditions aux limites périodiques ##############################################
 void ReplacePosi(int id)
-{
-    int i,j,k,nr;
-
+{// This function will relocate an aggregate when it gets out of the box limiting the space
+    int i,j,k,nr,actualiseFlowgen;
+    //$ Get the list of the monomeres if Agg Id
     nr = SelectLabelEgal(id,MonoRep);
 
+    //$ for every dimension
     for (i = 1; i <= 3; i++)
-    {
+    {   actualiseFlowgen=1;
+        //$ Check on what side it is getting out
         if (PosiGravite[id][i] > L)
         {
             PosiGravite[id][i] = PosiGravite[id][i] - L;
+            //$ Update the position of the center of gravity in Agg Id
             for (j = 1; j <= nr; j++)
             {
+                //$ Update the position of the spheres in Agg Id
                 k = MonoRep[j];
                 spheres[k].pos[i] = spheres[k].pos[i] - L;
             }
@@ -701,9 +700,11 @@ void ReplacePosi(int id)
         if (PosiGravite[id][i] < 0)
         {
             PosiGravite[id][i] = PosiGravite[id][i] + L;
+            //$ Update the position of the center of gravity in Agg Id
             for (j = 1; j <= nr; j++)
             {
                 k = MonoRep[j];
+                //$ Update the position of the spheres in Agg Id
                 spheres[k].pos[i] = spheres[k].pos[i] + L;
             }
         }
@@ -712,7 +713,7 @@ void ReplacePosi(int id)
 //###############################################################################################################################
 
 void SupprimeLigne(int ligne)
-{
+{// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
 
     for (i = ligne + 1; i<= N; i++)
@@ -726,8 +727,8 @@ void SupprimeLigne(int ligne)
 
     for (i=ligne+1;i<=NAgg;i++)
     {
-        delete[] AggLabels[i-1];
-        AggLabels[i-1]=new int[AggLabels[i][0]+1];
+        delete[] AggLabels[i-1]; // Considering the 2nd dimension of Agglabels doesn't always have the same size, we have to delete
+        AggLabels[i-1]=new int[AggLabels[i][0]+1];//and reallocate each of these sub-arrays
         for (j=0;j<=AggLabels[i][0];j++)
         {
             AggLabels[i-1][j]=AggLabels[i][j];
@@ -946,15 +947,19 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
 //################################################# Réunion de deux agrégats ####################################################
 int Reunit(int AggI, int AggJ, int &err)
-{
-    int i, nselect, numreject, numstudy;
+{// This function will merge the aggregates AggI and AggJ
+    int i, nselect, numreject, numstudy,nAggI;
+    int * MonoAggI;
+    MonoAggI=new int[N+1];
 
     err = 0;
+    //$Translation of the spheres in AggI
+    for(i=1;i<=AggLabels[AggI][0];i++)
+    {
+        spheres[AggLabels[AggI][i]].Translate(Translate);
+    }
 
-    for (i = 1; i <= N; i++)
-        if (spheres[i].Label == AggI)
-            spheres[i].Translate(Translate);
-
+    //$ Check wich one has the smallest index
     if (AggI < AggJ)
     {
         numstudy = AggI;
@@ -966,6 +971,7 @@ int Reunit(int AggI, int AggJ, int &err)
         numreject = AggI;
     }
 
+    //$ Creation of the new sub array in Agglabels
     TamponValeurs= new int[AggLabels[AggI][0]+AggLabels[AggJ][0]+1];
     TamponValeurs[0]=AggLabels[AggI][0]+AggLabels[AggJ][0];
     for(i=1;i<=AggLabels[AggI][0];i++)
@@ -977,6 +983,7 @@ int Reunit(int AggI, int AggJ, int &err)
         TamponValeurs[i]=AggLabels[AggJ][i-AggLabels[AggI][0]];
     }
 
+    //$ Reallocation of the subarray that will contain the labels of the spheres in the reunited aggregate
     delete[] AggLabels[numstudy];
     AggLabels[numstudy] = new int [TamponValeurs[0]+1];
     for (i=0;i<=TamponValeurs[0];i++)
@@ -987,21 +994,25 @@ int Reunit(int AggI, int AggJ, int &err)
 
 
     nselect = SelectLabelEgal(numreject, MonoSel);
-
+    //$ Update of the labels of the spheres that were in the deleted aggregate
     for (i = 1; i <= nselect; i++)
     {
         spheres[MonoSel[i]].Label = numstudy;
 
     }
 
+    //$ Deletionn of the aggregate that was absorbed, using SupprimeLigne()
     SupprimeLigne(numreject);
     delete[] TamponValeurs;
 
+    //$ Update of the labels of every sphere that is in an aggregate indexed highger than the one absorbed
     nselect = SelectLabelSuperieur(numreject, MonoSel);
 
     for (i = 1; i <= nselect; i++)
         spheres[MonoSel[i]].Label--;
 
+
+    //$ Index of the Reunited aggregate is returned
     return numstudy;
 }
 //###############################################################################################################################
@@ -1163,8 +1174,6 @@ void Init()
     double x, masse, surface, Dp, Cc, Diff, Vit, lpm, rg, dist;
 
     compteur = 0;
-    compteurDicho=0;
-    compteurSecante=0;
     testmem = 0;
     L = X*Dpm*1E-9;
     Mu = 18.203E-6*(293.15+110)/(T+110)*pow(T/293.15,1.5);
@@ -1191,15 +1200,16 @@ void Init()
     TpT = new double[N+1];
     IndexPourTri = new int[N+1];
 
-    AggLabels= new int*[N+1];
+    AggLabels= new int*[N+1];// Array containing the labels of the spheres in each aggregate
 
     for (i=1;i<=N;i++)
-    {
-        AggLabels[i]= new int[2];
-        AggLabels[i][0]=1;
-        AggLabels[i][1]=i;
-
+    {                               //_____
+        AggLabels[i]= new int[2];   //     |
+        AggLabels[i][0]=1;          //     |--- Initialisation of Agglabels, at the start there are N aggregates of 1 sphere.
+        AggLabels[i][1]=i;          //_____|
+                                    //
     }
+    // Agglabels[0] isn't used
     AggLabels[0]=new int[2];
     AggLabels[0][0]=0;
     AggLabels[0][1]=0;
@@ -1726,9 +1736,6 @@ void Calcul() //Coeur du programme
             printf("%e\t", PosiGravite[i][j]*1E9);
         printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
     }
-
-    printf("Appels de Secante  :  %d",compteurSecante);
-    printf("Appels Dicho  :  %d,  Pourcentage : %e",compteurDicho,(double)compteurDicho/compteurSecante);
 
     Fermeture();
     if (GUI == NULL)
