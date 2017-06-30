@@ -63,9 +63,12 @@ char com[500];
 bool with_dots;
 int* TamponValeurs;
 int** AggLabels;
-
-
-
+bool root_dicho = false;
+bool root_sec = true;
+//double precision = 1E-1; //Précision recherchée
+double precision = 1E-6; //Précision recherchée
+//double precision = 1E-12; //Précision recherchée
+double Cunningham_rpeqmass;
 
 MainWindow* GUI;
 
@@ -197,26 +200,27 @@ double ModeleBeta(double rm, double np, double rg)
     //double df = 1.72;
     //double kf = 1.47; //pow(5./3.,df/2.0);
 
-    return rg/rm*Cunningham(rm) - pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass);
+    return rg/rm*Cunningham(rm) - Cunningham_rpeqmass;
 }
 
-double Dichotomie (double np, double rg)
+double Dichotomie (double np, double rg,double rpmoy)
 {
-    double 	rmin, rmax, rmed, frmed, frmin, frmax, precision;
-
-    rmin = 0.0;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    rmax = 5E-6; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-    precision = 0.01E-9; //Précision recherchée
+    double 	rmin, rmax, rmed, frmed, frmin, frmax;
+    int ite=1;
+    rmin = rpmoy*pow(np,gamma_/dfe)/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    rmax = 2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
 
     frmin = ModeleBeta(rmin, np, rg);
     frmax = ModeleBeta(rmax, np, rg);
 
-    if (frmin*frmax>=0) {printf("Intervalle incorrect.\n"); return -1;} //Intervalle incorrect
-    while (rmax-rmin>precision)
+    if (frmin*frmax>=0) {printf("Intervalle incorrect : %e %e \n",frmin,frmax); return -1;} //Intervalle incorrect
+
+    rmed = (rmin+rmax)/2 ;
+    frmed = ModeleBeta(rmed, np, rg);
+
+    while (fabs(frmed)>precision)
     {
-        rmed = (rmin+rmax)/2 ;
-        frmed = ModeleBeta(rmed, np, rg);
-        if (frmed==0)   break; //zero trouvé
+
         if (frmin*frmed < 0)
         {
             rmax = rmed;
@@ -227,13 +231,53 @@ double Dichotomie (double np, double rg)
             rmin = rmed;
             frmin = frmed;
         }
+        rmed = (rmin+rmax)/2 ;
+        frmed = ModeleBeta(rmed, np, rg);
+        ite++;
     }
     return rmed;
 }
 
-double ConvertRg2Dm(double np, double rg)
+double Secante(double np,double rg,double rpmoy)
 {
-    return  Dichotomie (np, rg)*2; //Retourne le diamètre de mobilité
+    double 	x,x0,fx0,x1, x2, fx1;
+    x = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+
+    x1=x+8.e-13;
+    x0=x+4.e-13;
+
+    fx0 = ModeleBeta(x0, np, rg);
+
+    while ((fabs(fx0)>precision && x>0.))
+    {
+
+        x2=x1;
+        x1=x0;
+        x0=x;
+        fx1=fx0;
+        fx0=ModeleBeta(x0,np,rg);
+
+        x=x0-(x0-x1)*fx0/(fx0-fx1);
+
+    }
+    if(x<0.)
+    {
+        return Dichotomie(np,rg,rpmoy);
+    }
+    else
+    {
+        return x;
+    }
+}
+
+double ConvertRg2Dm(double np, double rg,double rpmoy)
+{
+    Cunningham_rpeqmass = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass);
+
+    if (root_dicho) return Dichotomie(np,rg,rpmoy)*2;
+    if (root_sec) return Secante(np,rg,rpmoy)*2;
+
+    return  Dichotomie(np,rg,rpmoy)*2;
 }
 //################################################## Recherche de sphères #############################################################################
 
@@ -371,7 +415,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
     //$ Check if there is more than one monomere in the aggregate
     //$ [nmonoi == 1]
-    if (nmonoi == 1)
+    if (nmonoi == 1 || Nc == 0)
     {
         //$ Cov = 0
         cov = 0;
@@ -436,8 +480,8 @@ void ParametresAgg(int Agg)
     rpmoy = rpmoy/((double)np);   //Calcul du rayon moyen de l'agrégat n°Agg
     rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
     rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
-
-    dm = ConvertRg2Dm(np,rg);
+    //printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
+    dm = ConvertRg2Dm(np,rg,rpmoy);
     cc = Cunningham(dm/2);
     diff = K*T/3/PI/Mu/dm*cc;
     vit = sqrt(8*K*T/PI/masse);
@@ -1353,6 +1397,7 @@ void Calcul() //Coeur du programme
     contact=true;
     int end = fmax(5,N/200);
 
+    end = 20;
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats\n", end);
 
