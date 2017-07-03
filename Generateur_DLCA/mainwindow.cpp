@@ -13,6 +13,7 @@
 #include <QString>
 #include <stdio.h>
 #include <string>
+#include <list>
 
 QString FichierParam = "___";
 QString pathParam = "___";
@@ -69,6 +70,17 @@ bool root_sec = true;
 double precision = 1E-6; //Précision recherchée
 //double precision = 1E-12; //Précision recherchée
 double Cunningham_rpeqmass;
+
+
+
+
+// Chained list / Verlet
+list<int>**** Verlet;
+int VerIndex1,VerIndex2,VerIndex3;
+int GridDiv=10;
+double RayonAggMax=0.;
+
+
 
 MainWindow* GUI;
 
@@ -664,7 +676,8 @@ void ParametresAgg(int Agg)
         Aggregate[Agg][4] = Dpm*1E-9;
         Aggregate[Agg][5] = 1E-6;
     }
-
+    if(rmax>RayonAggMax)
+    {RayonAggMax=rmax;}
     Aggregate[Agg][6] = rmax;          //Radius of the sphere containing Agg
     Aggregate[Agg][7] = volAgregat;    //Etimation of the Aggregate's volume
     Aggregate[Agg][8] = surfAgregat;   //Estimation of the sufrace of the aggregate
@@ -672,7 +685,32 @@ void ParametresAgg(int Agg)
     Aggregate[Agg][10] = cov;          //Covering Parameter
     Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
 }
-//###############################################################################################################################
+//######################################################    verlet   #########################################################################
+
+void SupprimeVerlet(int id)
+{
+    VerIndex1=floor((PosiGravite[id][1]/GridDiv));
+    VerIndex2=floor((PosiGravite[id][2]/GridDiv));
+    VerIndex3=floor((PosiGravite[id][3]/GridDiv));
+    Verlet[VerIndex1+1][VerIndex2+1][VerIndex3+1]->remove(id);
+}
+
+void AjouteVerlet(int id)
+{
+    VerIndex1=(int)PosiGravite[id][1]/GridDiv+1;
+    VerIndex2=(int)PosiGravite[id][2]/GridDiv+1;
+    VerIndex3=(int)PosiGravite[id][3]/GridDiv+1;
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_back(id);
+}
+
+void DecrementeVerlet(int id)
+{
+    VerIndex1=floor((PosiGravite[id][1]/GridDiv));
+    VerIndex2=floor((PosiGravite[id][2]/GridDiv));
+    VerIndex3=floor((PosiGravite[id][3]/GridDiv));
+    Verlet[VerIndex1+1][VerIndex2+1][VerIndex3+1]->remove(id);
+    Verlet[VerIndex1+1][VerIndex2+1][VerIndex3+1]->push_back(id-1);
+}
 
 //############################################# Conditions aux limites périodiques ##############################################
 void ReplacePosi(int id)
@@ -687,7 +725,10 @@ void ReplacePosi(int id)
         //$ Check on what side it is getting out
         if (PosiGravite[id][i] > L)
         {
+
             PosiGravite[id][i] = PosiGravite[id][i] - L;
+
+
             //$ Update the position of the center of gravity in Agg Id
             for (j = 1; j <= nr; j++)
             {
@@ -699,7 +740,9 @@ void ReplacePosi(int id)
 
         if (PosiGravite[id][i] < 0)
         {
+
             PosiGravite[id][i] = PosiGravite[id][i] + L;
+
             //$ Update the position of the center of gravity in Agg Id
             for (j = 1; j <= nr; j++)
             {
@@ -708,7 +751,9 @@ void ReplacePosi(int id)
                 spheres[k].pos[i] = spheres[k].pos[i] + L;
             }
         }
+
     }
+    AjouteVerlet(id);
 }
 //###############################################################################################################################
 
@@ -716,10 +761,17 @@ void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
 
+
+    SupprimeVerlet(ligne);
+
+
     for (i = ligne + 1; i<= N; i++)
     {
         for (j = 0; j <= 11; j++)
             Aggregate[i-1][j] = Aggregate[i][j];
+
+        DecrementeVerlet(i);
+
         for (j = 1; j<= 3; j++)
             PosiGravite[i-1][j] = PosiGravite[i][j];
 
@@ -1200,6 +1252,35 @@ void Init()
     TpT = new double[N+1];
     IndexPourTri = new int[N+1];
 
+
+    // Verlet
+
+    Verlet=new list<int>***[GridDiv+1];
+
+
+
+
+    for(i=1;i<=GridDiv;i++)
+    {
+        Verlet[i]=new list<int>**[GridDiv+1];
+
+        for(j=1;j<=GridDiv;j++)
+        {
+            Verlet[i][j]=new list<int>*[GridDiv+1];
+
+            for(k=1;k<=GridDiv+1;k++)
+            {
+                std::list<int> Verlet[i][j][k];
+            }
+
+        }
+
+    }
+
+    std:list<int> Verlet[0][0][0];
+    Verlet[0][0][0].push_back(1);
+
+    // Agglabels
     AggLabels= new int*[N+1];// Array containing the labels of the spheres in each aggregate
 
     for (i=1;i<=N;i++)
@@ -1226,6 +1307,9 @@ void Init()
 
         for (j = 1; j<= 3 ; j++)
             PosiGravite[i][j] = Random()*L;
+
+
+        AjouteVerlet(i);
 
         x = Random(); //Tirage aléatoire
 
@@ -1271,6 +1355,10 @@ void Init()
         lpm = 8*Diff/PI/Vit;
         rg = sqrt(3.0/5.0)*Dp/2;
 
+        if(Dp/2>RayonAggMax)
+        {
+            RayonAggMax=Dp/2;
+        }
         if (ActiveModulephysique==1)
         {
             Aggregate[i][0] = rg;                   //Rayon de gyration
@@ -1508,9 +1596,9 @@ void Calcul() //Coeur du programme
 {
     double deltatemps, distmin, lpm;
     double thetarandom, phirandom;
-    int aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
+    int IdAggContact,aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
     //int tmp,superpo;
-    int i, j, co, err;
+    int i, j,k, co, err;
     bool contact;
     time_t t, t0;
 
@@ -1660,12 +1748,20 @@ void Calcul() //Coeur du programme
 
             //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
             //It gets in box on one side, then has to go out on the other one.
-            for (j = 1; j <= N; j++)
+            /*for (j = 1; j <= N; j++)
                 if (spheres[j].Label == IdPossible[aggcontact][1])
                 {
                     spheres[j].Update(spheres[j].pos[1]+IdPossible[aggcontact][2]*L,spheres[j].pos[2]+IdPossible[aggcontact][3]*L,spheres[j].pos[3]+IdPossible[aggcontact][4]*L,spheres[j].r);
                 }
+            */
+            IdAggContact=IdPossible[aggcontact][1];
+            for(k=1;k<=AggLabels[IdAggContact][0];k++)
+            {
 
+                j=AggLabels[IdAggContact][k];
+                spheres[j].Update(spheres[j].pos[1]+IdPossible[aggcontact][2]*L,spheres[j].pos[2]+IdPossible[aggcontact][3]*L,spheres[j].pos[3]+IdPossible[aggcontact][4]*L,spheres[j].r);
+
+            }
 
             //$ Aggregates in contact are reunited
             newnumagg = Reunit(NumAgg, IdPossible[aggcontact][1], err);
@@ -1687,6 +1783,7 @@ void Calcul() //Coeur du programme
         }
         else
         {
+            SupprimeVerlet(NumAgg);
             //$ Translation of the aggregate on his full lpm distance
             for (i = 1; i <= 3; i++)
                 Translate[i] = Vectdir[i]*lpm;
@@ -1697,6 +1794,7 @@ void Calcul() //Coeur du programme
                     spheres[i].Translate(Translate);
                 }
             }
+
             for (j = 1; j <= 3; j++)
             {
                 PosiGravite[NumAgg][j] = PosiGravite[NumAgg][j] + Translate[j];
@@ -1705,6 +1803,8 @@ void Calcul() //Coeur du programme
             newnumagg = NumAgg;
         }
         ReplacePosi(newnumagg);
+
+
         if (DeltaSauve>0)
         {
             co++;
