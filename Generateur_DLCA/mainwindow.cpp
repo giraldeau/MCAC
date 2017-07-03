@@ -75,7 +75,7 @@ double Cunningham_rpeqmass;
 
 
 // Chained list / Verlet
-list<int>**** Verlet;
+std::list<int>**** Verlet;
 int VerIndex1,VerIndex2,VerIndex3;
 int GridDiv=10;
 double RayonAggMax=0.;
@@ -1255,30 +1255,27 @@ void Init()
 
     // Verlet
 
-    Verlet=new list<int>***[GridDiv+1];
+    Verlet=new std::list<int>***[GridDiv+1];
 
 
 
 
     for(i=1;i<=GridDiv;i++)
     {
-        Verlet[i]=new list<int>**[GridDiv+1];
+        Verlet[i]=new std::list<int>**[GridDiv+1];
 
         for(j=1;j<=GridDiv;j++)
         {
-            Verlet[i][j]=new list<int>*[GridDiv+1];
+            Verlet[i][j]=new std::list<int>*[GridDiv+1];
 
             for(k=1;k<=GridDiv+1;k++)
             {
-                std::list<int> Verlet[i][j][k];
+                Verlet[i][j][k] = new std::list<int>;
             }
 
         }
 
     }
-
-    std:list<int> Verlet[0][0][0];
-    Verlet[0][0][0].push_back(1);
 
     // Agglabels
     AggLabels= new int*[N+1];// Array containing the labels of the spheres in each aggregate
@@ -1307,7 +1304,6 @@ void Init()
 
         for (j = 1; j<= 3 ; j++)
             PosiGravite[i][j] = Random()*L;
-
 
         AjouteVerlet(i);
 
