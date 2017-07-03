@@ -2,6 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <cmath>
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+using namespace std;
 
 const double PI = atan(1.0)*4;
 
@@ -107,8 +113,8 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
             DELTA = sqrt(DELTA);
             K1=(-B-DELTA)/2/A;
             K2=(-B+DELTA)/2/A;
-            if (K1*K2 < 0) K = fmax(K1,K2);
-            else if (K1 > 0) K = fmin(K1,K2);
+            if (K1*K2 < 0) K = MAX(K1,K2);
+            else if (K1 > 0) K = MIN(K1,K2);
             if (K > 0) dist = K*sqrt(A);
             if (dist > distmax) dist = 1;
         }

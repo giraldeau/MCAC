@@ -13,6 +13,11 @@
 #include <QString>
 #include <stdio.h>
 #include <string>
+#include <cmath>
+
+
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 QString FichierParam = "___";
 QString pathParam = "___";
@@ -66,10 +71,9 @@ int** AggLabels;
 bool root_dicho = false;
 bool root_sec = true;
 //double precision = 1E-1; //Précision recherchée
-double precision = 1E-6; //Précision recherchée
-//double precision = 1E-12; //Précision recherchée
-double Cunningham_rpeqmass;
-
+//double precision = 1E-6; //Précision recherchée
+double precision = 1E-12; //Précision recherchée
+double FactorModelBeta;
 MainWindow* GUI;
 
 Sphere* spheres;
@@ -197,18 +201,20 @@ double Cunningham(double R) //Facteur correctif de Cunningham
 
 double ModeleBeta(double rm, double np, double rg)
 {
-    //double df = 1.72;
-    //double kf = 1.47; //pow(5./3.,df/2.0);
+    if (rm<0.) {throw 42;}
 
-    return rg/rm*Cunningham(rm) - Cunningham_rpeqmass;
+    //return rm*Cunningham(rpeqmass) - rg*Cunningham(rm)*pow(kfe,1/dfe)*pow(np,(gamma_-1)/dfe) ;
+
+    return Cunningham(rm) - FactorModelBeta*rm;
+    //return rm - FactorModelBeta*Cunningham(rm);
 }
 
-double Dichotomie (double np, double rg,double rpmoy)
+double Dichotomie(double np, double rg,double rpmoy,double x0)
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax;
     int ite=1;
-    rmin = rpmoy*pow(np,gamma_/dfe)/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    rmax = 2*rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    rmin = x0/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    rmax = 2*x0; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
 
     frmin = ModeleBeta(rmin, np, rg);
     frmax = ModeleBeta(rmax, np, rg);
@@ -238,46 +244,148 @@ double Dichotomie (double np, double rg,double rpmoy)
     return rmed;
 }
 
-double Secante(double np,double rg,double rpmoy)
+double brentq(double np, double rg,double rpmoy,double x0)
 {
-    double 	x,x0,fx0,x1, x2, fx1;
-    x = rpmoy*pow(np,gamma_/dfe); //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    double xa,xb,xtol,rtol;
+    int iter=500;
 
-    x1=x+8.e-13;
-    x0=x+4.e-13;
+    xa = x0/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    xb = 2*x0; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    xtol = rtol = precision;
 
-    fx0 = ModeleBeta(x0, np, rg);
+    double xpre = xa, xcur = xb;
+    double xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
+    /* the tolerance is 2*delta */
+    double delta;
+    double stry, dpre, dblk;
+    int i;
 
-    while ((fabs(fx0)>precision && x>0.))
-    {
+    fpre = ModeleBeta(xpre, np, rg);
+    fcur = ModeleBeta(xcur, np, rg);
+    if (fpre*fcur > 0) {printf("Intervalle incorrect : %e %e \n",fpre,fcur); return -1;} //Intervalle incorrect
 
-        x2=x1;
-        x1=x0;
-        x0=x;
-        fx1=fx0;
-        fx0=ModeleBeta(x0,np,rg);
-
-        x=x0-(x0-x1)*fx0/(fx0-fx1);
-
+    if (fpre == 0) {
+        return xpre;
     }
-    if(x<0.)
-    {
-        return Dichotomie(np,rg,rpmoy);
+    if (fcur == 0) {
+        return xcur;
     }
-    else
-    {
-        return x;
+
+    for (i = 0; i < iter; i++) {
+        if (fpre*fcur < 0) {
+            xblk = xpre;
+            fblk = fpre;
+            spre = scur = xcur - xpre;
+        }
+        if (fabs(fblk) < fabs(fcur)) {
+            xpre = xcur;
+            xcur = xblk;
+            xblk = xpre;
+
+            fpre = fcur;
+            fcur = fblk;
+            fblk = fpre;
+        }
+
+        delta = (xtol + rtol*fabs(xcur))/2;
+        sbis = (xblk - xcur)/2;
+        //if (fcur == 0 || fabs(sbis) < delta) {
+        if (fabs(fcur) < precision) {
+            return xcur;
+        }
+
+        if (fabs(spre) > delta && fabs(fcur) < fabs(fpre)) {
+            if (xpre == xblk) {
+                /* interpolate */
+                stry = -fcur*(xcur - xpre)/(fcur - fpre);
+            }
+            else {
+                /* extrapolate */
+                dpre = (fpre - fcur)/(xpre - xcur);
+                dblk = (fblk - fcur)/(xblk - xcur);
+                stry = -fcur*(fblk*dblk - fpre*dpre)
+                    /(dblk*dpre*(fblk - fpre));
+            }
+            if (2*fabs(stry) < fmin(fabs(spre), 3*fabs(sbis) - delta)) {
+                /* good short step */
+                spre = scur;
+                scur = stry;
+            } else {
+                /* bisect */
+                spre = sbis;
+                scur = sbis;
+            }
+        }
+        else {
+            /* bisect */
+            spre = sbis;
+            scur = sbis;
+        }
+
+        xpre = xcur; fpre = fcur;
+        if (fabs(scur) > delta) {
+            xcur += scur;
+        }
+        else {
+            xcur += (sbis > 0 ? delta : -delta);
+        }
+
+        fcur = ModeleBeta(xcur, np, rg);
     }
+    return xcur;
+}
+
+double Secante(double np,double rg,double rpmoy, double xsave)
+{
+    double 	x0,fx0,x1, x2, fx1;
+    double x[2];
+    double fx[2];
+    bool i=1;
+
+    x[0]=xsave+4.e-13;
+    fx[0] = ModeleBeta(x[0], np, rg);
+
+    x[1]=xsave;
+
+    try
+    {
+        fx[i]=ModeleBeta(x[i],np,rg);
+        x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
+        i = !i;
+        fx[i]=ModeleBeta(x[i],np,rg);
+        x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
+        i = !i;
+        fx[i]=ModeleBeta(x[i],np,rg);
+        x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
+        i = !i;
+        while ((fabs(fx[!i])>precision))
+        {
+            fx[i]=ModeleBeta(x[i],np,rg);
+            x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
+            i = !i;
+        }
+    }
+    catch (int e)
+    {
+        printf("FAILSAFE\n");
+        return brentq(np,rg,rpmoy,xsave);
+    }
+    return x[i];
 }
 
 double ConvertRg2Dm(double np, double rg,double rpmoy)
 {
-    Cunningham_rpeqmass = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass);
+    FactorModelBeta = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass)/rg;
+    double x0 = rpmoy*pow(np,gamma_/dfe);
+/*
+    npeqmass = kfe*pow(rg/rpeqmass,dfe);
+    double nptmp = pow(npeqmass*pow(np,gamma_-1),1./gamma_);
+    FactorModelBeta = 1./(rpeqmass*pow(nptmp,gamma_/dfe)/Cunningham(rpeqmass));
+*/
+    if (root_dicho) return Dichotomie(np,rg,rpmoy,x0)*2;
+    if (root_sec) return Secante(np,rg,rpmoy,x0)*2;
 
-    if (root_dicho) return Dichotomie(np,rg,rpmoy)*2;
-    if (root_sec) return Secante(np,rg,rpmoy)*2;
-
-    return  Dichotomie(np,rg,rpmoy)*2;
+    return  Dichotomie(np,rg,rpmoy,x0)*2;
 }
 //################################################## Recherche de sphères #############################################################################
 
@@ -451,7 +559,10 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     delete[] tabVol;
     delete[] tabSurf;
 
-    return sqrt((Arg+3.0/5.0*Brg)/volAgregat); //Rayon de giration de l'agrégat n°id
+    double rg = fabs((Arg+3.0/5.0*Brg)/volAgregat);
+    volAgregat=fabs(volAgregat);
+
+    return sqrt(rg); //Rayon de giration de l'agrégat n°id
 }
 //###############################################################################################################################
 
@@ -468,6 +579,7 @@ void ParametresAgg(int Agg)
     masse = Rho*volAgregat; //Masse réelle de l'agrégat n°Agg
 
     np = SelectLabelEgal(Agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
+    //npeqmass = kfe*pow(rg/rpeqmass,dfe);
 
     for (i = 1; i <= np; i++)
     {
@@ -1161,7 +1273,7 @@ void SauveASCII(int value, int id)
     char NomComplet[500];
     FILE *f;
 
-    std::locale::global(std::locale("C"));
+    locale::global(locale("C"));
 
     return;
 
@@ -1242,9 +1354,9 @@ void test_locale()
     }
 }
 
-double latof(const char* string)
+double latof(const char* _char)
 {
-    std::string mystring = string;
+    string mystring = _char;
     if (!with_dots)
     {
         int f = mystring.find(".");
@@ -1396,13 +1508,16 @@ void Calcul() //Coeur du programme
     time(&t0);
     contact=true;
     int end = fmax(5,N/200);
+    int it_without_contact=0;
+    int lim_it_without_contact = 100;
 
     end = 20;
+
     printf("\n");
-    printf("Ending calcul when there is less than %d aggregats\n", end);
+    printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);
 
     //$ Loop on the N monomeres
-    while (NAgg > end) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
+    while (NAgg > end && it_without_contact<100) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
     {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
         time(&t);
@@ -1501,8 +1616,8 @@ void Calcul() //Coeur du programme
             if (tmp == 1)     {superpo++;}
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             */
-             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec\t\n", NAgg, temps*1E6, secondes);
-
+             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, temps*1E6, secondes,it_without_contact);
+            it_without_contact = 0;
              if (!(GUI == NULL)            )
                 GUI->progress(N-NAgg+1);
 
@@ -1525,6 +1640,7 @@ void Calcul() //Coeur du programme
             }
 
             newnumagg = NumAgg;
+            it_without_contact++;
         }
         ReplacePosi(newnumagg);
         if (DeltaSauve>0)
@@ -1542,7 +1658,7 @@ void Calcul() //Coeur du programme
             SauveASCII(NSauve++, newnumagg);
     }
 
-    printf("Nombre total d'aggregats' : %d\n",NAgg);
+    printf("Nombre total d'aggregats : %d\n",NAgg);
 /*
     cout << "L=" << L*1E9
          <<"     lambda=" << lambda*1E9
