@@ -71,8 +71,8 @@ int** AggLabels;
 bool root_dicho = false;
 bool root_sec = true;
 //double precision = 1E-1; //Précision recherchée
-//double precision = 1E-6; //Précision recherchée
-double precision = 1E-12; //Précision recherchée
+double precision = 1E-4; //Précision recherchée
+//double precision = 1E-12; //Précision recherchée
 double FactorModelBeta;
 MainWindow* GUI;
 
@@ -349,15 +349,6 @@ double Secante(double np,double rg,double rpmoy, double xsave)
 
     try
     {
-        fx[i]=ModeleBeta(x[i],np,rg);
-        x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
-        i = !i;
-        fx[i]=ModeleBeta(x[i],np,rg);
-        x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
-        i = !i;
-        fx[i]=ModeleBeta(x[i],np,rg);
-        x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
-        i = !i;
         while ((fabs(fx[!i])>precision))
         {
             fx[i]=ModeleBeta(x[i],np,rg);
@@ -684,7 +675,7 @@ void SupprimeLigne(int ligne)
     NAgg--;
 }
 
-void MonTri(int n, double arr[], int index[])
+void InsertionSort(int n, double arr[], int index[])
 {
     int i, j, id;
     double a;
@@ -708,6 +699,58 @@ void MonTri(int n, double arr[], int index[])
         arr[i+1] = a;
         index[i+1] = id;
     }
+}
+
+
+
+void quickSort(double arr[], int index[], int left, int right) {
+
+      int i = left, j = right;
+      int itmp;
+      double pivot = arr[(left + right) / 2];
+      double dtmp;
+
+      /* partition */
+      while (i <= j) {
+            while (arr[i] < pivot)
+                  i++;
+            while (arr[j] > pivot)
+                  j--;
+            if (i <= j) {
+                  dtmp = arr[i];
+                  arr[i] = arr[j];
+                  arr[j] = dtmp;
+                  itmp = index[i];
+                  index[i] = index[j];
+                  index[j] = itmp;
+                  i++;
+                  j--;
+            }
+      };
+
+      /* recursion */
+      if (left < j)
+            quickSort(arr, index, left, j);
+      if (i < right)
+            quickSort(arr, index, i, right);
+}
+
+void quickSort(int n, double arr[], int index[])
+{
+      quickSort(arr, index, 1, n);
+}
+
+void MonTri(int n, double arr[], int index[])
+{
+    int i, j, id;
+    double a;
+
+    for (i = 1; i <= n; i++)
+        index[i] = i;
+
+    //InsertionSort(n, arr, index);
+    quickSort(n, arr, index);
+
 }
 
 int Probabilite(bool trier,double &deltatemps)
