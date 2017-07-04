@@ -480,7 +480,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
             dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
             //$ Check if i is covering j
             //$ [dbordabord <= 1]
-            if ((int)dbordabord <= 1)
+            if (dbordabord <= 1.)
             {
                 //$ Calculation of the Number of contacts
                 cov = cov - dbordabord; //Coefficient of total Covering of Agg id
@@ -805,53 +805,36 @@ int Probabilite(bool trier,double &deltatemps)
 //############################################# Calcul de la distance inter-agrégats ############################################
 double Distance_Aggregate(int s, int nmonoi, double lpm)
 {
-    int agg,actualiserFlowgen, j, k, knum, memsuperpo;
+    int agg, j, k, knum, np, l;
     double dist, dc, ret;
     Sphere spheredecale;
 
     ret = 1.0;
-    memsuperpo = 0;
     agg = IdPossible[s][1];
 
-    //$ Loop on all the spheres
-    for (j = 1; j <= N; j++)
+    np = SelectLabelEgal(agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
+
+
+    //$ Loop on all the spheres of the other aggregate
+    for (j = 1; j <= np; j++)
     {
-        actualiserFlowgen=1;
-        //$ If j belongs to Agg S
-        // [spheres[j].Label == agg]
-        if (spheres[j].Label == agg) //Sphérules de l'agrégat cible
+        l = MonoSel[j];
+        //$ spheredecale is used to replace the sphere into the corresponding box
+        spheredecale.Update(spheres[l].pos[1]+IdPossible[s][2]*L,spheres[l].pos[2]+IdPossible[s][3]*L,spheres[l].pos[3]+IdPossible[s][4]*L,spheres[l].r);
+
+        //$ For every sphere in the aggregate :
+        for (knum = 1; knum <= nmonoi; knum++)
         {
-            spheredecale.Update(spheres[j].pos[1]+IdPossible[s][2]*L,spheres[j].pos[2]+IdPossible[s][3]*L,spheres[j].pos[3]+IdPossible[s][4]*L,spheres[j].r);
-            //$ j is positionned in the corresponding box - Loop on Agg mov
-            actualiserFlowgen=2;
-            //$ For every sphere in the aggregate :
-            for (knum = 1; knum <= nmonoi; knum++)
+            k=Monoi[knum];
+            //$ Check if j and k are contact and if not, what is the distance between them
+            dist=spheres[k].Collision(spheredecale, Vectdir, lpm, dc);
+            if (dist < ret)
             {
-
-                k=Monoi[knum];
-                //$ Check if j and k are contact and if not, what is the distance between them
-                dist=spheres[k].Collision(spheredecale, Vectdir, lpm, dc);
-                //$ [dist == -1]
-                if (dist == -1)
-                {   //$ There is contact between the 2 aggregates
-                    memsuperpo = 1;}
-                //$ [dist < ret]
-                else if (dist < ret)
-                    {
-                        ret = dist;
-                        //$ We determine the distance between k and j and see if they are closer than the spheres already tested
-                    }
-
+                ret = dist;
             }
 
         }
-
     }
-    //$ Check if the aggregates are in contact,
-    if (memsuperpo == 1)
-       {
-        ret = 1;  //S'il y a au moins deux sphérules en superposition, on ignore l'agglomération des deux agrégats
-       }
     return ret;
 }
 //###############################################################################################################################
@@ -877,28 +860,35 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     //$ Find potential contacts between agregates
 
     s1.Update(PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
-    //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
-    for (dx = -1;dx <= 1; dx++)
 
+    //$ [For all other agregate]
+    for (i = 1;i <= NAgg; i++)
     {
-        for (dy = -1; dy <= 1; dy++)
+        if (i != id)
         {
-            for (dz = -1; dz <= 1; dz++)
+            double inix,iniy,iniz;
+            inix = PosiGravite[i][1];
+            iniy = PosiGravite[i][2];
+            iniz = PosiGravite[i][3];
+            s2.r = Aggregate[i][6]; //represents the different agregates
+
+            //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
+            for (dx = -1;dx <= 1; dx++)
             {
-
-                for (i = 1;i <= NAgg; i++)
+                s2.pos[1] = inix+L*dx;
+                for (dy = -1; dy <= 1; dy++)
                 {
-                    if (i != id)
+                    s2.pos[2] = iniy+L*dy;
+                    for (dz = -1; dz <= 1; dz++)
                     {
+                        s2.pos[3] = iniz+L*dz;
 
-
-                        s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
-
-                        dist = s1.Collision(s2, Vectdir, lpm, dc);
                         // checks if the two spheres will be in contact while
                          //... the first one is moving
                         //$ Intersection check between agregates
-                        //$ [dist<=lpm]
+                        dist = s1.Collision(s2, Vectdir, lpm, dc);
+
+                        //$ [Potential Collision]
                         if (dist <= lpm)
                         {
                             //$ Aggregate is stocked into IdPossible

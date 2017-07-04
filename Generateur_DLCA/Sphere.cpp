@@ -183,39 +183,34 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     if (d >= Ri + Rj)
     {
         //$ Intersection is empty
-
         vol1 = vol2 = 0.;
         surf1 = surf2 = 0.;
     }
-
-    //$ Check if j is completely absorbed by i
-    else if (d < Ri - Rj)
+    else if(d >= fabs(Ri-Rj))
     {
-        //$ Volcal = VolJ
-        vol1 = vol2 = 4.0*PI*pow(Rj,3)/3.0;
-        surf1 = surf2 = 4.0*PI*pow(Rj,2);
-
-    }
-
-    //$ Check if i is completely in j
-
-    else if (d < Rj - Ri)
-    {
-        //$ Volcal = Voli
-        vol1 = vol2 = 4.0*PI*pow(Ri,3)/3.0;
-        surf1 = surf2 = 4.0*PI*pow(Ri,2);
-    }
-
-    //$ Volume of the intersection is returned
-
-    else
-    {
+        //$ Volume of the intersection is returned
         h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
         vol1= PI*pow(h,2)*(3*Ri-h)/3.0;
         surf1 = 2*PI*Ri*h;
         h = (pow(Ri,2)-pow((Rj-d),2))/(2.0*d);
         vol2= PI*pow(h,2)*(3*Rj-h)/3.0;
         surf2 = 2*PI*Rj*h;
+    }
+    //$ Check if j is completely absorbed by i
+    else if (d < Ri - Rj)
+    {
+        //$ Volcal = VolJ
+        vol1 = vol2 = 4.0*PI*pow(Rj,3)/3.0;
+        surf1 = surf2 = 4.0*PI*pow(Rj,2);
+    }
+
+    //$ Check if i is completely in j
+
+    else // if (d < Rj - Ri)
+    {
+        //$ Volcal = Voli
+        vol1 = vol2 = 4.0*PI*pow(Ri,3)/3.0;
+        surf1 = surf2 = 4.0*PI*pow(Ri,2);
     }
 
     return d;
