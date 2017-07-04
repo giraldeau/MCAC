@@ -688,28 +688,82 @@ void ParametresAgg(int Agg)
 //######################################################    verlet   #########################################################################
 
 void SupprimeVerlet(int id)
-{
-    VerIndex1=floor((PosiGravite[id][1]/GridDiv));
-    VerIndex2=floor((PosiGravite[id][2]/GridDiv));
-    VerIndex3=floor((PosiGravite[id][3]/GridDiv));
-    Verlet[VerIndex1+1][VerIndex2+1][VerIndex3+1]->remove(id);
+{   int taille1,taille2;
+
+
+    VerIndex1=floor((PosiGravite[id][1]/GridDiv))+1;
+    VerIndex2=floor((PosiGravite[id][2]/GridDiv))+1;
+    VerIndex3=floor((PosiGravite[id][3]/GridDiv))+1;
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
+    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
+
+    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=-1)
+    {
+        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() <<"  " << taille1 <<"Supprime Deconne \n";
+    }
 }
 
 void AjouteVerlet(int id)
-{
+{   int taille1;
+
+
     VerIndex1=(int)PosiGravite[id][1]/GridDiv+1;
     VerIndex2=(int)PosiGravite[id][2]/GridDiv+1;
     VerIndex3=(int)PosiGravite[id][3]/GridDiv+1;
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_back(id);
+    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
+
+    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=1)
+    {
+        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "   "  << taille1 <<"Ajouter Deconne \n";
+    }
+}
+
+void AfficheVerlet(int id)
+{   std::_List_iterator<int> i;
+    int j;
+
+
+
+
+    VerIndex1=(int)PosiGravite[id][1]/GridDiv+1;
+    VerIndex2=(int)PosiGravite[id][2]/GridDiv+1;
+    VerIndex3=(int)PosiGravite[id][3]/GridDiv+1;
+
+
+
+    std::cout<<"Taille: "<<Verlet[VerIndex1][VerIndex2][VerIndex3]->size()<<"\n";
+    std::cout << " mylist contains:\n";
+
+    for(i= Verlet[VerIndex1][VerIndex2][VerIndex3]->begin();i!= Verlet[VerIndex1][VerIndex2][VerIndex3]->end();i++)
+    {
+        std::cout << " " << *i<<"\n";
+    }
 }
 
 void DecrementeVerlet(int id)
-{
-    VerIndex1=floor((PosiGravite[id][1]/GridDiv));
-    VerIndex2=floor((PosiGravite[id][2]/GridDiv));
-    VerIndex3=floor((PosiGravite[id][3]/GridDiv));
-    Verlet[VerIndex1+1][VerIndex2+1][VerIndex3+1]->remove(id);
-    Verlet[VerIndex1+1][VerIndex2+1][VerIndex3+1]->push_back(id-1);
+{   int taille1,taille2;
+
+
+
+    VerIndex1=(PosiGravite[id][1]/GridDiv)+1;
+    VerIndex2=(PosiGravite[id][2]/GridDiv)+1;
+    VerIndex3=(PosiGravite[id][3]/GridDiv)+1;
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
+    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
+    taille2=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id--);
+
+    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=0)
+    {
+        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "     " <<taille2 << "    "<<taille1 <<"  Decremente Deconne \n";
+    }
+
 }
 
 //############################################# Conditions aux limites périodiques ##############################################
@@ -1270,7 +1324,10 @@ void Init()
 
             for(k=1;k<=GridDiv+1;k++)
             {
-                Verlet[i][j][k] = new std::list<int>;
+                Verlet[i][j][k]= new std::list<int>;
+
+
+
             }
 
         }
@@ -1832,6 +1889,12 @@ void Calcul() //Coeur du programme
             printf("%e\t", PosiGravite[i][j]*1E9);
         printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
     }
+    printf("\n\n");
+//    for (i=1;i<=NAgg;i++)
+//    {
+//        printf("Nagg =  %d\n",i);
+//        AfficheVerlet(i);
+//    }
 
     Fermeture();
     if (GUI == NULL)
