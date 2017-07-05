@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <cmath>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -40,10 +43,24 @@ void Sphere::Update(const double* newp,const double newr)
     r = newr;
 }
 
+void Sphere::Update(const Sphere& c)
+{
+    // newp: position double[4] pour compatibilité....
+    pos[1] = c.pos[1];
+    pos[2] = c.pos[2];
+    pos[3] = c.pos[3];
+    r = c.r;
+}
 
-void Sphere::SetLabel(int value)
+
+void Sphere::SetLabel(const int value)
 {
     Label = value;
+}
+
+void Sphere::DecreaseLabel()
+{
+    Label--;
 }
 
 void Sphere::Translate(const double* trans)
@@ -56,9 +73,21 @@ void Sphere::Translate(const double trans)
     for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans;
 }
 
-void Sphere::Aff(const double coef) const
+string Sphere::str(const double coef) const
 {
-    printf("%8.3f %8.3f %8.3f %8.3f\n", pos[1]*coef, pos[2]*coef, pos[3]*coef, r*coef);
+    stringstream res;
+    res
+        << setw(5) << Label << "\t"
+        << setprecision(5) << setw(11) << fixed << r*coef << "\t"
+        << setprecision(5) << setw(11) << fixed << pos[1]*coef << "\t"
+        << setprecision(5) << setw(11) << fixed << pos[2]*coef << "\t"
+        << setprecision(5) << setw(11) << fixed << pos[3]*coef;
+    return res.str();
+}
+
+void Sphere::Aff(const double coef) const
+{  
+    cout << str(coef) << endl;
 }
 double Sphere::Distance(const Sphere& c) const
 {
@@ -127,47 +156,27 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
     return dist;
 }
 
-//Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-double Sphere::VolumeCalotteij(const Sphere& c) const
+
+double Sphere::Volume() const
 {
-    double Volcal, d, h;
-    double Ri, Rj;
-
-    Ri = r;
-    Rj = c.r;
-    //$ Determination of the distance between the center of the 2 aggregates
-    d = sqrt(pow(pos[1]-c.pos[1],2) + pow(pos[2]-c.pos[2],2) + pow(pos[3]-c.pos[3],2));
-    //$ Check if they aren't in contact
-    if (d >= Ri + Rj)
-    {
-        //$ Volcal = 0
-
-        return 0.0;
-    }
-
-
-    //$ Check if j is completely absorbed by i
-    if ((0 <= d) && (d < Ri - Rj))
-    {
-        //$ Volcal = VolJ
-        return 4.0*PI*pow(Rj,3)/3.0;
-
-    }
-
-    //$ Check if i is completely in j
-
-    if ((0 <= d) && (d < Rj - Ri))
-    {
-        //$ Volcal = Voli
-        return 4.0*PI*pow(Ri,3)/3.0;
-    }
-
-    //$ Volume of the intersection is returned
-        h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
-
-    return PI*pow(h,2)*(3*Ri-h)/3.0;
-
+    return 4.0*PI*pow(r, 3)/3.0;
 }
+
+double Sphere::Surface() const
+{
+    return 4.0*PI*pow(r, 2);
+}
+
+double Sphere::Radius() const
+{
+    return r;
+}
+
+double* Sphere::Position() const
+{
+    return pos;
+}
+
 
 //Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
 double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
@@ -219,30 +228,4 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     }
 
     return d;
-}
-
-//Calcul de la surface de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-double Sphere::SurfaceCalotteij(const Sphere& c) const // Works exactly the same way as VolumeCalotte, the only things that changes is the formulas
-{
-    double Surfcal, d, h;
-    double Ri, Rj;
-
-    Ri = r;
-    Rj = c.r;
-
-    d = sqrt(pow(pos[1]-c.pos[1], 2)+pow(pos[2]-c.pos[2], 2)+pow(pos[3]-c.pos[3], 2));
-
-    if (d >= Ri + Rj)
-        Surfcal = 0.0;
-    else if ((0 <= d) && (d < Ri - Rj))
-        Surfcal = 4.0*PI*pow(Rj, 2);
-    else if ((0 <= d) && (d < Rj - Ri))
-        Surfcal = 4.0*PI*pow(Ri, 2);
-    else
-    {
-        h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
-        Surfcal = 2*PI*Ri*h;
-    }
-
-    return Surfcal;
 }

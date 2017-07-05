@@ -455,8 +455,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     for (i = 1; i <= nmonoi; i++) //Pour les i sphérules constituant l'agrégat n°id
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] += 4.0*PI*pow(spheres[Monoi[i]].r, 3)/3.0; //Calculation of the volume of i
-        tabSurf[i] += 4.0*PI*pow(spheres[Monoi[i]].r, 2);    //Calculation of the surface of i
+        tabVol[i] += spheres[Monoi[i]].Volume(); //Calculation of the volume of i
+        tabSurf[i] += spheres[Monoi[i]].Surface();    //Calculation of the surface of i
 
         for (j = i+1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
         {
@@ -467,7 +467,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
             //$ Calculation of the intersection between the spheres i and j
             dist = spheres[Monoi[i]].Intersection(spheres[Monoi[j]],voli,volj,surfi,surfj);
 
-            rpmoy = (spheres[Monoi[i]].r+spheres[Monoi[j]].r)/2.0; //Mean Radius between i and j monomeres
+            rpmoy = (spheres[Monoi[i]].Radius()+spheres[Monoi[j]].Radius())/2.0; //Mean Radius between i and j monomeres
             dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
             //$ Check if i is covering j
             //$ [dbordabord <= 1]
@@ -494,13 +494,14 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         volAgregat = volAgregat + tabVol[i];    //Total Volume of Agg id
         surfAgregat = surfAgregat + tabSurf[i]; //Total Surface of Agg id
 
-        terme = terme + tabVol[i]/pow(spheres[Monoi[i]].r, 3);
+        terme = terme + tabVol[i]/spheres[Monoi[i]].Volume();
 
-        Tv = 1 - (3.0/(4.0*nmonoi*PI))*terme;
         //$ Calculation of the position of the center of mass
+        double* pos = spheres[Monoi[i]].Position();
         for (k = 1; k <= 3; k++)
-            PosiGravite[id][k] = PosiGravite[id][k] + spheres[Monoi[i]].pos[k]*tabVol[i]; //Somme des Vi*xi
+            PosiGravite[id][k] = PosiGravite[id][k] + pos[k]*tabVol[i]; //Somme des Vi*xi
     }
+    Tv = 1 - terme /nmonoi;
 
     Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
     //$ Check if there is more than one monomere in the aggregate
@@ -528,14 +529,14 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         //$ Determination of the distance between each monomere and the center of mass of Agg Id
         li = spheres[Monoi[i]].Distance(PosiGravite[id]); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
 
-        r = li + spheres[Monoi[i]].r;
+        r = li + spheres[Monoi[i]].Radius();
 
         //$ Calculation of rmax
         rmax=fmax(rmax,r);
 
         //$ Calculation of Rg
         Arg = Arg + tabVol[i]*pow(li, 2);
-        Brg = Brg + tabVol[i]*pow(spheres[Monoi[i]].r, 2);
+        Brg = Brg + tabVol[i]*pow(spheres[Monoi[i]].Radius(), 2);
     }
 
     delete[] tabVol;
@@ -565,9 +566,9 @@ void ParametresAgg(int Agg)
 
     for (i = 1; i <= np; i++)
     {
-        rpmoy = rpmoy + spheres[MonoSel[i]].r; //Somme des rayons des sphérules de l'agrégat n°Agg
-        rpmoy2 = rpmoy2 + pow(spheres[MonoSel[i]].r, 2);
-        rpmoy3 = rpmoy3 + pow(spheres[MonoSel[i]].r, 3);
+        rpmoy = rpmoy + spheres[MonoSel[i]].Radius(); //Somme des rayons des sphérules de l'agrégat n°Agg
+        rpmoy2 = rpmoy2 + pow(spheres[MonoSel[i]].Radius(), 2);
+        rpmoy3 = rpmoy3 + pow(spheres[MonoSel[i]].Radius(), 3);
     }
 
 
@@ -613,28 +614,37 @@ void ReplacePosi(int id)
 
     nr = SelectLabelEgal(id,MonoRep);
 
+    double* trans = new double[4];
+    bool move=false;
+
     for (i = 1; i <= 3; i++)
     {
         if (PosiGravite[id][i] > L)
         {
-            PosiGravite[id][i] = PosiGravite[id][i] - L;
-            for (j = 1; j <= nr; j++)
-            {
-                k = MonoRep[j];
-                spheres[k].pos[i] = spheres[k].pos[i] - L;
-            }
+            trans[i] = - L;
+            move = true;
         }
-
-        if (PosiGravite[id][i] < 0)
+        else if (PosiGravite[id][i] < 0)
         {
-            PosiGravite[id][i] = PosiGravite[id][i] + L;
-            for (j = 1; j <= nr; j++)
-            {
-                k = MonoRep[j];
-                spheres[k].pos[i] = spheres[k].pos[i] + L;
-            }
+            trans[i] = L;
+            move = true;
+        }
+        else
+        {
+            trans[i] = 0;
         }
     }
+    if (move)
+    {
+        for (i = 1; i <= 3; i++)
+            PosiGravite[id][i] = PosiGravite[id][i] + trans[i];
+
+        for (j = 1; j <= nr; j++)
+        {
+            spheres[MonoRep[j]].Translate(trans);
+        }
+    }
+    delete[] trans;
 }
 //###############################################################################################################################
 
@@ -805,13 +815,17 @@ double Distance_Aggregate(int s, int nmonoi, double lpm)
 
     np = SelectLabelEgal(agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
 
+    double* trans = new double[4];
+    trans[1] = IdPossible[s][2]*L;
+    trans[2] = IdPossible[s][3]*L;
+    trans[3] = IdPossible[s][4]*L;
 
     //$ Loop on all the spheres of the other aggregate
     for (j = 1; j <= np; j++)
     {
-        l = MonoSel[j];
         //$ spheredecale is used to replace the sphere into the corresponding box
-        spheredecale.Update(spheres[l].pos[1]+IdPossible[s][2]*L,spheres[l].pos[2]+IdPossible[s][3]*L,spheres[l].pos[3]+IdPossible[s][4]*L,spheres[l].r);
+        spheredecale.Update(spheres[MonoSel[j]]);
+        spheredecale.Translate(trans);
 
         //$ For every sphere in the aggregate :
         for (knum = 1; knum <= nmonoi; knum++)
@@ -826,6 +840,7 @@ double Distance_Aggregate(int s, int nmonoi, double lpm)
 
         }
     }
+    delete[] trans;
     return ret;
 }
 //###############################################################################################################################
@@ -857,22 +872,20 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     {
         if (i != id)
         {
-            double inix,iniy,iniz;
+            double inix,iniy,iniz,inir;
             inix = PosiGravite[i][1];
             iniy = PosiGravite[i][2];
             iniz = PosiGravite[i][3];
-            s2.r = Aggregate[i][6]; //represents the different agregates
+            inir = Aggregate[i][6]; //represents the different agregates
 
             //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
             for (dx = -1;dx <= 1; dx++)
             {
-                s2.pos[1] = inix+L*dx;
                 for (dy = -1; dy <= 1; dy++)
                 {
-                    s2.pos[2] = iniy+L*dy;
                     for (dz = -1; dz <= 1; dz++)
                     {
-                        s2.pos[3] = iniz+L*dz;
+                        s2.Update(inix+L*dx,iniy+L*dy,iniz+L*dz,inir);
 
                         // checks if the two spheres will be in contact while
                          //... the first one is moving
@@ -916,13 +929,14 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 //################################################# Réunion de deux agrégats ####################################################
 int Reunit(int AggI, int AggJ, int &err)
 {
-    int i, nselect, numreject, numstudy;
+    int i, nselect, numreject, numstudy,nmonoi;
 
     err = 0;
 
-    for (i = 1; i <= N; i++)
-        if (spheres[i].Label == AggI)
-            spheres[i].Translate(Translate);
+    nmonoi = SelectLabelEgal(AggI, Monoi); //Liste of the monomeres in the aggregate id
+
+    for (i = 1; i <= nmonoi; i++)
+            spheres[Monoi[i]].Translate(Translate);
 
     if (AggI < AggJ)
     {
@@ -959,8 +973,7 @@ int Reunit(int AggI, int AggJ, int &err)
 
     for (i = 1; i <= nselect; i++)
     {
-        spheres[MonoSel[i]].Label = numstudy;
-
+        spheres[MonoSel[i]].SetLabel(numstudy);
     }
 
     SupprimeLigne(numreject);
@@ -969,7 +982,7 @@ int Reunit(int AggI, int AggJ, int &err)
     nselect = SelectLabelSuperieur(numreject, MonoSel);
 
     for (i = 1; i <= nselect; i++)
-        spheres[MonoSel[i]].Label--;
+        spheres[MonoSel[i]].DecreaseLabel();
 
     return numstudy;
 }
@@ -989,7 +1002,9 @@ int CalculSuperposition(int id)
         for (j = 1;j <= i-1; j++)
         {
             d = spheres[Monoi[j]].Distance(spheres[Monoi[i]]);
-            dsuperpos = (d-(spheres[Monoi[j]].r+spheres[Monoi[i]].r))/(spheres[Monoi[j]].r+spheres[Monoi[i]].r);
+            double rj = spheres[Monoi[j]].Radius();
+            double ri = spheres[Monoi[i]].Radius();
+            dsuperpos = (d-(rj+ri))/(rj+ri);
             if (dsuperpos < mem)
             {
                 mem = dsuperpos;
@@ -1014,7 +1029,8 @@ void CroissanceSurface(double dt)
 
     for (i = 1; i <= N; i++)
     {
-        spheres[i].Update(spheres[i].pos, spheres[i].r+Asurfgrowth*pow(spheres[i].r, xsurfgrowth-2)*dt);
+        double newradius = spheres[i].Radius() + Asurfgrowth*pow(spheres[i].Radius(), xsurfgrowth-2)*dt;
+        spheres[i].Update(spheres[i].Position(),newradius );
     }
 }
 //###############################################################################################################################
@@ -1202,8 +1218,8 @@ void Init()
         test=0;
         for (k = 1; k <= i-1; k++)
         {
-            dist = spheres[k].Distance(spheres[i].pos); // Calcule la distance centre à centre entre le monomère k et tous les autres
-            if (dist <= spheres[k].r+spheres[i].r)
+            dist = spheres[k].Distance(spheres[i]); // Calcule la distance centre à centre entre le monomère k et tous les autres
+            if (dist <= spheres[k].Radius()+spheres[i].Radius())
                 test++;
         }
 
@@ -1313,7 +1329,7 @@ void SauveASCII(int value, int id)
     fprintf(f, "Label\t      Rp(nm)\t      X(nm)\t     Y(nm)\t     Z(nm)\n");
 
     for (i=1;i<=N;i++)
-        fprintf(f,"%5d\t %10.5f\t %10.5f\t %10.5f\t %10.5f\n", spheres[i].Label, spheres[i].r*1E9, spheres[i].pos[1]*1E9, spheres[i].pos[2]*1E9, spheres[i].pos[3]*1E9);
+        fprintf(f,"%s\n", spheres[i].str(1e9).c_str());
 
     fclose(f);
 
@@ -1619,14 +1635,18 @@ void Calcul() //Coeur du programme
             }
             //$ The aggregate in contact is moved to the right box
 
+            int nmonoi = SelectLabelEgal(IdPossible[aggcontact][1], Monoi);
+
+            double* trans = new double[4];
+            trans[1] = IdPossible[aggcontact][2]*L;
+            trans[2] = IdPossible[aggcontact][3]*L;
+            trans[3] = IdPossible[aggcontact][4]*L;
+
             //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
             //It gets in box on one side, then has to go out on the other one.
-            for (j = 1; j <= N; j++)
-                if (spheres[j].Label == IdPossible[aggcontact][1])
-                {
-                    spheres[j].Update(spheres[j].pos[1]+IdPossible[aggcontact][2]*L,spheres[j].pos[2]+IdPossible[aggcontact][3]*L,spheres[j].pos[3]+IdPossible[aggcontact][4]*L,spheres[j].r);
-                }
-
+            for (j = 1; j <= nmonoi; j++)
+                    spheres[Monoi[j]].Translate(trans);
+            delete[] trans;
 
             //$ Aggregates in contact are reunited
             newnumagg = Reunit(NumAgg, IdPossible[aggcontact][1], err);
@@ -1651,12 +1671,13 @@ void Calcul() //Coeur du programme
             //$ Translation of the aggregate on his full lpm distance
             for (i = 1; i <= 3; i++)
                 Translate[i] = Vectdir[i]*lpm;
-            for (i = 1; i <= N; i++)
+
+            int nmonoi = SelectLabelEgal(NumAgg, Monoi);
+
+            for (i = 1; i <= nmonoi; i++)
             {
-                if (spheres[i].Label == NumAgg)
-                {
-                    spheres[i].Translate(Translate);
-                }
+                spheres[Monoi[i]].Translate(Translate);
+
             }
             for (j = 1; j <= 3; j++)
             {
