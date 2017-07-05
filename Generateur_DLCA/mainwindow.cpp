@@ -820,19 +820,6 @@ int CalculSuperposition(int id)
 }
 //###############################################################################################################################
 
-//####################################### Croissance de surface des particules primaires ########################################
-void CroissanceSurface(double dt)
-{
-    int i;
-
-    for (i = 1; i <= N; i++)
-    {
-        double newradius = physicalmodel.Grow(spheres[i].Radius(), dt);
-        spheres[i].Update(spheres[i].Position(),newradius );
-    }
-}
-//###############################################################################################################################
-
 //################################ Lecture des données physiques d'entrée variables dans le temps ###############################
 int LectureSuiviTempo()
 {
@@ -950,8 +937,6 @@ void Init()
     L = X*Dpm*1E-9;
 
     physicalmodel.Init(P,T,dfe,kfe,Dpm,sigmaDpm,xsurfgrowth,coeffB,Rho);
-    physicalmodel.SetPrecision(1e-4);
-    physicalmodel.UseSecante();
 
     spheres.Init(N,physicalmodel);
     Translate = new double[4];
@@ -1391,7 +1376,7 @@ void Calcul() //Coeur du programme
             }
 
             //$ Surface Growth
-            CroissanceSurface(deltatemps);
+            spheres.CroissanceSurface(deltatemps);
 
             //$ Aggregates parameter update
 

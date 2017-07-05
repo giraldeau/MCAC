@@ -10,6 +10,8 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+using namespace std;
+
 const double PI = atan(1.0)*4;
 
 void PhysicalModel::Init(const double _P, const double _T, const double _dfe, const double _kfe, const double _Dpm, const double _sigmaDpm, const double _xsurfgrowth, const double _coeffB, const double _Rho)
@@ -33,6 +35,11 @@ void PhysicalModel::Init(const double _P, const double _T, const double _dfe, co
     Mu = 18.203E-6*(293.15+110)/(T+110)*pow(T/293.15,1.5);
 
     Asurfgrowth = coeffB*1E-3;
+
+    SetPrecision(1e-4);
+    UseSecante();
+
+    print();
 }
 
 void PhysicalModel::SetPrecision(const double _precision)
@@ -60,10 +67,32 @@ void PhysicalModel::UseSecante(void)
     root_sec = true;
 }
 
-//void print(voidi) const
-//{
-
-//}
+void PhysicalModel::print(void) const
+{
+    cout << "Physical parameters:" << endl
+         << " Pressure    : " << P << endl
+         << " Temperature : " << T << endl
+         << " diffusivity : " << Mu << endl
+         << " K           : " << K << endl
+         << " density     : " << Rho << endl
+         << " Dpm         : " << Dpm << endl
+         << " sigmaDpm    : " << sigmaDpm << endl
+         << " Asurfgrowth : " << Asurfgrowth << endl
+         << " xsurfgrowth : " << xsurfgrowth << endl
+         << " coeffB      : " << coeffB << endl
+         << " dfe         : " << dfe << endl
+         << " kfe         : " << kfe << endl
+         << " lambda      : " << lambda << endl
+         << " Dpeqmass    : " << Dpeqmass << endl
+         << " rpeqmass    : " << rpeqmass << endl
+         << " gamma_      : " << gamma_ << endl
+         << endl
+         << "Options for Pysical model: " << endl
+         << " precision   : " << precision << endl
+         << " root_dicho  : " << root_dicho << endl
+         << " root_sec    : " << root_sec << endl
+         << " root_brent  : " << root_brent << endl;
+}
 
 
 //###############################################################################################################################

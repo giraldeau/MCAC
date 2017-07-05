@@ -18,14 +18,39 @@ const double facsurf = 4*PI;
 
 Sphere::Sphere(void)
 {
-    pos = new double[4];
-    Label = 0;
+    arr = new double[7];
+    pos = arr;
+    r = &arr[4];
+    volume = &arr[5];
+    surface = &arr[6];
+    AggLabel = 0;
+    SphereLabel = 0;
     Update(0, 0, 0, 0);
+
+    external_storage=false;
+}
+
+Sphere::Sphere(double* arr,const int i)
+{
+    pos = arr;
+    r = &arr[4];
+    volume = &arr[5];
+    surface = &arr[6];
+    AggLabel = 0;
+    SphereLabel = i;
+    Update(0, 0, 0, 0);
+
+    external_storage =true;
 }
 
 Sphere::~Sphere(void)
 {
-    if (pos!=NULL) delete[] pos;
+    if(!external_storage)
+        if (arr!=NULL) delete[] arr;
+    pos = NULL;
+    r = NULL;
+    volume = NULL;
+    surface = NULL;
 }
 
 void Sphere::Update(const double newx,const double newy,const double newz,const double newr)
@@ -33,8 +58,8 @@ void Sphere::Update(const double newx,const double newy,const double newz,const 
     pos[1] = newx;
     pos[2] = newy;
     pos[3] = newz;
-    r = newr;
-    Update();
+    *r = newr;
+    UpdateVolAndSurf();
 }
 
 void Sphere::Update(const double* newp,const double newr)
@@ -44,18 +69,18 @@ void Sphere::Update(const double* newp,const double newr)
 
 void Sphere::Update(const Sphere& c)
 {
-    Update(c.pos,c.r);
+    Update(c.pos,c.Radius());
 }
 
 
 void Sphere::SetLabel(const int value)
 {
-    Label = value;
+    AggLabel = value;
 }
 
 void Sphere::DecreaseLabel(void)
 {
-    Label--;
+    AggLabel--;
 }
 
 void Sphere::Translate(const double* trans)
@@ -65,17 +90,17 @@ void Sphere::Translate(const double* trans)
 
 double Sphere::Volume(void) const
 {
-    return volume;
+    return *volume;
 }
 
 double Sphere::Surface(void) const
 {
-    return surface;
+    return *surface;
 }
 
 double Sphere::Radius(void) const
 {
-    return r;
+    return *r;
 }
 
 const double* Sphere::Position(void) const
@@ -87,8 +112,8 @@ string Sphere::str(const double coef) const
 {
     stringstream res;
     res
-        << setw(5) << Label << "\t"
-        << setprecision(5) << setw(11) << fixed << r*coef << "\t"
+        << setw(5) << AggLabel << "\t"
+        << setprecision(5) << setw(11) << fixed << Radius()*coef << "\t"
         << setprecision(5) << setw(11) << fixed << pos[1]*coef << "\t"
         << setprecision(5) << setw(11) << fixed << pos[2]*coef << "\t"
         << setprecision(5) << setw(11) << fixed << pos[3]*coef;
@@ -100,12 +125,12 @@ void Sphere::Aff(const double coef) const
     cout << str(coef) << endl;
 }
 
-void Sphere::Update(void)
+void Sphere::UpdateVolAndSurf(void)
 {
-    if (Label > 0)
+    if (AggLabel > 0)
     {
-        volume = facvol*pow(r, 3);
-        surface =  facsurf*pow(r, 2);
+        *volume = facvol*pow(*r, 3);
+        *surface =  facsurf*pow(*r, 2);
     }
 }
 
@@ -144,7 +169,7 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
     dy = c.pos[2] - pos[2];
     dz = c.pos[3] - pos[3];
 
-    dist_contact = pow(r + c.r,2);
+    dist_contact = pow(Radius() + c.Radius(),2);
 
     //$ Compute signed distance for contact between two spheres
     distance = dx*dx+dy*dy+dz*dz;
@@ -186,8 +211,8 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     vol1 = vol2 = 0.;
     surf1 = surf2 = 0.;
 
-    Ri = r;
-    Rj = c.r;
+    Ri = Radius();
+    Rj = c.Radius();
 
     //$ Determination of the distance between the center of the 2 aggregates
     d = sqrt(pow(pos[1]-c.pos[1],2) + pow(pos[2]-c.pos[2],2) + pow(pos[3]-c.pos[3],2));
@@ -229,21 +254,34 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     return d;
 }
 
-void SphereList::Init(const int _N,const PhysicalModel _physicalmodel)
+void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
 {
     N=_N;
-    spheres = new Sphere[N+1];
+    spheres = new Sphere*[N+1];
     physicalmodel=&_physicalmodel;
+
+    array = new double*[N+1];
+
+    for (int i = 1; i <= N; i++)
+    {
+        array[i] = new double[7];
+        spheres[i] = new Sphere(array[i],i);
+    }
+
+    external_storage = false;
 }
 
 SphereList::~SphereList(void)
 {
-    if (spheres!=NULL) delete[] spheres;
+    if(!external_storage)
+        if (spheres!=NULL) delete[] spheres;
+        if (array!=NULL) delete[] array;
+    physicalmodel = NULL;
 }
 
 Sphere& SphereList::operator[](const int i)
 {
-    return spheres[i];
+    return *spheres[i];
 }
 
 //####################################### Croissance de surface des particules primaires ########################################
@@ -251,7 +289,8 @@ void SphereList::CroissanceSurface(double dt)
 {
     for (int i = 1; i <= N; i++)
     {
-        double newradius = physicalmodel->Grow(spheres[i].Radius(), dt);
-        spheres[i].Update(spheres[i].Position(),newradius );
+        array[i][4] = physicalmodel->Grow(array[i][4], dt);
+        array[i][5] = facvol*pow(array[i][4], 3);
+        array[i][6] = facsurf*pow(array[i][4], 2);
     }
 }

@@ -8,16 +8,21 @@ class Sphere
     friend class SphereList;
 
     private:
+        double* arr;
         double* pos;
-        double r;
-        int Label;
+        double* r;
+        double* volume;
+        double* surface;
 
-        void Update(void);
+        int AggLabel, SphereLabel;
 
-        double volume, surface;
+        bool external_storage;
+
+        void UpdateVolAndSurf(void);
 
     public:
         Sphere(void);
+        Sphere(double* arr,const int i);
         ~Sphere(void);
 
         void Update(const double newx, const double newy, const double newz, const double newr);
@@ -42,13 +47,16 @@ class Sphere
 class SphereList
 {
     private:
-        Sphere* spheres;
+        Sphere** spheres;
+        double** array;
         int N;
         const PhysicalModel* physicalmodel;
 
+        bool external_storage;
+
     public:
 
-        void Init(const int N,const PhysicalModel _physicalmodel);
+        void Init(const int N,PhysicalModel& _physicalmodel);
         ~SphereList(void);
 
         Sphere& operator[](const int i);
