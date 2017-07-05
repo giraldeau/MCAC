@@ -21,6 +21,7 @@ public:
     double Distance(const Sphere& c) const;
     double Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
     double Collision(const Sphere& c, const double* vd,const  double  distmax,double& distance_contact) const;
+    double Collision_opt(const Sphere& c, const double* vd,const  double  distmax,double& distance_contact) const;
     double VolumeCalotteij(const Sphere& c) const;
     double SurfaceCalotteij(const Sphere& c) const;
 };

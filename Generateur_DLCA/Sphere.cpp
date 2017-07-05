@@ -65,7 +65,7 @@ double Sphere::Distance(const Sphere& c) const
     return sqrt(pow(pos[1]-c.pos[1],2)+pow(pos[2]-c.pos[2],2)+pow(pos[3]-c.pos[3],2));
 }
 
-double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,double& distance_contact) const
+double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,double& distance) const
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
@@ -80,20 +80,22 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
   /*!
    *  \image html cCSphereFIntersectionCSphereddd.png
    */
-    double A, B, C;
+    double B, C;
     double dx, dy, dz;
     double DELTA;
     double K, K1, K2;
-    double dist;
+    double dist,dist_contact;
 
     dx = c.pos[1] - pos[1];
     dy = c.pos[2] - pos[2];
     dz = c.pos[3] - pos[3];
 
-    //$ Compute signed distance for contact between two spheres
-    distance_contact = sqrt(dx*dx+dy*dy+dz*dz)-r-c.r;
+    dist_contact = pow(r + c.r,2);
 
-    if (distance_contact <= 0)
+    //$ Compute signed distance for contact between two spheres
+    distance = dx*dx+dy*dy+dz*dz;
+
+    if (distance <= dist_contact)
     {
        //$ There is contact between these two spheres
        dist = -1;
@@ -104,20 +106,68 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
 
         dist = 1;
         K = -1;
-        A = vd[1]*vd[1]+vd[2]*vd[2]+vd[3]*vd[3];
         B = -2*(dx*vd[1]+dy*vd[2]+dz*vd[3]);
-        C = -pow(r+c.r,2)+(dx*dx+dy*dy+dz*dz);
-        DELTA = B*B-4*A*C;
+        C = distance - dist_contact;
+        DELTA = B*B-4*C;
         if (DELTA >= 0)
         {
             DELTA = sqrt(DELTA);
-            K1=(-B-DELTA)/2/A;
-            K2=(-B+DELTA)/2/A;
-            if (K1*K2 < 0) K = MAX(K1,K2);
-            else if (K1 > 0) K = MIN(K1,K2);
-            if (K > 0) dist = K*sqrt(A);
+            K1=0.5*(-B-DELTA);
+            K2=0.5*(-B+DELTA);
+            K = MIN(K1,K2);
+            if (K < 0) K = MAX(K1,K2);
+            if (K > 0) dist = K;
             if (dist > distmax) dist = 1;
         }
+    }
+    return dist;
+}
+
+
+double Sphere::Collision_opt(const Sphere& c,const  double* vd,const double distmax,double& distance) const
+{
+/*
+     (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
+     résultat:
+        dist=-1: les sphères se touchent
+        dist=1 : la sphère courante ne peut pas toucher la sphère (c) en
+        se déplaçant suivant le vecteur directeur (vd) et sur une distance maxi
+        égale à (distmax).
+        sinon  : il peut y avoir contact. La sphère courante doit être déplacée
+        de (dist) en suivant (vd) pour toucher la sphère (c)
+*/
+  /*!
+   *  \image html cCSphereFIntersectionCSphereddd.png
+   */
+    double dist_proj,min_dist,dist_contact;
+    double dx, dy, dz;
+    double dist;
+
+    dx = c.pos[1] - pos[1];
+    dy = c.pos[2] - pos[2];
+    dz = c.pos[3] - pos[3];
+
+    dist_contact = pow(r + c.r,2);
+    distance = dx*dx+dy*dy+dz*dz;
+
+    if (distance <= dist_contact)
+    {
+        //$ There is already contact between these two spheres
+        return -1;
+    }
+    dist_proj = dx*vd[1]+dy*vd[2]+dz*vd[3];
+    min_dist = pow(dist_proj*vd[1] - dx,2) + pow(dist_proj*vd[2] - dy,2) + pow(dist_proj*vd[3] - dz,2);
+
+    if (min_dist > dist_contact)
+    {
+        //$ There is not contact possible between these two spheres
+        return  1;
+    }
+    dist = dist_proj-sqrt(dist_contact-min_dist);
+    if (dist > distmax || dist < 0)
+    {
+        //$ The contact would be too late, or is behind
+        return  1;
     }
     return dist;
 }
