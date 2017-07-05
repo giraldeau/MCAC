@@ -175,15 +175,6 @@ double erf(double x) { return 1-erfc(x); }
 double inverf(double p) {return inverfc(1.-p);}
 //###############################################################################################################################
 
-double Distance(double* V1, double* V2) //Calcule la distance centre à centre entre deux sphères
-{
-    double dx=V2[1]-V1[1];
-    double dy=V2[2]-V1[2];
-    double dz=V2[3]-V1[3];
-
-    return sqrt(dx*dx+dy*dy+dz*dz);
-}
-
 double Cunningham(double R) //Facteur correctif de Cunningham
 {
     double A = 1.142;
@@ -535,7 +526,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     for (i = 1; i <= nmonoi; i++)
     {
         //$ Determination of the distance between each monomere and the center of mass of Agg Id
-        li = Distance(spheres[Monoi[i]].pos, PosiGravite[id]); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
+        li = spheres[Monoi[i]].Distance(PosiGravite[id]); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
 
         r = li + spheres[Monoi[i]].r;
 
@@ -997,7 +988,7 @@ int CalculSuperposition(int id)
     {
         for (j = 1;j <= i-1; j++)
         {
-            d = Distance(spheres[Monoi[j]].pos,spheres[Monoi[i]].pos);
+            d = spheres[Monoi[j]].Distance(spheres[Monoi[i]]);
             dsuperpos = (d-(spheres[Monoi[j]].r+spheres[Monoi[i]].r))/(spheres[Monoi[j]].r+spheres[Monoi[i]].r);
             if (dsuperpos < mem)
             {
@@ -1211,7 +1202,7 @@ void Init()
         test=0;
         for (k = 1; k <= i-1; k++)
         {
-            dist = Distance(spheres[k].pos,spheres[i].pos); // Calcule la distance centre à centre entre le monomère k et tous les autres
+            dist = spheres[k].Distance(spheres[i].pos); // Calcule la distance centre à centre entre le monomère k et tous les autres
             if (dist <= spheres[k].r+spheres[i].r)
                 test++;
         }
