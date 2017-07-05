@@ -492,10 +492,9 @@ int SelectLabelSuperieur(int id, int* resu)
 void AjouteVerlet(int id)
 {   int taille1;
 
-
-    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+1;
-    VerIndex2=floor(PosiGravite[id][1]*GridDiv/L)+1;
-    VerIndex3=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
     Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
     Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
     taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
@@ -511,9 +510,9 @@ void SupprimeVerlet(int id)
 {   int taille1,taille2;
 
 
-    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+1;
-    VerIndex2=floor(PosiGravite[id][1]*GridDiv/L)+1;
-    VerIndex3=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
     Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
     Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
     taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
@@ -549,6 +548,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     tabVol = new double[nmonoi+1];
     tabSurf = new double[nmonoi+1];
 
+    SupprimeVerlet(id);
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
 
@@ -780,6 +780,8 @@ void ReplacePosi(int id)
     //$ Get the list of the monomeres if Agg Id
     nr = SelectLabelEgal(id,MonoRep);
 
+    SupprimeVerlet(id);
+
     //$ for every dimension
     for (i = 1; i <= 3; i++)
     {   actualiseFlowgen=1;
@@ -822,18 +824,23 @@ void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
     printf("SupLigne  : ");
-    SupprimeVerlet(ligne);
+    //SupprimeVerlet(ligne);
     printf("\n");
 
-    for (i = ligne + 1; i<= N; i++)
+    for (i = ligne + 1; i<= NAgg; i++)
     {
+        SupprimeVerlet(i-1);
+
         for (j = 0; j <= 11; j++)
             Aggregate[i-1][j] = Aggregate[i][j];
 
-        DecrementeVerlet(i);
+        //DecrementeVerlet(i);
 
         for (j = 1; j<= 3; j++)
             PosiGravite[i-1][j] = PosiGravite[i][j];
+
+        AjouteVerlet(i-1);
+
 
     }
 
@@ -1316,25 +1323,18 @@ void Init()
 
     // Verlet
 
-    Verlet=new std::list<int>***[GridDiv+1];
-
-
-
-
-    for(i=1;i<=GridDiv;i++)
+    Verlet=new std::list<int>***[3*GridDiv+1];
+    for(i=0;i<=3*GridDiv;i++)
     {
-        Verlet[i]=new std::list<int>**[GridDiv+1];
+        Verlet[i]=new std::list<int>**[3*GridDiv+1];
 
-        for(j=1;j<=GridDiv;j++)
+        for(j=0;j<=3*GridDiv;j++)
         {
-            Verlet[i][j]=new std::list<int>*[GridDiv+1];
+            Verlet[i][j]=new std::list<int>*[3*GridDiv+1];
 
-            for(k=1;k<=GridDiv+1;k++)
+            for(k=0;k<=3*GridDiv;k++)
             {
                 Verlet[i][j][k]= new std::list<int>;
-
-
-
             }
 
         }
@@ -1457,7 +1457,7 @@ void Init()
 void Fermeture()
 {
 
-    for (int i = 0; i <= N; i++)
+    for (int i = 1; i <= N; i++)
     {
         delete[] PosiGravite[i];
         delete[] Aggregate[i];
@@ -1796,7 +1796,6 @@ void Calcul() //Coeur du programme
             lpm = Dpm*1E-9; //On fixe le lpm au Dpm
             contact = (aggcontact != 0);
         }
-        SupprimeVerlet(NumAgg);
         if (contact)
         {
             //$ Translation of the aggregate
@@ -1854,15 +1853,15 @@ void Calcul() //Coeur du programme
                     spheres[i].Translate(Translate);
                 }
             }
-
+            SupprimeVerlet(NumAgg);
             for (j = 1; j <= 3; j++)
             {
                 PosiGravite[NumAgg][j] = PosiGravite[NumAgg][j] + Translate[j];
             }
+            AjouteVerlet(NumAgg);
 
             newnumagg = NumAgg;
         }
-        //SupprimeVerlet(newnumagg);
         ReplacePosi(newnumagg);
 
 
