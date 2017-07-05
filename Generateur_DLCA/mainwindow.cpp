@@ -488,6 +488,43 @@ int SelectLabelSuperieur(int id, int* resu)
     return m;
 }
 
+
+void AjouteVerlet(int id)
+{   int taille1;
+
+
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex2=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex3=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
+    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
+
+    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=1)
+    {
+        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "   "  << taille1 <<"Ajouter Deconne \n";
+    }
+}
+
+void SupprimeVerlet(int id)
+{   int taille1,taille2;
+
+
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex2=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex3=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
+    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+    Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
+
+    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=-1)
+    {
+        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() <<"  " << taille1 <<"Supprime Deconne "<<"\n";
+    }
+}
+
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
 double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat, double** PosiGravite)
@@ -522,7 +559,6 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         tabVol[i] =0.;
         tabSurf[i] =0.;
     }
-
 
 
     //$ For the Spheres i in Agg Id
@@ -574,6 +610,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         //$ Calculation of the position of the center of mass
         for (k = 1; k <= 3; k++)
             PosiGravite[id][k] = PosiGravite[id][k] + spheres[Monoi[i]].pos[k]*tabVol[i]; //Somme des Vi*xi
+
     }
 
     Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
@@ -595,6 +632,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     {
         PosiGravite[id][k] = PosiGravite[id][k]/volAgregat;
     } //Centre of mass of Agg Id
+    AjouteVerlet(id);
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
 
     for (i = 1; i <= nmonoi; i++)
@@ -687,39 +725,9 @@ void ParametresAgg(int Agg)
 }
 //######################################################    verlet   #########################################################################
 
-void SupprimeVerlet(int id)
-{   int taille1,taille2;
 
 
-    VerIndex1=floor((PosiGravite[id][1]/GridDiv))+1;
-    VerIndex2=floor((PosiGravite[id][2]/GridDiv))+1;
-    VerIndex3=floor((PosiGravite[id][3]/GridDiv))+1;
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
-    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
 
-    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=-1)
-    {
-        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() <<"  " << taille1 <<"Supprime Deconne \n";
-    }
-}
-
-void AjouteVerlet(int id)
-{   int taille1;
-
-
-    VerIndex1=(int)PosiGravite[id][1]/GridDiv+1;
-    VerIndex2=(int)PosiGravite[id][2]/GridDiv+1;
-    VerIndex3=(int)PosiGravite[id][3]/GridDiv+1;
-    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
-
-    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=1)
-    {
-        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "   "  << taille1 <<"Ajouter Deconne \n";
-    }
-}
 
 void AfficheVerlet(int id)
 {   std::_List_iterator<int> i;
@@ -728,9 +736,9 @@ void AfficheVerlet(int id)
 
 
 
-    VerIndex1=(int)PosiGravite[id][1]/GridDiv+1;
-    VerIndex2=(int)PosiGravite[id][2]/GridDiv+1;
-    VerIndex3=(int)PosiGravite[id][3]/GridDiv+1;
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex2=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex3=floor(PosiGravite[id][1]*GridDiv/L)+1;
 
 
 
@@ -746,11 +754,9 @@ void AfficheVerlet(int id)
 void DecrementeVerlet(int id)
 {   int taille1,taille2;
 
-
-
-    VerIndex1=(PosiGravite[id][1]/GridDiv)+1;
-    VerIndex2=(PosiGravite[id][2]/GridDiv)+1;
-    VerIndex3=(PosiGravite[id][3]/GridDiv)+1;
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex2=floor(PosiGravite[id][1]*GridDiv/L)+1;
+    VerIndex3=floor(PosiGravite[id][1]*GridDiv/L)+1;
     Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
     Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
     taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
@@ -762,6 +768,7 @@ void DecrementeVerlet(int id)
     if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=0)
     {
         std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "     " <<taille2 << "    "<<taille1 <<"  Decremente Deconne \n";
+
     }
 
 }
@@ -814,10 +821,9 @@ void ReplacePosi(int id)
 void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
-
-
+    printf("SupLigne  : ");
     SupprimeVerlet(ligne);
-
+    printf("\n");
 
     for (i = ligne + 1; i<= N; i++)
     {
@@ -1108,6 +1114,7 @@ int Reunit(int AggI, int AggJ, int &err)
     }
 
     //$ Deletionn of the aggregate that was absorbed, using SupprimeLigne()
+
     SupprimeLigne(numreject);
     delete[] TamponValeurs;
 
@@ -1789,7 +1796,7 @@ void Calcul() //Coeur du programme
             lpm = Dpm*1E-9; //On fixe le lpm au Dpm
             contact = (aggcontact != 0);
         }
-
+        SupprimeVerlet(NumAgg);
         if (contact)
         {
             //$ Translation of the aggregate
@@ -1836,7 +1843,7 @@ void Calcul() //Coeur du programme
         }
         else
         {
-            SupprimeVerlet(NumAgg);
+
             //$ Translation of the aggregate on his full lpm distance
             for (i = 1; i <= 3; i++)
                 Translate[i] = Vectdir[i]*lpm;
@@ -1855,6 +1862,7 @@ void Calcul() //Coeur du programme
 
             newnumagg = NumAgg;
         }
+        //SupprimeVerlet(newnumagg);
         ReplacePosi(newnumagg);
 
 
