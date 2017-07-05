@@ -13,32 +13,36 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp\
-        Sphere.cpp
+        Sphere.cpp \
+    physical_model.cpp
 
 HEADERS += mainwindow.h\
-        Sphere.h
+        Sphere.h \
+    physical_model.h
 
 FORMS += mainwindow.ui
 
 RESOURCES += \
     mainwindow.qrc
 
-#CONFIG += warn_on
+CONFIG += warn_on
 
 #### INTEL ###
+#QMAKE_CXXFLAGS_DEBUG += -g -traceback
 #QMAKE_CXXFLAGS_DEBUG += -fp-trap=common -ansi-alias-check -check=conversions,stack,uninit -fp-stack-check -fstack-security-check -ftrapuv -par-runtime-control=3 -vec-guard-write  -Wcheck
 #QMAKE_CXXFLAGS_DEBUG += -check-pointers=rw -check-pointers-dangling=all -check-pointers-narrowing -check-pointers-undimensioned
+#QMAKE_LFLAGS_DEBUG += -g
 #LIBS += -lchkp -lchkpwrap
 
-QMAKE_CXXFLAGS_RELEASE = -Ofast -falign-functions=16 -ansi-alias -xHost -static -no-prec-div -DNDEBUG
+#QMAKE_CXXFLAGS_RELEASE = -fast -falign-functions=16 -ansi-alias -xHost -static -no-prec-div -DNDEBUG -fp-model fast=2
 
 ### When not profiling
-##QMAKE_CXXFLAGS_RELEASE += -lto
+#QMAKE_CXXFLAGS_RELEASE += -lto # -prof-gen:srcpos
 
 ### When profiling
-QMAKE_CXXFLAGS_RELEASE +=  -g -traceback #-fno-inline-functions -p -pg  -fno-omit-frame-pointer  -fno-optimize-sibling-calls   -fno-inline
-QMAKE_LFLAGS_RELEASE += -g #-p -pg
-LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
+#QMAKE_CXXFLAGS_RELEASE +=  -g -traceback #-fno-inline-functions -p -pg  -fno-omit-frame-pointer  -fno-optimize-sibling-calls   -fno-inline
+#QMAKE_LFLAGS_RELEASE += -g #-p -pg
+#LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
 
 
 

@@ -54,9 +54,6 @@ int nb_line;
 int secondes;
 int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
 int iValTab=0;
-int* Monoi; //
-int* MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
-int* MonoRep; //
 double** IdPossible;
 int* IdDistTab;
 int* IndexPourTri;
@@ -68,8 +65,11 @@ int** AggLabels;
 
 MainWindow* GUI;
 
-Sphere* spheres;
 Sphere s1,s2;
+SphereList spheres;
+int* Monoi; //
+int* MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
+int* MonoRep; //
 
 PhysicalModel physicalmodel;
 
@@ -953,7 +953,7 @@ void Init()
     physicalmodel.SetPrecision(1e-4);
     physicalmodel.UseSecante();
 
-    spheres = new Sphere[N+1];
+    spheres.Init(N,physicalmodel);
     Translate = new double[4];
     Vectdir = new double[4];
     TriCum = new double[N+1];
@@ -1083,7 +1083,6 @@ void Fermeture()
         delete[] IdPossible[i];
 
     }
-    delete[] spheres;
     delete[] Translate;
     delete[] Vectdir;
     delete[] TriCum;

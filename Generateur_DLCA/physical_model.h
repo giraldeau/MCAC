@@ -27,15 +27,15 @@ private:
 public:
     void Init(const double _P, const double _T, const double _dfe, const double _kfe, const double _Dpm, const double _sigmaDpm, const double _xsurfgrowth, const double _coeffB, const double _Rho);
     void SetPrecision(const double _precision);
-    void UseDichotomia();
-    void UseBrent();
-    void UseSecante();
+    void UseDichotomia(void);
+    void UseBrent(void);
+    void UseSecante(void);
     double ConvertRg2Dm(const double np, const double rg, const double rpmoy);
     double Cunningham(const double R) const;
     double Grow(const double R,const double dt) const;
     double diffusivity(const double dm) const;
     double velocity(const double masse) const;
-    void print() const;
+    void print(void) const;
 };
 #endif // PHYSICAL_MODEL
 

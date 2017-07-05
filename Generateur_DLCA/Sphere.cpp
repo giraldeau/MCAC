@@ -53,7 +53,7 @@ void Sphere::SetLabel(const int value)
     Label = value;
 }
 
-void Sphere::DecreaseLabel()
+void Sphere::DecreaseLabel(void)
 {
     Label--;
 }
@@ -63,22 +63,22 @@ void Sphere::Translate(const double* trans)
     for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans[i];
 }
 
-double Sphere::Volume() const
+double Sphere::Volume(void) const
 {
     return volume;
 }
 
-double Sphere::Surface() const
+double Sphere::Surface(void) const
 {
     return surface;
 }
 
-double Sphere::Radius() const
+double Sphere::Radius(void) const
 {
     return r;
 }
 
-const double* Sphere::Position() const
+const double* Sphere::Position(void) const
 {
     return pos;
 }
@@ -100,7 +100,7 @@ void Sphere::Aff(const double coef) const
     cout << str(coef) << endl;
 }
 
-void Sphere::Update()
+void Sphere::Update(void)
 {
     if (Label > 0)
     {
@@ -227,4 +227,31 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     }
 
     return d;
+}
+
+void SphereList::Init(const int _N,const PhysicalModel _physicalmodel)
+{
+    N=_N;
+    spheres = new Sphere[N+1];
+    physicalmodel=&_physicalmodel;
+}
+
+SphereList::~SphereList(void)
+{
+    if (spheres!=NULL) delete[] spheres;
+}
+
+Sphere& SphereList::operator[](const int i)
+{
+    return spheres[i];
+}
+
+//####################################### Croissance de surface des particules primaires ########################################
+void SphereList::CroissanceSurface(double dt)
+{
+    for (int i = 1; i <= N; i++)
+    {
+        double newradius = physicalmodel->Grow(spheres[i].Radius(), dt);
+        spheres[i].Update(spheres[i].Position(),newradius );
+    }
 }

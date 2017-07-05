@@ -40,27 +40,27 @@ void PhysicalModel::SetPrecision(const double _precision)
     precision = _precision;
 }
 
-void PhysicalModel::UseDichotomia()
+void PhysicalModel::UseDichotomia(void)
 {
     root_dicho = true;
     root_brent = false;
     root_sec = false;
 }
 
-void PhysicalModel::UseBrent()
+void PhysicalModel::UseBrent(void)
 {
     root_dicho = false;
     root_brent = true;
     root_sec = false;
 }
-void PhysicalModel::UseSecante()
+void PhysicalModel::UseSecante(void)
 {
     root_dicho = false;
     root_brent = false;
     root_sec = true;
 }
 
-//void print() const
+//void print(voidi) const
 //{
 
 //}
