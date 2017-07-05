@@ -1,4 +1,6 @@
 #include "mainwindow.h"
+#include <Sphere.h>
+#include <physical_model.h>
 #include "ui_mainwindow.h"
 #include <QFileDialog>
 #include <stdlib.h>
@@ -7,14 +9,12 @@
 #include <fstream>
 #include <sstream>
 #include <time.h>
-#include <Sphere.h>
 #include <string.h>
 #include <qdir.h>
 #include <QString>
 #include <stdio.h>
 #include <string>
 #include <cmath>
-
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -31,12 +31,9 @@ char commentaires[500];
 using namespace std;
 
 const double PI = atan(1.0)*4; // 3.14159
-double T, X, FV, L, Mu, K, P, Rho; // Ture, Paramètre de taille de la boîte, Fraction volumique de suie, longueur de la boîte, ?, ?, ?, Masse volumique
-double Asurfgrowth; // surface growth coefficient
+double T, X, FV, L, P, Rho; // Temperature, Paramètre de taille de la boîte, Fraction volumique de suie, longueur de la boîte, ?, ?, ?, Masse volumique
 double dfe, kfe; // dimension fractale et préfacteur fractal
 double xsurfgrowth, coeffB; // surface growth parameter, Bêta
-int puissancep;
-double lambda, Dpeqmass, rpeqmass, gamma_; // libre parcours moyen d'une sphère
 double Dpm, sigmaDpm; //
 double temps;
 double* Vectdir; // direction aléatoire
@@ -68,16 +65,13 @@ char com[500];
 bool with_dots;
 int* TamponValeurs;
 int** AggLabels;
-bool root_dicho = false;
-bool root_sec = true;
-//double precision = 1E-1; //Précision recherchée
-double precision = 1E-4; //Précision recherchée
-//double precision = 1E-12; //Précision recherchée
-double FactorModelBeta;
+
 MainWindow* GUI;
 
 Sphere* spheres;
 Sphere s1,s2;
+
+PhysicalModel physicalmodel;
 
 void InitRandom()
 {
@@ -173,202 +167,7 @@ double inverfc(double p)
 }
 double erf(double x) { return 1-erfc(x); }
 double inverf(double p) {return inverfc(1.-p);}
-//###############################################################################################################################
 
-double Cunningham(double R) //Facteur correctif de Cunningham
-{
-    double A = 1.142;
-    double B = 0.558;
-    double C = 0.999;
-    return 1+A*lambda/R+B*lambda/R*exp(-C*R/lambda);
-}
-
-//######################################## Fonctions pour le calcul du diamètre de mobilité #####################################
-
-/*
- Fonction permettant de retrouver le rayon de mobilité en régime transitoire
- On obtient le bon rayon de mobilité lorsque la fonction retourne 0
-*/
-
-double ModeleBeta(double rm, double np, double rg)
-{
-    if (rm<0.) {throw 42;}
-
-    //return rm*Cunningham(rpeqmass) - rg*Cunningham(rm)*pow(kfe,1/dfe)*pow(np,(gamma_-1)/dfe) ;
-
-    return Cunningham(rm) - FactorModelBeta*rm;
-    //return rm - FactorModelBeta*Cunningham(rm);
-}
-
-double Dichotomie(double np, double rg,double rpmoy,double x0)
-{
-    double 	rmin, rmax, rmed, frmed, frmin, frmax;
-    int ite=1;
-    rmin = x0/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    rmax = 2*x0; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-
-    frmin = ModeleBeta(rmin, np, rg);
-    frmax = ModeleBeta(rmax, np, rg);
-
-    if (frmin*frmax>=0) {printf("Intervalle incorrect : %e %e \n",frmin,frmax); return -1;} //Intervalle incorrect
-
-    rmed = (rmin+rmax)/2 ;
-    frmed = ModeleBeta(rmed, np, rg);
-
-    while (fabs(frmed)>precision)
-    {
-
-        if (frmin*frmed < 0)
-        {
-            rmax = rmed;
-            frmax = frmed;
-        }
-        else
-        {
-            rmin = rmed;
-            frmin = frmed;
-        }
-        rmed = (rmin+rmax)/2 ;
-        frmed = ModeleBeta(rmed, np, rg);
-        ite++;
-    }
-    return rmed;
-}
-
-double brentq(double np, double rg,double rpmoy,double x0)
-{
-    double xa,xb,xtol,rtol;
-    int iter=500;
-
-    xa = x0/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    xb = 2*x0; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
-    xtol = rtol = precision;
-
-    double xpre = xa, xcur = xb;
-    double xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
-    /* the tolerance is 2*delta */
-    double delta;
-    double stry, dpre, dblk;
-    int i;
-
-    fpre = ModeleBeta(xpre, np, rg);
-    fcur = ModeleBeta(xcur, np, rg);
-    if (fpre*fcur > 0) {printf("Intervalle incorrect : %e %e \n",fpre,fcur); return -1;} //Intervalle incorrect
-
-    if (fpre == 0) {
-        return xpre;
-    }
-    if (fcur == 0) {
-        return xcur;
-    }
-
-    for (i = 0; i < iter; i++) {
-        if (fpre*fcur < 0) {
-            xblk = xpre;
-            fblk = fpre;
-            spre = scur = xcur - xpre;
-        }
-        if (fabs(fblk) < fabs(fcur)) {
-            xpre = xcur;
-            xcur = xblk;
-            xblk = xpre;
-
-            fpre = fcur;
-            fcur = fblk;
-            fblk = fpre;
-        }
-
-        delta = (xtol + rtol*fabs(xcur))/2;
-        sbis = (xblk - xcur)/2;
-        //if (fcur == 0 || fabs(sbis) < delta) {
-        if (fabs(fcur) < precision) {
-            return xcur;
-        }
-
-        if (fabs(spre) > delta && fabs(fcur) < fabs(fpre)) {
-            if (xpre == xblk) {
-                /* interpolate */
-                stry = -fcur*(xcur - xpre)/(fcur - fpre);
-            }
-            else {
-                /* extrapolate */
-                dpre = (fpre - fcur)/(xpre - xcur);
-                dblk = (fblk - fcur)/(xblk - xcur);
-                stry = -fcur*(fblk*dblk - fpre*dpre)
-                    /(dblk*dpre*(fblk - fpre));
-            }
-            if (2*fabs(stry) < fmin(fabs(spre), 3*fabs(sbis) - delta)) {
-                /* good short step */
-                spre = scur;
-                scur = stry;
-            } else {
-                /* bisect */
-                spre = sbis;
-                scur = sbis;
-            }
-        }
-        else {
-            /* bisect */
-            spre = sbis;
-            scur = sbis;
-        }
-
-        xpre = xcur; fpre = fcur;
-        if (fabs(scur) > delta) {
-            xcur += scur;
-        }
-        else {
-            xcur += (sbis > 0 ? delta : -delta);
-        }
-
-        fcur = ModeleBeta(xcur, np, rg);
-    }
-    return xcur;
-}
-
-double Secante(double np,double rg,double rpmoy, double xsave)
-{
-    double 	x0,fx0,x1, x2, fx1;
-    double x[2];
-    double fx[2];
-    bool i=1;
-
-    x[0]=xsave+4.e-13;
-    fx[0] = ModeleBeta(x[0], np, rg);
-
-    x[1]=xsave;
-
-    try
-    {
-        while ((fabs(fx[!i])>precision))
-        {
-            fx[i]=ModeleBeta(x[i],np,rg);
-            x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
-            i = !i;
-        }
-    }
-    catch (int e)
-    {
-        printf("FAILSAFE\n");
-        return brentq(np,rg,rpmoy,xsave);
-    }
-    return x[i];
-}
-
-double ConvertRg2Dm(double np, double rg,double rpmoy)
-{
-    FactorModelBeta = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass)/rg;
-    double x0 = rpmoy*pow(np,gamma_/dfe);
-/*
-    npeqmass = kfe*pow(rg/rpeqmass,dfe);
-    double nptmp = pow(npeqmass*pow(np,gamma_-1),1./gamma_);
-    FactorModelBeta = 1./(rpeqmass*pow(nptmp,gamma_/dfe)/Cunningham(rpeqmass));
-*/
-    if (root_dicho) return Dichotomie(np,rg,rpmoy,x0)*2;
-    if (root_sec) return Secante(np,rg,rpmoy,x0)*2;
-
-    return  Dichotomie(np,rg,rpmoy,x0)*2;
-}
 //################################################## Recherche de sphères #############################################################################
 
 int SelectLabelEgal(int id, int* resu)
@@ -497,7 +296,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         terme = terme + tabVol[i]/spheres[Monoi[i]].Volume();
 
         //$ Calculation of the position of the center of mass
-        double* pos = spheres[Monoi[i]].Position();
+        const double* pos = spheres[Monoi[i]].Position();
         for (k = 1; k <= 3; k++)
             PosiGravite[id][k] = PosiGravite[id][k] + pos[k]*tabVol[i]; //Somme des Vi*xi
     }
@@ -532,7 +331,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         r = li + spheres[Monoi[i]].Radius();
 
         //$ Calculation of rmax
-        rmax=fmax(rmax,r);
+        rmax=MAX(rmax,r);
 
         //$ Calculation of Rg
         Arg = Arg + tabVol[i]*pow(li, 2);
@@ -576,10 +375,9 @@ void ParametresAgg(int Agg)
     rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
     rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
     //printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
-    dm = ConvertRg2Dm(np,rg,rpmoy);
-    cc = Cunningham(dm/2);
-    diff = K*T/3/PI/Mu/dm*cc;
-    vit = sqrt(8*K*T/PI/masse);
+    dm = physicalmodel.ConvertRg2Dm(np,rg,rpmoy);
+    diff = physicalmodel.diffusivity(dm);
+    vit =  physicalmodel.velocity(masse);
     lpm = 8*diff/PI/vit;
 
     Aggregate[Agg][0] = rg; //Rayon de giration
@@ -652,7 +450,7 @@ void SupprimeLigne(int ligne)
 {
     int i, j;
 
-    for (i = ligne + 1; i<= N; i++)
+    for (i = ligne + 1; i<= NAgg; i++)
     {
         for (j = 0; j <= 11; j++)
             Aggregate[i-1][j] = Aggregate[i][j];
@@ -1029,7 +827,7 @@ void CroissanceSurface(double dt)
 
     for (i = 1; i <= N; i++)
     {
-        double newradius = spheres[i].Radius() + Asurfgrowth*pow(spheres[i].Radius(), xsurfgrowth-2)*dt;
+        double newradius = physicalmodel.Grow(spheres[i].Radius(), dt);
         spheres[i].Update(spheres[i].Position(),newradius );
     }
 }
@@ -1150,13 +948,10 @@ void Init()
     compteur = 0;
     testmem = 0;
     L = X*Dpm*1E-9;
-    Mu = 18.203E-6*(293.15+110)/(T+110)*pow(T/293.15,1.5);
-    K = 1.38066E-23;
-    lambda = 66.5E-9*(101300/P)*(T/293.15)*(1+110/293.15)/(1+110/T);
-    Dpeqmass = Dpm*exp(1.5*log(sigmaDpm)*log(sigmaDpm)); //Diamètre équivalent massique moyen des monomères
-                                                           //donné par l'équation de Hatch-Choate
-    rpeqmass = (Dpeqmass*1E-9)/2.0; //Rayon équivalent massique moyen des monomères
-    gamma_ = 1.378*(0.5+0.5*erf(((lambda/rpeqmass)+4.454)/10.628));
+
+    physicalmodel.Init(P,T,dfe,kfe,Dpm,sigmaDpm,xsurfgrowth,coeffB,Rho);
+    physicalmodel.SetPrecision(1e-4);
+    physicalmodel.UseSecante();
 
     spheres = new Sphere[N+1];
     Translate = new double[4];
@@ -1238,9 +1033,8 @@ void Init()
 
         masse = Rho*PI*pow(Dp,3)/6;
         surface = PI*pow(Dp,2);
-        Cc = Cunningham(Dp/2);
-        Diff = K*T/3/PI/Mu/Dp*Cc;
-        Vit = sqrt(8*K*T/PI/masse);
+        Diff = physicalmodel.diffusivity(Dp);
+        Vit =  physicalmodel.velocity(masse);
         lpm = 8*Diff/PI/Vit;
         rg = sqrt(3.0/5.0)*Dp/2;
 
@@ -1282,7 +1076,7 @@ void Init()
 void Fermeture()
 {
 
-    for (int i = 0; i <= N; i++)
+    for (int i = 1; i <= N; i++)
     {
         delete[] PosiGravite[i];
         delete[] Aggregate[i];
@@ -1528,7 +1322,7 @@ void Calcul() //Coeur du programme
     else
         GUI->print(commentaires);
 
-    Asurfgrowth = coeffB*1E-3;
+    double Asurfgrowth = coeffB*1E-3;
     sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
     if (GUI == NULL)
         printf("%s",commentaires);
@@ -1547,7 +1341,7 @@ void Calcul() //Coeur du programme
     deltatemps=0;
     time(&t0);
     contact=true;
-    int end = fmax(5,N/200);
+    int end = MAX(5,N/200);
     int it_without_contact=0;
     int lim_it_without_contact = 100;
 
@@ -1609,7 +1403,6 @@ void Calcul() //Coeur du programme
             //$ looking for potential contacts
             CalculDistance(NumAgg, distmin, aggcontact);
             lpm = Aggregate[NumAgg][4];
-            contact = (aggcontact != 0);
         }
         else
         {
@@ -1621,10 +1414,10 @@ void Calcul() //Coeur du programme
             //$ looking for potential contacts
 
             CalculDistance(NumAgg, distmin, aggcontact);
-
             lpm = Dpm*1E-9; //On fixe le lpm au Dpm
-            contact = (aggcontact != 0);
+
         }
+        contact = (aggcontact != 0);
 
         if (contact)
         {

@@ -13,12 +13,14 @@
 using namespace std;
 
 const double PI = atan(1.0)*4;
+const double facvol = 4*PI/3;
+const double facsurf = 4*PI;
 
 Sphere::Sphere(void)
 {
     pos = new double[4];
-    Label = 1;
-    Update(0, 0, 0, 1);
+    Label = 0;
+    Update(0, 0, 0, 0);
 }
 
 Sphere::~Sphere(void)
@@ -32,24 +34,17 @@ void Sphere::Update(const double newx,const double newy,const double newz,const 
     pos[2] = newy;
     pos[3] = newz;
     r = newr;
+    Update();
 }
 
 void Sphere::Update(const double* newp,const double newr)
 {
-    // newp: position double[4] pour compatibilité....
-    pos[1] = newp[1];
-    pos[2] = newp[2];
-    pos[3] = newp[3];
-    r = newr;
+    Update(newp[1],newp[2],newp[3],newr);
 }
 
 void Sphere::Update(const Sphere& c)
 {
-    // newp: position double[4] pour compatibilité....
-    pos[1] = c.pos[1];
-    pos[2] = c.pos[2];
-    pos[3] = c.pos[3];
-    r = c.r;
+    Update(c.pos,c.r);
 }
 
 
@@ -68,9 +63,24 @@ void Sphere::Translate(const double* trans)
     for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans[i];
 }
 
-void Sphere::Translate(const double trans)
+double Sphere::Volume() const
 {
-    for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans;
+    return volume;
+}
+
+double Sphere::Surface() const
+{
+    return surface;
+}
+
+double Sphere::Radius() const
+{
+    return r;
+}
+
+const double* Sphere::Position() const
+{
+    return pos;
 }
 
 string Sphere::str(const double coef) const
@@ -89,10 +99,21 @@ void Sphere::Aff(const double coef) const
 {  
     cout << str(coef) << endl;
 }
+
+void Sphere::Update()
+{
+    if (Label > 0)
+    {
+        volume = facvol*pow(r, 3);
+        surface =  facsurf*pow(r, 2);
+    }
+}
+
 double Sphere::Distance(const Sphere& c) const
 {
-    return sqrt(pow(pos[1]-c.pos[1],2)+pow(pos[2]-c.pos[2],2)+pow(pos[3]-c.pos[3],2));
+    return Distance(c.pos);
 }
+
 double Sphere::Distance(const double* point) const
 {
     return sqrt(pow(pos[1]-point[1],2)+pow(pos[2]-point[2],2)+pow(pos[3]-point[3],2));
@@ -156,28 +177,6 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
     return dist;
 }
 
-
-double Sphere::Volume() const
-{
-    return 4.0*PI*pow(r, 3)/3.0;
-}
-
-double Sphere::Surface() const
-{
-    return 4.0*PI*pow(r, 2);
-}
-
-double Sphere::Radius() const
-{
-    return r;
-}
-
-double* Sphere::Position() const
-{
-    return pos;
-}
-
-
 //Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
 double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
 {
@@ -214,8 +213,8 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     else if (d < Ri - Rj)
     {
         //$ Volcal = VolJ
-        vol1 = vol2 = 4.0*PI*pow(Rj,3)/3.0;
-        surf1 = surf2 = 4.0*PI*pow(Rj,2);
+        vol1 = vol2 = c.Volume();
+        surf1 = surf2 = c.Surface();
     }
 
     //$ Check if i is completely in j
@@ -223,8 +222,8 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     else // if (d < Rj - Ri)
     {
         //$ Volcal = Voli
-        vol1 = vol2 = 4.0*PI*pow(Ri,3)/3.0;
-        surf1 = surf2 = 4.0*PI*pow(Ri,2);
+        vol1 = vol2 = Volume();
+        surf1 = surf2 = Surface();
     }
 
     return d;

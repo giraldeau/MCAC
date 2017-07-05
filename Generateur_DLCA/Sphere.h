@@ -1,16 +1,19 @@
 #include <iostream>
-
-#pragma once
+#ifndef SPHERE
+#define SPHERE
 
 class Sphere
 {
 private:
-
-
-public:
     double* pos;
     double r;
     int Label;
+
+    void Update();
+
+    double volume, surface;
+
+public:
     Sphere(void);
     ~Sphere(void);
 	
@@ -20,7 +23,6 @@ public:
     void SetLabel(const int value);
     void DecreaseLabel();
     void Translate(const double* trans);
-    void Translate(const double trans);
     std::string str(const double coef) const;
     void Aff(const double coef) const;
     double Distance(const Sphere& c) const;
@@ -28,7 +30,8 @@ public:
     double Volume() const;
     double Surface() const;
     double Radius() const;
-    double* Position() const;
+    const double* Position() const;
     double Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
     double Collision(const Sphere& c, const double* vd,const  double  distmax,double& distance_contact) const;
 };
+#endif // SPHERE
