@@ -8,8 +8,10 @@ class Sphere
     friend class SphereList;
 
     private:
-        double* arr;
-        double* pos;
+        double* arr[7];
+        double* x;
+        double* y;
+        double* z;
         double* r;
         double* volume;
         double* surface;
@@ -22,7 +24,7 @@ class Sphere
 
     public:
         Sphere(void);
-        Sphere(double* arr,const int i);
+        Sphere(double** arr,const int i);
         ~Sphere(void);
 
         void Update(const double newx, const double newy, const double newz, const double newr);
@@ -35,6 +37,7 @@ class Sphere
         void Aff(const double coef) const;
         double Distance(const Sphere& c) const;
         double Distance(const double* point) const;
+        double Distance(const double otherx, const double othery, const double otherz) const;
         double Volume(void) const;
         double Surface(void) const;
         double Radius(void) const;

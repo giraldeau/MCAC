@@ -10,6 +10,8 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+#define ROWMAJOR
+
 using namespace std;
 
 const double PI = atan(1.0)*4;
@@ -18,11 +20,16 @@ const double facsurf = 4*PI;
 
 Sphere::Sphere(void)
 {
-    arr = new double[7];
-    pos = arr;
-    r = &arr[4];
-    volume = &arr[5];
-    surface = &arr[6];
+    arr[0] = new double[7];
+    for (int i=1;i<=6;i++)
+        arr[i]=&arr[0][i];
+
+    x = arr[1];
+    y = arr[2];
+    z = arr[3];
+    r = arr[4];
+    volume = arr[5];
+    surface = arr[6];
     AggLabel = 0;
     SphereLabel = 0;
     Update(0, 0, 0, 0);
@@ -30,12 +37,21 @@ Sphere::Sphere(void)
     external_storage=false;
 }
 
-Sphere::Sphere(double* arr,const int i)
+Sphere::Sphere(double** ext_arr,const int i)
 {
-    pos = arr;
-    r = &arr[4];
-    volume = &arr[5];
-    surface = &arr[6];
+    for (int j=0;j<=6;j++)
+#ifdef ROWMAJOR
+        arr[j]=&ext_arr[j][i];
+#else
+        arr[j]=&ext_arr[i][j];
+#endif
+
+    x = arr[1];
+    y = arr[2];
+    z = arr[3];
+    r = arr[4];
+    volume = arr[5];
+    surface = arr[6];
     AggLabel = 0;
     SphereLabel = i;
     Update(0, 0, 0, 0);
@@ -46,46 +62,17 @@ Sphere::Sphere(double* arr,const int i)
 Sphere::~Sphere(void)
 {
     if(!external_storage)
-        if (arr!=NULL) delete[] arr;
-    pos = NULL;
+        if (arr[0]!=NULL) delete[] arr[0];
+
+    for (int j=1;j<=6;j++)
+        arr[j]=NULL;
+
+    x = NULL;
+    y = NULL;
+    z = NULL;
     r = NULL;
     volume = NULL;
     surface = NULL;
-}
-
-void Sphere::Update(const double newx,const double newy,const double newz,const double newr)
-{
-    pos[1] = newx;
-    pos[2] = newy;
-    pos[3] = newz;
-    *r = newr;
-    UpdateVolAndSurf();
-}
-
-void Sphere::Update(const double* newp,const double newr)
-{
-    Update(newp[1],newp[2],newp[3],newr);
-}
-
-void Sphere::Update(const Sphere& c)
-{
-    Update(c.pos,c.Radius());
-}
-
-
-void Sphere::SetLabel(const int value)
-{
-    AggLabel = value;
-}
-
-void Sphere::DecreaseLabel(void)
-{
-    AggLabel--;
-}
-
-void Sphere::Translate(const double* trans)
-{
-    for (int i = 1; i <= 3; i++) pos[i] = pos[i] + trans[i];
 }
 
 double Sphere::Volume(void) const
@@ -105,7 +92,51 @@ double Sphere::Radius(void) const
 
 const double* Sphere::Position(void) const
 {
-    return pos;
+
+    double* mypos= new double[4];
+    mypos[1]=*x;
+    mypos[2]=*y;
+    mypos[3]=*z;
+    return mypos;
+
+    //return arr[0];
+}
+
+void Sphere::Update(const double newx,const double newy,const double newz,const double newr)
+{
+    *x = newx;
+    *y = newy;
+    *z = newz;
+    *r = newr;
+    UpdateVolAndSurf();
+}
+
+void Sphere::Update(const double* newp,const double newr)
+{
+    Update(newp[1],newp[2],newp[3],newr);
+}
+
+void Sphere::Update(const Sphere& c)
+{
+    Update(*c.x,*c.y,*c.z,*c.r);
+}
+
+
+void Sphere::SetLabel(const int value)
+{
+    AggLabel = value;
+}
+
+void Sphere::DecreaseLabel(void)
+{
+    AggLabel--;
+}
+
+void Sphere::Translate(const double* trans)
+{
+    *x += trans[1];
+    *y += trans[2];
+    *z += trans[3];
 }
 
 string Sphere::str(const double coef) const
@@ -113,10 +144,10 @@ string Sphere::str(const double coef) const
     stringstream res;
     res
         << setw(5) << AggLabel << "\t"
-        << setprecision(5) << setw(11) << fixed << Radius()*coef << "\t"
-        << setprecision(5) << setw(11) << fixed << pos[1]*coef << "\t"
-        << setprecision(5) << setw(11) << fixed << pos[2]*coef << "\t"
-        << setprecision(5) << setw(11) << fixed << pos[3]*coef;
+        << setprecision(5) << setw(11) << fixed << *r*coef << "\t"
+        << setprecision(5) << setw(11) << fixed << *x*coef << "\t"
+        << setprecision(5) << setw(11) << fixed << *y*coef << "\t"
+        << setprecision(5) << setw(11) << fixed << *z*coef;
     return res.str();
 }
 
@@ -136,12 +167,17 @@ void Sphere::UpdateVolAndSurf(void)
 
 double Sphere::Distance(const Sphere& c) const
 {
-    return Distance(c.pos);
+    return Distance(*c.x,*c.y,*c.z);
 }
 
 double Sphere::Distance(const double* point) const
 {
-    return sqrt(pow(pos[1]-point[1],2)+pow(pos[2]-point[2],2)+pow(pos[3]-point[3],2));
+    return Distance(point[1],point[2],point[3]);
+}
+
+double Sphere::Distance(const double otherx, const double othery, const double otherz) const
+{
+    return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
 }
 
 double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,double& distance) const
@@ -165,11 +201,11 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
     double K, K1, K2;
     double dist,dist_contact;
 
-    dx = c.pos[1] - pos[1];
-    dy = c.pos[2] - pos[2];
-    dz = c.pos[3] - pos[3];
+    dx = *c.x - *x;
+    dy = *c.y - *y;
+    dz = *c.z - *z;
 
-    dist_contact = pow(Radius() + c.Radius(),2);
+    dist_contact = pow(*r + *c.r,2);
 
     //$ Compute signed distance for contact between two spheres
     distance = dx*dx+dy*dy+dz*dz;
@@ -211,11 +247,12 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     vol1 = vol2 = 0.;
     surf1 = surf2 = 0.;
 
-    Ri = Radius();
-    Rj = c.Radius();
+    Ri = *r;
+    Rj = *c.r;
+
 
     //$ Determination of the distance between the center of the 2 aggregates
-    d = sqrt(pow(pos[1]-c.pos[1],2) + pow(pos[2]-c.pos[2],2) + pow(pos[3]-c.pos[3],2));
+    d = Distance(c);
 
     //$ Check if they aren't in contact
     if (d >= Ri + Rj)
@@ -238,8 +275,8 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     else if (d < Ri - Rj)
     {
         //$ Volcal = VolJ
-        vol1 = vol2 = c.Volume();
-        surf1 = surf2 = c.Surface();
+        vol1 = vol2 = *c.volume;
+        surf1 = surf2 = *c.surface;
     }
 
     //$ Check if i is completely in j
@@ -247,8 +284,8 @@ double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& 
     else // if (d < Rj - Ri)
     {
         //$ Volcal = Voli
-        vol1 = vol2 = Volume();
-        surf1 = surf2 = Surface();
+        vol1 = vol2 = *volume;
+        surf1 = surf2 = *surface;
     }
 
     return d;
@@ -260,13 +297,18 @@ void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
     spheres = new Sphere*[N+1];
     physicalmodel=&_physicalmodel;
 
+#ifdef ROWMAJOR
+    array = new double*[7];
+    for (int i = 1; i <= 6; i++)
+        array[i] = new double[N+1];
+#else
     array = new double*[N+1];
-
     for (int i = 1; i <= N; i++)
-    {
         array[i] = new double[7];
-        spheres[i] = new Sphere(array[i],i);
-    }
+#endif
+
+    for (int i = 1; i <= _N; i++)
+        spheres[i] = new Sphere(array,i);
 
     external_storage = false;
 }
@@ -287,10 +329,17 @@ Sphere& SphereList::operator[](const int i)
 //####################################### Croissance de surface des particules primaires ########################################
 void SphereList::CroissanceSurface(double dt)
 {
+    #pragma omp for simd
     for (int i = 1; i <= N; i++)
     {
+#ifdef ROWMAJOR
+        array[4][i] = physicalmodel->Grow(array[4][i], dt);
+        array[5][i] = facvol*pow(array[4][i], 3);
+        array[6][i] = facsurf*pow(array[4][i], 2);
+#else
         array[i][4] = physicalmodel->Grow(array[i][4], dt);
         array[i][5] = facvol*pow(array[i][4], 3);
         array[i][6] = facsurf*pow(array[i][4], 2);
+#endif
     }
 }

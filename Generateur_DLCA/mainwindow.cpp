@@ -172,49 +172,26 @@ double inverf(double p) {return inverfc(1.-p);}
 
 int SelectLabelEgal(int id, int* resu)
 {
-    int i, n;
-
-    n = 0;
-/*
-    for (i = 1; i <= N; i++)
-        if (spheres[i].Label == id)
-        {
-            n++;
-            resu[n] = i;
-        }
-*/
-    for(i=1;i<=AggLabels[id][0];i++)
+    int NSphereInAggrerat = AggLabels[id][0];
+    for(int i=1;i<=NSphereInAggrerat;i++)
     {
         resu[i]=AggLabels[id][i];
     }
-    n=AggLabels[id][0];
 
-    return n;
+    return NSphereInAggrerat;
 }
 
 int SelectLabelSuperieur(int id, int* resu)
-{
-    int i,j;
-    /*
-    int n = 0;
-    for (i = 1;i <= N; i++)
-        if (spheres[i].Label > id)
-        {
-            n++;
-            resu[n] = i;
-        }
-
-    return n
-    */
+{ 
     int m = 0;
 
-    for(i=id;i<=NAgg;i++)
+    for(int i=id;i<=NAgg;i++)
     {
-
-        for(j=1;j<=AggLabels[i][0];j++)
+        int NSphereInAggrerat = AggLabels[i][0];
+        for(int j=1;j<=NSphereInAggrerat;j++)
         {
 
-            resu[m+j]=AggLabels[i][j];
+            resu[m+j]=NSphereInAggrerat;
         }
         m+=AggLabels[i][0];
     }
@@ -476,17 +453,14 @@ void SupprimeLigne(int ligne)
 
 void InsertionSort(int n, double arr[], int index[])
 {
-    int i, j, id;
-    double a;
-    //$ TOTO
 
-    for (i = 1; i <= n; i++)
+    for (int i = 1; i <= n; i++)
         index[i] = i;
-    for (j = 2; j <= n; j++)
+    for (int j = 2; j <= n; j++)
     {
-        a = arr[j];
-        id = index[j];
-        i = j-1;
+        double a = arr[j];
+        int id = index[j];
+        int i = j-1;
 
         while (i > 0 && arr[i] > a)
         {
@@ -505,9 +479,7 @@ void InsertionSort(int n, double arr[], int index[])
 void quickSort(double arr[], int index[], int left, int right) {
 
       int i = left, j = right;
-      int itmp;
       double pivot = arr[(left + right) / 2];
-      double dtmp;
 
       /* partition */
       while (i <= j) {
@@ -516,10 +488,10 @@ void quickSort(double arr[], int index[], int left, int right) {
             while (arr[j] > pivot)
                   j--;
             if (i <= j) {
-                  dtmp = arr[i];
+                  double dtmp = arr[i];
                   arr[i] = arr[j];
                   arr[j] = dtmp;
-                  itmp = index[i];
+                  int itmp = index[i];
                   index[i] = index[j];
                   index[j] = itmp;
                   i++;
@@ -541,10 +513,7 @@ void quickSort(int n, double arr[], int index[])
 
 void MonTri(int n, double arr[], int index[])
 {
-    int i, j, id;
-    double a;
-
-    for (i = 1; i <= n; i++)
+    for (int i = 1; i <= n; i++)
         index[i] = i;
 
     //InsertionSort(n, arr, index);
