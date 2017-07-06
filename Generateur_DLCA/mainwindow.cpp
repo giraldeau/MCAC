@@ -56,7 +56,7 @@ int iValTab=0;
 int* Monoi; //
 int* MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
 int* MonoRep; //
-double** IdPossible;
+int** IdPossible;
 int* IdDistTab;
 int* IndexPourTri;
 bool* Select;
@@ -1010,41 +1010,53 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
     s1.Update(PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
     //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
-//        for (dx = -1;dx <= 1; dx++)
-
-//        {
-//            for (dy = -1; dy <= 1; dy++)
-//            {
-//                for (dz = -1; dz <= 1; dz++)
-//                {
-
-//                    for (i = 1;i <= NAgg; i++)
-//                    {
-//                        if (i != id)
-//                        {
 
 
-//                            s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
+    /*
+    for (dx = -1;dx <= 1; dx++)
 
-//                            dist = s1.Collision(s2, Vectdir, lpm, dc);
-//                            // checks if the two spheres will be in contact while
-//                             //... the first one is moving
-//                            //$ Intersection check between agregates
-//                            //$ [dist<=lpm]
-//                            if (dist <= lpm)
-//                            {
-//                                //$ Aggregate is stored into IdPossible
-//                                npossible++; // Number of aggregates that could be hit
-//                                IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
-//                                IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
-//                                IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
-//                                IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
+    {
+        for (dy = -1; dy <= 1; dy++)
+        {
+            for (dz = -1; dz <= 1; dz++)
+            {
+
+                for (i = 1;i <= NAgg; i++)
+                {
+                    if (i != id)
+                    {
+
+
+                        s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
+
+                        dist = s1.Collision(s2, Vectdir, lpm, dc);
+                        // checks if the two spheres will be in contact while
+                         //... the first one is moving
+                        //$ Intersection check between agregates
+                        //$ [dist<=lpm]
+                        if (dist <= lpm)
+                        {
+                            //$ Aggregate is stored into IdPossible
+                            npossible++; // Number of aggregates that could be hit
+                            IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
+                            IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
+                            IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
+                            IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    printf("OLD : %d\n",npossible);
+    for (i = 1;i <= npossible; i++)
+    {
+        printf("OLD : %d %d %d %d\n",IdPossible[i][1],IdPossible[i][2],IdPossible[i][3],IdPossible[i][4]);
+    }
+*/
+    npossible=0;
 
     // Détermination des bornes
 
@@ -1052,50 +1064,55 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     if(Vectdir[1]>=0)
     {
         tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax;
-        bornei1=floor(tampon);
+        bornei1=floor(tampon*GridDiv/L)+1;
         tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[1];
-        bornei2=floor(tampon)+1;
+        bornei2=floor(tampon*GridDiv/L)+2;
     }
     else
     {
         tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[1];
-        bornei1=floor(tampon);
+        bornei1=floor(tampon*GridDiv/L)+1;
         tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax;
-        bornei2=floor(tampon)+1;
+        bornei2=floor(tampon*GridDiv/L)+2;
     }
 
     if(Vectdir[2]>=0)
     {
         tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax;
-        bornej1=floor(tampon);
+        bornej1=floor(tampon*GridDiv/L)+1;
         tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[2];
-        bornej2=floor(tampon)+1;
+        bornej2=floor(tampon*GridDiv/L)+2;
     }
     else
     {
         tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[2];
-        bornej1=floor(tampon);
+        bornej1=floor(tampon*GridDiv/L)+1;
         tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax;
-        bornej2=floor(tampon)+1;
+        bornej2=floor(tampon*GridDiv/L)+2;
     }
 
     if(Vectdir[3]>=0)
     {
-        tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax;
-        bornek1=floor(tampon);
-        tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[2];
-        bornek2=floor(tampon)+1;
+        tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax;
+        bornek1=floor(tampon*GridDiv/L)+1;
+        tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[3];
+        bornek2=floor(tampon*GridDiv/L)+2;
     }
     else
     {
-        tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[2];
-        bornek1=floor(tampon);
-        tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax;
-        bornek2=floor(tampon)+1;
+        tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[3];
+        bornek1=floor(tampon*GridDiv/L)+1;
+        tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax;
+        bornek2=floor(tampon*GridDiv/L)+2;
     }
 
-
     // ///////
+
+    printf("Recherche\n");
+    printf(" i: %d %d\n",bornei1+GridDiv,bornei2+GridDiv);
+    printf(" j: %d %d\n",bornej1+GridDiv,bornej2+GridDiv);
+    printf(" k: %d %d\n",bornek1+GridDiv,bornek2+GridDiv);
+
     for (i=bornei1+GridDiv;i<=bornei2+GridDiv;i++)
     {
         for (j=bornej1+GridDiv;j<=bornej2+GridDiv;j++)
@@ -1103,28 +1120,41 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
             for (k=bornek1+GridDiv;k<=bornek2+GridDiv;k++)
             {
 
-                dx=floor(i/GridDiv)-1;
-                dy=floor(j/GridDiv)-1;
-                dz=floor(k/GridDiv)-1;
+                dx=floor((i-1)/GridDiv)-1;
+                dy=floor((j-1)/GridDiv)-1;
+                dz=floor((k-1)/GridDiv)-1;
+                bool toto=false;
                 for(p=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->begin();p!=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->end();p++)
                 {
-                    s2.Update(PosiGravite[*p][1]+dx*L, PosiGravite[*p][2]+dy*L, PosiGravite[*p][3]+dz*L, Aggregate[*p][6]); //represents the different agregates
-
-                    dist = s1.Collision(s2, Vectdir, lpm, dc);
-                    if (dist <= lpm)
+                    //printf("%d %d %d : %d ",i,j,k,*p);
+                    toto = true;
+                    if (*p != id)
                     {
-                        npossible++; // Number of aggregates that could be hit
-                        IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
-                        IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
-                        IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
-                        IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                        s2.Update(PosiGravite[*p][1]+dx*L, PosiGravite[*p][2]+dy*L, PosiGravite[*p][3]+dz*L, Aggregate[*p][6]); //represents the different agregates
+
+                        dist = s1.Collision(s2, Vectdir, lpm, dc);
+                        if (dist <= lpm)
+                        {
+                            npossible++; // Number of aggregates that could be hit
+                            IdPossible[npossible][1] = *p;  //Label of an aggregate that could be in contact with the one moving
+                            IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
+                            IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
+                            IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                        }
                     }
                 }
-
-
+                //if(toto) printf("\n");
             }
         }
     }
+
+    printf("NEW : %d\n",npossible);
+    for (i = 1;i <= npossible; i++)
+    {
+        printf("NEW : %d %d %d %d\n",IdPossible[i][1],IdPossible[i][2],IdPossible[i][3],IdPossible[i][4]);
+    }
+    //exit(52);
+
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //$ Number of agregates possibly in contact
     if (npossible > 0)
@@ -1392,7 +1422,7 @@ void Init()
     Monoi = new int[N+1];
     MonoSel = new int[N+1];
     MonoRep = new int[N+1];
-    IdPossible = new double* [N+1];
+    IdPossible = new int* [N+1];
     DistTab = new double[N+1];
     IdDistTab = new int[N+1];
     PosiGravite = new double* [N+1];
@@ -1440,7 +1470,7 @@ void Init()
     {
         PosiGravite[i] = new double[4];
         Aggregate[i] = new double[12];
-        IdPossible[i] = new double[5];
+        IdPossible[i] = new int[5];
     }
 
     for (i = 1; i <= N; i++)
@@ -1804,6 +1834,8 @@ void Calcul() //Coeur du programme
     contact=true;
     int end = fmax(5,N/200);
 
+    //end = 97;
+
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats\n", end);
 
@@ -1969,6 +2001,7 @@ void Calcul() //Coeur du programme
          <<"     gamma=" << gamma <<endl;
 
 */
+
     for (i = 1; i <= NAgg; i++)
     {
         printf("%d\t", i);
