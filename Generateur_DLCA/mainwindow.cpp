@@ -71,8 +71,7 @@ double precision = 1E-6; //Précision recherchée
 //double precision = 1E-12; //Précision recherchée
 double Cunningham_rpeqmass;
 
-
-
+bool use_verlet = true;
 
 // Chained list / Verlet
 std::list<int>**** Verlet;
@@ -492,35 +491,45 @@ int SelectLabelSuperieur(int id, int* resu)
 void AjouteVerlet(int id)
 {   int taille1;
 
-    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
-    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
-    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
-    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
-
-    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=1)
+    if (use_verlet)
     {
-        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "   "  << taille1 <<"Ajouter Deconne \n";
+
+
+
+        VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+        //Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
+        //Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
+        taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+
+        Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
+        Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
+
+        if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=1)
+        {
+            std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "   "  << taille1 <<" Ajouter Deconne \n";
+        }
     }
 }
 
 void SupprimeVerlet(int id)
 {   int taille1,taille2;
 
-
-    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
-    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
-    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
-    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
-
-    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=-1)
+    if (use_verlet)
     {
-        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() <<"  " << taille1 <<"Supprime Deconne "<<"\n";
+        VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+        //Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
+        //Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
+        taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+        Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
+
+        if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()!=taille1-1)
+        {
+            std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() <<"  " << taille1 <<" Supprime Deconne "<<"\n";
+        }
     }
 }
 
@@ -725,52 +734,53 @@ void ParametresAgg(int Agg)
 }
 //######################################################    verlet   #########################################################################
 
-
-
-
-
 void AfficheVerlet(int id)
 {   std::_List_iterator<int> i;
     int j;
 
 
-
-
-    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
-    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
-    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
-
-
-
-    std::cout<<"Taille: "<<Verlet[VerIndex1][VerIndex2][VerIndex3]->size()<<"\n";
-    std::cout << " mylist contains:\n";
-
-    for(i= Verlet[VerIndex1][VerIndex2][VerIndex3]->begin();i!= Verlet[VerIndex1][VerIndex2][VerIndex3]->end();i++)
+    if (use_verlet)
     {
-        std::cout << " " << *i<<"\n";
+
+        VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+
+
+
+        std::cout<<"Taille: "<<Verlet[VerIndex1][VerIndex2][VerIndex3]->size()<<"\n";
+        std::cout << " mylist contains:\n";
+
+        for(i= Verlet[VerIndex1][VerIndex2][VerIndex3]->begin();i!= Verlet[VerIndex1][VerIndex2][VerIndex3]->end();i++)
+        {
+            std::cout << " " << *i<<"\n";
+        }
     }
 }
-
+/*
 void DecrementeVerlet(int id)
 {   int taille1,taille2;
-    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
-    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
-    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
-    taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
-
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
-    taille2=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
-    Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id--);
-
-    if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=0)
+    if (use_verlet)
     {
-        std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "     " <<taille2 << "    "<<taille1 <<"  Decremente Deconne \n";
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+        //Verlet[VerIndex1][VerIndex2][VerIndex3]->sort();
+        //Verlet[VerIndex1][VerIndex2][VerIndex3]->unique();
+        taille1=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
 
+        Verlet[VerIndex1][VerIndex2][VerIndex3]->remove(id);
+        taille2=Verlet[VerIndex1][VerIndex2][VerIndex3]->size();
+        Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id--);
+
+        if(Verlet[VerIndex1][VerIndex2][VerIndex3]->size()-taille1!=0)
+        {
+            std::cout << Verlet[VerIndex1][VerIndex2][VerIndex3]->size() << "     " <<taille2 << "    "<<taille1 <<"  Decremente Deconne \n";
+
+        }
     }
-
 }
+*/
 
 //############################################# Conditions aux limites périodiques ##############################################
 void ReplacePosi(int id)
@@ -823,23 +833,23 @@ void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
     //printf("SupLigne  : ");
-    SupprimeVerlet(NAgg);
-    printf("\n");
+
+    SupprimeVerlet(ligne);
 
     for (i = ligne + 1; i<= NAgg; i++)
     {
-        SupprimeVerlet(i-1);
 
         for (j = 0; j <= 11; j++)
             Aggregate[i-1][j] = Aggregate[i][j];
 
         //DecrementeVerlet(i);
 
+        SupprimeVerlet(i);
+
         for (j = 1; j<= 3; j++)
             PosiGravite[i-1][j] = PosiGravite[i][j];
 
         AjouteVerlet(i-1);
-
 
     }
 
@@ -852,9 +862,6 @@ void SupprimeLigne(int ligne)
             AggLabels[i-1][j]=AggLabels[i][j];
         }
     }
-
-
-
     NAgg--;
 }
 
@@ -1011,149 +1018,128 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     s1.Update(PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
     //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
 
-
-    /*
-    for (dx = -1;dx <= 1; dx++)
-
-    {
-        for (dy = -1; dy <= 1; dy++)
-        {
-            for (dz = -1; dz <= 1; dz++)
-            {
-
-                for (i = 1;i <= NAgg; i++)
-                {
-                    if (i != id)
-                    {
-
-
-                        s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
-
-                        dist = s1.Collision(s2, Vectdir, lpm, dc);
-                        // checks if the two spheres will be in contact while
-                         //... the first one is moving
-                        //$ Intersection check between agregates
-                        //$ [dist<=lpm]
-                        if (dist <= lpm)
-                        {
-                            //$ Aggregate is stored into IdPossible
-                            npossible++; // Number of aggregates that could be hit
-                            IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
-                            IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
-                            IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
-                            IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    printf("OLD : %d\n",npossible);
-    for (i = 1;i <= npossible; i++)
-    {
-        printf("OLD : %d %d %d %d\n",IdPossible[i][1],IdPossible[i][2],IdPossible[i][3],IdPossible[i][4]);
-    }
-*/
     npossible=0;
-
-    // Détermination des bornes
-
-
-    if(Vectdir[1]>=0)
+    if (! use_verlet)
     {
-        tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax;
-        bornei1=floor(tampon*GridDiv/L)+1;
-        tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[1];
-        bornei2=floor(tampon*GridDiv/L)+2;
-    }
-    else
-    {
-        tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[1];
-        bornei1=floor(tampon*GridDiv/L)+1;
-        tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax;
-        bornei2=floor(tampon*GridDiv/L)+2;
-    }
+        for (dx = -1;dx <= 1; dx++)
 
-    if(Vectdir[2]>=0)
-    {
-        tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax;
-        bornej1=floor(tampon*GridDiv/L)+1;
-        tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[2];
-        bornej2=floor(tampon*GridDiv/L)+2;
-    }
-    else
-    {
-        tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[2];
-        bornej1=floor(tampon*GridDiv/L)+1;
-        tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax;
-        bornej2=floor(tampon*GridDiv/L)+2;
-    }
-
-    if(Vectdir[3]>=0)
-    {
-        tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax;
-        bornek1=floor(tampon*GridDiv/L)+1;
-        tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[3];
-        bornek2=floor(tampon*GridDiv/L)+2;
-    }
-    else
-    {
-        tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[3];
-        bornek1=floor(tampon*GridDiv/L)+1;
-        tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax;
-        bornek2=floor(tampon*GridDiv/L)+2;
-    }
-
-    // ///////
-
-    printf("Recherche\n");
-    printf(" i: %d %d\n",bornei1+GridDiv,bornei2+GridDiv);
-    printf(" j: %d %d\n",bornej1+GridDiv,bornej2+GridDiv);
-    printf(" k: %d %d\n",bornek1+GridDiv,bornek2+GridDiv);
-
-    for (i=bornei1+GridDiv;i<=bornei2+GridDiv;i++)
-    {
-        for (j=bornej1+GridDiv;j<=bornej2+GridDiv;j++)
         {
-            for (k=bornek1+GridDiv;k<=bornek2+GridDiv;k++)
+            for (dy = -1; dy <= 1; dy++)
             {
-
-                dx=floor((i-1)/GridDiv)-1;
-                dy=floor((j-1)/GridDiv)-1;
-                dz=floor((k-1)/GridDiv)-1;
-                bool toto=false;
-                for(p=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->begin();p!=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->end();p++)
+                for (dz = -1; dz <= 1; dz++)
                 {
-                    //printf("%d %d %d : %d ",i,j,k,*p);
-                    toto = true;
-                    if (*p != id)
-                    {
-                        s2.Update(PosiGravite[*p][1]+dx*L, PosiGravite[*p][2]+dy*L, PosiGravite[*p][3]+dz*L, Aggregate[*p][6]); //represents the different agregates
 
-                        dist = s1.Collision(s2, Vectdir, lpm, dc);
-                        if (dist <= lpm)
+                    for (i = 1;i <= NAgg; i++)
+                    {
+                        if (i != id)
                         {
-                            npossible++; // Number of aggregates that could be hit
-                            IdPossible[npossible][1] = *p;  //Label of an aggregate that could be in contact with the one moving
-                            IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
-                            IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
-                            IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+
+
+                            s2.Update(PosiGravite[i][1]+dx*L, PosiGravite[i][2]+dy*L, PosiGravite[i][3]+dz*L, Aggregate[i][6]); //represents the different agregates
+
+                            dist = s1.Collision(s2, Vectdir, lpm, dc);
+                            // checks if the two spheres will be in contact while
+                             //... the first one is moving
+                            //$ Intersection check between agregates
+                            //$ [dist<=lpm]
+                            if (dist <= lpm)
+                            {
+                                //$ Aggregate is stored into IdPossible
+                                npossible++; // Number of aggregates that could be hit
+                                IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
+                                IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
+                                IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
+                                IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                            }
                         }
                     }
                 }
-                //if(toto) printf("\n");
             }
         }
     }
-
-    printf("NEW : %d\n",npossible);
-    for (i = 1;i <= npossible; i++)
+    else
     {
-        printf("NEW : %d %d %d %d\n",IdPossible[i][1],IdPossible[i][2],IdPossible[i][3],IdPossible[i][4]);
+
+        // Détermination des bornes
+
+
+        if(Vectdir[1]>=0)
+        {
+            tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax;
+            bornei1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[1];
+            bornei2=floor(tampon*GridDiv/L)+2;
+        }
+        else
+        {
+            tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[1];
+            bornei1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax;
+            bornei2=floor(tampon*GridDiv/L)+2;
+        }
+
+        if(Vectdir[2]>=0)
+        {
+            tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax;
+            bornej1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[2];
+            bornej2=floor(tampon*GridDiv/L)+2;
+        }
+        else
+        {
+            tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[2];
+            bornej1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax;
+            bornej2=floor(tampon*GridDiv/L)+2;
+        }
+
+        if(Vectdir[3]>=0)
+        {
+            tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax;
+            bornek1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[3];
+            bornek2=floor(tampon*GridDiv/L)+2;
+        }
+        else
+        {
+            tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[3];
+            bornek1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax;
+            bornek2=floor(tampon*GridDiv/L)+2;
+        }
+
+        // ///////
+        for (i=bornei1+GridDiv;i<=bornei2+GridDiv;i++)
+        {
+            for (j=bornej1+GridDiv;j<=bornej2+GridDiv;j++)
+            {
+                for (k=bornek1+GridDiv;k<=bornek2+GridDiv;k++)
+                {
+
+                    dx=floor((i-1)/GridDiv)-1;
+                    dy=floor((j-1)/GridDiv)-1;
+                    dz=floor((k-1)/GridDiv)-1;
+                    for(p=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->begin();p!=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->end();p++)
+                    {
+                        if (*p != id)
+                        {
+                            s2.Update(PosiGravite[*p][1]+dx*L, PosiGravite[*p][2]+dy*L, PosiGravite[*p][3]+dz*L, Aggregate[*p][6]); //represents the different agregates
+
+                            dist = s1.Collision(s2, Vectdir, lpm, dc);
+                            if (dist <= lpm)
+                            {
+                                npossible++; // Number of aggregates that could be hit
+                                IdPossible[npossible][1] = *p;  //Label of an aggregate that could be in contact with the one moving
+                                IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
+                                IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
+                                IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-    //exit(52);
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //$ Number of agregates possibly in contact
@@ -1432,23 +1418,25 @@ void Init()
 
 
     // Verlet
-
-    Verlet=new std::list<int>***[3*GridDiv+1];
-    for(i=0;i<=3*GridDiv;i++)
+    if (use_verlet)
     {
-        Verlet[i]=new std::list<int>**[3*GridDiv+1];
-
-        for(j=0;j<=3*GridDiv;j++)
+        Verlet=new std::list<int>***[3*GridDiv+1];
+        for(i=0;i<=3*GridDiv;i++)
         {
-            Verlet[i][j]=new std::list<int>*[3*GridDiv+1];
+            Verlet[i]=new std::list<int>**[3*GridDiv+1];
 
-            for(k=0;k<=3*GridDiv;k++)
+            for(j=0;j<=3*GridDiv;j++)
             {
-                Verlet[i][j][k]= new std::list<int>;
+                Verlet[i][j]=new std::list<int>*[3*GridDiv+1];
+
+                for(k=0;k<=3*GridDiv;k++)
+                {
+                    Verlet[i][j][k]= new std::list<int>;
+                }
+
             }
 
         }
-
     }
 
     // Agglabels
@@ -1834,7 +1822,7 @@ void Calcul() //Coeur du programme
     contact=true;
     int end = fmax(5,N/200);
 
-    //end = 97;
+    end = 20;
 
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats\n", end);
