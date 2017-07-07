@@ -553,6 +553,57 @@ void SupprimeVerlet(int id)
     }
 }
 
+
+
+//############################################# Conditions aux limites périodiques ##############################################
+void ReplacePosi(int id)
+{// This function will relocate an aggregate when it gets out of the box limiting the space
+    int i,j,k,nr,actualiseFlowgen;
+    //$ Get the list of the monomeres if Agg Id
+    nr = SelectLabelEgal(id,MonoRep);
+
+    SupprimeVerlet(id);
+
+    //$ for every dimension
+    for (i = 1; i <= 3; i++)
+    {   actualiseFlowgen=1;
+        //$ Check on what side it is getting out
+        if (PosiGravite[id][i] > L)
+        {
+
+            PosiGravite[id][i] = PosiGravite[id][i] - L;
+
+
+            //$ Update the position of the center of gravity in Agg Id
+            for (j = 1; j <= nr; j++)
+            {
+                //$ Update the position of the spheres in Agg Id
+                k = MonoRep[j];
+                spheres[k].pos[i] = spheres[k].pos[i] - L;
+            }
+        }
+
+        if (PosiGravite[id][i] < 0)
+        {
+
+            PosiGravite[id][i] = PosiGravite[id][i] + L;
+
+            //$ Update the position of the center of gravity in Agg Id
+            for (j = 1; j <= nr; j++)
+            {
+                k = MonoRep[j];
+                //$ Update the position of the spheres in Agg Id
+                spheres[k].pos[i] = spheres[k].pos[i] + L;
+            }
+        }
+
+    }
+    AjouteVerlet(id);
+}
+//###############################################################################################################################
+
+
+
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
 double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat, double** PosiGravite)
@@ -662,6 +713,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         PosiGravite[id][k] = PosiGravite[id][k]/volAgregat;
     } //Centre of mass of Agg Id
     AjouteVerlet(id);
+    ReplacePosi(id);
+
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
 
     for (i = 1; i <= nmonoi; i++)
@@ -801,53 +854,6 @@ void DecrementeVerlet(int id)
     }
 }
 */
-
-//############################################# Conditions aux limites périodiques ##############################################
-void ReplacePosi(int id)
-{// This function will relocate an aggregate when it gets out of the box limiting the space
-    int i,j,k,nr,actualiseFlowgen;
-    //$ Get the list of the monomeres if Agg Id
-    nr = SelectLabelEgal(id,MonoRep);
-
-    SupprimeVerlet(id);
-
-    //$ for every dimension
-    for (i = 1; i <= 3; i++)
-    {   actualiseFlowgen=1;
-        //$ Check on what side it is getting out
-        if (PosiGravite[id][i] > L)
-        {
-
-            PosiGravite[id][i] = PosiGravite[id][i] - L;
-
-
-            //$ Update the position of the center of gravity in Agg Id
-            for (j = 1; j <= nr; j++)
-            {
-                //$ Update the position of the spheres in Agg Id
-                k = MonoRep[j];
-                spheres[k].pos[i] = spheres[k].pos[i] - L;
-            }
-        }
-
-        if (PosiGravite[id][i] < 0)
-        {
-
-            PosiGravite[id][i] = PosiGravite[id][i] + L;
-
-            //$ Update the position of the center of gravity in Agg Id
-            for (j = 1; j <= nr; j++)
-            {
-                k = MonoRep[j];
-                //$ Update the position of the spheres in Agg Id
-                spheres[k].pos[i] = spheres[k].pos[i] + L;
-            }
-        }
-
-    }
-    AjouteVerlet(id);
-}
-//###############################################################################################################################
 
 void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
@@ -1038,9 +1044,9 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     s1.Update(PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
     //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
 
-    npossible=0;
     if (! use_verlet)
     {
+        npossible=0;
         for (dx = -1;dx <= 1; dx++)
 
         {
@@ -1075,58 +1081,65 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                     }
                 }
             }
-        }
+        }    
+
+
     }
     else
     {
 
+
+        double mindist = (Aggregate[id][6]+RayonAggMax);
+
         // Détermination des bornes
-
-
         if(Vectdir[1]>=0)
         {
-            tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax;
+            tampon=PosiGravite[id][1]-mindist;
             bornei1=floor(tampon*GridDiv/L)+1;
-            tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[1];
+            tampon=PosiGravite[id][1]+mindist+lpm*Vectdir[1];
             bornei2=floor(tampon*GridDiv/L)+2;
         }
         else
         {
-            tampon=PosiGravite[id][1]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[1];
+            tampon=PosiGravite[id][1]-mindist+lpm*Vectdir[1];
             bornei1=floor(tampon*GridDiv/L)+1;
-            tampon=PosiGravite[id][1]+Aggregate[id][4]+RayonAggMax;
+            tampon=PosiGravite[id][1]+mindist;
             bornei2=floor(tampon*GridDiv/L)+2;
         }
 
         if(Vectdir[2]>=0)
         {
-            tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax;
+            tampon=PosiGravite[id][2]-mindist;
             bornej1=floor(tampon*GridDiv/L)+1;
-            tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[2];
+            tampon=PosiGravite[id][2]+mindist+lpm*Vectdir[2];
             bornej2=floor(tampon*GridDiv/L)+2;
         }
         else
         {
-            tampon=PosiGravite[id][2]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[2];
+            tampon=PosiGravite[id][2]-mindist+lpm*Vectdir[2];
             bornej1=floor(tampon*GridDiv/L)+1;
-            tampon=PosiGravite[id][2]+Aggregate[id][4]+RayonAggMax;
+            tampon=PosiGravite[id][2]+mindist;
             bornej2=floor(tampon*GridDiv/L)+2;
         }
 
         if(Vectdir[3]>=0)
         {
-            tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax;
+            tampon=PosiGravite[id][3]-mindist;
             bornek1=floor(tampon*GridDiv/L)+1;
-            tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax+lpm*Vectdir[3];
+            tampon=PosiGravite[id][3]+mindist+lpm*Vectdir[3];
             bornek2=floor(tampon*GridDiv/L)+2;
         }
         else
         {
-            tampon=PosiGravite[id][3]-Aggregate[id][4]-RayonAggMax+lpm*Vectdir[3];
+            tampon=PosiGravite[id][3]-mindist+lpm*Vectdir[3];
             bornek1=floor(tampon*GridDiv/L)+1;
-            tampon=PosiGravite[id][3]+Aggregate[id][4]+RayonAggMax;
+            tampon=PosiGravite[id][3]+mindist;
             bornek2=floor(tampon*GridDiv/L)+2;
         }
+
+        bornei1 = fmax(bornei1,-GridDiv+1) ; bornei2 = fmin(bornei2,2*GridDiv);
+        bornej1 = fmax(bornej1,-GridDiv+1) ; bornej2 = fmin(bornej2,2*GridDiv);
+        bornek1 = fmax(bornek1,-GridDiv+1) ; bornek2 = fmin(bornek2,2*GridDiv);
 
         // ///////
         for (i=bornei1+GridDiv;i<=bornei2+GridDiv;i++)
@@ -1139,6 +1152,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                     dx=floor((i-1)/GridDiv)-1;
                     dy=floor((j-1)/GridDiv)-1;
                     dz=floor((k-1)/GridDiv)-1;
+
                     for(p=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->begin();p!=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->end();p++)
                     {
                         if (*p != id)
@@ -1160,6 +1174,8 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
             }
         }
     }
+
+
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //$ Number of agregates possibly in contact
