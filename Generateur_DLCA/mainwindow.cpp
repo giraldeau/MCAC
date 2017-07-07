@@ -490,10 +490,30 @@ int SelectLabelSuperieur(int id, int* resu)
 
 void AjouteVerlet(int id)
 {   int taille1;
+    int i,j,k;
+    std::_List_iterator<int> p;
 
     if (use_verlet)
-    {
+    {/*
+        for (i=GridDiv+1;i<=2*GridDiv;i++)
+        {
+            for(j=GridDiv+1;j<=2*GridDiv;j++)
+            {
+                for(k=GridDiv+1;k<=2*GridDiv;k++)
+                {
+                    for(p= Verlet[i][j][k]->begin();p!= Verlet[i][j][k]->end();p++)
+                    {
 
+                        if(*p==id)
+                        {
+
+                            printf("Bug Ajoute\n");
+
+                        }
+                    }
+                }
+            }
+        }*/
 
 
         VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
@@ -1432,6 +1452,7 @@ void Init()
                 for(k=0;k<=3*GridDiv;k++)
                 {
                     Verlet[i][j][k]= new std::list<int>;
+                    *Verlet[i][j][k]= std::list<int>();
                 }
 
             }
@@ -1467,7 +1488,7 @@ void Init()
         for (j = 1; j<= 3 ; j++)
             PosiGravite[i][j] = Random()*L;
 
-        AjouteVerlet(i);
+
 
         x = Random(); //Tirage aléatoire
 
@@ -1494,7 +1515,10 @@ void Init()
 
         if (test > 0)
             i--;
-
+        else
+        {
+        AjouteVerlet(i);
+        }
         testmem = testmem + test; //Comptabilise le nombre d'échecs à positionner une sphère sans superposition
 
         if (testmem > N)
