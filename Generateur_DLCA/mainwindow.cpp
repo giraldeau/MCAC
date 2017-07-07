@@ -67,7 +67,7 @@ MainWindow* GUI;
 
 Sphere s1,s2;
 SphereList spheres;
-int* Monoi; //
+int* Monoi;   //
 int* MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
 int* MonoRep; //
 
@@ -88,7 +88,7 @@ double Random()
     return v;
 }
 
-double Maxi2D(int colonne, int nmax)
+__attribute__((pure)) double Maxi2D(int colonne, int nmax)
 {
     //Maximum of a column in the Aggregate table
     int i;
@@ -119,55 +119,6 @@ double MinEtIndex(double* tableau, int size, int& position)
 
     return m;
 }
-
-//###################################################### Fonction Erf ###########################################################
-const int ncof=28;
-
-const double cof[28] = {-1.3026537197817094, 6.4196979235649026e-1,
-        1.9476473204185836e-2,-9.561514786808631e-3,-9.46595344482036e-4,
-        3.66839497852761e-4,4.2523324806907e-5,-2.0278578112534e-5,
-        -1.624290004647e-6,1.303655835580e-6,1.5626441722e-8,-8.5238095915e-8,
-        6.529054439e-9,5.059343495e-9,-9.91364156e-10,-2.27365122e-10,
-        9.6467911e-11, 2.394038e-12,-6.886027e-12,8.94487e-13, 3.13092e-13,
-        -1.12708e-13,3.81e-16,7.106e-15,-1.523e-15,-9.4e-17,1.21e-16,-2.8e-17};
-
-double erfccheb(double z)
-{
-        int j;
-        double t,ty,tmp,d=0.,dd=0.;
-        //if (z < 0.) throw("erfccheb requires nonnegative argument");
-        t = 2./(2.+z);
-        ty = 4.*t - 2.;
-        for (j=ncof-1;j>0;j--) {
-                tmp = d;
-                d = ty*d - dd + cof[j];
-                dd = tmp;
-        }
-        return t*exp(-z*z + 0.5*(cof[0] + ty*d) - dd);
-}
-double erfc(double x)
-{
-                if (x >= 0.) return erfccheb(x);
-                else return 2.0 - erfccheb(-x);
-}
-
-double inverfc(double p)
-{
-        double x,err,t,pp;
-        if (p >= 2.0) return -100.;
-        if (p <= 0.0) return 100.;
-        pp = (p < 1.0)? p : 2. - p;
-        t = sqrt(-2.*log(pp/2.));
-        x = -0.70711*((2.30753+t*0.27061)/(1.+t*(0.99229+t*0.04481)) - t);
-        for (int j=0;j<2;j++) {
-                err = erfc(x) - pp;
-                x += err/(1.12837916709551257*exp(-(x*x))-x*err);
-        }
-        return (p < 1.0? x : -x);
-}
-double erf(double x) { return 1-erfc(x); }
-double inverf(double p) {return inverfc(1.-p);}
-
 //################################################## Recherche de sphères #############################################################################
 
 int SelectLabelEgal(int id, int* resu)
@@ -200,7 +151,7 @@ int SelectLabelSuperieur(int id, int* resu)
 
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
-double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat, double** PosiGravite)
+double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat)
 {
     double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
     int i, j, k, nmonoi;
@@ -290,7 +241,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     else
     {
         //$ Determination of the coefficient of mean covering, using the one determined in the precedent loop
-        cov = cov/((double)Nc)/2.0;
+        cov = cov/(double(Nc))/2.0;
     }
     //$ Filling of PosiGravite
 
@@ -333,7 +284,7 @@ void ParametresAgg(int Agg)
     double volAgregat, surfAgregat;
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
-    rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat, PosiGravite);
+    rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat);
 
     masse = Rho*volAgregat; //Masse réelle de l'agrégat n°Agg
 
@@ -348,9 +299,9 @@ void ParametresAgg(int Agg)
     }
 
 
-    rpmoy = rpmoy/((double)np);   //Calcul du rayon moyen de l'agrégat n°Agg
-    rpmoy2 = rpmoy2/((double)np); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
-    rpmoy3 = rpmoy3/((double)np); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
+    rpmoy = rpmoy/(double(np));   //Calcul du rayon moyen de l'agrégat n°Agg
+    rpmoy2 = rpmoy2/(double(np)); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
+    rpmoy3 = rpmoy3/(double(np)); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
     //printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
     dm = physicalmodel.ConvertRg2Dm(np,rg,rpmoy);
     diff = physicalmodel.diffusivity(dm);
@@ -780,9 +731,9 @@ int CalculSuperposition(int id)
     }
     mem = mem*1E6;
 
-    if ((int)mem < 0)
+    if (mem < 0)
     {
-        printf("Superposition pour Numfichier %d,   agrégat n°%d    mem=%d\n", NSauve, id, (int)mem);
+        printf("Superposition pour Numfichier %d,   agrégat n°%d    mem=%d\n", NSauve, id, int(mem));
         return 1;
     }
     else return 0;
@@ -1094,8 +1045,8 @@ void SauveASCII(int value, int id)
     for (i = 1; i <= NAgg; i++)
     {
         fprintf(f, "%10.3f\t", Aggregate[i][0]*1E9);
-        fprintf(f, "%d\t", (int)Aggregate[i][1]);
-        fprintf(f, "%d\t", (int)Aggregate[i][2]); //Nombre de coordination
+        fprintf(f, "%d\t", int(Aggregate[i][1]));
+        fprintf(f, "%d\t", int(Aggregate[i][2])); //Nombre de coordination
         fprintf(f, "%10.3f\t", Aggregate[i][3]*1E9);
         fprintf(f, "%10.3f\t", Aggregate[i][4]*1E9);
         fprintf(f, "%10.3f\t", Aggregate[i][5]*1E6);
@@ -1296,7 +1247,7 @@ void Calcul() //Coeur du programme
     contact=true;
     int end = MAX(5,N/200);
     int it_without_contact=0;
-    int lim_it_without_contact = 100;
+    int lim_it_without_contact = 200;
 
     end = 20;
 
@@ -1304,7 +1255,7 @@ void Calcul() //Coeur du programme
     printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);
 
     //$ Loop on the N monomeres
-    while (NAgg > end && it_without_contact<100) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
+    while (NAgg > end && it_without_contact<lim_it_without_contact) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
     {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
         time(&t);
@@ -1360,7 +1311,7 @@ void Calcul() //Coeur du programme
         else
         {
             //$ Random Choice of an aggregate
-            NumAgg = int(Random()*(double)NAgg)+1;
+            NumAgg = int(Random()*double(NAgg))+1;
             deltatemps = 0.0;
             temps = temps + 1E-9;
 
@@ -1449,7 +1400,7 @@ void Calcul() //Coeur du programme
             SauveASCII(NSauve++, newnumagg);
     }
 
-    printf("Nombre total d'aggregats : %d\n",NAgg);
+    printf("Nombre total d'aggregats : %d\nNombre d'iterations sans contacts' : %d\n",NAgg,it_without_contact);
 /*
     cout << "L=" << L*1E9
          <<"     lambda=" << lambda*1E9
@@ -1503,7 +1454,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::BoutonQuitter()
+__attribute__((noreturn)) void MainWindow::BoutonQuitter()
 {
     this->close();
     exit(0);

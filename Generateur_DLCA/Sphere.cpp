@@ -75,17 +75,17 @@ Sphere::~Sphere(void)
     surface = NULL;
 }
 
-double Sphere::Volume(void) const
+__attribute__((pure)) double Sphere::Volume(void) const
 {
     return *volume;
 }
 
-double Sphere::Surface(void) const
+__attribute__((pure)) double Sphere::Surface(void) const
 {
     return *surface;
 }
 
-double Sphere::Radius(void) const
+__attribute__((pure)) double Sphere::Radius(void) const
 {
     return *r;
 }
@@ -165,22 +165,22 @@ void Sphere::UpdateVolAndSurf(void)
     }
 }
 
-double Sphere::Distance(const Sphere& c) const
+__attribute__((pure)) double Sphere::Distance(const Sphere& c) const
 {
     return Distance(*c.x,*c.y,*c.z);
 }
 
-double Sphere::Distance(const double* point) const
+__attribute__((pure)) double Sphere::Distance(const double* point) const
 {
     return Distance(point[1],point[2],point[3]);
 }
 
-double Sphere::Distance(const double otherx, const double othery, const double otherz) const
+__attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz) const
 {
     return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
 }
 
-double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,double& distance) const
+__attribute__((pure)) double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,double& distance) const
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
@@ -239,7 +239,7 @@ double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,
 }
 
 //Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
+__attribute__((pure)) double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
 {
     double d, h;
     double Ri, Rj;
@@ -321,7 +321,7 @@ SphereList::~SphereList(void)
     physicalmodel = NULL;
 }
 
-Sphere& SphereList::operator[](const int i)
+__attribute__((pure)) Sphere& SphereList::operator[](const int i)
 {
     return *spheres[i];
 }

@@ -37,5 +37,13 @@ public:
     double velocity(const double masse) const;
     void print(void) const;
 };
+
+
+double erfccheb(const double z);
+double myerfc(const double x);
+double inverfc(const double p);
+double myerf(const double x);
+double inverf(const double p);
+
 #endif // PHYSICAL_MODEL
 
