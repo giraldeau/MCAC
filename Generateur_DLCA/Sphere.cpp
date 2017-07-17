@@ -327,7 +327,7 @@ __attribute__((pure)) Sphere& SphereList::operator[](const int i)
 }
 
 //####################################### Croissance de surface des particules primaires ########################################
-void SphereList::CroissanceSurface(double dt)
+void SphereList::CroissanceSurface(const double dt)
 {
     #pragma omp for simd
     for (int i = 1; i <= N; i++)
@@ -343,3 +343,77 @@ void SphereList::CroissanceSurface(double dt)
 #endif
     }
 }
+
+
+//################################################## Recherche de sphères #############################################################################
+
+SphereList SphereList::extract(const int id, int** AggLabels) const
+{
+    SphereList res;
+
+    res.Init(AggLabels[id][0],*physicalmodel);
+
+#ifdef ROWMAJOR
+    for(int j=1;j<=6;j++)
+    {
+        for(int i=1;i<=res.N;i++)
+        {
+            res.array[j][i] = array[j][AggLabels[id][i]];
+        }
+    }
+#else
+    for(int i=1;i<=res.N;i++)
+    {
+        for(int j=1;j<=6;j++)
+        {
+
+            res.array[i][j] = array[AggLabels[id][i]][j];
+        }
+    }
+#endif
+    return res;
+}
+SphereList SphereList::extractplus(const int id, int** AggLabels,const int NAgg) const
+{
+    SphereList res;
+    int NSphereInAggrerat=0;
+
+    for(int i=id;i<=NAgg;i++)
+        NSphereInAggrerat += AggLabels[i][0];
+
+    res.Init(NSphereInAggrerat,*physicalmodel);
+
+    int m = 0;
+
+
+    for(int k=id;k<=NAgg;k++)
+    {
+#ifdef ROWMAJOR
+        for(int j=1;j<=6;j++)
+        {
+            for(int i=1;i<=AggLabels[k][0];i++)
+            {
+                res.array[j][m+i] = array[j][AggLabels[id][i]];
+            }
+        }
+#else
+        for(int i=1;i<=AggLabels[k][0];i++)
+        {
+            for(int j=1;j<=6;j++)
+            {
+
+                res.array[m+i][j] = array[AggLabels[id][i]][j];
+            }
+        }
+#endif
+        m+=AggLabels[k][0];
+    }
+    return res;
+}
+
+
+__attribute__((pure)) int SphereList::size() const
+{
+    return N;
+}
+

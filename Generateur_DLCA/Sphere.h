@@ -53,7 +53,7 @@ class SphereList
         Sphere** spheres;
         double** array;
         int N;
-        const PhysicalModel* physicalmodel;
+        PhysicalModel* physicalmodel;
 
         bool external_storage;
 
@@ -63,6 +63,10 @@ class SphereList
         ~SphereList(void);
 
         Sphere& operator[](const int i);
-        void CroissanceSurface(double dt);
+        void CroissanceSurface(const double dt);
+        SphereList extract(const int, int** AggLabels) const;
+        SphereList extractplus(const int, int** AggLabels,const int NAgg) const;
+        int size() const;
+
 };
 #endif // SPHERE

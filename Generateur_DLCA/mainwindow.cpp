@@ -67,6 +67,11 @@ MainWindow* GUI;
 
 Sphere s1,s2;
 SphereList spheres;
+/*
+SphereList Monoi;   //
+SphereList MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
+SphereList MonoRep; //
+*/
 int* Monoi;   //
 int* MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
 int* MonoRep; //
@@ -164,7 +169,12 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     rmax = 0.0;
     Arg = Brg = 0.0;
     Tv = 0.0;
+
     //$ Identification of the spheres in Agg id
+/*
+    Monoi = spheres.extract(id, AggLabels);
+    nmonoi = Monoi.size();
+*/
     nmonoi = SelectLabelEgal(id, Monoi);
 
     tabVol = new double[nmonoi+1];
