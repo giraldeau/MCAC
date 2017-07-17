@@ -730,7 +730,10 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     delete[] tabVol;
     delete[] tabSurf;
 
-    return sqrt((Arg+3.0/5.0*Brg)/volAgregat); //Rayon de giration de l'agrégat n°id
+    double rg = fabs((Arg+3.0/5.0*Brg)/volAgregat);
+    volAgregat=fabs(volAgregat);
+
+    return sqrt(rg); //Rayon de giration de l'agrégat n°id
 }
 //###############################################################################################################################
 
