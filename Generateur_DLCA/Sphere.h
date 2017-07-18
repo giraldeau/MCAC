@@ -33,7 +33,7 @@ class Sphere
 
     public:
         Sphere(void);
-        Sphere(SphereList* Storage,const int i);
+        Sphere(SphereList* Storage);
         ~Sphere(void);
         double& operator[](const int i);
 
@@ -69,19 +69,24 @@ class SphereList
         PhysicalModel* physicalmodel;
 
         std::array< std::vector<double>, 7>* Storage;
-        SphereList* external_storage;
+        const SphereList* external_storage;
+        int* index;
 
         void setpointers();
 
     public:
+        SphereList(void);
+        SphereList(const SphereList* parent,int* AggLabels);
+
         ~SphereList(void);
         Sphere& operator[](const int i);
 
         int size() const;
 
         void Init(const int N,PhysicalModel& _physicalmodel);
-        void extract(const int, int** AggLabels, SphereList& res) const;
-        void extractplus(const int, int** AggLabels,const int NAgg, SphereList& res) const;
+
+        SphereList extract(const int, int** AggLabels) const;
+        SphereList extractplus(const int, int** AggLabels,const int NAgg) const;
 
         void CroissanceSurface(const double dt);
 

@@ -27,7 +27,7 @@ Sphere::Sphere(void)
 }
 
 
-Sphere::Sphere(SphereList* sphere_list,const int i)
+Sphere::Sphere(SphereList* sphere_list)
 {
     external_storage =sphere_list;
 
@@ -304,27 +304,62 @@ double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1,
     return d;
 }
 
+SphereList::SphereList(void)
+{
+        spheres = NULL;
+        physicalmodel=NULL;
+
+        external_storage=NULL;
+        index = NULL;
+        Storage = NULL;
+}
+
+
+SphereList::SphereList(const SphereList* parent, int* _index)
+{
+        spheres = new Sphere*[_index[0]];
+        physicalmodel=parent->physicalmodel;
+
+        external_storage=parent;
+        index = _index;
+        Storage = external_storage->Storage;
+
+        N = index[0];
+
+        //#pragma omp for simd
+        for (int i = 0; i < N; i++)
+        {
+            int iparent = external_storage->index[index[i+1]]-1;
+            spheres[i] = external_storage->spheres[iparent];
+        }
+}
+
+
 void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
 {
-    spheres = new Sphere*[_N+1];
+    spheres = new Sphere*[_N];
     physicalmodel=&_physicalmodel;
 
     Storage = new array< vector<double>, 7>;
-    external_storage=NULL;
 
+    index = new int[_N+1];
+    index[0]=_N;
     for (N = 0; N < _N; N++)
-        spheres[N] = new Sphere(this, N);
+    {
+        index[N+1] = N+1;
+        spheres[N] = new Sphere(this);
+    }
 
-    /*
-    cout << "init" <<endl;
-    spheres[1]->Aff(1e9);
-    */
 }
+
 
 void SphereList::setpointers()
 {
+    //#pragma omp for simd
     for (int i = 0; i < N-1; i++)
+    {
         spheres[i]->setpointers();
+    }
 }
 
 SphereList::~SphereList(void)
@@ -333,9 +368,11 @@ SphereList::~SphereList(void)
     {
         if (spheres!=NULL)
         {
+            /*
             for (int i = 0; i < N; i++)
                 if (spheres[i]!=NULL)
                     delete spheres[i];
+            */
             delete[] spheres;
         }
         if (Storage!=NULL)
@@ -366,13 +403,14 @@ void SphereList::CroissanceSurface(const double dt)
     #pragma omp for simd
     for (int i = 0; i < listSize; i++)
     {
-        double oldR = (*Storage)[4][i];
+        int j = index[i+1]-1;
+        double oldR = (*Storage)[4][j];
         double newR = physicalmodel->Grow(oldR, dt);
         double newR2=newR*newR;
         double newR3=newR2*newR;
-        (*Storage)[4][i] = newR;
-        (*Storage)[5][i] = facvol*newR3;
-        (*Storage)[6][i] = facsurf*newR2;
+        (*Storage)[4][j] = newR;
+        (*Storage)[5][j] = facvol*newR3;
+        (*Storage)[6][j] = facsurf*newR2;
     }
 
     /*
@@ -389,15 +427,31 @@ int SphereList::size() const
 
 //################################################## Recherche de sphères #############################################################################
 
-void SphereList::extract(const int id, int** AggLabels, SphereList& res) const
+SphereList SphereList::extract(const int id, int** AggLabels) const
 {
-   cout << "TO BE IMPLEMENTED" << endl;
-   exit(5);
+    return SphereList(this,AggLabels[id]);
 }
 
-void SphereList::extractplus(const int id, int** AggLabels,const int NAgg, SphereList& res) const
+SphereList SphereList::extractplus(const int id, int** AggLabels,const int NAgg) const
 {
-   cout << "TO BE IMPLEMENTED" << endl;
-   exit(5);
-}
 
+    int NSphereInAggrerat=0;
+
+    for(int i=id;i<=NAgg;i++)
+        NSphereInAggrerat += AggLabels[i][0];
+
+    int AggLabelPlus[NSphereInAggrerat+1];
+
+    AggLabelPlus[0] = NSphereInAggrerat;
+
+    int m =0;
+    for(int i=id;i<=NAgg;i++)
+        for(int j=1;j<=AggLabels[i][0];j++)
+        {
+            m++;
+            AggLabelPlus[m] = AggLabels[i][j];
+        }
+
+    return SphereList(this,AggLabelPlus);
+
+}

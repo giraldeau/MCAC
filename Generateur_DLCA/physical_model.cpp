@@ -97,7 +97,7 @@ void PhysicalModel::print(void) const
 
 //###############################################################################################################################
 
-__attribute__((pure)) double PhysicalModel::Cunningham(const double R) const //Facteur correctif de Cunningham
+double PhysicalModel::Cunningham(const double R) const //Facteur correctif de Cunningham
 {
     double A = 1.142;
     double B = 0.558;
@@ -113,13 +113,13 @@ __attribute__((pure)) double PhysicalModel::Cunningham(const double R) const //F
  On obtient le bon rayon de mobilité lorsque la fonction retourne 0
 */
 
-__attribute__((pure)) double PhysicalModel::ModeleBeta(const double rm,const double np, const double rg) const
+double PhysicalModel::ModeleBeta(const double rm,const double np, const double rg) const
 {
     if (rm<0.) {throw 42;}
     return Cunningham(rm) - FactorModelBeta*rm;
 }
 
-__attribute__((pure)) double PhysicalModel::Dichotomie(const double np, const double rg, const double rpmoy, const double x0) const
+double PhysicalModel::Dichotomie(const double np, const double rg, const double rpmoy, const double x0) const
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax;
     int ite=1;
@@ -154,7 +154,7 @@ __attribute__((pure)) double PhysicalModel::Dichotomie(const double np, const do
     return rmed;
 }
 
-__attribute__((pure)) double PhysicalModel::brentq(const double np, const double rg, const double rpmoy, const double x0) const
+double PhysicalModel::brentq(const double np, const double rg, const double rpmoy, const double x0) const
 {
     double xa,xb,xtol,rtol;
     int iter=500;
@@ -245,7 +245,7 @@ __attribute__((pure)) double PhysicalModel::brentq(const double np, const double
     return xcur;
 }
 
-__attribute__((pure)) double PhysicalModel::Secante(const double np,const double rg,const double rpmoy, const double xsave) const
+double PhysicalModel::Secante(const double np,const double rg,const double rpmoy, const double xsave) const
 {
     double x[2];
     double fx[2];
@@ -288,17 +288,17 @@ double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double
     return  Dichotomie(np,rg,rpmoy,x0)*2;
 }
 
-__attribute__((pure)) double PhysicalModel::Grow(const double R,const double dt) const
+double PhysicalModel::Grow(const double R,const double dt) const
 {
     return R + Asurfgrowth*pow(R, xsurfgrowth-2)*dt;
 }
 
-__attribute__((pure)) double PhysicalModel::diffusivity(const double dm) const
+double PhysicalModel::diffusivity(const double dm) const
 {
     double cc = Cunningham(dm/2);
     return K*T/3/PI/Mu/dm*cc;
 }
-__attribute__((pure)) double PhysicalModel::velocity(const double masse) const
+double PhysicalModel::velocity(const double masse) const
 {
     return sqrt(8*K*T/PI/masse);
 }
@@ -314,7 +314,7 @@ const double cof[28] = {-1.3026537197817094, 6.4196979235649026e-1,
         9.6467911e-11, 2.394038e-12,-6.886027e-12,8.94487e-13, 3.13092e-13,
         -1.12708e-13,3.81e-16,7.106e-15,-1.523e-15,-9.4e-17,1.21e-16,-2.8e-17};
 
-__attribute__((pure)) double erfccheb(const double z)
+double erfccheb(const double z)
 {
         int j;
         double t,ty,tmp,d=0.,dd=0.;
@@ -328,13 +328,13 @@ __attribute__((pure)) double erfccheb(const double z)
         }
         return t*exp(-z*z + 0.5*(cof[0] + ty*d) - dd);
 }
-__attribute__((pure,const)) double myerfc(const double x)
+double myerfc(const double x)
 {
                 if (x >= 0.) return erfccheb(x);
                 else return 2.0 - erfccheb(-x);
 }
 
-__attribute__((pure,const)) double inverfc(const double p)
+double inverfc(const double p)
 {
         double x,err,t,pp;
         if (p >= 2.0) return -100.;
@@ -348,5 +348,5 @@ __attribute__((pure,const)) double inverfc(const double p)
         }
         return (p < 1.0? x : -x);
 }
-__attribute__((pure,const)) double myerf(const double x) { return 1-myerfc(x); }
-__attribute__((pure,const)) double inverf(const double p) {return inverfc(1.-p);}
+double myerf(const double x) { return 1-myerfc(x); }
+double inverf(const double p) {return inverfc(1.-p);}
