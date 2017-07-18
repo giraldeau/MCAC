@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-COMPILATOR = "GNU"
+COMPILATOR = "INTEL"
 
 QT       += core gui
 
