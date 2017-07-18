@@ -174,6 +174,12 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     double * tabVol;
     double* tabSurf;
 
+
+    /*
+    cout << "rayon giration" <<endl;
+    spheres[1].Aff(1e9);
+    */
+
     cov = 0.0;
     Nc = 0;
     volAgregat = surfAgregat = terme = 0.0;
@@ -912,24 +918,26 @@ void Init()
     }
 
     for (i = 1; i <= N; i++)
-    {
-
+    {          
+        //random position
         for (j = 1; j<= 3 ; j++)
             PosiGravite[i][j] = Random()*L;
 
-        x = Random(); //Tirage aléatoire
-
+        //random size
+        x = Random();
         if (Mode == 1)
             Dp = Dpm+sqrt(2.0)*sigmaDpm*inverf(2*x-1); //Loi normale
         else
             Dp = exp(log(Dpm)+sqrt(2.0)*log(sigmaDpm)*inverf(2*x-1)); //Loi log-normale
 
         Dp = Dp/1E9;
-
         if (Dp <= 0)  Dp = Dpm*1E-9;
 
-        spheres[i].Update(PosiGravite[i], Dp/2);
+        //initialize the sphere :
+        // This is a real sphere
         spheres[i].SetLabel(i);
+        // position and size
+        spheres[i].Update(PosiGravite[i], Dp/2);
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
         test=0;

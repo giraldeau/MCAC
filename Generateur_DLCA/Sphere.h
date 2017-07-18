@@ -1,14 +1,20 @@
 #include <iostream>
 #include <physical_model.h>
+#include <vector>
+#include <array>
 #ifndef SPHERE
 #define SPHERE
+
+
+class SphereList;
+class Sphere;
+
 
 class Sphere
 {
     friend class SphereList;
 
     private:
-        double* arr[7];
         double* x;
         double* y;
         double* z;
@@ -18,14 +24,18 @@ class Sphere
 
         int AggLabel, SphereLabel;
 
-        bool external_storage;
+        std::array< std::vector<double>, 7>* Storage;
+        SphereList* external_storage;
 
         void UpdateVolAndSurf(void);
+        void setpointers(void);
+        void add(void);
 
     public:
         Sphere(void);
-        Sphere(double** arr,const int i);
+        Sphere(SphereList* Storage,const int i);
         ~Sphere(void);
+        double& operator[](const int i);
 
         void Update(const double newx, const double newy, const double newz, const double newr);
         void Update(const double* newp, const double newr);
@@ -35,13 +45,15 @@ class Sphere
         void Translate(const double* trans);
         std::string str(const double coef) const;
         void Aff(const double coef) const;
-        double Distance(const Sphere& c) const;
-        double Distance(const double* point) const;
-        double Distance(const double otherx, const double othery, const double otherz) const;
         double Volume(void) const;
         double Surface(void) const;
         double Radius(void) const;
         const double* Position(void) const;
+
+        double Distance(const Sphere& c) const;
+        double Distance(const double* point) const;
+        double Distance(const double otherx, const double othery, const double otherz) const;
+
         double Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
         double Collision(const Sphere& c, const double* vd,const  double  distmax,double& distance_contact) const;
     };
@@ -49,23 +61,29 @@ class Sphere
 
 class SphereList
 {
+    friend class Sphere;
+
     private:
-        Sphere** spheres;
-        double** array;
         int N;
+        Sphere** spheres;
         PhysicalModel* physicalmodel;
 
-        bool external_storage;
+        std::array< std::vector<double>, 7>* Storage;
+        SphereList* external_storage;
+
+        void setpointers();
 
     public:
-
-        void Init(const int N,PhysicalModel& _physicalmodel);
         ~SphereList(void);
         Sphere& operator[](const int i);
-        void CroissanceSurface(const double dt);
+
+        int size() const;
+
+        void Init(const int N,PhysicalModel& _physicalmodel);
         void extract(const int, int** AggLabels, SphereList& res) const;
         void extractplus(const int, int** AggLabels,const int NAgg, SphereList& res) const;
-        int size() const;
+
+        void CroissanceSurface(const double dt);
 
 };
 #endif // SPHERE

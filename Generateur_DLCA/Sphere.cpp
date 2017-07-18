@@ -10,8 +10,6 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-#define ROWMAJOR
-
 using namespace std;
 
 const double PI = atan(1.0)*4;
@@ -20,54 +18,53 @@ const double facsurf = 4*PI;
 
 Sphere::Sphere(void)
 {
-    arr[0] = new double[7];
-    for (int i=1;i<=6;i++)
-        arr[i]=&arr[0][i];
+    Storage = new array< vector<double>, 7>;
+    external_storage=NULL;
 
-    x = arr[1];
-    y = arr[2];
-    z = arr[3];
-    r = arr[4];
-    volume = arr[5];
-    surface = arr[6];
     AggLabel = 0;
-    SphereLabel = 0;
-    Update(0, 0, 0, 0);
 
-    external_storage=false;
+    add();
 }
 
-Sphere::Sphere(double** ext_arr,const int i)
+
+Sphere::Sphere(SphereList* sphere_list,const int i)
+{
+    external_storage =sphere_list;
+
+    Storage = (*external_storage).Storage;
+    AggLabel = 0;
+
+    add();
+}
+
+
+void Sphere::add(void)
 {
     for (int j=0;j<=6;j++)
-    {
-#ifdef ROWMAJOR
-        arr[j]=&ext_arr[j][i];
-#else
-        arr[j]=&ext_arr[i][j];
-#endif
-    }
+        (*Storage)[j].push_back(0.);
+    SphereLabel = (*Storage)[0].size()-1;
 
-    x = arr[1];
-    y = arr[2];
-    z = arr[3];
-    r = arr[4];
-    volume = arr[5];
-    surface = arr[6];
-    AggLabel = 0;
-    SphereLabel = i;
-    Update(0, 0, 0, 0);
+    setpointers();
+    if(external_storage!=NULL)
+        external_storage->setpointers();
 
-    external_storage =true;
 }
 
 Sphere::~Sphere(void)
 {
-    if(!external_storage)
-        if (arr[0]!=NULL) delete[] arr[0];
+    for (int j=0;j<=6;j++)
+        (*Storage)[j].erase((*Storage)[j].begin() + SphereLabel);
 
-    for (int j=1;j<=6;j++)
-        arr[j]=NULL;
+    setpointers();
+    if(external_storage!=NULL)
+        external_storage->setpointers();
+
+    if(external_storage==NULL)
+        if (Storage!=NULL) delete Storage;
+
+    external_storage=NULL;
+    SphereLabel = 0;
+    AggLabel = 0;
 
     x = NULL;
     y = NULL;
@@ -75,6 +72,22 @@ Sphere::~Sphere(void)
     r = NULL;
     volume = NULL;
     surface = NULL;
+
+}
+
+__attribute__((pure)) double& Sphere::operator[](const int i)
+{
+    return (*Storage)[i][SphereLabel];
+}
+
+void Sphere::setpointers(void)
+{
+    x = &(*this)[1];
+    y = &(*this)[2];
+    z = &(*this)[3];
+    r = &(*this)[4];
+    volume = &(*this)[5];
+    surface =&(*this)[6];
 }
 
 __attribute__((pure)) double Sphere::Volume(void) const
@@ -99,8 +112,6 @@ const double* Sphere::Position(void) const
     mypos[2]=*y;
     mypos[3]=*z;
     return mypos;
-
-    //return arr[0];
 }
 
 void Sphere::Update(const double newx,const double newy,const double newz,const double newr)
@@ -294,31 +305,48 @@ __attribute__((pure)) double Sphere::Intersection(const Sphere& c,double& vol1, 
 
 void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
 {
-    N=_N;
-    spheres = new Sphere*[N+1];
+    spheres = new Sphere*[_N+1];
     physicalmodel=&_physicalmodel;
 
-#ifdef ROWMAJOR
-    array = new double*[7];
-    for (int i = 1; i <= 6; i++)
-        array[i] = new double[N+1];
-#else
-    array = new double*[N+1];
-    for (int i = 1; i <= N; i++)
-        array[i] = new double[7];
-#endif
+    Storage = new array< vector<double>, 7>;
+    external_storage=NULL;
 
-    for (int i = 1; i <= _N; i++)
-        spheres[i] = new Sphere(array,i);
+    for (N = 1; N <= _N; N++)
+        spheres[N] = new Sphere(this, N);
 
-    external_storage = false;
+    /*
+    cout << "init" <<endl;
+    spheres[1]->Aff(1e9);
+    */
+}
+
+void SphereList::setpointers()
+{
+    for (int i = 1; i <= N-1; i++)
+        spheres[i]->setpointers();
 }
 
 SphereList::~SphereList(void)
 {
-    if(!external_storage)
-        if (spheres!=NULL) delete[] spheres;
-        if (array!=NULL) delete[] array;
+    if (external_storage==NULL)
+    {
+        if (spheres!=NULL)
+        {
+            /*
+            for (int i = 1; i <= N; i++)
+                if (spheres[i]!=NULL)
+                    delete spheres[i];
+            */
+            delete[] spheres;
+        }
+        if (Storage!=NULL)
+            delete Storage;
+    }
+    else
+    {
+        spheres = NULL;
+        Storage = NULL;
+    }
     physicalmodel = NULL;
 }
 
@@ -330,24 +358,28 @@ __attribute__((pure)) Sphere& SphereList::operator[](const int i)
 //####################################### Croissance de surface des particules primaires ########################################
 void SphereList::CroissanceSurface(const double dt)
 {
+    /*
+    cout << "before croissance" <<endl;
+    spheres[1]->Aff(1e9);
+    */
+
     const int listSize = N;
     //#pragma omp for simd
     for (int i = 1; i <= listSize; i++)
     {
-#ifdef ROWMAJOR
-        double oldR = array[4][i];
+        double oldR = (*Storage)[4][i];
         double newR = physicalmodel->Grow(oldR, dt);
-	double newR2=newR*newR;
-	double newR3=newR2*newR;
-        array[4][i] = newR;
-        array[5][i] = facvol*newR3;
-        array[6][i] = facsurf*newR2;
-#else
-        array[i][4] = physicalmodel->Grow(array[i][4], dt);
-        array[i][5] = facvol*pow(array[i][4], 3);
-        array[i][6] = facsurf*pow(array[i][4], 2);
-#endif
+        double newR2=newR*newR;
+        double newR3=newR2*newR;
+        (*Storage)[4][i] = newR;
+        (*Storage)[5][i] = facvol*newR3;
+        (*Storage)[6][i] = facsurf*newR2;
     }
+
+    /*
+    cout << "after croissance" <<endl;
+    spheres[1]->Aff(1e9);
+    */
 }
 
 __attribute__((pure)) int SphereList::size() const
