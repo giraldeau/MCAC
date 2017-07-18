@@ -38,8 +38,8 @@ RCC_DIR = $$DESTDIR/.qrc
 UI_DIR = $$DESTDIR/.ui
 
 equals(COMPILATOR, "INTEL"){
-    QMAKE_CXXFLAGS += -g -traceback -xHost -qopenmp -static
-    QMAKE_LFLAGS   += -g -traceback -qopenmp
+    QMAKE_CXXFLAGS += -g -traceback -xHost -qopenmp -static -std=c++11
+    QMAKE_LFLAGS   += -g -traceback -qopenmp -std=c++11
 
     ### WARNINGS ###
     QMAKE_CXXFLAGS += -w3 -Wall

@@ -35,6 +35,8 @@ Sphere::Sphere(SphereList* sphere_list,const int i)
     AggLabel = 0;
 
     add();
+
+    external_storage->setpointers();
 }
 
 
@@ -45,9 +47,8 @@ void Sphere::add(void)
     SphereLabel = (*Storage)[0].size()-1;
 
     setpointers();
-    if(external_storage!=NULL)
-        external_storage->setpointers();
 
+    Update(0, 0, 0, 0);
 }
 
 Sphere::~Sphere(void)
@@ -75,7 +76,7 @@ Sphere::~Sphere(void)
 
 }
 
-__attribute__((pure)) double& Sphere::operator[](const int i)
+double& Sphere::operator[](const int i)
 {
     return (*Storage)[i][SphereLabel];
 }
@@ -90,22 +91,22 @@ void Sphere::setpointers(void)
     surface =&(*this)[6];
 }
 
-__attribute__((pure)) double Sphere::Volume(void) const
+double Sphere::Volume(void)
 {
     return *volume;
 }
 
-__attribute__((pure)) double Sphere::Surface(void) const
+double Sphere::Surface(void)
 {
     return *surface;
 }
 
-__attribute__((pure)) double Sphere::Radius(void) const
+double Sphere::Radius(void)
 {
     return *r;
 }
 
-const double* Sphere::Position(void) const
+const double* Sphere::Position(void)
 {
     double* mypos= new double[4];
     mypos[1]=*x;
@@ -128,7 +129,7 @@ void Sphere::Update(const double* newp,const double newr)
     Update(newp[1],newp[2],newp[3],newr);
 }
 
-void Sphere::Update(const Sphere& c)
+void Sphere::Update(Sphere& c)
 {
     Update(*c.x,*c.y,*c.z,*c.r);
 }
@@ -151,7 +152,7 @@ void Sphere::Translate(const double* trans)
     *z += trans[3];
 }
 
-string Sphere::str(const double coef) const
+string Sphere::str(const double coef)
 {
     stringstream res;
     res
@@ -163,7 +164,7 @@ string Sphere::str(const double coef) const
     return res.str();
 }
 
-void Sphere::Aff(const double coef) const
+void Sphere::Aff(const double coef)
 {  
     cout << str(coef) << endl;
 }
@@ -177,22 +178,22 @@ void Sphere::UpdateVolAndSurf(void)
     }
 }
 
-__attribute__((pure)) double Sphere::Distance(const Sphere& c) const
+double Sphere::Distance(Sphere& c)
 {
     return Distance(*c.x,*c.y,*c.z);
 }
 
-__attribute__((pure)) double Sphere::Distance(const double* point) const
+double Sphere::Distance(const double* point)
 {
     return Distance(point[1],point[2],point[3]);
 }
 
-__attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz) const
+double Sphere::Distance(const double otherx, const double othery, const double otherz)
 {
     return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
 }
 
-__attribute__((pure)) double Sphere::Collision(const Sphere& c,const  double* vd,const double distmax,double& distance) const
+double Sphere::Collision(Sphere& c,const  double* vd,const double distmax,double& distance)
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
@@ -251,7 +252,7 @@ __attribute__((pure)) double Sphere::Collision(const Sphere& c,const  double* vd
 }
 
 //Calcul du volume de la calotte sphérique de la sphère courante de rayon Ri due à la surestimation de la sphère c de rayon Rj
-__attribute__((pure)) double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
+double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 )
 {
     double d, h;
     double Ri, Rj;
@@ -311,7 +312,7 @@ void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
     Storage = new array< vector<double>, 7>;
     external_storage=NULL;
 
-    for (N = 1; N <= _N; N++)
+    for (N = 0; N < _N; N++)
         spheres[N] = new Sphere(this, N);
 
     /*
@@ -322,7 +323,7 @@ void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
 
 void SphereList::setpointers()
 {
-    for (int i = 1; i <= N-1; i++)
+    for (int i = 0; i < N-1; i++)
         spheres[i]->setpointers();
 }
 
@@ -332,11 +333,9 @@ SphereList::~SphereList(void)
     {
         if (spheres!=NULL)
         {
-            /*
-            for (int i = 1; i <= N; i++)
+            for (int i = 0; i < N; i++)
                 if (spheres[i]!=NULL)
                     delete spheres[i];
-            */
             delete[] spheres;
         }
         if (Storage!=NULL)
@@ -350,9 +349,9 @@ SphereList::~SphereList(void)
     physicalmodel = NULL;
 }
 
-__attribute__((pure)) Sphere& SphereList::operator[](const int i)
+Sphere& SphereList::operator[](const int i)
 {
-    return *spheres[i];
+    return *spheres[i-1];
 }
 
 //####################################### Croissance de surface des particules primaires ########################################
@@ -364,8 +363,8 @@ void SphereList::CroissanceSurface(const double dt)
     */
 
     const int listSize = N;
-    //#pragma omp for simd
-    for (int i = 1; i <= listSize; i++)
+    #pragma omp for simd
+    for (int i = 0; i < listSize; i++)
     {
         double oldR = (*Storage)[4][i];
         double newR = physicalmodel->Grow(oldR, dt);
@@ -382,7 +381,7 @@ void SphereList::CroissanceSurface(const double dt)
     */
 }
 
-__attribute__((pure)) int SphereList::size() const
+int SphereList::size() const
 {
     return N;
 }
