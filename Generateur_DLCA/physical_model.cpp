@@ -314,7 +314,7 @@ const double cof[28] = {-1.3026537197817094, 6.4196979235649026e-1,
         9.6467911e-11, 2.394038e-12,-6.886027e-12,8.94487e-13, 3.13092e-13,
         -1.12708e-13,3.81e-16,7.106e-15,-1.523e-15,-9.4e-17,1.21e-16,-2.8e-17};
 
-__attribute__((pure,const)) double erfccheb(const double z)
+__attribute__((pure)) double erfccheb(const double z)
 {
         int j;
         double t,ty,tmp,d=0.,dd=0.;

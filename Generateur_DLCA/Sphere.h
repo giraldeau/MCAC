@@ -24,7 +24,7 @@ class Sphere
 
     public:
         Sphere(void);
-        Sphere(double*** arr,const int i);
+        Sphere(double** arr,const int i);
         ~Sphere(void);
 
         void Update(const double newx, const double newy, const double newz, const double newr);
@@ -51,7 +51,7 @@ class SphereList
 {
     private:
         Sphere** spheres;
-        double*** array;
+        double** array;
         int N;
         PhysicalModel* physicalmodel;
 
@@ -61,7 +61,6 @@ class SphereList
 
         void Init(const int N,PhysicalModel& _physicalmodel);
         ~SphereList(void);
-        void free(void);
         Sphere& operator[](const int i);
         void CroissanceSurface(const double dt);
         void extract(const int, int** AggLabels, SphereList& res) const;

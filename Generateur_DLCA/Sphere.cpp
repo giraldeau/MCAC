@@ -37,14 +37,14 @@ Sphere::Sphere(void)
     external_storage=false;
 }
 
-Sphere::Sphere(double*** ext_arr,const int i)
+Sphere::Sphere(double** ext_arr,const int i)
 {
-    for (int j=1;j<=6;j++)
+    for (int j=0;j<=6;j++)
     {
 #ifdef ROWMAJOR
-        arr[j]=ext_arr[j][i];
+        arr[j]=&ext_arr[j][i];
 #else
-        arr[j]=ext_arr[i][j];
+        arr[j]=&ext_arr[i][j];
 #endif
     }
 
@@ -299,21 +299,13 @@ void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
     physicalmodel=&_physicalmodel;
 
 #ifdef ROWMAJOR
-    array = new double**[7];
+    array = new double*[7];
     for (int i = 1; i <= 6; i++)
-    {
-        array[i] = new double*[N+1];
-        array[i][0] = new double[N];
-        for (int j=1;j<=N;j++)
-            array[i][j]=&array[i][0][j];
-    }
+        array[i] = new double[N+1];
 #else
-    array = new double**[N+1];
+    array = new double*[N+1];
     for (int i = 1; i <= N; i++)
-        array[i] = new double*[7];
-        array[i][0] = new double[7];
-        for (int j=1;j<=7;j++)
-            array[i][j]=&array[i][0][j];
+        array[i] = new double[7];
 #endif
 
     for (int i = 1; i <= _N; i++)
@@ -324,11 +316,6 @@ void SphereList::Init(const int _N,PhysicalModel& _physicalmodel)
 
 SphereList::~SphereList(void)
 {
-    free();
-}
-
-void SphereList::free(void)
-    {
     if(!external_storage)
         if (spheres!=NULL) delete[] spheres;
         if (array!=NULL) delete[] array;
@@ -348,14 +335,13 @@ void SphereList::CroissanceSurface(const double dt)
     for (int i = 1; i <= listSize; i++)
     {
 #ifdef ROWMAJOR
-        double oldR = *array[4][i];
+        double oldR = array[4][i];
         double newR = physicalmodel->Grow(oldR, dt);
-        *array[4][i] = newR;
-        newR *= newR;
-        *array[6][i] = facsurf*newR;
-        newR *= newR;
-        *array[5][i] = facvol*newR;
-
+	double newR2=newR*newR;
+	double newR3=newR2*newR;
+        array[4][i] = newR;
+        array[5][i] = facvol*newR3;
+        array[6][i] = facsurf*newR2;
 #else
         array[i][4] = physicalmodel->Grow(array[i][4], dt);
         array[i][5] = facvol*pow(array[i][4], 3);
@@ -364,95 +350,23 @@ void SphereList::CroissanceSurface(const double dt)
     }
 }
 
+__attribute__((pure)) int SphereList::size() const
+{
+    return N;
+}
+
 
 //################################################## Recherche de sphères #############################################################################
 
 void SphereList::extract(const int id, int** AggLabels, SphereList& res) const
 {
-    res.free();
-
-    res.N=AggLabels[id][0];
-    res.spheres = new Sphere*[res.N+1];
-    res.physicalmodel=physicalmodel;
-
-#ifdef ROWMAJOR
-    res.array = new double**[7];
-    for(int j=1;j<=6;j++)
-    {
-        res.array[j] = new double*[res.N+1];
-        for(int i=1;i<=res.N;i++)
-        {
-            res.array[j][i] = array[j][AggLabels[id][i]];
-        }
-    }
-#else
-    res.array = new double**[res.N+1];
-    for(int i=1;i<=res.N;i++)
-    {
-        res.array[i] = new double*[7];
-        for(int j=1;j<=6;j++)
-        {
-
-            res.array[i][j] = array[AggLabels[id][i]][j];
-        }
-    }
-#endif
-
-    for (int i = 1; i <= res.N; i++)
-    {
-        res.spheres[i] = new Sphere(res.array,i);
-        cout << "coucou" << endl;
-        res.spheres[i]->Aff(1e9);
-        spheres[AggLabels[id][i]]->Aff(1e9);
-    }
-
-
-    res.external_storage = true;
-
-    res.spheres[1]->Aff(1e9);
+   cout << "TO BE IMPLEMENTED" << endl;
+   exit(5);
 }
 
 void SphereList::extractplus(const int id, int** AggLabels,const int NAgg, SphereList& res) const
 {
-    int NSphereInAggrerat=0;
-
-    for(int i=id;i<=NAgg;i++)
-        NSphereInAggrerat += AggLabels[i][0];
-
-    res.Init(NSphereInAggrerat,*physicalmodel);
-
-    int m = 0;
-
-
-    for(int k=id;k<=NAgg;k++)
-    {
-#ifdef ROWMAJOR
-        for(int j=1;j<=6;j++)
-        {
-            for(int i=1;i<=AggLabels[k][0];i++)
-            {
-                res.array[j][m+i] = array[j][AggLabels[id][i]];
-                res.spheres[m+i]->AggLabel = spheres[AggLabels[id][i]]->AggLabel;
-            }
-        }
-#else
-        for(int i=1;i<=AggLabels[k][0];i++)
-        {
-            for(int j=1;j<=6;j++)
-            {
-
-                res.array[m+i][j] = array[AggLabels[id][i]][j];
-            }
-            res.spheres[m+i]->AggLabel = spheres[AggLabels[id][i]]->AggLabel;
-        }
-#endif
-        m+=AggLabels[k][0];
-    }
-}
-
-
-__attribute__((pure)) int SphereList::size() const
-{
-    return N;
+   cout << "TO BE IMPLEMENTED" << endl;
+   exit(5);
 }
 
