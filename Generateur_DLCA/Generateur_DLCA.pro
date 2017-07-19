@@ -15,8 +15,9 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp\
-        Sphere.cpp \
-    physical_model.cpp
+    physical_model.cpp \
+    Sphere_storage.cpp \
+    Sphere_physics.cpp
 
 HEADERS += mainwindow.h\
         Sphere.h \
