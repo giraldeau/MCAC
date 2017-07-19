@@ -57,17 +57,17 @@ equals(COMPILATOR, "INTEL"){
 
 equals(COMPILATOR, "GNU"){
 
-    QMAKE_CXXFLAGS += -g -march=native -fopenmp -static
-    QMAKE_LFLAGS   += -g  -fopenmp
+    QMAKE_CXXFLAGS += -g -march=native -fopenmp -static  -std=c++11
+    QMAKE_LFLAGS   += -g  -fopenmp  -std=c++11
 
     ### WARNINGS ###
-    QMAKE_CXXFLAGS += -std=gnu++03 -Wpedantic -Wall -Wextra -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized
-    QMAKE_CXXFLAGS += -Wstrict-overflow=5 -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
+    QMAKE_CXXFLAGS += -Wpedantic -Wall -Wextra -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wstrict-overflow=5
     QMAKE_CXXFLAGS += -Warray-bounds -Wtrampolines -Wfloat-equal -Wundef -Wshadow -Wunsafe-loop-optimizations -Wcast-qual -Wcast-align -Wconversion
     QMAKE_CXXFLAGS += -Wuseless-cast -Wlogical-op -Wno-aggressive-loop-optimizations -Wnormalized=nfkc -Wpacked -Wredundant-decls -Winline -Winvalid-pch
     QMAKE_CXXFLAGS += -Wvector-operation-performance -Wdisabled-optimization -Wnoexcept  -fext-numeric-literals -Wstrict-null-sentinel -Wold-style-cast -Woverloaded-virtual -Wsign-promo
     QMAKE_CXXFLAGS += -Wzero-as-null-pointer-constant -Wmissing-declarations -Weffc++ -Wpadded -Waggregate-return
     # Not interesting
+    #QMAKE_CXXFLAGS += -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
     QMAKE_CXXFLAGS += -Wno-missing-declarations -Wno-effc++ -Wno-padded -Wno-aggregate-return -Wno-unused-variable -Wno-unused-result -Wno-unused-parameter
     # QT problems
     QMAKE_CXXFLAGS += -Wno-zero-as-null-pointer-constant -Wno-long-long -Wno-useless-cast -Wno-conversion -Wno-float-equal -Wno-packed -Wno-switch-default -Wno-strict-overflow

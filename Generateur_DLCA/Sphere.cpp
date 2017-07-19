@@ -440,7 +440,7 @@ SphereList SphereList::extractplus(const int id, int** AggLabels,const int NAgg)
     for(int i=id;i<=NAgg;i++)
         NSphereInAggrerat += AggLabels[i][0];
 
-    int AggLabelPlus[NSphereInAggrerat+1];
+    int* AggLabelPlus = new int[NSphereInAggrerat+1];
 
     AggLabelPlus[0] = NSphereInAggrerat;
 
@@ -452,6 +452,10 @@ SphereList SphereList::extractplus(const int id, int** AggLabels,const int NAgg)
             AggLabelPlus[m] = AggLabels[i][j];
         }
 
-    return SphereList(this,AggLabelPlus);
+    SphereList ret = SphereList(this,AggLabelPlus);
+
+    delete[] AggLabelPlus;
+
+    return ret;
 
 }

@@ -175,17 +175,17 @@ int SelectLabelSuperieur(int id, SphereList& resu)
     return NSphereInAggrerat;
 }
 
-bool CompareIndexVerlet(int id,int* OldPos)
+bool CompareIndexVerlet(int id,int* _OldPos)
 {
     VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
     VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
     VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
 
-    if(VerIndex1!=OldPos[1])
+    if(VerIndex1!=_OldPos[1])
     {return 1;}
-    if(VerIndex2!=OldPos[2])
+    if(VerIndex2!=_OldPos[2])
     {return 1;}
-    if(VerIndex3!=OldPos[3])
+    if(VerIndex3!=_OldPos[3])
     {return 1;}
     return 0;
 }
@@ -206,12 +206,12 @@ void AjouteVerlet(int id)
     }
 }
 
-void SupprimeVerlet(int id,int* OldPos)
+void SupprimeVerlet(int id,int* _OldPos)
 {   int taille1,taille2;
 
     if (use_verlet)
     {
-        Verlet[OldPos[1]][OldPos[2]][OldPos[3]]->remove(id);
+        Verlet[_OldPos[1]][_OldPos[2]][_OldPos[3]]->remove(id);
     }
 }
 
@@ -279,7 +279,7 @@ void ReplacePosi(int id)
 
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
-double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat, double** PosiGravite)
+double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat)
 {// This function determines the Gyration Radius of the Aggregate Id.
     double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
     int i, j, k, nmonoi;
@@ -435,7 +435,7 @@ void ParametresAgg(int Agg)
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
     //$ Determination of the Radius of gyration of Agg using RayonGiration()
-    rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat, PosiGravite);
+    rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat);
 
     masse = Rho*volAgregat;//Determination of the real mass of Agg
     //$Determination of the spheres in Agg
@@ -1726,11 +1726,6 @@ void Calcul() //Coeur du programme
         printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
     }
     printf("\n\n");
-    for (i=1;i<=NAgg;i++)
-    {
-        printf("Nagg =  %d\n",i);
-        AfficheVerlet(i);
-    }
 
     Fermeture();
     if (GUI == NULL)
