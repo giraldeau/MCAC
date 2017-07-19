@@ -14,6 +14,7 @@
 #include <QString>
 #include <stdio.h>
 #include <string>
+#include <list>
 #include <cmath>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -31,45 +32,54 @@ char commentaires[500];
 using namespace std;
 
 const double PI = atan(1.0)*4; // 3.14159
-double T, X, FV, L, P, Rho; // Temperature, Paramètre de taille de la boîte, Fraction volumique de suie, longueur de la boîte, ?, ?, ?, Masse volumique
-double dfe, kfe; // dimension fractale et préfacteur fractal
+double T, X, FV, L, P, Rho; // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
+double dfe, kfe; // fractal dimension and pre-factor
 double xsurfgrowth, coeffB; // surface growth parameter, Bêta
-double Dpm, sigmaDpm; //
-double temps;
-double* Vectdir; // direction aléatoire
-double* TriCum;
-double* Translate;
-double* DistTab;
-double* NombreAlea;
+double Dpm, sigmaDpm; // Particle mean diameter, Sum of the mean diameters
+double temps; // Time
+double* Vectdir; // Direction of the translatiion of an aggregate
+double* TriCum; // Cumulated probabilities
+double* Translate;// Translation Vector
+double* DistTab; // unused
+double* NombreAlea; // unused
 double* TpT;
-double** PosiGravite; // Position du centre de gravité
-double** Aggregate; // Tableau des aggrégats
-double** tab;
+double** PosiGravite; // Position of the center of gravity
+double** Aggregate; // Array of the different aggregates and their caracteristics
+double** tab; // generic array
 int DeltaSauve;
 int NSauve;
 int Mode;
-int NumAgg;
-int compteur;
+int NumAgg; // Number of the aggregate in translation
+int compteur; // unused
 int nb_line;
-int secondes;
+int secondes; // CPU Time variable
 int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
 int iValTab=0;
-double** IdPossible;
-int* IdDistTab;
-int* IndexPourTri;
-bool* Select;
-char com[500];
-bool with_dots;
-int* TamponValeurs;
-int** AggLabels;
+int** IdPossible;  // Array of the Ids of the aggregates that could be in contact with the one moving
+int* IndexPourTri; // Used in the Sort
+bool* Select; // Unused
+char com[500]; // Char array used in the ASCII Save
+bool with_dots; // Bool used to chose the format of the ASCII exits
+int* TamponValeurs; // Buffer variable
+int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
+                // Aggregate, and then , the labels of saif spheres
+bool use_verlet = true; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
+
+// Chained list / Verlet
+std::list<int>**** Verlet; // Verlet's List
+int VerIndex1,VerIndex2,VerIndex3; // Values of the index in Verlet calculated using PosiGravite[]
+int GridDiv=10; // Number of Divisions of the box
+double RayonAggMax=0.; // Value of the radius of the bigger aggregate in the box
+int *OldPos; // Array used to stock the position of an aggregate before it is translated, used to determine if the aggregate has to be moved or not
+
 
 MainWindow* GUI;
 
 Sphere s1,s2;
 SphereList spheres;
-SphereList Monoi;   //
-SphereList MonoSel; //  Tableaux d'indices de sphères appartenant à un aggrégat
-SphereList MonoRep; //
+SphereList Monoi;   // Array of the spheres in an aggregate
+SphereList MonoSel; //  Array of the spheres in an aggregate, used in SupprimeLigne
+SphereList MonoRep; // Array of the spheres in an aggregate
 
 PhysicalModel physicalmodel;
 
@@ -88,7 +98,7 @@ double Random()
     return v;
 }
 
-__attribute__((pure)) double Maxi2D(int colonne, int nmax)
+double Maxi2D(int colonne, int nmax)
 {
     //Maximum of a column in the Aggregate table
     int i;
@@ -165,34 +175,142 @@ int SelectLabelSuperieur(int id, SphereList& resu)
     return NSphereInAggrerat;
 }
 
+bool CompareIndexVerlet(int id,int* OldPos)
+{
+    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+
+    if(VerIndex1!=OldPos[1])
+    {return 1;}
+    if(VerIndex2!=OldPos[2])
+    {return 1;}
+    if(VerIndex3!=OldPos[3])
+    {return 1;}
+    return 0;
+}
+
+void AjouteVerlet(int id)
+{   int taille1;
+    int i,j,k;
+    std::_List_iterator<int> p;
+
+    if (use_verlet)
+    {
+
+        VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+
+        Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
+    }
+}
+
+void SupprimeVerlet(int id,int* OldPos)
+{   int taille1,taille2;
+
+    if (use_verlet)
+    {
+        Verlet[OldPos[1]][OldPos[2]][OldPos[3]]->remove(id);
+    }
+}
+
+//############################################# Conditions aux limites périodiques ##############################################
+
+void ReplacePosi(int id)
+{// This function will relocate an aggregate when it gets out of the box limiting the space
+    int i,j,k,nr;
+    double* trans = new double[4];
+    bool move=false;
+
+    //$ Get the list of the monomeres if Agg Id
+    nr = SelectLabelEgal(id,MonoRep);
+
+    for(i=1;i<=3;i++)
+    {
+        OldPos[i]=floor(PosiGravite[id][i]*GridDiv/L)+GridDiv+1;
+    }
+
+    //$ for every dimension
+    for (i = 1; i <= 3; i++)
+    {
+        //$ Check if it is getting out
+        if (PosiGravite[id][i] > L)
+        {
+            trans[i] = - L;
+            move = true;
+        }
+        else if (PosiGravite[id][i] < 0)
+        {
+            trans[i] = L;
+            move = true;
+        }
+        else
+        {
+            trans[i] = 0;
+        }
+    }
+
+    //$ If it is getting out
+    if (move)
+    {
+        //$ Update the position of the spheres in Agg Id
+        for (i = 1; i <= 3; i++)
+            PosiGravite[id][i] = PosiGravite[id][i] + trans[i];
+
+        //$ Update the position of the spheres in Agg Id
+        for (j = 1; j <= nr; j++)
+        {
+            MonoRep[j].Translate(trans);
+        }
+
+        //$ Update Verlet
+        if (CompareIndexVerlet(id,OldPos))
+        {
+            SupprimeVerlet(id,OldPos);
+            AjouteVerlet(id);
+        }
+    }
+    delete[] trans;
+}
+//###############################################################################################################################
+
+
+
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
-double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat)
-{
+double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat, double** PosiGravite)
+{// This function determines the Gyration Radius of the Aggregate Id.
     double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
     int i, j, k, nmonoi;
     double * tabVol;
     double* tabSurf;
 
-
-    /*
-    cout << "rayon giration" <<endl;
-    spheres[1].Aff(1e9);
-    */
-
-    cov = 0.0;
-    Nc = 0;
-    volAgregat = surfAgregat = terme = 0.0;
-    rmax = 0.0;
-    Arg = Brg = 0.0;
+    cov = 0.0;// Coeficient of mean covering
+    Nc = 0; // Number of contacts
+    volAgregat = surfAgregat = terme = 0.0; // Volume and surface of Agg Id
+    rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
+                // It is used to assimilate the aggregate to a sphere when checking for intersections
+    Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
     Tv = 0.0;
 
     //$ Identification of the spheres in Agg id
+
+    //$ Determination of the monomeres in Agg Id
     nmonoi = SelectLabelEgal(id, Monoi);
 
 
     tabVol = new double[nmonoi+1];
     tabSurf = new double[nmonoi+1];
+
+    for(i=1;i<=3;i++)
+    {
+        OldPos[i]=floor(PosiGravite[id][i]*GridDiv/L)+GridDiv+1;
+    }
+
+
+
+    //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
 
     for (k = 1; k <= 3; k++)    PosiGravite[id][k] = 0.0; //Initialisation
 
@@ -203,7 +321,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     }
 
 
-    for (i = 1; i <= nmonoi; i++) //Pour les i sphérules constituant l'agrégat n°id
+    //$ For the Spheres i in Agg Id
+    for (i = 1; i <= nmonoi; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
         tabVol[i] += Monoi[i].Volume(); //Calculation of the volume of i
@@ -273,6 +392,13 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     {
         PosiGravite[id][k] = PosiGravite[id][k]/volAgregat;
     } //Centre of mass of Agg Id
+    if (CompareIndexVerlet(id,OldPos))
+    {
+        SupprimeVerlet(id,OldPos);
+        AjouteVerlet(id);
+    }
+    ReplacePosi(id);
+
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
 
     for (i = 1; i <= nmonoi; i++)
@@ -302,127 +428,133 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void ParametresAgg(int Agg)
-{
+{// This function will update the parameter of Agg
     int i, np, Nc;
     double masse, dm, cc, diff, vit, lpm, Tv, cov, rmax, rg, rpmoy, rpmoy2, rpmoy3;
     double volAgregat, surfAgregat;
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
-    rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat);
+    //$ Determination of the Radius of gyration of Agg using RayonGiration()
+    rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat, PosiGravite);
 
-    masse = Rho*volAgregat; //Masse réelle de l'agrégat n°Agg
+    masse = Rho*volAgregat;//Determination of the real mass of Agg
+    //$Determination of the spheres in Agg
+    np = SelectLabelEgal(Agg, MonoSel);
 
-    np = SelectLabelEgal(Agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
-    //npeqmass = kfe*pow(rg/rpeqmass,dfe);
-
+    //$ Determination of the mean radius of degrees 1,2,3 of Agg
     for (i = 1; i <= np; i++)
     {
-        rpmoy = rpmoy + MonoSel[i].Radius(); //Somme des rayons des sphérules de l'agrégat n°Agg
+        rpmoy = rpmoy + MonoSel[i].Radius(); //Sum of the radius of each sphere in Agg
         rpmoy2 = rpmoy2 + pow(MonoSel[i].Radius(), 2);
         rpmoy3 = rpmoy3 + pow(MonoSel[i].Radius(), 3);
     }
 
 
-    rpmoy = rpmoy/(double(np));   //Calcul du rayon moyen de l'agrégat n°Agg
-    rpmoy2 = rpmoy2/(double(np)); //Calcul du rayon moyen d'ordre 2 de l'agrégat n°Agg
-    rpmoy3 = rpmoy3/(double(np)); //Calcul du rayon moyen d'ordre 3 de l'agrégat n°Agg
-    //printf("Np   %d   Rpmoy  %e   lambda  %e   Gamma  %e   dfe  %e\n",np,rpmoy,lambda,gamma_,dfe);
+    rpmoy = rpmoy/(double(np));
+    rpmoy2 = rpmoy2/(double(np));
+    rpmoy3 = rpmoy3/(double(np));
+
+
+    //$ Determination of Dm using ConvertRg2Dm
     dm = physicalmodel.ConvertRg2Dm(np,rg,rpmoy);
+
+    //$Calculation fo it's mean free path, speed, and diff
+
     diff = physicalmodel.diffusivity(dm);
     vit =  physicalmodel.velocity(masse);
     lpm = 8*diff/PI/vit;
 
-    Aggregate[Agg][0] = rg; //Rayon de giration
-    Aggregate[Agg][1] = np; //Nombre de spherules par aggregat
-    Aggregate[Agg][2] = Nc; //Nombre de coordination
-    Aggregate[Agg][3] = dm; //Diametre de mobilité
+
+    //$ Update of Aggregate[] with the parameters
+    Aggregate[Agg][0] = rg; //Gyration Radius
+    Aggregate[Agg][1] = np; //Number of spheres in Agg
+    Aggregate[Agg][2] = Nc; //Cumber of contacts
+    Aggregate[Agg][3] = dm; //Mobility Diameter
 
     if (ActiveModulephysique == 1)
     {
-        Aggregate[Agg][4] = lpm;     //Libre parcours moyen
-        Aggregate[Agg][5] = lpm/vit; //Durée du deplacement
+        Aggregate[Agg][4] = lpm;     //Mean Free Path
+        Aggregate[Agg][5] = lpm/vit; //Displacement duration
     }
     else
     {
         Aggregate[Agg][4] = Dpm*1E-9;
         Aggregate[Agg][5] = 1E-6;
     }
-
-    Aggregate[Agg][6] = rmax;          //Rayon de la sphere qui contient l'agregat
-    Aggregate[Agg][7] = volAgregat;    //Estimation du volume de l'agrégat
-    Aggregate[Agg][8] = surfAgregat;   //Estimation de la surface libre de l'agrégat
-    Aggregate[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume de l'agrégat sans recouvrement      (Avant c'était Tv : Taux de recouvrement volumique)
-    Aggregate[Agg][10] = cov;          //Paramètre de recouvrement
-    Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Surface libre de l'agrégat sans recouvrement       (Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+    if(rmax>RayonAggMax)
+    {RayonAggMax=rmax;}
+    Aggregate[Agg][6] = rmax;          //Radius of the sphere containing Agg
+    Aggregate[Agg][7] = volAgregat;    //Etimation of the Aggregate's volume
+    Aggregate[Agg][8] = surfAgregat;   //Estimation of the sufrace of the aggregate
+    Aggregate[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
+    Aggregate[Agg][10] = cov;          //Covering Parameter
+    Aggregate[Agg][11] = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
 }
-//###############################################################################################################################
+//######################################################    verlet   #########################################################################
 
-//############################################# Conditions aux limites périodiques ##############################################
-void ReplacePosi(int id)
-{
-    int i,j,k,nr;
+void AfficheVerlet(int id)
+{   std::_List_iterator<int> i;
+    int j;
 
-    nr = SelectLabelEgal(id,MonoRep);
 
-    double* trans = new double[4];
-    bool move=false;
-
-    for (i = 1; i <= 3; i++)
+    if (use_verlet)
     {
-        if (PosiGravite[id][i] > L)
+
+        VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+
+
+
+        std::cout<<"Taille: "<<Verlet[VerIndex1][VerIndex2][VerIndex3]->size()<<"\n";
+        std::cout << " mylist contains:\n";
+
+        for(i= Verlet[VerIndex1][VerIndex2][VerIndex3]->begin();i!= Verlet[VerIndex1][VerIndex2][VerIndex3]->end();i++)
         {
-            trans[i] = - L;
-            move = true;
-        }
-        else if (PosiGravite[id][i] < 0)
-        {
-            trans[i] = L;
-            move = true;
-        }
-        else
-        {
-            trans[i] = 0;
+            std::cout << " " << *i<<"\n";
         }
     }
-    if (move)
-    {
-        for (i = 1; i <= 3; i++)
-            PosiGravite[id][i] = PosiGravite[id][i] + trans[i];
-
-        for (j = 1; j <= nr; j++)
-        {
-            MonoRep[j].Translate(trans);
-        }
-    }
-    delete[] trans;
 }
-//###############################################################################################################################
 
 void SupprimeLigne(int ligne)
-{
+{// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
+    //printf("SupLigne  : ");
+    for(i=1;i<=3;i++)
+    {
+        OldPos[i]=floor(PosiGravite[ligne][i]*GridDiv/L)+GridDiv+1;
+    }
+    SupprimeVerlet(ligne,OldPos);
 
     for (i = ligne + 1; i<= NAgg; i++)
     {
+
         for (j = 0; j <= 11; j++)
             Aggregate[i-1][j] = Aggregate[i][j];
+
+        //DecrementeVerlet(i);
+        for(j=1;j<=3;j++)
+        {
+            OldPos[j]=floor(PosiGravite[i][j]*GridDiv/L)+GridDiv+1;
+        }
+        SupprimeVerlet(i,OldPos);
+
         for (j = 1; j<= 3; j++)
             PosiGravite[i-1][j] = PosiGravite[i][j];
+
+        AjouteVerlet(i-1);
 
     }
 
     for (i=ligne+1;i<=NAgg;i++)
     {
-        delete[] AggLabels[i-1];
-        AggLabels[i-1]=new int[AggLabels[i][0]+1];
+        delete[] AggLabels[i-1]; // Considering the 2nd dimension of Agglabels doesn't always have the same size, we have to delete
+        AggLabels[i-1]=new int[AggLabels[i][0]+1];//and reallocate each of these sub-arrays
         for (j=0;j<=AggLabels[i][0];j++)
         {
             AggLabels[i-1][j]=AggLabels[i][j];
         }
     }
-
-
-
     NAgg--;
 }
 
@@ -588,11 +720,12 @@ double Distance_Aggregate(int s, int nmonoi, double lpm)
 
 //########################################## Determination of the contacts between agrgates ##########################################
 void CalculDistance(int id, double &distmin, int &aggcontact)
-{
+{   std::_List_iterator<int> p;
     double lpm,dist;
-    double dc;
+    double dc,tampon;
     int nmonoi;
-    int i,s;
+    int bornei1,bornei2,bornej1,bornej2,bornek1,bornek2;
+    int i,s,j,k;
     int npossible;
     int dx,dy,dz;
     nmonoi =0;
@@ -607,47 +740,143 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     //$ Find potential contacts between agregates
 
     s1.Update(PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
+    //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
 
-    //$ [For all other agregate]
-    for (i = 1;i <= NAgg; i++)
+    if (! use_verlet)
     {
-        if (i != id)
+        //$ [For all other agregate]
+        for (i = 1;i <= NAgg; i++)
         {
-            double inix,iniy,iniz,inir;
-            inix = PosiGravite[i][1];
-            iniy = PosiGravite[i][2];
-            iniz = PosiGravite[i][3];
-            inir = Aggregate[i][6]; //represents the different agregates
-
-            //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
-            for (dx = -1;dx <= 1; dx++)
+            if (i != id)
             {
-                for (dy = -1; dy <= 1; dy++)
+                double inix,iniy,iniz,inir;
+                inix = PosiGravite[i][1];
+                iniy = PosiGravite[i][2];
+                iniz = PosiGravite[i][3];
+                inir = Aggregate[i][6]; //represents the different agregates
+
+                //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
+                for (dx = -1;dx <= 1; dx++)
                 {
-                    for (dz = -1; dz <= 1; dz++)
+                    for (dy = -1; dy <= 1; dy++)
                     {
-                        s2.Update(inix+L*dx,iniy+L*dy,iniz+L*dz,inir);
-
-                        // checks if the two spheres will be in contact while
-                         //... the first one is moving
-                        //$ Intersection check between agregates
-                        dist = s1.Collision(s2, Vectdir, lpm, dc);
-
-                        //$ [Potential Collision]
-                        if (dist <= lpm)
+                        for (dz = -1; dz <= 1; dz++)
                         {
-                            //$ Aggregate is stocked into IdPossible
-                            npossible++; // Number of aggregates that could be hit
-                            IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
-                            IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
-                            IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
-                            IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                            s2.Update(inix+L*dx,iniy+L*dy,iniz+L*dz,inir);
+
+                            // checks if the two spheres will be in contact while
+                             //... the first one is moving
+                            //$ Intersection check between agregates
+                            dist = s1.Collision(s2, Vectdir, lpm, dc);
+
+                            //$ [Potential Collision]
+                            if (dist <= lpm)
+                            {
+                                //$ Aggregate is stocked into IdPossible
+                                npossible++; // Number of aggregates that could be hit
+                                IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
+                                IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
+                                IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
+                                IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                            }
+                        }
+                    }
+                }
+            }
+        }    
+    }
+    else
+    {
+
+
+        double mindist = (Aggregate[id][6]+RayonAggMax);
+
+        // Détermination des bornes
+        if(Vectdir[1]>=0)
+        {
+            tampon=PosiGravite[id][1]-mindist;
+            bornei1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][1]+mindist+lpm*Vectdir[1];
+            bornei2=floor(tampon*GridDiv/L)+2;
+        }
+        else
+        {
+            tampon=PosiGravite[id][1]-mindist+lpm*Vectdir[1];
+            bornei1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][1]+mindist;
+            bornei2=floor(tampon*GridDiv/L)+2;
+        }
+
+        if(Vectdir[2]>=0)
+        {
+            tampon=PosiGravite[id][2]-mindist;
+            bornej1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][2]+mindist+lpm*Vectdir[2];
+            bornej2=floor(tampon*GridDiv/L)+2;
+        }
+        else
+        {
+            tampon=PosiGravite[id][2]-mindist+lpm*Vectdir[2];
+            bornej1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][2]+mindist;
+            bornej2=floor(tampon*GridDiv/L)+2;
+        }
+
+        if(Vectdir[3]>=0)
+        {
+            tampon=PosiGravite[id][3]-mindist;
+            bornek1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][3]+mindist+lpm*Vectdir[3];
+            bornek2=floor(tampon*GridDiv/L)+2;
+        }
+        else
+        {
+            tampon=PosiGravite[id][3]-mindist+lpm*Vectdir[3];
+            bornek1=floor(tampon*GridDiv/L)+1;
+            tampon=PosiGravite[id][3]+mindist;
+            bornek2=floor(tampon*GridDiv/L)+2;
+        }
+
+        bornei1 = fmax(bornei1,-GridDiv+1) ; bornei2 = fmin(bornei2,2*GridDiv);
+        bornej1 = fmax(bornej1,-GridDiv+1) ; bornej2 = fmin(bornej2,2*GridDiv);
+        bornek1 = fmax(bornek1,-GridDiv+1) ; bornek2 = fmin(bornek2,2*GridDiv);
+
+        // ///////
+        for (i=bornei1+GridDiv;i<=bornei2+GridDiv;i++)
+        {
+            for (j=bornej1+GridDiv;j<=bornej2+GridDiv;j++)
+            {
+                for (k=bornek1+GridDiv;k<=bornek2+GridDiv;k++)
+                {
+
+                    dx=floor((i-1)/GridDiv)-1;
+                    dy=floor((j-1)/GridDiv)-1;
+                    dz=floor((k-1)/GridDiv)-1;
+
+                    for(p=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->begin();p!=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->end();p++)
+                    {
+                        if (*p != id)
+                        {
+                            s2.Update(PosiGravite[*p][1]+dx*L, PosiGravite[*p][2]+dy*L, PosiGravite[*p][3]+dz*L, Aggregate[*p][6]); //represents the different agregates
+
+                            dist = s1.Collision(s2, Vectdir, lpm, dc);
+                            if (dist <= lpm)
+                            {
+                                npossible++; // Number of aggregates that could be hit
+                                IdPossible[npossible][1] = *p;  //Label of an aggregate that could be in contact with the one moving
+                                IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
+                                IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
+                                IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+
+
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //$ Number of agregates possibly in contact
     if (npossible > 0)
@@ -669,16 +898,17 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
 //################################################# Réunion de deux agrégats ####################################################
 int Reunit(int AggI, int AggJ, int &err)
-{
+{// This function will merge the aggregates AggI and AggJ
     int i, nselect, numreject, numstudy,nmonoi;
 
     err = 0;
 
+    //$Translation of the spheres in AggI
     nmonoi = SelectLabelEgal(AggI, Monoi); //Liste of the monomeres in the aggregate id
-
     for (i = 1; i <= nmonoi; i++)
             Monoi[i].Translate(Translate);
 
+    //$ Check wich one has the smallest index
     if (AggI < AggJ)
     {
         numstudy = AggI;
@@ -690,6 +920,7 @@ int Reunit(int AggI, int AggJ, int &err)
         numreject = AggI;
     }
 
+    //$ Creation of the new sub array in Agglabels
     TamponValeurs= new int[AggLabels[AggI][0]+AggLabels[AggJ][0]+1];
     TamponValeurs[0]=AggLabels[AggI][0]+AggLabels[AggJ][0];
     for(i=1;i<=AggLabels[AggI][0];i++)
@@ -701,6 +932,7 @@ int Reunit(int AggI, int AggJ, int &err)
         TamponValeurs[i]=AggLabels[AggJ][i-AggLabels[AggI][0]];
     }
 
+    //$ Reallocation of the subarray that will contain the labels of the spheres in the reunited aggregate
     delete[] AggLabels[numstudy];
     AggLabels[numstudy] = new int [TamponValeurs[0]+1];
     for (i=0;i<=TamponValeurs[0];i++)
@@ -711,20 +943,25 @@ int Reunit(int AggI, int AggJ, int &err)
 
 
     nselect = SelectLabelEgal(numreject, MonoSel);
-
+    //$ Update of the labels of the spheres that were in the deleted aggregate
     for (i = 1; i <= nselect; i++)
     {
         MonoSel[i].SetLabel(numstudy);
     }
 
+    //$ Deletionn of the aggregate that was absorbed, using SupprimeLigne()
+
     SupprimeLigne(numreject);
     delete[] TamponValeurs;
 
+    //$ Update of the labels of every sphere that is in an aggregate indexed highger than the one absorbed
     nselect = SelectLabelSuperieur(numreject, MonoSel);
 
     for (i = 1; i <= nselect; i++)
         MonoSel[i].DecreaseLabel();
 
+
+    //$ Index of the Reunited aggregate is returned
     return numstudy;
 }
 //###############################################################################################################################
@@ -889,23 +1126,48 @@ void Init()
 //    Monoi = new int[N+1];
 //    MonoSel = new int[N+1];
 //    MonoRep = new int[N+1];
-    IdPossible = new double* [N+1];
+    IdPossible = new int* [N+1];
     DistTab = new double[N+1];
-    IdDistTab = new int[N+1];
     PosiGravite = new double* [N+1];
     Aggregate = new double* [N+1];
     TpT = new double[N+1];
     IndexPourTri = new int[N+1];
+    OldPos= new int[3];
 
-    AggLabels= new int*[N+1];
+    // Verlet
+    if (use_verlet)
+    {
+        Verlet=new std::list<int>***[3*GridDiv+1];
+        for(i=0;i<=3*GridDiv;i++)
+        {
+            Verlet[i]=new std::list<int>**[3*GridDiv+1];
+
+            for(j=0;j<=3*GridDiv;j++)
+            {
+                Verlet[i][j]=new std::list<int>*[3*GridDiv+1];
+
+                for(k=0;k<=3*GridDiv;k++)
+                {
+                    Verlet[i][j][k]= new std::list<int>;
+                    *Verlet[i][j][k]= std::list<int>();
+                }
+
+            }
+
+        }
+    }
+
+    // Agglabels
+    AggLabels= new int*[N+1];// Array containing the labels of the spheres in each aggregate
 
     for (i=1;i<=N;i++)
-    {
-        AggLabels[i]= new int[2];
-        AggLabels[i][0]=1;
-        AggLabels[i][1]=i;
-
+    {                               //_____
+        AggLabels[i]= new int[2];   //     |
+        AggLabels[i][0]=1;          //     |--- Initialisation of Agglabels, at the start there are N aggregates of 1 sphere.
+        AggLabels[i][1]=i;          //_____|
+                                    //
     }
+    // Agglabels[0] isn't used
     AggLabels[0]=new int[2];
     AggLabels[0][0]=0;
     AggLabels[0][1]=0;
@@ -914,7 +1176,7 @@ void Init()
     {
         PosiGravite[i] = new double[4];
         Aggregate[i] = new double[12];
-        IdPossible[i] = new double[5];
+        IdPossible[i] = new int[5];
     }
 
     for (i = 1; i <= N; i++)
@@ -925,6 +1187,7 @@ void Init()
 
         //random size
         x = Random();
+
         if (Mode == 1)
             Dp = Dpm+sqrt(2.0)*sigmaDpm*inverf(2*x-1); //Loi normale
         else
@@ -950,7 +1213,10 @@ void Init()
 
         if (test > 0)
             i--;
-
+        else
+        {
+            AjouteVerlet(i);
+        }
         testmem = testmem + test; //Comptabilise le nombre d'échecs à positionner une sphère sans superposition
 
         if (testmem > N)
@@ -968,6 +1234,10 @@ void Init()
         lpm = 8*Diff/PI/Vit;
         rg = sqrt(3.0/5.0)*Dp/2;
 
+        if(Dp/2>RayonAggMax)
+        {
+            RayonAggMax=Dp/2;
+        }
         if (ActiveModulephysique==1)
         {
             Aggregate[i][0] = rg;                   //Rayon de gyration
@@ -1022,7 +1292,6 @@ void Fermeture()
 //    delete[] MonoRep;
     delete[] IdPossible;
     delete[] DistTab;
-    delete[] IdDistTab;
     delete[] PosiGravite;
     delete[] Aggregate;
     delete[] TpT;
@@ -1204,9 +1473,9 @@ void Calcul() //Coeur du programme
 {
     double deltatemps, distmin, lpm;
     double thetarandom, phirandom;
-    int aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
+    int IdAggContact,aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
     //int tmp,superpo;
-    int i, j, co, err;
+    int i, j,kom, co, err;
     bool contact;
     time_t t, t0;
 
@@ -1390,6 +1659,7 @@ void Calcul() //Coeur du programme
         }
         else
         {
+
             //$ Translation of the aggregate on his full lpm distance
             for (i = 1; i <= 3; i++)
                 Translate[i] = Vectdir[i]*lpm;
@@ -1399,17 +1669,30 @@ void Calcul() //Coeur du programme
             for (i = 1; i <= nmonoi; i++)
             {
                 Monoi[i].Translate(Translate);
-
             }
+
+            for(i=1;i<=3;i++)
+            {
+                OldPos[i]=floor(PosiGravite[NumAgg][i]*GridDiv/L)+GridDiv+1;
+            }
+
             for (j = 1; j <= 3; j++)
             {
                 PosiGravite[NumAgg][j] = PosiGravite[NumAgg][j] + Translate[j];
             }
+            if (CompareIndexVerlet(NumAgg,OldPos))
+            {
+                SupprimeVerlet(NumAgg,OldPos);
+                AjouteVerlet(NumAgg);
+            }
+
 
             newnumagg = NumAgg;
             it_without_contact++;
         }
         ReplacePosi(newnumagg);
+
+
         if (DeltaSauve>0)
         {
             co++;
@@ -1434,12 +1717,19 @@ void Calcul() //Coeur du programme
          <<"     gamma=" << gamma <<endl;
 
 */
+
     for (i = 1; i <= NAgg; i++)
     {
         printf("%d\t", i);
         for (j = 1; j <= 3; j++)
             printf("%e\t", PosiGravite[i][j]*1E9);
         printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
+    }
+    printf("\n\n");
+    for (i=1;i<=NAgg;i++)
+    {
+        printf("Nagg =  %d\n",i);
+        AfficheVerlet(i);
     }
 
     Fermeture();
