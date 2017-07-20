@@ -76,10 +76,10 @@ int *OldPos; // Array used to stock the position of an aggregate before it is tr
 MainWindow* GUI;
 
 Sphere s1,s2;
-Aggregat spheres;
-Aggregat Monoi;   // Array of the spheres in an aggregate
-Aggregat MonoSel; //  Array of the spheres in an aggregate, used in SupprimeLigne
-Aggregat MonoRep; // Array of the spheres in an aggregate
+ListSphere spheres;
+ListSphere Monoi;   // Array of the spheres in an aggregate
+ListSphere MonoSel; //  Array of the spheres in an aggregate, used in SupprimeLigne
+ListSphere MonoRep; // Array of the spheres in an aggregate
 
 PhysicalModel physicalmodel;
 
@@ -142,7 +142,7 @@ int SelectLabelEgal(int id, int* resu)
     return NSphereInAggrerat;
 }
 
-int SelectLabelEgal(int id, Aggregat& resu)
+int SelectLabelEgal(int id, ListSphere& resu)
 {
 
     resu = spheres.extract(id, AggLabels);
@@ -168,7 +168,7 @@ int SelectLabelSuperieur(int id, int* resu)
     return m;
 }
 
-int SelectLabelSuperieur(int id, Aggregat& resu)
+int SelectLabelSuperieur(int id, ListSphere& resu)
 {
     resu = spheres.extractplus(id, AggLabels, NAgg);
     int NSphereInAggrerat = resu.size();

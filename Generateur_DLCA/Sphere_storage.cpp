@@ -57,7 +57,7 @@ Sphere::Sphere(PhysicalModel& _physicalmodel)
     add();
 }
 
-Sphere::Sphere(Aggregat* aggregat)
+Sphere::Sphere(ListSphere* aggregat)
 {
     external_storage =aggregat;
 
@@ -200,23 +200,7 @@ void Sphere::Aff(const double coef)
     cout << str(coef) << endl;
 }
 
-double Sphere::Distance(Sphere& c)
-{
-    return Distance(*c.x,*c.y,*c.z);
-}
-
-double Sphere::Distance(const double* point)
-{
-    return Distance(point[1],point[2],point[3]);
-}
-
-double Sphere::Distance(const double otherx, const double othery, const double otherz)
-{
-    return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
-}
-
-
-Aggregat::Aggregat(void)
+ListSphere::ListSphere(void)
 {
         spheres = NULL;
         physicalmodel=NULL;
@@ -227,7 +211,7 @@ Aggregat::Aggregat(void)
 }
 
 
-Aggregat::Aggregat(const Aggregat* parent, int* _index)
+ListSphere::ListSphere(const ListSphere* parent, int* _index)
 {
         spheres = new Sphere*[_index[0]];
         physicalmodel=parent->physicalmodel;
@@ -247,7 +231,7 @@ Aggregat::Aggregat(const Aggregat* parent, int* _index)
 }
 
 
-void Aggregat::Init(const int _N,PhysicalModel& _physicalmodel)
+void ListSphere::Init(const int _N,PhysicalModel& _physicalmodel)
 {
     spheres = new Sphere*[_N];
     physicalmodel=&_physicalmodel;
@@ -265,7 +249,7 @@ void Aggregat::Init(const int _N,PhysicalModel& _physicalmodel)
 }
 
 
-void Aggregat::setpointers()
+void ListSphere::setpointers()
 {
     //#pragma omp for simd
     for (int i = 0; i < N-1; i++)
@@ -274,7 +258,7 @@ void Aggregat::setpointers()
     }
 }
 
-Aggregat::~Aggregat(void)
+ListSphere::~ListSphere(void)
 {
     if (external_storage==NULL)
     {
@@ -293,12 +277,12 @@ Aggregat::~Aggregat(void)
     physicalmodel = NULL;
 }
 
-Sphere& Aggregat::operator[](const int i)
+Sphere& ListSphere::operator[](const int i)
 {
     return *spheres[i-1];
 }
 
-int Aggregat::size() const
+int ListSphere::size() const
 {
     return N;
 }
@@ -306,12 +290,12 @@ int Aggregat::size() const
 
 //################################################## Recherche de sphères #############################################################################
 
-Aggregat Aggregat::extract(const int id, int** AggLabels) const
+ListSphere ListSphere::extract(const int id, int** AggLabels) const
 {
-    return Aggregat(this,AggLabels[id]);
+    return ListSphere(this,AggLabels[id]);
 }
 
-Aggregat Aggregat::extractplus(const int id, int** AggLabels,const int NAgg) const
+ListSphere ListSphere::extractplus(const int id, int** AggLabels,const int NAgg) const
 {
 
     int NSphereInAggrerat=0;
@@ -331,7 +315,7 @@ Aggregat Aggregat::extractplus(const int id, int** AggLabels,const int NAgg) con
             AggLabelPlus[m] = AggLabels[i][j];
         }
 
-    Aggregat ret = Aggregat(this,AggLabelPlus);
+    ListSphere ret = ListSphere(this,AggLabelPlus);
 
     delete[] AggLabelPlus;
 

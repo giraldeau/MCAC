@@ -25,13 +25,13 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 */
 
-class Aggregat;
+class ListSphere;
 class Sphere;
 
 
 class Sphere
 {
-    friend class Aggregat;
+    friend class ListSphere;
 
     /* Generic */
 
@@ -57,7 +57,7 @@ class Sphere
 
     private:
         std::array< std::vector<double>, 7>* Storage;
-        Aggregat* external_storage;
+        ListSphere* external_storage;
 
         void setpointers(void);
         void add(void);
@@ -65,7 +65,7 @@ class Sphere
 
     public:
         Sphere(void);
-        Sphere(Aggregat* Storage);
+        Sphere(ListSphere* Storage);
         Sphere(PhysicalModel& _physicalmodel);
         ~Sphere(void);
 
@@ -89,7 +89,7 @@ class Sphere
     };
 
 
-class Aggregat
+class ListSphere
 {
     friend class Sphere;
 
@@ -106,24 +106,24 @@ class Aggregat
     /* Storage specific */
     private:
         std::array< std::vector<double>, 7>* Storage;
-        const Aggregat* external_storage;
+        const ListSphere* external_storage;
         int* index;
 
         void setpointers();
 
     public:
-        Aggregat(void);
-        Aggregat(const Aggregat* parent,int* AggLabels);
+        ListSphere(void);
+        ListSphere(const ListSphere* parent,int* AggLabels);
 
-        ~Aggregat(void);
+        ~ListSphere(void);
         Sphere& operator[](const int i);
 
         int size() const;
 
         void Init(const int N,PhysicalModel& _physicalmodel);
 
-        Aggregat extract(const int, int** AggLabels) const;
-        Aggregat extractplus(const int, int** AggLabels,const int NAgg) const;
+        ListSphere extract(const int, int** AggLabels) const;
+        ListSphere extractplus(const int, int** AggLabels,const int NAgg) const;
 
 };
 #endif // SPHERE
