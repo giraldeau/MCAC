@@ -53,6 +53,8 @@ class Sphere
 
         void Init(const double x, const double y, const double z, const double r);
         void Init(const double* position, const double r);
+        void Init(const std::array<double, 4> position,const double r);
+
         void Init(Sphere&);
         void Init(void);
 
@@ -69,6 +71,7 @@ class Sphere
 
         double Distance(Sphere&) ;
         double Distance(const double* point) ;
+        double Distance(const std::array<double, 4> point) ;
         double Distance(const double x, const double y, const double z) ;
 
         double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) ;
@@ -84,6 +87,7 @@ class Sphere
         ~Sphere(void);
 
         Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
+        Sphere(PhysicalModel&, const std::array<double, 4> position, const double r);
         Sphere(PhysicalModel&, const double* position, const double r);
         Sphere(Sphere&);
 

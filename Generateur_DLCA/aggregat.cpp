@@ -46,7 +46,6 @@ void Aggregat::Init(void)
 
 void Aggregat::setpointers(void)
 {
-
     rg=&(*Storage)[0][Label];  //Gyration Radius
     dm=&(*Storage)[1][Label];  //Mobility Diameter
     lpm=&(*Storage)[2][Label]; //Mean Free Path
@@ -71,6 +70,62 @@ const array<double, 4> Aggregat::Position(void)
     mypos[2]=*y;
     mypos[3]=*z;
     return mypos;
+}
+
+void Aggregat::Position(const std::array<double, 4> position)
+{
+    *x = position[1];
+    *y = position[2];
+    *z = position[3];
+}
+
+void Aggregat::Translate(const std::array<double, 4> vector)
+{
+    *x += vector[1];
+    *y += vector[2];
+    *z += vector[3];
+}
+
+void Aggregat::Translate(const double* vector)
+{
+    *x += vector[1];
+    *y += vector[2];
+    *z += vector[3];
+}
+
+Aggregat::~Aggregat(void)
+{
+    if (external_storage==NULL)
+    {
+        delete Storage;
+    }
+
+    external_storage=NULL;
+
+    delete InclusiveSphere;
+    parents[0] = NULL;
+    parents[1] = NULL;
+    son = NULL;
+    physicalmodel = NULL;
+    Label = 0;
+    creation_date = 0.;
+    Nc = 0.;
+
+    rg=NULL;
+    dm=NULL;
+    lpm=NULL;
+    time_step=NULL;
+    rmax=NULL;
+    volAgregat=NULL;
+    surfAgregat=NULL;
+    Tv=NULL;
+    volAgregat_without_cov=NULL;
+    cov=NULL;
+    ratio_surf_vol=NULL;
+    free_surface=NULL;
+    x=NULL;
+    y=NULL;
+    z=NULL;
 }
 
 /*

@@ -58,6 +58,10 @@ double Sphere::Distance(const double* point)
 {
     return Distance(point[1],point[2],point[3]);
 }
+double Sphere::Distance(const std::array<double, 4> point)
+{
+    return Distance(point[1],point[2],point[3]);
+}
 
 double Sphere::Distance(const double otherx, const double othery, const double otherz)
 {

@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include <Sphere.h>
+#include <aggregat.h>
 #include <physical_model.h>
 #include "ui_mainwindow.h"
 #include <QFileDialog>
@@ -39,7 +40,7 @@ int NSauve; // last file number
 
 // Nagg
 int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
-double** PosiGravite; // Position of the center of gravity
+Aggregat *PosiGravite; // Position of the center of gravity
 double** Aggregate; // Array of the different aggregates and their caracteristics
 int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
                 // Aggregate, and then , the labels of saif spheres
@@ -128,9 +129,10 @@ int SelectLabelEgal(int id, ListSphere& resu)
 
 bool CompareIndexVerlet(int id,int* _OldPos)
 {
-    VerIndex1=floor(PosiGravite[id][1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
-    VerIndex2=floor(PosiGravite[id][2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
-    VerIndex3=floor(PosiGravite[id][3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+    const array<double, 4> pos = PosiGravite[id].Position();
+    VerIndex1=floor(pos[1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+    VerIndex2=floor(pos[2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+    VerIndex3=floor(pos[3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
 
     if(VerIndex1!=_OldPos[1])
     {return 1;}
@@ -148,10 +150,10 @@ void AjouteVerlet(int id)
 
     if (physicalmodel.use_verlet)
     {
-
-        VerIndex1=floor(PosiGravite[id][1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
-        VerIndex2=floor(PosiGravite[id][2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
-        VerIndex3=floor(PosiGravite[id][3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        const array<double, 4> pos = PosiGravite[id].Position();
+        VerIndex1=floor(pos[1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex2=floor(pos[2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex3=floor(pos[3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
 
         Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
     }
@@ -178,21 +180,22 @@ void ReplacePosi(int id)
     ListSphere MonoRep(spheres, AggLabels[id]);
     int nr = MonoRep.size();
 
+    const array<double, 4> pos = PosiGravite[id].Position();
     for(i=1;i<=3;i++)
     {
-        OldPos[i]=floor(PosiGravite[id][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        OldPos[i]=floor(pos[i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
     }
 
     //$ for every dimension
     for (i = 1; i <= 3; i++)
     {
         //$ Check if it is getting out
-        if (PosiGravite[id][i] > physicalmodel.L)
+        if (pos[i] > physicalmodel.L)
         {
             trans[i] = - physicalmodel.L;
             move = true;
         }
-        else if (PosiGravite[id][i] < 0)
+        else if (pos[i] < 0)
         {
             trans[i] = physicalmodel.L;
             move = true;
@@ -206,9 +209,8 @@ void ReplacePosi(int id)
     //$ If it is getting out
     if (move)
     {
-        //$ Update the position of the spheres in Agg Id
-        for (i = 1; i <= 3; i++)
-            PosiGravite[id][i] = PosiGravite[id][i] + trans[i];
+        //$ Update the position of aggregate
+        PosiGravite[id].Translate(trans);
 
         //$ Update the position of the spheres in Agg Id
         for (j = 1; j <= nr; j++)
@@ -255,16 +257,17 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     tabVol = new double[nmonoi+1];
     tabSurf = new double[nmonoi+1];
 
+    const array<double, 4> pos = PosiGravite[id].Position();
     for(i=1;i<=3;i++)
     {
-        OldPos[i]=floor(PosiGravite[id][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        OldPos[i]=floor(pos[i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
     }
 
 
 
-    //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
 
-    for (k = 1; k <= 3; k++)    PosiGravite[id][k] = 0.0; //Initialisation
+    //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
+    array<double, 4> newpos={0.,0.,0.,0.};
 
     for (i = 1; i <= nmonoi; i++)
     {
@@ -321,7 +324,9 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         //$ Calculation of the position of the center of mass
         const array<double, 4> pos = Monoi[i].Position();
         for (k = 1; k <= 3; k++)
-            PosiGravite[id][k] = PosiGravite[id][k] + pos[k]*tabVol[i]; //Somme des Vi*xi
+        {
+            newpos[k] += pos[k]*tabVol[i];
+        }
     }
     Tv = 1 - terme /nmonoi;
 
@@ -342,8 +347,10 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 
     for (k = 1; k <= 3; k++)
     {
-        PosiGravite[id][k] = PosiGravite[id][k]/volAgregat;
+        newpos[k] = newpos[k]/volAgregat;
     } //Centre of mass of Agg Id
+    PosiGravite[id].Position(newpos);
+
     if (CompareIndexVerlet(id,OldPos))
     {
         SupprimeVerlet(id,OldPos);
@@ -356,7 +363,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
     for (i = 1; i <= nmonoi; i++)
     {
         //$ Determination of the distance between each monomere and the center of mass of Agg Id
-        li = Monoi[i].Distance(PosiGravite[id]); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
+        li = Monoi[i].Distance(PosiGravite[id].Position()); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
 
         r = li + Monoi[i].Radius();
 
@@ -452,10 +459,10 @@ void AfficheVerlet(int id)
 
     if (physicalmodel.use_verlet)
     {
-
-        VerIndex1=floor(PosiGravite[id][1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
-        VerIndex2=floor(PosiGravite[id][2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
-        VerIndex3=floor(PosiGravite[id][3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        const array<double, 4> pos = PosiGravite[id].Position();
+        VerIndex1=floor(pos[1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex2=floor(pos[2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex3=floor(pos[3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
 
 
 
@@ -473,9 +480,11 @@ void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
     //printf("SupLigne  : ");
+
+    const array<double, 4> oldpos = PosiGravite[ligne].Position();
     for(i=1;i<=3;i++)
     {
-        OldPos[i]=floor(PosiGravite[ligne][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        OldPos[i]=floor(oldpos[i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
     }
     SupprimeVerlet(ligne,OldPos);
 
@@ -485,15 +494,15 @@ void SupprimeLigne(int ligne)
         for (j = 0; j <= 11; j++)
             Aggregate[i-1][j] = Aggregate[i][j];
 
+        const array<double, 4> newpos = PosiGravite[i].Position();
         //DecrementeVerlet(i);
         for(j=1;j<=3;j++)
         {
-            OldPos[j]=floor(PosiGravite[i][j]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+            OldPos[j]=floor(newpos[j]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
         }
         SupprimeVerlet(i,OldPos);
 
-        for (j = 1; j<= 3; j++)
-            PosiGravite[i-1][j] = PosiGravite[i][j];
+        PosiGravite[i-1].Position(newpos);
 
         AjouteVerlet(i-1);
 
@@ -695,7 +704,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
     //$ Find potential contacts between agregates
 
-    Sphere s1(physicalmodel, PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
+    Sphere s1(physicalmodel, PosiGravite[id].Position(), Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
     //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
 
     if (! physicalmodel.use_verlet)
@@ -706,9 +715,10 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
             if (i != id)
             {
                 double inix,iniy,iniz,inir;
-                inix = PosiGravite[i][1];
-                iniy = PosiGravite[i][2];
-                iniz = PosiGravite[i][3];
+                const array<double, 4> pos = PosiGravite[i].Position();
+                inix = pos[1];
+                iniy = pos[2];
+                iniz = pos[3];
                 inir = Aggregate[i][6]; //represents the different agregates
 
                 //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
@@ -746,50 +756,51 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
 
         double mindist = (Aggregate[id][6]+RayonAggMax);
+        const array<double, 4> pos = PosiGravite[id].Position();
 
         // Détermination des bornes
         if(Vectdir[1]>=0)
         {
-            tampon=PosiGravite[id][1]-mindist;
+            tampon=pos[1]-mindist;
             bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=PosiGravite[id][1]+mindist+lpm*Vectdir[1];
+            tampon=pos[1]+mindist+lpm*Vectdir[1];
             bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
-            tampon=PosiGravite[id][1]-mindist+lpm*Vectdir[1];
+            tampon=pos[1]-mindist+lpm*Vectdir[1];
             bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=PosiGravite[id][1]+mindist;
+            tampon=pos[1]+mindist;
             bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
         if(Vectdir[2]>=0)
         {
-            tampon=PosiGravite[id][2]-mindist;
+            tampon=pos[2]-mindist;
             bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=PosiGravite[id][2]+mindist+lpm*Vectdir[2];
+            tampon=pos[2]+mindist+lpm*Vectdir[2];
             bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
-            tampon=PosiGravite[id][2]-mindist+lpm*Vectdir[2];
+            tampon=pos[2]-mindist+lpm*Vectdir[2];
             bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=PosiGravite[id][2]+mindist;
+            tampon=pos[2]+mindist;
             bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
         if(Vectdir[3]>=0)
         {
-            tampon=PosiGravite[id][3]-mindist;
+            tampon=pos[3]-mindist;
             bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=PosiGravite[id][3]+mindist+lpm*Vectdir[3];
+            tampon=pos[3]+mindist+lpm*Vectdir[3];
             bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
-            tampon=PosiGravite[id][3]-mindist+lpm*Vectdir[3];
+            tampon=pos[3]-mindist+lpm*Vectdir[3];
             bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=PosiGravite[id][3]+mindist;
+            tampon=pos[3]+mindist;
             bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
@@ -813,7 +824,14 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                     {
                         if (*p != id)
                         {
-                            Sphere s2(physicalmodel,PosiGravite[*p][1]+dx*physicalmodel.L, PosiGravite[*p][2]+dy*physicalmodel.L, PosiGravite[*p][3]+dz*physicalmodel.L, Aggregate[*p][6]); //represents the different agregates
+                            double inix,iniy,iniz,inir;
+                            const array<double, 4> pos = PosiGravite[*p].Position();
+                            inix = pos[1];
+                            iniy = pos[2];
+                            iniz = pos[3];
+                            inir = Aggregate[*p][6]; //represents the different agregates
+
+                            Sphere s2(physicalmodel,inix+physicalmodel.L*dx,iniy+physicalmodel.L*dy,iniz+physicalmodel.L*dz,inir);
 
                             dist = s1.Collision(s2, Vectdir, lpm);
                             if (dist <= lpm)
@@ -1077,7 +1095,7 @@ void Init()
 //    MonoSel = new int[N+1];
 //    MonoRep = new int[N+1];
     IdPossible = new int* [physicalmodel.N+1];
-    PosiGravite = new double* [physicalmodel.N+1];
+    PosiGravite = new Aggregat [physicalmodel.N+1];
     Aggregate = new double* [physicalmodel.N+1];
     OldPos= new int[3];
     IndexPourTri.assign(physicalmodel.N+1,0);
@@ -1123,16 +1141,18 @@ void Init()
 
     for (i = 1; i <= physicalmodel.N; i++)
     {
-        PosiGravite[i] = new double[4];
         Aggregate[i] = new double[12];
         IdPossible[i] = new int[5];
     }
 
     for (i = 1; i <= physicalmodel.N; i++)
     {          
+
+        array<double, 4> newpos;
         //random position
         for (j = 1; j<= 3 ; j++)
-            PosiGravite[i][j] = Random()*physicalmodel.L;
+            newpos[j] = Random()*physicalmodel.L;
+        PosiGravite[i].Position(newpos);
 
         //random size
         x = Random();
@@ -1149,7 +1169,7 @@ void Init()
         // This is a real sphere
         spheres[i].SetLabel(i);
         // position and size
-        spheres[i].Init(PosiGravite[i], Dp/2);
+        spheres[i].Init(PosiGravite[i].Position(), Dp/2);
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
         test=0;
@@ -1227,7 +1247,6 @@ void Fermeture()
 
     for (int i = 1; i <= physicalmodel.N; i++)
     {
-        delete[] PosiGravite[i];
         delete[] Aggregate[i];
         delete[] IdPossible[i];
 
@@ -1290,8 +1309,9 @@ void SauveASCII(int value, int id)
         fprintf(f, "%10.3f\t", Aggregate[i][5]*1E6);
         fprintf(f, "%10.3f\t", Aggregate[i][6]*1E9);
 
+        const array<double, 4> pos = PosiGravite[i].Position();
         for (j = 1; j <= 3; j++)
-            fprintf(f, "%10.3f\t", PosiGravite[i][j]*1E9);
+            fprintf(f, "%10.3f\t", pos[j]*1E9);
 
         fprintf(f, "%10.3f\t", Aggregate[i][7]*1E25);  //Estimation du volume d'un agrégat
         fprintf(f, "%10.3f\t", Aggregate[i][8]*1E16);  //Estimation de la surface d'un agrégat
@@ -1628,15 +1648,14 @@ void Calcul() //Coeur du programme
                 Monoi[i].Translate(Vectdir);
             }
 
+            const array<double, 4> pos = PosiGravite[NumAgg].Position();
             for(i=1;i<=3;i++)
             {
-                OldPos[i]=floor(PosiGravite[NumAgg][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+                OldPos[i]=floor(pos[i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
             }
 
-            for (j = 1; j <= 3; j++)
-            {
-                PosiGravite[NumAgg][j] = PosiGravite[NumAgg][j] + Vectdir[j];
-            }
+            PosiGravite[NumAgg].Translate(Vectdir);
+
             if (CompareIndexVerlet(NumAgg,OldPos))
             {
                 SupprimeVerlet(NumAgg,OldPos);
@@ -1678,8 +1697,9 @@ void Calcul() //Coeur du programme
     for (i = 1; i <= NAgg; i++)
     {
         printf("%d\t", i);
+        const array<double, 4> pos = PosiGravite[i].Position();
         for (j = 1; j <= 3; j++)
-            printf("%e\t", PosiGravite[i][j]*1E9);
+            printf("%e\t", pos[j]*1E9);
         printf("\t%e\t%e\n",Aggregate[i][7]*1E25,Aggregate[i][9]*1E25);
     }
     printf("\n\n");

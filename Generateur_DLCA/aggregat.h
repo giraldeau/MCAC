@@ -41,6 +41,10 @@ class Aggregat
 
         void Init(void);
         const std::array<double, 4> Position(void);
+        void Position(const std::array<double, 4> position);
+        void Translate(const std::array<double, 4> vector);
+        void Translate(const double* vector);
+
 
 
     /* Storage specific */

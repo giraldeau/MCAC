@@ -104,6 +104,7 @@ Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double new
 }
 
 Sphere::Sphere(PhysicalModel& _physicalmodel, const double* newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
+Sphere::Sphere(PhysicalModel& _physicalmodel, const std::array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
 
 Sphere::Sphere(Sphere& c) : Sphere(*(c.physicalmodel), *c.x,*c.y,*c.z,*c.r){}
 
@@ -203,6 +204,11 @@ void Sphere::Init(const double newx,const double newy,const double newz,const do
 }
 
 void Sphere::Init(const double* newp,const double newr)
+{
+    Init(newp[1],newp[2],newp[3],newr);
+}
+
+void Sphere::Init(const std::array<double, 4> newp,const double newr)
 {
     Init(newp[1],newp[2],newp[3],newr);
 }
