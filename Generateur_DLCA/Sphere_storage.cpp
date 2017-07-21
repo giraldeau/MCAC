@@ -57,18 +57,39 @@ Sphere::Sphere(PhysicalModel& _physicalmodel)
     add();
 }
 
-Sphere::Sphere(ListSphere* aggregat)
+Sphere::Sphere(ListSphere& aggregat)
 {
-    external_storage =aggregat;
+    external_storage =&aggregat;
 
-    Storage = (*external_storage).Storage;
-    physicalmodel = (*external_storage).physicalmodel;
+    Storage = aggregat.Storage;
+    physicalmodel = aggregat.physicalmodel;
     AggLabel = 0;
 
     add();
 
     external_storage->setpointers();
 }
+
+
+Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr)
+{
+    Storage = new array< vector<double>, 7>;
+    external_storage=NULL;
+    physicalmodel = &_physicalmodel;
+    AggLabel = 0;
+
+    add();
+
+    *x = newx;
+    *y = newy;
+    *z = newz;
+    *r = newr;
+    UpdateVolAndSurf();
+}
+
+Sphere::Sphere(PhysicalModel& _physicalmodel, const double* newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
+
+Sphere::Sphere(Sphere& c) : Sphere(*(c.physicalmodel), *c.x,*c.y,*c.z,*c.r){}
 
 void Sphere::add(void)
 {
@@ -78,7 +99,12 @@ void Sphere::add(void)
 
     setpointers();
 
-    Update(0, 0, 0, 0);
+    *x = 0.;
+    *y = 0;
+    *z = 0;
+    *r = 0;
+    *volume = 0.;
+    *surface = 0.;
 }
 
 Sphere::~Sphere(void)
@@ -86,12 +112,11 @@ Sphere::~Sphere(void)
     for (int j=0;j<=6;j++)
         (*Storage)[j].erase((*Storage)[j].begin() + SphereLabel);
 
-    setpointers();
+    //setpointers();
     if(external_storage!=NULL)
         external_storage->setpointers();
-
-    if(external_storage==NULL)
-        if (Storage!=NULL) delete Storage;
+    else if (Storage!=NULL)
+        delete Storage;
 
     external_storage=NULL;
     SphereLabel = 0;
@@ -146,7 +171,7 @@ const double* Sphere::Position(void)
     return mypos;
 }
 
-void Sphere::Update(const double newx,const double newy,const double newz,const double newr)
+void Sphere::Init(const double newx,const double newy,const double newz,const double newr)
 {
     *x = newx;
     *y = newy;
@@ -155,16 +180,10 @@ void Sphere::Update(const double newx,const double newy,const double newz,const 
     UpdateVolAndSurf();
 }
 
-void Sphere::Update(const double* newp,const double newr)
+void Sphere::Init(const double* newp,const double newr)
 {
-    Update(newp[1],newp[2],newp[3],newr);
+    Init(newp[1],newp[2],newp[3],newr);
 }
-
-void Sphere::Update(Sphere& c)
-{
-    Update(*c.x,*c.y,*c.z,*c.r);
-}
-
 
 void Sphere::SetLabel(const int value)
 {
@@ -202,50 +221,77 @@ void Sphere::Aff(const double coef)
 
 ListSphere::ListSphere(void)
 {
-        spheres = NULL;
         physicalmodel=NULL;
 
         external_storage=NULL;
-        index = NULL;
         Storage = NULL;
 }
 
 
-ListSphere::ListSphere(const ListSphere* parent, int* _index)
+ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N)
 {
-        spheres = new Sphere*[_index[0]];
-        physicalmodel=parent->physicalmodel;
+    physicalmodel=&_physicalmodel;
+    Storage = new array< vector<double>, 7>;
 
-        external_storage=parent;
-        index = _index;
+    index.assign(_N+1, 0);
+    spheres.assign(_N, NULL);
+
+    index[0]=_N;
+    for (N = 0; N < _N; N++)
+    {
+        Sphere* newsphere = new Sphere(*this);
+        index[N+1] = N+1;
+        spheres[N] = newsphere;
+    }
+
+}
+
+ListSphere::ListSphere(ListSphere& parent, int* _index)
+{
+        physicalmodel=parent.physicalmodel;
+        external_storage=&parent;
         Storage = external_storage->Storage;
 
-        N = index[0];
+        N = _index[0];
 
+        index.assign(N+1, 0);
+        spheres.assign(N, NULL);
+
+        index[0]=N;
         //#pragma omp for simd
         for (int i = 0; i < N; i++)
         {
+            index[i+1] = _index[i+1];
             int iparent = external_storage->index[index[i+1]]-1;
             spheres[i] = external_storage->spheres[iparent];
         }
 }
 
 
-void ListSphere::Init(const int _N,PhysicalModel& _physicalmodel)
+
+ListSphere::ListSphere(ListSphere& parent, int** _index, const int start, const int end)
 {
-    spheres = new Sphere*[_N];
-    physicalmodel=&_physicalmodel;
+    physicalmodel=parent.physicalmodel;
+    external_storage=&parent;
+    Storage = external_storage->Storage;
 
-    Storage = new array< vector<double>, 7>;
+    N = 0;
+    for(int i=start;i<=end;i++)
+        N += _index[i][0];
 
-    index = new int[_N+1];
-    index[0]=_N;
-    for (N = 0; N < _N; N++)
-    {
-        index[N+1] = N+1;
-        spheres[N] = new Sphere(this);
-    }
+    index.assign(N+1, 0);
+    spheres.assign(N, NULL);
 
+    index[0]=N;
+    int m=0;
+    for(int i=start;i<=end;i++)
+        for(int j=1;j<=_index[i][0];j++)
+        {
+            index[m+1] = _index[i][j];
+            int iparent = external_storage->index[index[m+1]]-1;
+            spheres[m] = external_storage->spheres[iparent];
+            m++;
+        }
 }
 
 
@@ -262,16 +308,11 @@ ListSphere::~ListSphere(void)
 {
     if (external_storage==NULL)
     {
-        if (spheres!=NULL)
-        {
-            delete[] spheres;
-        }
         if (Storage!=NULL)
             delete Storage;
     }
     else
     {
-        spheres = NULL;
         Storage = NULL;
     }
     physicalmodel = NULL;
@@ -285,40 +326,4 @@ Sphere& ListSphere::operator[](const int i)
 int ListSphere::size() const
 {
     return N;
-}
-
-
-//################################################## Recherche de sphères #############################################################################
-
-ListSphere ListSphere::extract(const int id, int** AggLabels) const
-{
-    return ListSphere(this,AggLabels[id]);
-}
-
-ListSphere ListSphere::extractplus(const int id, int** AggLabels,const int NAgg) const
-{
-
-    int NSphereInAggrerat=0;
-
-    for(int i=id;i<=NAgg;i++)
-        NSphereInAggrerat += AggLabels[i][0];
-
-    int* AggLabelPlus = new int[NSphereInAggrerat+1];
-
-    AggLabelPlus[0] = NSphereInAggrerat;
-
-    int m =0;
-    for(int i=id;i<=NAgg;i++)
-        for(int j=1;j<=AggLabels[i][0];j++)
-        {
-            m++;
-            AggLabelPlus[m] = AggLabels[i][j];
-        }
-
-    ListSphere ret = ListSphere(this,AggLabelPlus);
-
-    delete[] AggLabelPlus;
-
-    return ret;
-
 }

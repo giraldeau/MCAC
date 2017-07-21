@@ -79,7 +79,7 @@ void Sphere::UpdateVolAndSurf(void)
 /* #############################################################################################################
  * ########################################## Distance before collision ########################################
  * #############################################################################################################*/
-double Sphere::Collision(Sphere& c,const  double* vd,const double distmax,double& distance)
+double Sphere::Collision(Sphere& c,const  double* vd,const double distmax)
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
@@ -99,6 +99,7 @@ double Sphere::Collision(Sphere& c,const  double* vd,const double distmax,double
     double DELTA;
     double K, K1, K2;
     double dist,dist_contact;
+    double distance;
 
     dx = *c.x - *x;
     dy = *c.y - *y;

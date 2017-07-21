@@ -17,11 +17,13 @@ SOURCES += main.cpp\
         mainwindow.cpp\
     physical_model.cpp \
     Sphere_storage.cpp \
-    Sphere_physics.cpp
+    Sphere_physics.cpp \
+    aggregat.cpp
 
 HEADERS += mainwindow.h\
         Sphere.h \
-    physical_model.h
+    physical_model.h \
+    aggregat.h
 
 FORMS += mainwindow.ui
 

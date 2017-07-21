@@ -24,7 +24,7 @@ Sphere.h and Sphere.cpp defines the data storage.
  Data can be shared between multiple Aggregat
 
 */
-
+class Aggregat;
 class ListSphere;
 class Sphere;
 
@@ -32,6 +32,7 @@ class Sphere;
 class Sphere
 {
     friend class ListSphere;
+    friend class Aggregat;
 
     /* Generic */
 
@@ -45,12 +46,39 @@ class Sphere
         int AggLabel, SphereLabel;
         PhysicalModel* physicalmodel;
 
-
         void UpdateVolAndSurf(void);
 
     public:
+        Sphere(void);
+        Sphere(ListSphere& Storage);
+        Sphere(PhysicalModel&);
+        ~Sphere(void);
+
+        Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
+        Sphere(PhysicalModel&, const double* position, const double newr);
+        Sphere(Sphere&);
+
+
+        void Init(const double x, const double y, const double z, const double r);
+        void Init(const double* position, const double r);
+        void Init(Sphere&);
+
+        void SetLabel(const int);
+        void DecreaseLabel(void);
+        void Translate(const double* vector);
+        std::string str(const double coef) ;
+        void Aff(const double coef) ;
+        double Volume(void) ;
+        double Surface(void) ;
+        double Radius(void) ;
+        const double* Position(void) ;
+
+        double Distance(Sphere&) ;
+        double Distance(const double* point) ;
+        double Distance(const double x, const double y, const double z) ;
+
         double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) ;
-        double Collision(Sphere& c, const double* vd,const  double  distmax,double& distance_contact) ;
+        double Collision(Sphere& c, const double* vector,const  double  distmax) ;
         void CroissanceSurface(const double dt);
 
     /* Storage specific */
@@ -61,30 +89,7 @@ class Sphere
 
         void setpointers(void);
         void add(void);
-        double& operator[](const int i);
-
-    public:
-        Sphere(void);
-        Sphere(ListSphere* Storage);
-        Sphere(PhysicalModel& _physicalmodel);
-        ~Sphere(void);
-
-        void Update(const double newx, const double newy, const double newz, const double newr);
-        void Update(const double* newp, const double newr);
-        void Update(Sphere& c);
-        void SetLabel(const int value);
-        void DecreaseLabel(void);
-        void Translate(const double* trans);
-        std::string str(const double coef) ;
-        void Aff(const double coef) ;
-        double Volume(void) ;
-        double Surface(void) ;
-        double Radius(void) ;
-        const double* Position(void) ;
-
-        double Distance(Sphere& c) ;
-        double Distance(const double* point) ;
-        double Distance(const double otherx, const double othery, const double otherz) ;
+        double& operator[](const int);
 
     };
 
@@ -97,7 +102,7 @@ class ListSphere
 
     private:
         int N;
-        Sphere** spheres;
+        std::vector < Sphere* > spheres;
         PhysicalModel* physicalmodel;
 
     public:
@@ -107,23 +112,21 @@ class ListSphere
     private:
         std::array< std::vector<double>, 7>* Storage;
         const ListSphere* external_storage;
-        int* index;
+        std::vector < int > index;
 
         void setpointers();
 
     public:
         ListSphere(void);
-        ListSphere(const ListSphere* parent,int* AggLabels);
+        ListSphere(PhysicalModel& _physicalmodel, const int N);
+        ListSphere(ListSphere& parent,int* index);
+        ListSphere(ListSphere& parent,int** index,const int start,const int end);
 
         ~ListSphere(void);
-        Sphere& operator[](const int i);
+        Sphere& operator[](const int);
 
         int size() const;
 
-        void Init(const int N,PhysicalModel& _physicalmodel);
-
-        ListSphere extract(const int, int** AggLabels) const;
-        ListSphere extractplus(const int, int** AggLabels,const int NAgg) const;
 
 };
 #endif // SPHERE

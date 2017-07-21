@@ -36,6 +36,10 @@ void PhysicalModel::Init(const double _P, const double _T, const double _dfe, co
 
     Asurfgrowth = coeffB*1E-3;
 
+    use_verlet = true; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
+    GridDiv = 10;      // Number of Divisions of the box
+
+
     SetPrecision(1e-4);
     UseSecante();
 
@@ -49,26 +53,30 @@ void PhysicalModel::SetPrecision(const double _precision)
 
 void PhysicalModel::UseDichotomia(void)
 {
-    root_dicho = true;
-    root_brent = false;
-    root_sec = false;
+    root_method = 0;
 }
 
 void PhysicalModel::UseBrent(void)
 {
-    root_dicho = false;
-    root_brent = true;
-    root_sec = false;
+    root_method = 1;
 }
 void PhysicalModel::UseSecante(void)
 {
-    root_dicho = false;
-    root_brent = false;
-    root_sec = true;
+    root_method = 2;
 }
 
 void PhysicalModel::print(void) const
 {
+
+    string RootMethod;
+    if (root_method==0)
+        RootMethod = "Dichotomia";
+    else if (root_method==1)
+        RootMethod = "Brent";
+    else if (root_method==2)
+        RootMethod = "Secante";
+
+
     cout << "Physical parameters:" << endl
          << " Pressure    : " << P << endl
          << " Temperature : " << T << endl
@@ -89,9 +97,7 @@ void PhysicalModel::print(void) const
          << endl
          << "Options for Pysical model: " << endl
          << " precision   : " << precision << endl
-         << " root_dicho  : " << root_dicho << endl
-         << " root_sec    : " << root_sec << endl
-         << " root_brent  : " << root_brent << endl;
+         << " root method : " << RootMethod << endl;
 }
 
 
@@ -282,8 +288,12 @@ double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double
     double nptmp = pow(npeqmass*pow(np,gamma_-1),1./gamma_);
     FactorModelBeta = 1./(rpeqmass*pow(nptmp,gamma_/dfe)/Cunningham(rpeqmass));
 */
-    if (root_dicho) return Dichotomie(np,rg,rpmoy,x0)*2;
-    if (root_sec) return Secante(np,rg,rpmoy,x0)*2;
+    if (root_method==0)
+        return Dichotomie(np,rg,rpmoy,x0)*2;
+    else if (root_method==1)
+        return brentq(np,rg,rpmoy,x0)*2;
+    else if (root_method==2)
+        return Secante(np,rg,rpmoy,x0)*2;
 
     return  Dichotomie(np,rg,rpmoy,x0)*2;
 }

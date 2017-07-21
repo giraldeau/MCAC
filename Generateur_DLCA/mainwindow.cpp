@@ -25,57 +25,51 @@ QString pathParam = "___";
 QString FichierSuiviTempo = "___";
 QString pathSuiviTempo = "___";
 
-int N, ActiveModulephysique, ActiveVariationTempo;// Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
 char CheminSauve[500];
 char commentaires[500];
 
 using namespace std;
 
 const double PI = atan(1.0)*4; // 3.14159
-double T, X, FV, L, P, Rho; // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
-double dfe, kfe; // fractal dimension and pre-factor
-double xsurfgrowth, coeffB; // surface growth parameter, Bêta
-double Dpm, sigmaDpm; // Particle mean diameter, Sum of the mean diameters
-double temps; // Time
-double* Vectdir; // Direction of the translatiion of an aggregate
-double* TriCum; // Cumulated probabilities
+double* Vectdir; // Direction of the translation of an aggregate
 double* Translate;// Translation Vector
-double* DistTab; // unused
-double* NombreAlea; // unused
-double* TpT;
+int NumAgg; // Number of the aggregate in translation
+
+
+// Nagg
+int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
+double* TriCum; // Cumulated probabilities
 double** PosiGravite; // Position of the center of gravity
 double** Aggregate; // Array of the different aggregates and their caracteristics
+vector<int> IndexPourTri;
+
+// Collision Agg
+int** IdPossible;  // Array of the Ids of the aggregates that could be in contact with the one moving
+
+
+// suivit tempo
 double** tab; // generic array
-int DeltaSauve;
+int iValTab=0;
+
+
 int NSauve;
-int Mode;
-int NumAgg; // Number of the aggregate in translation
-int compteur; // unused
 int nb_line;
 int secondes; // CPU Time variable
-int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
-int iValTab=0;
-int** IdPossible;  // Array of the Ids of the aggregates that could be in contact with the one moving
-int* IndexPourTri; // Used in the Sort
-bool* Select; // Unused
 char com[500]; // Char array used in the ASCII Save
 bool with_dots; // Bool used to chose the format of the ASCII exits
 int* TamponValeurs; // Buffer variable
 int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
                 // Aggregate, and then , the labels of saif spheres
-bool use_verlet = true; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
 // Chained list / Verlet
 std::list<int>**** Verlet; // Verlet's List
 int VerIndex1,VerIndex2,VerIndex3; // Values of the index in Verlet calculated using PosiGravite[]
-int GridDiv=10; // Number of Divisions of the box
 double RayonAggMax=0.; // Value of the radius of the bigger aggregate in the box
 int *OldPos; // Array used to stock the position of an aggregate before it is translated, used to determine if the aggregate has to be moved or not
 
 
 MainWindow* GUI;
 
-Sphere s1,s2;
 ListSphere spheres;
 ListSphere Monoi;   // Array of the spheres in an aggregate
 ListSphere MonoSel; //  Array of the spheres in an aggregate, used in SupprimeLigne
@@ -145,9 +139,8 @@ int SelectLabelEgal(int id, int* resu)
 int SelectLabelEgal(int id, ListSphere& resu)
 {
 
-    resu = spheres.extract(id, AggLabels);
-    int NSphereInAggrerat = resu.size();
-    return NSphereInAggrerat;
+    resu = ListSphere(spheres, AggLabels[id]);
+    return resu.size();
 }
 
 
@@ -170,16 +163,15 @@ int SelectLabelSuperieur(int id, int* resu)
 
 int SelectLabelSuperieur(int id, ListSphere& resu)
 {
-    resu = spheres.extractplus(id, AggLabels, NAgg);
-    int NSphereInAggrerat = resu.size();
-    return NSphereInAggrerat;
+    resu = ListSphere(spheres, AggLabels,id,NAgg);
+    return resu.size();
 }
 
 bool CompareIndexVerlet(int id,int* _OldPos)
 {
-    VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
-    VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
-    VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+    VerIndex1=floor(PosiGravite[id][1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+    VerIndex2=floor(PosiGravite[id][2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+    VerIndex3=floor(PosiGravite[id][3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
 
     if(VerIndex1!=_OldPos[1])
     {return 1;}
@@ -195,12 +187,12 @@ void AjouteVerlet(int id)
     int i,j,k;
     std::_List_iterator<int> p;
 
-    if (use_verlet)
+    if (physicalmodel.use_verlet)
     {
 
-        VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
-        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
-        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+        VerIndex1=floor(PosiGravite[id][1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
 
         Verlet[VerIndex1][VerIndex2][VerIndex3]->push_front(id);
     }
@@ -209,7 +201,7 @@ void AjouteVerlet(int id)
 void SupprimeVerlet(int id,int* _OldPos)
 {   int taille1,taille2;
 
-    if (use_verlet)
+    if (physicalmodel.use_verlet)
     {
         Verlet[_OldPos[1]][_OldPos[2]][_OldPos[3]]->remove(id);
     }
@@ -228,21 +220,21 @@ void ReplacePosi(int id)
 
     for(i=1;i<=3;i++)
     {
-        OldPos[i]=floor(PosiGravite[id][i]*GridDiv/L)+GridDiv+1;
+        OldPos[i]=floor(PosiGravite[id][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
     }
 
     //$ for every dimension
     for (i = 1; i <= 3; i++)
     {
         //$ Check if it is getting out
-        if (PosiGravite[id][i] > L)
+        if (PosiGravite[id][i] > physicalmodel.L)
         {
-            trans[i] = - L;
+            trans[i] = - physicalmodel.L;
             move = true;
         }
         else if (PosiGravite[id][i] < 0)
         {
-            trans[i] = L;
+            trans[i] = physicalmodel.L;
             move = true;
         }
         else
@@ -305,7 +297,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 
     for(i=1;i<=3;i++)
     {
-        OldPos[i]=floor(PosiGravite[id][i]*GridDiv/L)+GridDiv+1;
+        OldPos[i]=floor(PosiGravite[id][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
     }
 
 
@@ -437,7 +429,7 @@ void ParametresAgg(int Agg)
     //$ Determination of the Radius of gyration of Agg using RayonGiration()
     rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat);
 
-    masse = Rho*volAgregat;//Determination of the real mass of Agg
+    masse = physicalmodel.Rho*volAgregat;//Determination of the real mass of Agg
     //$Determination of the spheres in Agg
     np = SelectLabelEgal(Agg, MonoSel);
 
@@ -471,14 +463,14 @@ void ParametresAgg(int Agg)
     Aggregate[Agg][2] = Nc; //Cumber of contacts
     Aggregate[Agg][3] = dm; //Mobility Diameter
 
-    if (ActiveModulephysique == 1)
+    if (physicalmodel.ActiveModulephysique == 1)
     {
         Aggregate[Agg][4] = lpm;     //Mean Free Path
         Aggregate[Agg][5] = lpm/vit; //Displacement duration
     }
     else
     {
-        Aggregate[Agg][4] = Dpm*1E-9;
+        Aggregate[Agg][4] = physicalmodel.Dpm*1E-9;
         Aggregate[Agg][5] = 1E-6;
     }
     if(rmax>RayonAggMax)
@@ -497,12 +489,12 @@ void AfficheVerlet(int id)
     int j;
 
 
-    if (use_verlet)
+    if (physicalmodel.use_verlet)
     {
 
-        VerIndex1=floor(PosiGravite[id][1]*GridDiv/L)+GridDiv+1;
-        VerIndex2=floor(PosiGravite[id][2]*GridDiv/L)+GridDiv+1;
-        VerIndex3=floor(PosiGravite[id][3]*GridDiv/L)+GridDiv+1;
+        VerIndex1=floor(PosiGravite[id][1]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex2=floor(PosiGravite[id][2]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
+        VerIndex3=floor(PosiGravite[id][3]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
 
 
 
@@ -522,7 +514,7 @@ void SupprimeLigne(int ligne)
     //printf("SupLigne  : ");
     for(i=1;i<=3;i++)
     {
-        OldPos[i]=floor(PosiGravite[ligne][i]*GridDiv/L)+GridDiv+1;
+        OldPos[i]=floor(PosiGravite[ligne][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
     }
     SupprimeVerlet(ligne,OldPos);
 
@@ -535,7 +527,7 @@ void SupprimeLigne(int ligne)
         //DecrementeVerlet(i);
         for(j=1;j<=3;j++)
         {
-            OldPos[j]=floor(PosiGravite[i][j]*GridDiv/L)+GridDiv+1;
+            OldPos[j]=floor(PosiGravite[i][j]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
         }
         SupprimeVerlet(i,OldPos);
 
@@ -583,7 +575,7 @@ void InsertionSort(int n, double arr[], int index[])
 
 
 
-void quickSort(double arr[], int index[], int left, int right) {
+void quickSort(double arr[], vector<int>& index, int left, int right) {
 
       int i = left, j = right;
       double pivot = arr[(left + right) / 2];
@@ -613,12 +605,12 @@ void quickSort(double arr[], int index[], int left, int right) {
             quickSort(arr, index, i, right);
 }
 
-void quickSort(int n, double arr[], int index[])
+void quickSort(int n, double arr[], vector<int>& index)
 {
       quickSort(arr, index, 1, n);
 }
 
-void MonTri(int n, double arr[], int index[])
+void MonTri(int n, double arr[], vector<int>& index)
 {
     for (int i = 1; i <= n; i++)
         index[i] = i;
@@ -643,6 +635,8 @@ int Probabilite(bool trier,double &deltatemps)
 
     if (trier)
     {
+        double TpT[physicalmodel.N+1];
+
     //$ Sort the timesteps
         for (i=1; i <= NAgg; i++)
             TpT[i] = max/Aggregate[i][5];
@@ -682,7 +676,6 @@ double Distance_Aggregate(int s, int nmonoi, double lpm)
 {
     int agg, j, k, knum, np, l;
     double dist, dc, ret;
-    Sphere spheredecale;
 
     ret = 1.0;
     agg = IdPossible[s][1];
@@ -690,22 +683,22 @@ double Distance_Aggregate(int s, int nmonoi, double lpm)
     np = SelectLabelEgal(agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
 
     double* trans = new double[4];
-    trans[1] = IdPossible[s][2]*L;
-    trans[2] = IdPossible[s][3]*L;
-    trans[3] = IdPossible[s][4]*L;
+    trans[1] = IdPossible[s][2]*physicalmodel.L;
+    trans[2] = IdPossible[s][3]*physicalmodel.L;
+    trans[3] = IdPossible[s][4]*physicalmodel.L;
 
     //$ Loop on all the spheres of the other aggregate
     for (j = 1; j <= np; j++)
     {
         //$ spheredecale is used to replace the sphere into the corresponding box
-        spheredecale.Update(MonoSel[j]);
+        Sphere spheredecale(MonoSel[j]);
         spheredecale.Translate(trans);
 
         //$ For every sphere in the aggregate :
         for (knum = 1; knum <= nmonoi; knum++)
         {
             //$ Check if j and k are contact and if not, what is the distance between them
-            dist=Monoi[knum].Collision(spheredecale, Vectdir, lpm, dc);
+            dist=Monoi[knum].Collision(spheredecale, Vectdir, lpm);
             if (dist < ret)
             {
                 ret = dist;
@@ -739,10 +732,10 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
     //$ Find potential contacts between agregates
 
-    s1.Update(PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
+    Sphere s1(physicalmodel, PosiGravite[id], Aggregate[id][6]); // Represents the sphere containing the agregate we're testing
     //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
 
-    if (! use_verlet)
+    if (! physicalmodel.use_verlet)
     {
         //$ [For all other agregate]
         for (i = 1;i <= NAgg; i++)
@@ -762,12 +755,12 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                     {
                         for (dz = -1; dz <= 1; dz++)
                         {
-                            s2.Update(inix+L*dx,iniy+L*dy,iniz+L*dz,inir);
+                            Sphere s2(physicalmodel,inix+physicalmodel.L*dx,iniy+physicalmodel.L*dy,iniz+physicalmodel.L*dz,inir);
 
                             // checks if the two spheres will be in contact while
                              //... the first one is moving
                             //$ Intersection check between agregates
-                            dist = s1.Collision(s2, Vectdir, lpm, dc);
+                            dist = s1.Collision(s2, Vectdir, lpm);
 
                             //$ [Potential Collision]
                             if (dist <= lpm)
@@ -795,71 +788,71 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
         if(Vectdir[1]>=0)
         {
             tampon=PosiGravite[id][1]-mindist;
-            bornei1=floor(tampon*GridDiv/L)+1;
+            bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
             tampon=PosiGravite[id][1]+mindist+lpm*Vectdir[1];
-            bornei2=floor(tampon*GridDiv/L)+2;
+            bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
             tampon=PosiGravite[id][1]-mindist+lpm*Vectdir[1];
-            bornei1=floor(tampon*GridDiv/L)+1;
+            bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
             tampon=PosiGravite[id][1]+mindist;
-            bornei2=floor(tampon*GridDiv/L)+2;
+            bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
         if(Vectdir[2]>=0)
         {
             tampon=PosiGravite[id][2]-mindist;
-            bornej1=floor(tampon*GridDiv/L)+1;
+            bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
             tampon=PosiGravite[id][2]+mindist+lpm*Vectdir[2];
-            bornej2=floor(tampon*GridDiv/L)+2;
+            bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
             tampon=PosiGravite[id][2]-mindist+lpm*Vectdir[2];
-            bornej1=floor(tampon*GridDiv/L)+1;
+            bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
             tampon=PosiGravite[id][2]+mindist;
-            bornej2=floor(tampon*GridDiv/L)+2;
+            bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
         if(Vectdir[3]>=0)
         {
             tampon=PosiGravite[id][3]-mindist;
-            bornek1=floor(tampon*GridDiv/L)+1;
+            bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
             tampon=PosiGravite[id][3]+mindist+lpm*Vectdir[3];
-            bornek2=floor(tampon*GridDiv/L)+2;
+            bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
             tampon=PosiGravite[id][3]-mindist+lpm*Vectdir[3];
-            bornek1=floor(tampon*GridDiv/L)+1;
+            bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
             tampon=PosiGravite[id][3]+mindist;
-            bornek2=floor(tampon*GridDiv/L)+2;
+            bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
-        bornei1 = fmax(bornei1,-GridDiv+1) ; bornei2 = fmin(bornei2,2*GridDiv);
-        bornej1 = fmax(bornej1,-GridDiv+1) ; bornej2 = fmin(bornej2,2*GridDiv);
-        bornek1 = fmax(bornek1,-GridDiv+1) ; bornek2 = fmin(bornek2,2*GridDiv);
+        bornei1 = fmax(bornei1,-physicalmodel.GridDiv+1) ; bornei2 = fmin(bornei2,2*physicalmodel.GridDiv);
+        bornej1 = fmax(bornej1,-physicalmodel.GridDiv+1) ; bornej2 = fmin(bornej2,2*physicalmodel.GridDiv);
+        bornek1 = fmax(bornek1,-physicalmodel.GridDiv+1) ; bornek2 = fmin(bornek2,2*physicalmodel.GridDiv);
 
         // ///////
-        for (i=bornei1+GridDiv;i<=bornei2+GridDiv;i++)
+        for (i=bornei1+physicalmodel.GridDiv;i<=bornei2+physicalmodel.GridDiv;i++)
         {
-            for (j=bornej1+GridDiv;j<=bornej2+GridDiv;j++)
+            for (j=bornej1+physicalmodel.GridDiv;j<=bornej2+physicalmodel.GridDiv;j++)
             {
-                for (k=bornek1+GridDiv;k<=bornek2+GridDiv;k++)
+                for (k=bornek1+physicalmodel.GridDiv;k<=bornek2+physicalmodel.GridDiv;k++)
                 {
 
-                    dx=floor((i-1)/GridDiv)-1;
-                    dy=floor((j-1)/GridDiv)-1;
-                    dz=floor((k-1)/GridDiv)-1;
+                    dx=floor((i-1)/physicalmodel.GridDiv)-1;
+                    dy=floor((j-1)/physicalmodel.GridDiv)-1;
+                    dz=floor((k-1)/physicalmodel.GridDiv)-1;
 
-                    for(p=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->begin();p!=Verlet[i-dx*GridDiv][j-dy*GridDiv][k-dz*GridDiv]->end();p++)
+                    for(p=Verlet[i-dx*physicalmodel.GridDiv][j-dy*physicalmodel.GridDiv][k-dz*physicalmodel.GridDiv]->begin();p!=Verlet[i-dx*physicalmodel.GridDiv][j-dy*physicalmodel.GridDiv][k-dz*physicalmodel.GridDiv]->end();p++)
                     {
                         if (*p != id)
                         {
-                            s2.Update(PosiGravite[*p][1]+dx*L, PosiGravite[*p][2]+dy*L, PosiGravite[*p][3]+dz*L, Aggregate[*p][6]); //represents the different agregates
+                            Sphere s2(physicalmodel,PosiGravite[*p][1]+dx*physicalmodel.L, PosiGravite[*p][2]+dy*physicalmodel.L, PosiGravite[*p][3]+dz*physicalmodel.L, Aggregate[*p][6]); //represents the different agregates
 
-                            dist = s1.Collision(s2, Vectdir, lpm, dc);
+                            dist = s1.Collision(s2, Vectdir, lpm);
                             if (dist <= lpm)
                             {
                                 npossible++; // Number of aggregates that could be hit
@@ -1091,7 +1084,7 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 {
     int test = 0;
 
-    while (tab[iValTab][0] < temps && iValTab < (nb_line-1))
+    while (tab[iValTab][0] < physicalmodel.temps && iValTab < (nb_line-1))
     {
         iValTab++;
 //        cout << "temps residence = " << temps << "s"
@@ -1099,7 +1092,7 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 //             << "    T = " << tab[iValTab][1] << "K" << endl;
     }
 
-    T = tab[iValTab-1][1];
+    physicalmodel.T = tab[iValTab-1][1];
 
     if (iValTab == nb_line-1)     test = 1;
 
@@ -1110,43 +1103,36 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 void Init()
 {
     int i, j, k, test, testmem;
-    double x, masse, surface, Dp, Cc, Diff, Vit, lpm, rg, dist;
+    double x, masse, surface, Dp, Diff, Vit, lpm, rg, dist;
 
-    compteur = 0;
     testmem = 0;
-    L = X*Dpm*1E-9;
-
-    physicalmodel.Init(P,T,dfe,kfe,Dpm,sigmaDpm,xsurfgrowth,coeffB,Rho);
-
-    spheres.Init(N,physicalmodel);
+    spheres = ListSphere(physicalmodel, physicalmodel.N);
     Translate = new double[4];
     Vectdir = new double[4];
-    TriCum = new double[N+1];
-    Select = new bool[N+1];
+    TriCum = new double[physicalmodel.N+1];
 //    Monoi = new int[N+1];
 //    MonoSel = new int[N+1];
 //    MonoRep = new int[N+1];
-    IdPossible = new int* [N+1];
-    DistTab = new double[N+1];
-    PosiGravite = new double* [N+1];
-    Aggregate = new double* [N+1];
-    TpT = new double[N+1];
-    IndexPourTri = new int[N+1];
+    IdPossible = new int* [physicalmodel.N+1];
+    PosiGravite = new double* [physicalmodel.N+1];
+    Aggregate = new double* [physicalmodel.N+1];
     OldPos= new int[3];
+    IndexPourTri.assign(physicalmodel.N+1,0);
+
 
     // Verlet
-    if (use_verlet)
+    if (physicalmodel.use_verlet)
     {
-        Verlet=new std::list<int>***[3*GridDiv+1];
-        for(i=0;i<=3*GridDiv;i++)
+        Verlet=new std::list<int>***[3*physicalmodel.GridDiv+1];
+        for(i=0;i<=3*physicalmodel.GridDiv;i++)
         {
-            Verlet[i]=new std::list<int>**[3*GridDiv+1];
+            Verlet[i]=new std::list<int>**[3*physicalmodel.GridDiv+1];
 
-            for(j=0;j<=3*GridDiv;j++)
+            for(j=0;j<=3*physicalmodel.GridDiv;j++)
             {
-                Verlet[i][j]=new std::list<int>*[3*GridDiv+1];
+                Verlet[i][j]=new std::list<int>*[3*physicalmodel.GridDiv+1];
 
-                for(k=0;k<=3*GridDiv;k++)
+                for(k=0;k<=3*physicalmodel.GridDiv;k++)
                 {
                     Verlet[i][j][k]= new std::list<int>;
                     *Verlet[i][j][k]= std::list<int>();
@@ -1158,9 +1144,9 @@ void Init()
     }
 
     // Agglabels
-    AggLabels= new int*[N+1];// Array containing the labels of the spheres in each aggregate
+    AggLabels= new int*[physicalmodel.N+1];// Array containing the labels of the spheres in each aggregate
 
-    for (i=1;i<=N;i++)
+    for (i=1;i<=physicalmodel.N;i++)
     {                               //_____
         AggLabels[i]= new int[2];   //     |
         AggLabels[i][0]=1;          //     |--- Initialisation of Agglabels, at the start there are N aggregates of 1 sphere.
@@ -1172,35 +1158,35 @@ void Init()
     AggLabels[0][0]=0;
     AggLabels[0][1]=0;
 
-    for (i = 1; i <= N; i++)
+    for (i = 1; i <= physicalmodel.N; i++)
     {
         PosiGravite[i] = new double[4];
         Aggregate[i] = new double[12];
         IdPossible[i] = new int[5];
     }
 
-    for (i = 1; i <= N; i++)
+    for (i = 1; i <= physicalmodel.N; i++)
     {          
         //random position
         for (j = 1; j<= 3 ; j++)
-            PosiGravite[i][j] = Random()*L;
+            PosiGravite[i][j] = Random()*physicalmodel.L;
 
         //random size
         x = Random();
 
-        if (Mode == 1)
-            Dp = Dpm+sqrt(2.0)*sigmaDpm*inverf(2*x-1); //Loi normale
+        if (physicalmodel.Mode == 1)
+            Dp = physicalmodel.Dpm+sqrt(2.0)*physicalmodel.sigmaDpm*inverf(2*x-1); //Loi normale
         else
-            Dp = exp(log(Dpm)+sqrt(2.0)*log(sigmaDpm)*inverf(2*x-1)); //Loi log-normale
+            Dp = exp(log(physicalmodel.Dpm)+sqrt(2.0)*log(physicalmodel.sigmaDpm)*inverf(2*x-1)); //Loi log-normale
 
         Dp = Dp/1E9;
-        if (Dp <= 0)  Dp = Dpm*1E-9;
+        if (Dp <= 0)  Dp = physicalmodel.Dpm*1E-9;
 
         //initialize the sphere :
         // This is a real sphere
         spheres[i].SetLabel(i);
         // position and size
-        spheres[i].Update(PosiGravite[i], Dp/2);
+        spheres[i].Init(PosiGravite[i], Dp/2);
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
         test=0;
@@ -1219,7 +1205,7 @@ void Init()
         }
         testmem = testmem + test; //Comptabilise le nombre d'échecs à positionner une sphère sans superposition
 
-        if (testmem > N)
+        if (testmem > physicalmodel.N)
         {
             printf("Impossible de générer tous les monomères sans superposition.\n");
             printf("La fraction volumique doit être diminuée.\n");
@@ -1227,7 +1213,7 @@ void Init()
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        masse = Rho*PI*pow(Dp,3)/6;
+        masse = physicalmodel.Rho*PI*pow(Dp,3)/6;
         surface = PI*pow(Dp,2);
         Diff = physicalmodel.diffusivity(Dp);
         Vit =  physicalmodel.velocity(masse);
@@ -1238,7 +1224,7 @@ void Init()
         {
             RayonAggMax=Dp/2;
         }
-        if (ActiveModulephysique==1)
+        if (physicalmodel.ActiveModulephysique==1)
         {
             Aggregate[i][0] = rg;                   //Rayon de gyration
             Aggregate[i][1] = 1;                    //Nommbre de sphérules par agrégat Np
@@ -1247,7 +1233,7 @@ void Init()
             Aggregate[i][4] = lpm;                  //Libre parcours moyen
             Aggregate[i][5] = lpm/Vit;              //Durée du déplacement
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
-            Aggregate[i][7] = masse/Rho;            //Volume estimé de l'agrégat réunifié
+            Aggregate[i][7] = masse/physicalmodel.Rho;            //Volume estimé de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface estimée de l'agrégat réunifié
             Aggregate[i][9] = PI*pow(Dp, 3)/6;      //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
@@ -1259,10 +1245,10 @@ void Init()
             Aggregate[i][1] = 1;                    //Nommbre de sphérules par agrégat Np
             Aggregate[i][2] = 0;                    //Nombre de coordination Nc
             Aggregate[i][3] = Dp;                   //Diamètre de mobilité
-            Aggregate[i][4] = Dpm*1E-9;             //Libre parcours moyen
+            Aggregate[i][4] = physicalmodel.Dpm*1E-9;             //Libre parcours moyen
             Aggregate[i][5] = 1E-6;                 //Durée du déplacement
             Aggregate[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
-            Aggregate[i][7] = masse/Rho;            //Volume de l'agrégat réunifié
+            Aggregate[i][7] = masse/physicalmodel.Rho;            //Volume de l'agrégat réunifié
             Aggregate[i][8] = surface;              //Surface de l'agrégat réunifié
             Aggregate[i][9] = PI*pow(Dp, 3);        //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
             Aggregate[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
@@ -1270,13 +1256,13 @@ void Init()
         }
     }
 
-    NAgg = N;
+    NAgg = physicalmodel.N;
 }
 
 void Fermeture()
 {
 
-    for (int i = 1; i <= N; i++)
+    for (int i = 1; i <= physicalmodel.N; i++)
     {
         delete[] PosiGravite[i];
         delete[] Aggregate[i];
@@ -1286,16 +1272,12 @@ void Fermeture()
     delete[] Translate;
     delete[] Vectdir;
     delete[] TriCum;
-    delete[] Select;
 //    delete[] Monoi;
 //    delete[] MonoSel;
 //    delete[] MonoRep;
     delete[] IdPossible;
-    delete[] DistTab;
     delete[] PosiGravite;
     delete[] Aggregate;
-    delete[] TpT;
-    delete[] IndexPourTri;
     delete[] tab;
 }
 
@@ -1311,29 +1293,29 @@ void SauveASCII(int value, int id)
 
     sprintf(NomComplet, "%s/Sphere%05d.txt", CheminSauve, value);
     f = fopen(NomComplet, "w");
-    fprintf(f, "%d  N_[]\n", N);
-    fprintf(f, "%10.3f  FV_[ppm]\n", FV*1E6);
-    fprintf(f, "%10.3f  X_[]\n", X);
-    fprintf(f, "%10.3f  Dpm_[nm]\n", Dpm);
-    fprintf(f, "%10.3f  sigmaDpm_[nm]\n", sigmaDpm);
+    fprintf(f, "%d  N_[]\n", physicalmodel.N);
+    fprintf(f, "%10.3f  FV_[ppm]\n", physicalmodel.FV*1E6);
+    fprintf(f, "%10.3f  X_[]\n", physicalmodel.X);
+    fprintf(f, "%10.3f  Dpm_[nm]\n", physicalmodel.Dpm);
+    fprintf(f, "%10.3f  sigmaDpm_[nm]\n", physicalmodel.sigmaDpm);
     fprintf(f, "%d  NAgg_[]\n", NAgg);
-    fprintf(f, "%10.6f  Temps_[µs]\n", temps*1E6);
+    fprintf(f, "%10.6f  Temps_[µs]\n", physicalmodel.temps*1E6);
     fprintf(f, "Label\t      Rp(nm)\t      X(nm)\t     Y(nm)\t     Z(nm)\n");
 
-    for (i=1;i<=N;i++)
+    for (i=1;i<=physicalmodel.N;i++)
         fprintf(f,"%s\n", spheres[i].str(1e9).c_str());
 
     fclose(f);
 
     sprintf(NomComplet,"%s/Agg%05d.txt", CheminSauve, value);
     f = fopen(NomComplet, "w");
-    fprintf(f,"%d  N_[]\n",N);
-    fprintf(f,"%1.3f  FV_[ppm]\n", FV*1E6);
-    fprintf(f,"%1.3f  X_[]\n", X);
-    fprintf(f,"%1.3f  Dpm_[nm]\n", Dpm);
-    fprintf(f,"%1.3f  sigmaDpm_[nm]\n", sigmaDpm);
+    fprintf(f,"%d  N_[]\n",physicalmodel.N);
+    fprintf(f,"%1.3f  FV_[ppm]\n", physicalmodel.FV*1E6);
+    fprintf(f,"%1.3f  X_[]\n", physicalmodel.X);
+    fprintf(f,"%1.3f  Dpm_[nm]\n", physicalmodel.Dpm);
+    fprintf(f,"%1.3f  sigmaDpm_[nm]\n", physicalmodel.sigmaDpm);
     fprintf(f,"%d  NAgg_[]\n", NAgg);
-    fprintf(f,"%1.6f  Temps_[µs]\n", temps*1E6);
+    fprintf(f,"%1.6f  Temps_[µs]\n", physicalmodel.temps*1E6);
     fprintf(f,"Rg_[nm]\tNp_[]\tNc_[]\tDm_[nm]\tlpm_[nm]\tdeltat_[µs]\tRgeo_[nm]\tXG(nm)\tYG(nm)\tZG(nm)\tV_[1E-25m3]\tS_[1E-16m2]\tVOlWO_[1E-25m3]\tcov[]\tSurfWO_[1E-16m2]\n");
 
     for (i = 1; i <= NAgg; i++)
@@ -1361,7 +1343,7 @@ void SauveASCII(int value, int id)
     if (Aggregate[id][1] > 10)
     {
         f=fopen(NomComplet, "a");
-        fprintf(f, "%e\t%e\n", Aggregate[id][0]/(Dpm*1E-9), Aggregate[id][1]);
+        fprintf(f, "%e\t%e\n", Aggregate[id][0]/(physicalmodel.Dpm*1E-9), Aggregate[id][1]);
         fclose(f);
     }
 }
@@ -1409,15 +1391,15 @@ void LectureParams()
     QDir lDir;
     if (f == NULL)
     {
-        N = 2500;
-        T = 1500;
-        Dpm = 30;
-        sigmaDpm = 0.0;
-        FV = 3E-3;
-        Rho = 1.8E3;
-        P = 101300;
-        Mode = 1;
-        DeltaSauve = 0;
+        physicalmodel.N = 2500;
+        physicalmodel.T = 1500;
+        physicalmodel.Dpm = 30;
+        physicalmodel.sigmaDpm = 0.0;
+        physicalmodel.FV = 3E-3;
+        physicalmodel.Rho = 1.8E3;
+        physicalmodel.P = 101300;
+        physicalmodel.Mode = 1;
+        physicalmodel.DeltaSauve = 0;
         sprintf(sauve, "%s", "DATA");
     }
     else
@@ -1427,46 +1409,46 @@ void LectureParams()
 
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        N=atoi(commentaires);
+        physicalmodel.N=atoi(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        T=latof(commentaires);
+        physicalmodel.T=latof(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        Dpm=latof(commentaires);
+        physicalmodel.Dpm=latof(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        sigmaDpm=latof(commentaires);
+        physicalmodel.sigmaDpm=latof(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        FV=latof(commentaires)*1E-6;
+        physicalmodel.FV=latof(commentaires)*1E-6;
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        P=latof(commentaires);
+        physicalmodel.P=latof(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        Rho=latof(commentaires);
+        physicalmodel.Rho=latof(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        Mode=atoi(commentaires);
+        physicalmodel.Mode=atoi(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
-        DeltaSauve=atoi(commentaires);
+        physicalmodel.DeltaSauve=atoi(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",sauve,com);
         fclose(f);
     }
-    if (Mode == 1)
-        X = pow(N*PI/6.0/FV*(1.0+3.0*sigmaDpm*sigmaDpm/Dpm/Dpm),1.0/3.0); //Loi normale
+    if (physicalmodel.Mode == 1)
+        physicalmodel.X = pow(physicalmodel.N*PI/6.0/physicalmodel.FV*(1.0+3.0*physicalmodel.sigmaDpm*physicalmodel.sigmaDpm/physicalmodel.Dpm/physicalmodel.Dpm),1.0/3.0); //Loi normale
     else
-        X = pow(N*PI/6.0/FV*exp(9.0/2.0*log(sigmaDpm)*log(sigmaDpm)),1.0/3.0); //Loi log-normale
+        physicalmodel.X = pow(physicalmodel.N*PI/6.0/physicalmodel.FV*exp(9.0/2.0*log(physicalmodel.sigmaDpm)*log(physicalmodel.sigmaDpm)),1.0/3.0); //Loi log-normale
 
     strcat(CheminSauve,qPrintable(pathParam));
     strcat(CheminSauve,"//");
     strcat(CheminSauve,sauve);
     lDir.mkdir(CheminSauve);
 
-    sprintf(commentaires, "N=%d \nT=%1.3f \nDpm=%1.3f \nsigmaDpm=%1.3f \nFV=%1.3e\nX=%1.3f \nP=%1.3f\nMode=%d\nRho=%1.3f \nDeltaSauve=%d\nCheminSauve=%s\n", N, T, Dpm, sigmaDpm, FV, X, P, Mode, Rho, DeltaSauve, CheminSauve);
+    sprintf(commentaires, "N=%d \nT=%1.3f \nDpm=%1.3f \nsigmaDpm=%1.3f \nFV=%1.3e\nX=%1.3f \nP=%1.3f\nMode=%d\nRho=%1.3f \nDeltaSauve=%d\nCheminSauve=%s\n", physicalmodel.N, physicalmodel.T, physicalmodel.Dpm, physicalmodel.sigmaDpm, physicalmodel.FV, physicalmodel.X, physicalmodel.P, physicalmodel.Mode, physicalmodel.Rho, physicalmodel.DeltaSauve, CheminSauve);
 }
 
 void Calcul() //Coeur du programme
@@ -1479,7 +1461,12 @@ void Calcul() //Coeur du programme
     bool contact;
     time_t t, t0;
 
-    if (ActiveModulephysique)
+
+    physicalmodel.L = physicalmodel.X*physicalmodel.Dpm*1E-9;
+    physicalmodel.Init(physicalmodel.P,physicalmodel.T,physicalmodel.dfe,physicalmodel.kfe,physicalmodel.Dpm,physicalmodel.sigmaDpm,physicalmodel.xsurfgrowth,physicalmodel.coeffB,physicalmodel.Rho);
+
+
+    if (physicalmodel.ActiveModulephysique)
     {
         sprintf(commentaires, "Le module physique est activé.\n");
         if (GUI == NULL)
@@ -1496,7 +1483,7 @@ void Calcul() //Coeur du programme
             GUI->print(commentaires);
     }
 
-    if (ActiveVariationTempo)
+    if (physicalmodel.ActiveVariationTempo)
     {
         LectureSuiviTempo();
         sprintf(commentaires, "Le fichier de données de suivi temporel est lu.\n");
@@ -1514,13 +1501,13 @@ void Calcul() //Coeur du programme
             GUI->print(commentaires);
     }
 
-    sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n", dfe, kfe, coeffB, xsurfgrowth);
+    sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n", physicalmodel.dfe, physicalmodel.kfe, physicalmodel.coeffB, physicalmodel.xsurfgrowth);
     if (GUI == NULL)
         printf("%s",commentaires);
     else
         GUI->print(commentaires);
 
-    double Asurfgrowth = coeffB*1E-3;
+    double Asurfgrowth = physicalmodel.coeffB*1E-3;
     sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
     if (GUI == NULL)
         printf("%s",commentaires);
@@ -1535,11 +1522,11 @@ void Calcul() //Coeur du programme
     co=0;
     //superpo=0;
     NSauve=0;
-    temps=0;
+    physicalmodel.temps=0;
     deltatemps=0;
     time(&t0);
     contact=true;
-    int end = MAX(5,N/200);
+    int end = MAX(5,physicalmodel.N/200);
     int it_without_contact=0;
     int lim_it_without_contact = 200;
 
@@ -1567,14 +1554,14 @@ void Calcul() //Coeur du programme
 
 
 
-        if (ActiveModulephysique)
+        if (physicalmodel.ActiveModulephysique)
         {
             //$ Choice of an aggregate according to his MFP
             NumAgg = Probabilite(contact, deltatemps);// Choice of an agrgegate, the probability of said agrgegate to be chosen proportionnal to his lpm
 
-            temps = temps + deltatemps; // Time incrementation with a value given by Probabilite
+            physicalmodel.temps = physicalmodel.temps + deltatemps; // Time incrementation with a value given by Probabilite
 
-            if (ActiveVariationTempo)
+            if (physicalmodel.ActiveVariationTempo)
             {
                 //$ ?
                 finfichiersuivitempo = rechercheValTab();
@@ -1607,12 +1594,12 @@ void Calcul() //Coeur du programme
             //$ Random Choice of an aggregate
             NumAgg = int(Random()*double(NAgg))+1;
             deltatemps = 0.0;
-            temps = temps + 1E-9;
+            physicalmodel.temps = physicalmodel.temps + 1E-9;
 
             //$ looking for potential contacts
 
             CalculDistance(NumAgg, distmin, aggcontact);
-            lpm = Dpm*1E-9; //On fixe le lpm au Dpm
+            lpm = physicalmodel.Dpm*1E-9; //On fixe le lpm au Dpm
 
         }
         contact = (aggcontact != 0);
@@ -1629,9 +1616,9 @@ void Calcul() //Coeur du programme
             int nmonoi = SelectLabelEgal(IdPossible[aggcontact][1], Monoi);
 
             double* trans = new double[4];
-            trans[1] = IdPossible[aggcontact][2]*L;
-            trans[2] = IdPossible[aggcontact][3]*L;
-            trans[3] = IdPossible[aggcontact][4]*L;
+            trans[1] = IdPossible[aggcontact][2]*physicalmodel.L;
+            trans[2] = IdPossible[aggcontact][3]*physicalmodel.L;
+            trans[3] = IdPossible[aggcontact][4]*physicalmodel.L;
 
             //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
             //It gets in box on one side, then has to go out on the other one.
@@ -1644,17 +1631,17 @@ void Calcul() //Coeur du programme
 
             ParametresAgg(newnumagg);
 
-            temps = temps-deltatemps*(1-distmin/lpm);
+            physicalmodel.temps = physicalmodel.temps-deltatemps*(1-distmin/lpm);
             /*
             //+++++ Test de superposition des monomères dans un agrégat lors d'un contact +++++
             tmp = CalculSuperposition(newnumagg);
             if (tmp == 1)     {superpo++;}
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             */
-             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, temps*1E6, secondes,it_without_contact);
+             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.temps*1E6, secondes,it_without_contact);
             it_without_contact = 0;
              if (!(GUI == NULL)            )
-                GUI->progress(N-NAgg+1);
+                GUI->progress(physicalmodel.N-NAgg+1);
 
         }
         else
@@ -1673,7 +1660,7 @@ void Calcul() //Coeur du programme
 
             for(i=1;i<=3;i++)
             {
-                OldPos[i]=floor(PosiGravite[NumAgg][i]*GridDiv/L)+GridDiv+1;
+                OldPos[i]=floor(PosiGravite[NumAgg][i]*physicalmodel.GridDiv/physicalmodel.L)+physicalmodel.GridDiv+1;
             }
 
             for (j = 1; j <= 3; j++)
@@ -1693,10 +1680,10 @@ void Calcul() //Coeur du programme
         ReplacePosi(newnumagg);
 
 
-        if (DeltaSauve>0)
+        if (physicalmodel.DeltaSauve>0)
         {
             co++;
-            if (co > DeltaSauve)
+            if (co > physicalmodel.DeltaSauve)
             {
                 co = 0;
                 if (contact == false)
@@ -1704,7 +1691,7 @@ void Calcul() //Coeur du programme
             }
         }
 
-        if (contact && DeltaSauve >= 0)
+        if (contact && physicalmodel.DeltaSauve >= 0)
             SauveASCII(NSauve++, newnumagg);
     }
 
@@ -1817,20 +1804,20 @@ void MainWindow::ModulePhysique()
 void MainWindow::ExecuterDLCA()
 {
 
-    ui->progressBar->setMaximum(N);
+    ui->progressBar->setMaximum(physicalmodel.N);
     ui->progressBar->setVisible(true);
     ui->progressBar->setValue(0);
 
-    coeffB = ui->doubleSpinBoxCoeffCroissance->value();
-    xsurfgrowth = ui->doubleSpinBoxPuissancex->value();
-    dfe = ui->doubleSpinBoxDimFractale->value();
-    kfe = ui->doubleSpinBoxPrefFractal->value();
+    physicalmodel.coeffB = ui->doubleSpinBoxCoeffCroissance->value();
+    physicalmodel.xsurfgrowth = ui->doubleSpinBoxPuissancex->value();
+    physicalmodel.dfe = ui->doubleSpinBoxDimFractale->value();
+    physicalmodel.kfe = ui->doubleSpinBoxPrefFractal->value();
 
-    if (ui->ActModulePhysique->isChecked())     ActiveModulephysique = 1;
-    else    ActiveModulephysique = 0;
+    if (ui->ActModulePhysique->isChecked())     physicalmodel.ActiveModulephysique = 1;
+    else    physicalmodel.ActiveModulephysique = 0;
 
-    if (ui->SuiviTempo->isChecked())    ActiveVariationTempo = 1;
-    else    ActiveVariationTempo = 0;
+    if (ui->SuiviTempo->isChecked())    physicalmodel.ActiveVariationTempo = 1;
+    else    physicalmodel.ActiveVariationTempo = 0;
 
     Calcul();
 
@@ -1854,12 +1841,12 @@ int No_GUI(int argc, char *argv[]){
     pathParam = tmp2.absolutePath(); //Cette variable ne retient que le chemin du fichier param
     LectureParams();
 
-    coeffB = 1.0;
-    xsurfgrowth = 2.0;
-    dfe = 1.80;
-    kfe = 1.40;
-    ActiveModulephysique = 1;
-    ActiveVariationTempo = 0;
+    physicalmodel.coeffB = 1.0;
+    physicalmodel.xsurfgrowth = 2.0;
+    physicalmodel.dfe = 1.80;
+    physicalmodel.kfe = 1.40;
+    physicalmodel.ActiveModulephysique = 1;
+    physicalmodel.ActiveVariationTempo = 0;
 
     Calcul();
 
