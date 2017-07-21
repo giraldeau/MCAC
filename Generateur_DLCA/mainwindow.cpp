@@ -20,20 +20,21 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+using namespace std;
+
+
 QString FichierParam = "___";
 QString pathParam = "___";
 QString FichierSuiviTempo = "___";
-QString pathSuiviTempo = "___";
 
 char CheminSauve[500];
 char commentaires[500];
 
-using namespace std;
-
 const double PI = atan(1.0)*4; // 3.14159
 double* Vectdir; // Direction of the translation of an aggregate
-double* Translate;// Translation Vector
 int NumAgg; // Number of the aggregate in translation
+int secondes; // CPU Time variable
+int NSauve; // last file number
 
 
 // Nagg
@@ -42,6 +43,10 @@ double* TriCum; // Cumulated probabilities
 double** PosiGravite; // Position of the center of gravity
 double** Aggregate; // Array of the different aggregates and their caracteristics
 vector<int> IndexPourTri;
+int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
+                // Aggregate, and then , the labels of saif spheres
+
+
 
 // Collision Agg
 int** IdPossible;  // Array of the Ids of the aggregates that could be in contact with the one moving
@@ -50,16 +55,7 @@ int** IdPossible;  // Array of the Ids of the aggregates that could be in contac
 // suivit tempo
 double** tab; // generic array
 int iValTab=0;
-
-
-int NSauve;
 int nb_line;
-int secondes; // CPU Time variable
-char com[500]; // Char array used in the ASCII Save
-bool with_dots; // Bool used to chose the format of the ASCII exits
-int* TamponValeurs; // Buffer variable
-int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
-                // Aggregate, and then , the labels of saif spheres
 
 // Chained list / Verlet
 std::list<int>**** Verlet; // Verlet's List
@@ -72,8 +68,6 @@ MainWindow* GUI;
 
 ListSphere spheres;
 ListSphere Monoi;   // Array of the spheres in an aggregate
-ListSphere MonoSel; //  Array of the spheres in an aggregate, used in SupprimeLigne
-ListSphere MonoRep; // Array of the spheres in an aggregate
 
 PhysicalModel physicalmodel;
 
@@ -211,12 +205,13 @@ void SupprimeVerlet(int id,int* _OldPos)
 
 void ReplacePosi(int id)
 {// This function will relocate an aggregate when it gets out of the box limiting the space
-    int i,j,k,nr;
+    int i,j;
     double* trans = new double[4];
     bool move=false;
 
     //$ Get the list of the monomeres if Agg Id
-    nr = SelectLabelEgal(id,MonoRep);
+    ListSphere MonoRep(spheres, AggLabels[id]);
+    int nr = MonoRep.size();
 
     for(i=1;i<=3;i++)
     {
@@ -421,8 +416,8 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void ParametresAgg(int Agg)
 {// This function will update the parameter of Agg
-    int i, np, Nc;
-    double masse, dm, cc, diff, vit, lpm, Tv, cov, rmax, rg, rpmoy, rpmoy2, rpmoy3;
+    int i, Nc;
+    double masse, dm, diff, vit, lpm, Tv, cov, rmax, rg, rpmoy, rpmoy2, rpmoy3;
     double volAgregat, surfAgregat;
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
@@ -431,7 +426,8 @@ void ParametresAgg(int Agg)
 
     masse = physicalmodel.Rho*volAgregat;//Determination of the real mass of Agg
     //$Determination of the spheres in Agg
-    np = SelectLabelEgal(Agg, MonoSel);
+    ListSphere MonoSel(spheres, AggLabels[Agg]);
+    int np = MonoSel.size();
 
     //$ Determination of the mean radius of degrees 1,2,3 of Agg
     for (i = 1; i <= np; i++)
@@ -674,13 +670,15 @@ int Probabilite(bool trier,double &deltatemps)
 //############################################# Calcul de la distance inter-agrégats ############################################
 double Distance_Aggregate(int s, int nmonoi, double lpm)
 {
-    int agg, j, k, knum, np, l;
-    double dist, dc, ret;
+    int agg, j, knum;
+    double dist, ret;
 
     ret = 1.0;
     agg = IdPossible[s][1];
 
-    np = SelectLabelEgal(agg, MonoSel); //Liste des sphérules constituant l'agrégat n°Agg
+    //Liste des sphérules constituant l'agrégat n°Agg
+    ListSphere MonoSel(spheres, AggLabels[agg]);
+    int np = MonoSel.size();
 
     double* trans = new double[4];
     trans[1] = IdPossible[s][2]*physicalmodel.L;
@@ -892,14 +890,15 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 //################################################# Réunion de deux agrégats ####################################################
 int Reunit(int AggI, int AggJ, int &err)
 {// This function will merge the aggregates AggI and AggJ
-    int i, nselect, numreject, numstudy,nmonoi;
+    int i, numreject, numstudy,nmonoi;
+    int* TamponValeurs; // Buffer variable
 
     err = 0;
 
     //$Translation of the spheres in AggI
     nmonoi = SelectLabelEgal(AggI, Monoi); //Liste of the monomeres in the aggregate id
     for (i = 1; i <= nmonoi; i++)
-            Monoi[i].Translate(Translate);
+            Monoi[i].Translate(Vectdir);
 
     //$ Check wich one has the smallest index
     if (AggI < AggJ)
@@ -933,13 +932,12 @@ int Reunit(int AggI, int AggJ, int &err)
         AggLabels[numstudy][i]=TamponValeurs[i];
     }
 
-
-
-    nselect = SelectLabelEgal(numreject, MonoSel);
+    ListSphere SpheresToDelete(spheres, AggLabels[numreject]);
+    int nselect = SpheresToDelete.size();
     //$ Update of the labels of the spheres that were in the deleted aggregate
     for (i = 1; i <= nselect; i++)
     {
-        MonoSel[i].SetLabel(numstudy);
+        SpheresToDelete[i].SetLabel(numstudy);
     }
 
     //$ Deletionn of the aggregate that was absorbed, using SupprimeLigne()
@@ -948,10 +946,11 @@ int Reunit(int AggI, int AggJ, int &err)
     delete[] TamponValeurs;
 
     //$ Update of the labels of every sphere that is in an aggregate indexed highger than the one absorbed
-    nselect = SelectLabelSuperieur(numreject, MonoSel);
+    ListSphere SpheresToRelabel(spheres, AggLabels,numreject,NAgg);
+    nselect = SpheresToRelabel.size();
 
     for (i = 1; i <= nselect; i++)
-        MonoSel[i].DecreaseLabel();
+        SpheresToRelabel[i].DecreaseLabel();
 
 
     //$ Index of the Reunited aggregate is returned
@@ -1106,8 +1105,7 @@ void Init()
     double x, masse, surface, Dp, Diff, Vit, lpm, rg, dist;
 
     testmem = 0;
-    spheres = ListSphere(physicalmodel, physicalmodel.N);
-    Translate = new double[4];
+    spheres.Init(physicalmodel, physicalmodel.N);
     Vectdir = new double[4];
     TriCum = new double[physicalmodel.N+1];
 //    Monoi = new int[N+1];
@@ -1269,7 +1267,6 @@ void Fermeture()
         delete[] IdPossible[i];
 
     }
-    delete[] Translate;
     delete[] Vectdir;
     delete[] TriCum;
 //    delete[] Monoi;
@@ -1349,29 +1346,38 @@ void SauveASCII(int value, int id)
 }
 
 
-void test_locale()
+bool locale_with_dots()
 {
-    double testfloat = 1.5;
-    string teststr1 = "1.5";
-    string teststr2 = "1,5";
-    double test1=atof(teststr1.c_str());
-    double test2=atof(teststr2.c_str());
+    static bool tested = false;
+    static bool with_dots;
 
-    if (fabs(test1-testfloat)<1e-3)
-        with_dots = true;
-    else if (fabs(test2-testfloat)<1e-3)
-            with_dots = false;
+    if (tested)
+        return with_dots;
     else
     {
-        printf("What locale are you using ?\n");
-        exit(1);
+        double testfloat = 1.5;
+        string teststr1 = "1.5";
+        string teststr2 = "1,5";
+        double test1=atof(teststr1.c_str());
+        double test2=atof(teststr2.c_str());
+
+        if (fabs(test1-testfloat)<1e-3)
+            with_dots = true;
+        else if (fabs(test2-testfloat)<1e-3)
+                with_dots = false;
+        else
+        {
+            printf("What locale are you using ?\n");
+            exit(1);
+        }
+        return with_dots;
     }
 }
 
 double latof(const char* _char)
 {
     string mystring = _char;
-    if (!with_dots)
+    if (!locale_with_dots())
     {
         int f = mystring.find(".");
         if (f>0)
@@ -1404,8 +1410,7 @@ void LectureParams()
     }
     else
     {
-
-        test_locale();
+        char com[500]; // Char array used in the ASCII Save
 
         fgets(com,500,f);
         sscanf(com,"%s  %s",commentaires,com);
@@ -1609,7 +1614,7 @@ void Calcul() //Coeur du programme
             //$ Translation of the aggregate
             for (i = 1; i <= 3; i++)
             {
-                Translate[i] = Vectdir[i]*distmin;
+                Vectdir[i] = Vectdir[i]*distmin;
             }
             //$ The aggregate in contact is moved to the right box
 
@@ -1649,13 +1654,13 @@ void Calcul() //Coeur du programme
 
             //$ Translation of the aggregate on his full lpm distance
             for (i = 1; i <= 3; i++)
-                Translate[i] = Vectdir[i]*lpm;
+                Vectdir[i] = Vectdir[i]*lpm;
 
             int nmonoi = SelectLabelEgal(NumAgg, Monoi);
 
             for (i = 1; i <= nmonoi; i++)
             {
-                Monoi[i].Translate(Translate);
+                Monoi[i].Translate(Vectdir);
             }
 
             for(i=1;i<=3;i++)
@@ -1665,7 +1670,7 @@ void Calcul() //Coeur du programme
 
             for (j = 1; j <= 3; j++)
             {
-                PosiGravite[NumAgg][j] = PosiGravite[NumAgg][j] + Translate[j];
+                PosiGravite[NumAgg][j] = PosiGravite[NumAgg][j] + Vectdir[j];
             }
             if (CompareIndexVerlet(NumAgg,OldPos))
             {
@@ -1781,7 +1786,7 @@ void MainWindow::BoutonRechercheSuiviTempo()
                                                         "C:/Users/dlca/Desktop/DLCA_sous_Qt/",
                                                         "Fichier de paramètres (*.txt)");
     QFileInfo tmp3 = FichierSuiviTempo;
-    pathSuiviTempo = tmp3.absolutePath(); //Cette variable ne retient que le chemin du fichier Suivi Tempo
+    QString pathSuiviTempo = tmp3.absolutePath(); //Cette variable ne retient que le chemin du fichier Suivi Tempo
 
     //Affiche le chemin dans la zone de texte
     ui->AfficheurRep->append(FichierSuiviTempo);

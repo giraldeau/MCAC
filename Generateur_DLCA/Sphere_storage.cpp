@@ -41,31 +41,42 @@ const double facsurf = 4*PI;
 Sphere::Sphere(void)
 {
     Storage = new array< vector<double>, 7>;
+
+    for (int j=0;j<=6;j++)
+        (*Storage)[j].assign(1, 0.);
+
     external_storage=NULL;
     physicalmodel = NULL;
     AggLabel = 0;
+    SphereLabel = 0;
 
-    add();
+    Init();
 }
 Sphere::Sphere(PhysicalModel& _physicalmodel)
 {
     Storage = new array< vector<double>, 7>;
+
+    for (int j=0;j<=6;j++)
+        (*Storage)[j].assign(1, 0.);
+
     external_storage=NULL;
     physicalmodel = &_physicalmodel;
     AggLabel = 0;
+    SphereLabel = 0;
 
-    add();
+    Init();
 }
 
-Sphere::Sphere(ListSphere& aggregat)
+Sphere::Sphere(ListSphere& aggregat,const int id)
 {
     external_storage =&aggregat;
 
     Storage = aggregat.Storage;
     physicalmodel = aggregat.physicalmodel;
     AggLabel = 0;
+    SphereLabel = id;
 
-    add();
+    Init();
 
     external_storage->setpointers();
 }
@@ -74,11 +85,16 @@ Sphere::Sphere(ListSphere& aggregat)
 Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr)
 {
     Storage = new array< vector<double>, 7>;
+
+    for (int j=0;j<=6;j++)
+        (*Storage)[j].assign(1, 0.);
+
     external_storage=NULL;
     physicalmodel = &_physicalmodel;
     AggLabel = 0;
+    SphereLabel = 0;
 
-    add();
+    Init();
 
     *x = newx;
     *y = newy;
@@ -97,6 +113,11 @@ void Sphere::add(void)
         (*Storage)[j].push_back(0.);
     SphereLabel = (*Storage)[0].size()-1;
 
+    Init();
+}
+
+void Sphere::Init(void)
+{
     setpointers();
 
     *x = 0.;
@@ -106,6 +127,7 @@ void Sphere::add(void)
     *volume = 0.;
     *surface = 0.;
 }
+
 
 Sphere::~Sphere(void)
 {
@@ -230,18 +252,28 @@ ListSphere::ListSphere(void)
 
 ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N)
 {
+    Init(_physicalmodel,_N);
+}
+
+void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
+{
+    Destroy();
+
     physicalmodel=&_physicalmodel;
     Storage = new array< vector<double>, 7>;
+    external_storage=NULL;
+
 
     index.assign(_N+1, 0);
     spheres.assign(_N, NULL);
+    for (int j=0;j<=6;j++)
+        (*Storage)[j].assign(_N, 0.);
 
     index[0]=_N;
     for (N = 0; N < _N; N++)
     {
-        Sphere* newsphere = new Sphere(*this);
         index[N+1] = N+1;
-        spheres[N] = newsphere;
+        spheres[N] = new Sphere(*this,N);
     }
 
 }
@@ -298,7 +330,7 @@ ListSphere::ListSphere(ListSphere& parent, int** _index, const int start, const 
 void ListSphere::setpointers()
 {
     //#pragma omp for simd
-    for (int i = 0; i < N-1; i++)
+    for (int i = 0; i < N; i++)
     {
         spheres[i]->setpointers();
     }
@@ -306,10 +338,22 @@ void ListSphere::setpointers()
 
 ListSphere::~ListSphere(void)
 {
+    Destroy();
+}
+
+void ListSphere::Destroy(void)
+{
     if (external_storage==NULL)
     {
         if (Storage!=NULL)
+        {
+            int _N = N;
+            for (N = _N; N > 0; N--)
+            {
+                delete spheres[N-1];
+            }
             delete Storage;
+        }
     }
     else
     {

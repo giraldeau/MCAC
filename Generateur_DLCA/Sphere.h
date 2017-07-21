@@ -50,18 +50,20 @@ class Sphere
 
     public:
         Sphere(void);
-        Sphere(ListSphere& Storage);
+        Sphere(ListSphere& Storage, const int id);
         Sphere(PhysicalModel&);
         ~Sphere(void);
 
         Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Sphere(PhysicalModel&, const double* position, const double newr);
+        Sphere(PhysicalModel&, const double* position, const double r);
         Sphere(Sphere&);
 
 
         void Init(const double x, const double y, const double z, const double r);
         void Init(const double* position, const double r);
         void Init(Sphere&);
+        void Init(void);
+
 
         void SetLabel(const int);
         void DecreaseLabel(void);
@@ -124,6 +126,9 @@ class ListSphere
 
         ~ListSphere(void);
         Sphere& operator[](const int);
+
+        void Init(PhysicalModel& _physicalmodel, const int N);
+        void Destroy();
 
         int size() const;
 
