@@ -43,21 +43,13 @@ class Sphere
         double* r;
         double* volume;
         double* surface;
-        int AggLabel, SphereLabel;
         PhysicalModel* physicalmodel;
+
+        int AggLabel, SphereLabel;
 
         void UpdateVolAndSurf(void);
 
     public:
-        Sphere(void);
-        Sphere(ListSphere& Storage, const int id);
-        Sphere(PhysicalModel&);
-        ~Sphere(void);
-
-        Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Sphere(PhysicalModel&, const double* position, const double r);
-        Sphere(Sphere&);
-
 
         void Init(const double x, const double y, const double z, const double r);
         void Init(const double* position, const double r);
@@ -73,7 +65,7 @@ class Sphere
         double Volume(void) ;
         double Surface(void) ;
         double Radius(void) ;
-        const double* Position(void) ;
+        const std::array<double, 4> Position(void) ;
 
         double Distance(Sphere&) ;
         double Distance(const double* point) ;
@@ -84,6 +76,16 @@ class Sphere
         void CroissanceSurface(const double dt);
 
     /* Storage specific */
+
+    public:
+        Sphere(void);
+        Sphere(ListSphere& Storage, const int id);
+        Sphere(PhysicalModel&);
+        ~Sphere(void);
+
+        Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
+        Sphere(PhysicalModel&, const double* position, const double r);
+        Sphere(Sphere&);
 
     private:
         std::array< std::vector<double>, 7>* Storage;

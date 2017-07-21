@@ -39,12 +39,12 @@ int NSauve; // last file number
 
 // Nagg
 int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
-double* TriCum; // Cumulated probabilities
 double** PosiGravite; // Position of the center of gravity
 double** Aggregate; // Array of the different aggregates and their caracteristics
-vector<int> IndexPourTri;
 int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
                 // Aggregate, and then , the labels of saif spheres
+double* TriCum; // Cumulated probabilities
+vector<int> IndexPourTri;
 
 
 
@@ -119,45 +119,10 @@ double MinEtIndex(double* tableau, int size, int& position)
 }
 //################################################## Recherche de sphères #############################################################################
 
-int SelectLabelEgal(int id, int* resu)
-{
-    int NSphereInAggrerat = AggLabels[id][0];
-    for(int i=1;i<=NSphereInAggrerat;i++)
-    {
-        resu[i]=AggLabels[id][i];
-    }
-
-    return NSphereInAggrerat;
-}
-
 int SelectLabelEgal(int id, ListSphere& resu)
 {
 
     resu = ListSphere(spheres, AggLabels[id]);
-    return resu.size();
-}
-
-
-int SelectLabelSuperieur(int id, int* resu)
-{ 
-    int m = 0;
-
-    for(int i=id;i<=NAgg;i++)
-    {
-        int NSphereInAggrerat = AggLabels[i][0];
-        for(int j=1;j<=NSphereInAggrerat;j++)
-        {
-
-            resu[m+j]=NSphereInAggrerat;
-        }
-        m+=AggLabels[i][0];
-    }
-    return m;
-}
-
-int SelectLabelSuperieur(int id, ListSphere& resu)
-{
-    resu = ListSphere(spheres, AggLabels,id,NAgg);
     return resu.size();
 }
 
@@ -354,7 +319,7 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         terme = terme + tabVol[i]/Monoi[i].Volume();
 
         //$ Calculation of the position of the center of mass
-        const double* pos = Monoi[i].Position();
+        const array<double, 4> pos = Monoi[i].Position();
         for (k = 1; k <= 3; k++)
             PosiGravite[id][k] = PosiGravite[id][k] + pos[k]*tabVol[i]; //Somme des Vi*xi
     }

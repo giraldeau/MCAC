@@ -184,9 +184,9 @@ double Sphere::Radius(void)
     return *r;
 }
 
-const double* Sphere::Position(void)
+const array<double, 4> Sphere::Position(void)
 {
-    double* mypos= new double[4];
+    array<double, 4> mypos;
     mypos[1]=*x;
     mypos[2]=*y;
     mypos[3]=*z;
