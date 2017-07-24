@@ -1034,8 +1034,8 @@ void Init()
         test=0;
         for (k = 1; k <= i-1; k++)
         {
-            dist = spheres[k].Distance(spheres[i]); // Calcule la distance centre à centre entre le monomère k et tous les autres
-            if (dist <= spheres[k].Radius()+spheres[i].Radius())
+            dist = spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
+            if (dist <= spheres[k].Radius()+Dp/2)
                 test++;
         }
         testmem = testmem + test; //Comptabilise le nombre d'échecs à positionner une sphère sans superposition
