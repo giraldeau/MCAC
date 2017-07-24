@@ -1,6 +1,8 @@
 #ifndef PHYSICAL_MODEL
 #define PHYSICAL_MODEL
 
+using namespace std;
+
 class PhysicalModel
 {
 public:

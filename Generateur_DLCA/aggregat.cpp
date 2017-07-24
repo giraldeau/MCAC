@@ -1,8 +1,8 @@
 #include "aggregat.h"
+#include <math.h>
+#include <cmath>
 
-using namespace std;
-
-Aggregat::Aggregat(void)
+Aggregate::Aggregate(void)
 {
     Storage = new array< vector<double>, 16>;
     for (int j=0;j<=15;j++)
@@ -21,7 +21,26 @@ Aggregat::Aggregat(void)
     Init();
 }
 
-void Aggregat::Init(void)
+Aggregate::Aggregate(PhysicalModel& _physicalmodel)
+{
+    Storage = new array< vector<double>, 16>;
+    for (int j=0;j<=15;j++)
+        (*Storage)[j].assign(1, 0.);
+    external_storage=NULL;
+
+    InclusiveSphere = new Sphere;
+    parents[0] = NULL;
+    parents[1] = NULL;
+    son = NULL;
+    physicalmodel = &_physicalmodel;
+    Label = 0;
+    creation_date = 0.;
+    Nc = 0.;
+
+    Init();
+}
+
+void Aggregate::Init(void)
 {
     setpointers();
 
@@ -41,10 +60,12 @@ void Aggregat::Init(void)
     *x=0.;
     *y=0.;
     *z=0.;
+
+    IndexVerlet = {0,0,0,0};
 }
 
 
-void Aggregat::setpointers(void)
+void Aggregate::setpointers(void)
 {
     rg=&(*Storage)[0][Label];  //Gyration Radius
     dm=&(*Storage)[1][Label];  //Mobility Diameter
@@ -63,7 +84,20 @@ void Aggregat::setpointers(void)
     z=&(*Storage)[14][Label];
 }
 
-const array<double, 4> Aggregat::Position(void)
+void Aggregate::Init(PhysicalModel& _physicalmodel,list<int>****& _Verlet,const array<double, 4> position ,const int _label)
+{
+    physicalmodel = &_physicalmodel;
+    Verlet = &_Verlet;
+    Label = _label;
+
+    if (physicalmodel->use_verlet)
+    {
+        //(*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->push_front(Label);
+    }
+    Position(position);
+}
+
+const array<double, 4> Aggregate::Position(void)
 {
     array<double, 4> mypos;
     mypos[1]=*x;
@@ -72,29 +106,49 @@ const array<double, 4> Aggregat::Position(void)
     return mypos;
 }
 
-void Aggregat::Position(const std::array<double, 4> position)
+void Aggregate::Position(const double newx,const double newy,const double newz)
 {
-    *x = position[1];
-    *y = position[2];
-    *z = position[3];
+    *x = newx;
+    *y = newy;
+    *z = newz;
+    /*
+    if (physicalmodel->use_verlet)
+    {
+        //$ Update Verlet
+        array<int, 4> newindexVerlet = VerletIndex();
+
+        if (VerletIndex() != IndexVerlet)
+        {
+            (*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->remove(Label);
+            IndexVerlet = newindexVerlet;
+            (*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->push_front(Label);
+        }
+    }
+    */
 }
 
-void Aggregat::Translate(const std::array<double, 4> vector)
+void Aggregate::Position(const array<double, 4> position)
 {
-    *x += vector[1];
-    *y += vector[2];
-    *z += vector[3];
+    Position(position[1], position[2], position[3]);
 }
 
-void Aggregat::Translate(const double* vector)
+void Aggregate::Translate(const array<double, 4> vector)
 {
-    *x += vector[1];
-    *y += vector[2];
-    *z += vector[3];
+    Position(*x +vector[1], *y + vector[2], *z +vector[3]);
 }
 
-Aggregat::~Aggregat(void)
+void Aggregate::Translate(const double* vector)
 {
+    Position(*x +vector[1], *y + vector[2], *z +vector[3]);
+}
+
+Aggregate::~Aggregate(void)
+{
+    if (physicalmodel->use_verlet)
+    {
+        //(*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->remove(Label);
+    }
+
     if (external_storage==NULL)
     {
         delete Storage;
@@ -126,6 +180,22 @@ Aggregat::~Aggregat(void)
     x=NULL;
     y=NULL;
     z=NULL;
+
+
+
+}
+
+
+array<int, 4> Aggregate::VerletIndex()
+{
+    array<int, 4>  index= {0.,0.,0.,0.};
+    double step = physicalmodel->GridDiv/physicalmodel->L;
+    int origin = physicalmodel->GridDiv+1;
+
+    index[1]=floor((*x)*step)+origin;
+    index[2]=floor((*y)*step)+origin;
+    index[3]=floor((*z)*step)+origin;
+    return index;
 }
 
 /*

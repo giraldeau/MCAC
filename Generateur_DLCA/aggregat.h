@@ -2,17 +2,22 @@
 #define AGGREGAT_H
 
 #include "Sphere.h"
+#include <list>
 
-class Aggregat;
+using namespace std;
+
+class Aggregate;
 class ListAggregat;
 
-class Aggregat
+class Aggregate
 {
     private:
         Sphere* InclusiveSphere;
-        Aggregat* parents[2];
-        Aggregat* son;
+        Aggregate* parents[2];
+        Aggregate* son;
         PhysicalModel* physicalmodel;
+        list<int>***** Verlet;
+        array<int, 4> IndexVerlet;
 
         double creation_date;
         int Label;
@@ -36,31 +41,34 @@ class Aggregat
 
         ListSphere myspheres;
     public:
-        Aggregat(Sphere);
-        Aggregat(Aggregat Agg1, Aggregat Agg2);
+        Aggregate(Sphere);
+        Aggregate(Aggregate Agg1, Aggregate Agg2);
 
         void Init(void);
-        const std::array<double, 4> Position(void);
-        void Position(const std::array<double, 4> position);
-        void Translate(const std::array<double, 4> vector);
+        const array<double, 4> Position(void);
+        void Position(const array<double, 4> position);
+        void Position(const double x,const double y,const double z);
+        void Translate(const array<double, 4> vector);
         void Translate(const double* vector);
+        array<int, 4> VerletIndex();
+        void Init(PhysicalModel& _physicalmodel,list<int>****& Verlet,const array<double, 4> position ,const int _label);
 
 
 
     /* Storage specific */
 
     public:
-        Aggregat(void);
-        Aggregat(ListSphere& Storage, const int id);
-        Aggregat(PhysicalModel&);
-        ~Aggregat(void);
+        Aggregate(void);
+        Aggregate(ListSphere& Storage, const int id);
+        Aggregate(PhysicalModel&);
+        ~Aggregate(void);
 
-        Aggregat(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Aggregat(PhysicalModel&, const double* position, const double r);
-        Aggregat(Sphere&);
+        Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
+        Aggregate(PhysicalModel&, const double* position, const double r);
+        Aggregate(Sphere&);
 
     private:
-        std::array< std::vector<double>, 16>* Storage;
+        array< vector<double>, 16>* Storage;
         ListAggregat* external_storage;
 
         void setpointers(void);
@@ -75,13 +83,13 @@ class Aggregat
 
 class ListAggregat
 {
-    friend class Aggregat;
+    friend class Aggregate;
 
     /* Generic */
 
     private:
         int N;
-        std::vector < Aggregat* > Aggregats;
+        vector < Aggregate* > Aggregats;
         ListSphere spheres;
         PhysicalModel* physicalmodel;
 
@@ -89,14 +97,14 @@ class ListAggregat
         ListAggregat(PhysicalModel& _physicalmodel, const int N);
 
         ~ListAggregat(void);
-        Aggregat& operator[](const int);
+        Aggregate& operator[](const int);
 
         int size() const;
 
         /* Storage specific */
 
-        std::array< std::vector<double>, 16> Storage;
-        std::vector < int > index;
+        array< vector<double>, 16> Storage;
+        vector < int > index;
 
         void setpointers();
 

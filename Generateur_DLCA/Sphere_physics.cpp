@@ -32,8 +32,6 @@ Sphere.h and Sphere.cpp defines the data storage.
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-using namespace std;
-
 const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
@@ -58,7 +56,7 @@ double Sphere::Distance(const double* point)
 {
     return Distance(point[1],point[2],point[3]);
 }
-double Sphere::Distance(const std::array<double, 4> point)
+double Sphere::Distance(const array<double, 4> point)
 {
     return Distance(point[1],point[2],point[3]);
 }

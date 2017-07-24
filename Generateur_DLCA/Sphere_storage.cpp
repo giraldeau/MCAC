@@ -32,8 +32,6 @@ Sphere.h and Sphere.cpp defines the data storage.
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-using namespace std;
-
 const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
@@ -104,7 +102,7 @@ Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double new
 }
 
 Sphere::Sphere(PhysicalModel& _physicalmodel, const double* newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
-Sphere::Sphere(PhysicalModel& _physicalmodel, const std::array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
+Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
 
 Sphere::Sphere(Sphere& c) : Sphere(*(c.physicalmodel), *c.x,*c.y,*c.z,*c.r){}
 
@@ -208,7 +206,7 @@ void Sphere::Init(const double* newp,const double newr)
     Init(newp[1],newp[2],newp[3],newr);
 }
 
-void Sphere::Init(const std::array<double, 4> newp,const double newr)
+void Sphere::Init(const array<double, 4> newp,const double newr)
 {
     Init(newp[1],newp[2],newp[3],newr);
 }
@@ -224,6 +222,13 @@ void Sphere::DecreaseLabel(void)
 }
 
 void Sphere::Translate(const double* trans)
+{
+    *x += trans[1];
+    *y += trans[2];
+    *z += trans[3];
+}
+
+void Sphere::Translate(const array<double, 4> trans)
 {
     *x += trans[1];
     *y += trans[2];
