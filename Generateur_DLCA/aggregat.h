@@ -8,6 +8,7 @@ using namespace std;
 
 class Aggregate;
 class ListAggregat;
+class Verlet;
 
 class Aggregate
 {
@@ -16,13 +17,14 @@ class Aggregate
         Aggregate* parents[2];
         Aggregate* son;
         PhysicalModel* physicalmodel;
-        list<int>***** Verlet;
+        Verlet* verlet;
         array<int, 4> IndexVerlet;
 
         double creation_date;
         int Label;
         int Nc;     //Number of contacts
         int Np;     //Number of spheres
+        bool InVerlet;
 
         double *rg;  //Gyration Radius
         double *dm;  //Mobility Diameter
@@ -51,7 +53,7 @@ class Aggregate
         void Translate(const array<double, 4> vector);
         void Translate(const double* vector);
         array<int, 4> VerletIndex();
-        void Init(PhysicalModel& _physicalmodel,list<int>****& Verlet,const array<double, 4> position ,const int _label);
+        void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label);
 
 
 
@@ -66,6 +68,9 @@ class Aggregate
         Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
         Aggregate(PhysicalModel&, const double* position, const double r);
         Aggregate(Sphere&);
+
+        void AfficheVerlet();
+
 
     private:
         array< vector<double>, 16>* Storage;
@@ -110,5 +115,17 @@ class ListAggregat
 
 };
 
+
+class Verlet
+{
+public:
+    void Supprime(const int id,const array<int, 4> Index);
+    list<int>* GetCell(const int i,const int j,const int k)const;
+    void Init(const int GridDiv);
+
+    private:
+    list<int>**** verletlist;
+
+};
 
 #endif // AGGREGAT_H

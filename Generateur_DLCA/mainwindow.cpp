@@ -59,7 +59,7 @@ int iValTab=0;
 int nb_line;
 
 // Chained list / Verlet
-list<int>**** Verlet; // Verlet's List
+Verlet verlet; // Verlet's List
 double RayonAggMax=0.; // Value of the radius of the bigger aggregate in the box
 
 
@@ -115,26 +115,6 @@ double MinEtIndex(double* tableau, int size, int& position)
 
     return m;
 }
-//################################################## Recherche de sphères #############################################################################
-
-
-void AjouteVerlet(int id)
-{
-    if (physicalmodel.use_verlet)
-    {
-        array<int, 4> index = Aggregates[id].VerletIndex();
-        Verlet[index[1]][index[2]][index[3]]->push_front(id);
-    }
-}
-
-
-void SupprimeVerlet(int id,array<int, 4> oldIndex)
-{
-    if (physicalmodel.use_verlet)
-    {
-        Verlet[oldIndex[1]][oldIndex[2]][oldIndex[3]]->remove(id);
-    }
-}
 
 //############################################# Conditions aux limites périodiques ##############################################
 
@@ -168,9 +148,6 @@ void ReplacePosi(int id)
     //$ If it is getting out
     if (move)
     {
-
-        array<int, 4> oldVerletIndex = Aggregates[id].VerletIndex();
-
         //$ Update the position of aggregate
         Aggregates[id].Translate(trans);
 
@@ -182,13 +159,6 @@ void ReplacePosi(int id)
         for (int j = 1; j <= nr; j++)
         {
             MonoRep[j].Translate(trans);
-        }
-
-        //$ Update Verlet
-        if (Aggregates[id].VerletIndex() != oldVerletIndex)
-        {
-            SupprimeVerlet(id,oldVerletIndex);
-            AjouteVerlet(id);
         }
     }
 }
@@ -305,15 +275,9 @@ double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, dou
         newpos[k] = newpos[k]/volAgregat;
     } //Centre of mass of Agg Id
 
-    const array<int, 4> oldVerletIndex = Aggregates[id].VerletIndex();
 
     Aggregates[id].Position(newpos);
 
-    if (Aggregates[id].VerletIndex() != oldVerletIndex)
-    {
-        SupprimeVerlet(id,oldVerletIndex);
-        AjouteVerlet(id);
-    }
     ReplacePosi(id);
 
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
@@ -408,54 +372,24 @@ void ParametresAgg(int Agg)
     OldAggregates[Agg][10] = cov;          //Covering Parameter
     OldAggregates[Agg][11] = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
 }
-//######################################################    verlet   #########################################################################
 
-void AfficheVerlet(int id)
-{   _List_iterator<int> i;
-    int j;
-
-
-    if (physicalmodel.use_verlet)
-    {
-        const array<int, 4> VerletIndex = Aggregates[id].VerletIndex();
-
-        cout<<"Taille: "<<Verlet[VerletIndex[1]][VerletIndex[2]][VerletIndex[3]]->size()<<"\n";
-        cout << " mylist contains:\n";
-
-        for(i = Verlet[VerletIndex[1]][VerletIndex[2]][VerletIndex[3]]->begin();
-            i!= Verlet[VerletIndex[1]][VerletIndex[2]][VerletIndex[3]]->end();
-            i++)
-        {
-            cout << " " << *i<<"\n";
-        }
-    }
-}
 
 void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
     //printf("SupLigne  : ");
 
-    const array<int, 4> oldVerletIndex = Aggregates[ligne].VerletIndex();
-
-    SupprimeVerlet(ligne,oldVerletIndex);
-
     for (i = ligne + 1; i<= NAgg; i++)
     {
 
         for (j = 0; j <= 11; j++)
             OldAggregates[i-1][j] = OldAggregates[i][j];
-
         const array<double, 4> newpos = Aggregates[i].Position();
-        const array<int, 4> newVerletIndex = Aggregates[i].VerletIndex();
-
-        SupprimeVerlet(i,newVerletIndex);
 
         Aggregates[i-1].Position(newpos);
 
-        AjouteVerlet(i-1);
-
     }
+    verlet.Supprime(NAgg,Aggregates[NAgg].VerletIndex());
 
     for (i=ligne+1;i<=NAgg;i++)
     {
@@ -772,7 +706,11 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                     dy=floor((j-1)/physicalmodel.GridDiv)-1;
                     dz=floor((k-1)/physicalmodel.GridDiv)-1;
 
-                    for(p=Verlet[i-dx*physicalmodel.GridDiv][j-dy*physicalmodel.GridDiv][k-dz*physicalmodel.GridDiv]->begin();p!=Verlet[i-dx*physicalmodel.GridDiv][j-dy*physicalmodel.GridDiv][k-dz*physicalmodel.GridDiv]->end();p++)
+                    list<int>* cell = verlet.GetCell(i-dx*physicalmodel.GridDiv,
+                                                    j-dy*physicalmodel.GridDiv,
+                                                    k-dz*physicalmodel.GridDiv);
+
+                    for(p=cell->begin();p!=cell->end();p++)
                     {
                         if (*p != id)
                         {
@@ -1050,28 +988,7 @@ void Init()
     IndexPourTri.assign(physicalmodel.N+1,0);
 
 
-    // Verlet
-    if (physicalmodel.use_verlet)
-    {
-        Verlet=new list<int>***[3*physicalmodel.GridDiv+1];
-        for(i=0;i<=3*physicalmodel.GridDiv;i++)
-        {
-            Verlet[i]=new list<int>**[3*physicalmodel.GridDiv+1];
-
-            for(j=0;j<=3*physicalmodel.GridDiv;j++)
-            {
-                Verlet[i][j]=new list<int>*[3*physicalmodel.GridDiv+1];
-
-                for(k=0;k<=3*physicalmodel.GridDiv;k++)
-                {
-                    Verlet[i][j][k]= new list<int>;
-                    *Verlet[i][j][k]= list<int>();
-                }
-
-            }
-
-        }
-    }
+    verlet.Init(physicalmodel.GridDiv);
 
     // Agglabels
     AggLabels= new int*[physicalmodel.N+1];// Array containing the labels of the spheres in each aggregate
@@ -1127,15 +1044,12 @@ void Init()
             i--;
         else
         {
-            Aggregates[i].Init(physicalmodel,Verlet,newpos,i);
+            Aggregates[i].Init(physicalmodel,verlet,newpos,i);
             //initialize the sphere :
             // This is a real sphere
             spheres[i].SetLabel(i);
             // position and size
             spheres[i].Init(Aggregates[i].Position(), Dp/2);
-
-
-            AjouteVerlet(i);
         }
 
         if (testmem > physicalmodel.N)
@@ -1596,16 +1510,7 @@ void Calcul() //Coeur du programme
                 mySpheres[i].Translate(Vectdir);
             }
 
-            const array<int, 4> oldVerletIndex = Aggregates[NumAgg].VerletIndex();
-
             Aggregates[NumAgg].Translate(Vectdir);
-
-            if (Aggregates[NumAgg].VerletIndex() != oldVerletIndex)
-            {
-                SupprimeVerlet(NumAgg,oldVerletIndex);
-                AjouteVerlet(NumAgg);
-            }
-
 
             newnumagg = NumAgg;
             it_without_contact++;

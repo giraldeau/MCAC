@@ -17,6 +17,8 @@ Aggregate::Aggregate(void)
     Label = 0;
     creation_date = 0.;
     Nc = 0.;
+    InVerlet = false;
+    verlet = NULL;
 
     Init();
 }
@@ -36,6 +38,8 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel)
     Label = 0;
     creation_date = 0.;
     Nc = 0.;
+    InVerlet = false;
+    verlet = NULL;
 
     Init();
 }
@@ -57,11 +61,9 @@ void Aggregate::Init(void)
     *ratio_surf_vol=0.;         //Ratio surface / volume
     *free_surface=0.;           //Free surface of the aggregate (without covering)
 
-    *x=0.;
-    *y=0.;
-    *z=0.;
-
     IndexVerlet = {0,0,0,0};
+
+    Position(0.,0.,0.);
 }
 
 
@@ -84,15 +86,16 @@ void Aggregate::setpointers(void)
     z=&(*Storage)[14][Label];
 }
 
-void Aggregate::Init(PhysicalModel& _physicalmodel,list<int>****& _Verlet,const array<double, 4> position ,const int _label)
+void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 4> position ,const int _label)
 {
     physicalmodel = &_physicalmodel;
-    Verlet = &_Verlet;
+    verlet = &_verlet;
     Label = _label;
 
     if (physicalmodel->use_verlet)
     {
-        //(*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->push_front(Label);
+        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(Label);
+        InVerlet=true;
     }
     Position(position);
 }
@@ -111,20 +114,21 @@ void Aggregate::Position(const double newx,const double newy,const double newz)
     *x = newx;
     *y = newy;
     *z = newz;
-    /*
-    if (physicalmodel->use_verlet)
+
+    if (InVerlet && physicalmodel->use_verlet)
     {
         //$ Update Verlet
         array<int, 4> newindexVerlet = VerletIndex();
 
-        if (VerletIndex() != IndexVerlet)
+        if (newindexVerlet != IndexVerlet)
         {
-            (*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->remove(Label);
+
+            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(Label);
             IndexVerlet = newindexVerlet;
-            (*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->push_front(Label);
+            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(Label);
         }
     }
-    */
+
 }
 
 void Aggregate::Position(const array<double, 4> position)
@@ -144,9 +148,10 @@ void Aggregate::Translate(const double* vector)
 
 Aggregate::~Aggregate(void)
 {
-    if (physicalmodel->use_verlet)
+    if (InVerlet && physicalmodel->use_verlet)
     {
-        //(*Verlet[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]])->remove(Label);
+        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(Label);
+        InVerlet=false;
     }
 
     if (external_storage==NULL)
@@ -197,6 +202,58 @@ array<int, 4> Aggregate::VerletIndex()
     index[3]=floor((*z)*step)+origin;
     return index;
 }
+
+
+void Aggregate::AfficheVerlet()
+{   _List_iterator<int> i;
+
+    if (physicalmodel->use_verlet && InVerlet)
+    {
+        list<int>* cell = (*verlet).GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3]);
+        cout<<"Coordinates: "<< IndexVerlet[1] << " " << IndexVerlet[2] << " " << IndexVerlet[3] << endl;
+        cout<<"Taille: "<<cell->size()<< endl;
+        cout << " friends :"<< endl;
+        for(i = cell->begin();
+            i!= cell->end();
+            i++)
+        {
+            cout << " " << *i<<endl;
+        }
+    }
+}
+
+
+
+void Verlet::Supprime(const int id,const array<int, 4> Index)
+{
+    verletlist[Index[1]][Index[2]][Index[3]]->remove(id);
+}
+
+void Verlet::Init(const int GridDiv)
+{
+    verletlist=new list<int>***[3*GridDiv+1];
+    for(int i=0;i<=3*GridDiv;i++)
+    {
+        verletlist[i]=new list<int>**[3*GridDiv+1];
+
+        for(int j=0;j<=3*GridDiv;j++)
+        {
+            verletlist[i][j]=new list<int>*[3*GridDiv+1];
+
+            for(int k=0;k<=3*GridDiv;k++)
+            {
+                verletlist[i][j][k]= new list<int>;
+            }
+        }
+
+    }
+}
+
+list<int>* Verlet::GetCell(const int i,const int j,const int k)const
+{
+    return verletlist[i][j][k];
+}
+
 
 /*
 Aggregat::Aggregat(Sphere _mysphere)
