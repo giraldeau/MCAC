@@ -53,8 +53,8 @@ class Aggregate
         void Translate(const array<double, 4> vector);
         void Translate(const double* vector);
         array<int, 4> VerletIndex();
-        void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label);
-
+        void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
+        void UpdatesSpheres(ListSphere&, int* index);
 
 
     /* Storage specific */
@@ -84,13 +84,11 @@ class Aggregate
 };
 
 
-
+/*
 
 class ListAggregat
 {
     friend class Aggregate;
-
-    /* Generic */
 
     private:
         int N;
@@ -106,8 +104,6 @@ class ListAggregat
 
         int size() const;
 
-        /* Storage specific */
-
         array< vector<double>, 16> Storage;
         vector < int > index;
 
@@ -115,11 +111,12 @@ class ListAggregat
 
 };
 
+*/
 
 class Verlet
 {
 public:
-    void Supprime(const int id,const array<int, 4> Index);
+    void Remove(const int id,const array<int, 4> Index);
     list<int>* GetCell(const int i,const int j,const int k)const;
     void Init(const int GridDiv);
 

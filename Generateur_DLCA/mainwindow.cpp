@@ -23,13 +23,10 @@
 
 using namespace std;
 
-
-QString FichierParam = "___";
-QString pathParam = "___";
-QString FichierSuiviTempo = "___";
-
-char CheminSauve[500];
-char commentaires[500];
+MainWindow* GUI;
+Verlet verlet; // Verlet's List
+ListSphere spheres;
+PhysicalModel physicalmodel;
 
 const double PI = atan(1.0)*4; // 3.14159
 double* Vectdir; // Direction of the translation of an aggregate
@@ -46,7 +43,7 @@ int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the 
                 // Aggregate, and then , the labels of saif spheres
 double* TriCum; // Cumulated probabilities
 vector<int> IndexPourTri;
-
+double RayonAggMax=0.; // Value of the radius of the bigger aggregate in the box
 
 
 // Collision Agg
@@ -58,16 +55,13 @@ double** tab; // generic array
 int iValTab=0;
 int nb_line;
 
-// Chained list / Verlet
-Verlet verlet; // Verlet's List
-double RayonAggMax=0.; // Value of the radius of the bigger aggregate in the box
+QString FichierParam = "___";
+QString pathParam = "___";
+QString FichierSuiviTempo = "___";
 
+char CheminSauve[500];
+char commentaires[500];
 
-MainWindow* GUI;
-
-ListSphere spheres;
-
-PhysicalModel physicalmodel;
 
 void InitRandom()
 {
@@ -150,16 +144,6 @@ void ReplacePosi(int id)
     {
         //$ Update the position of aggregate
         Aggregates[id].Translate(trans);
-
-        //$ Get the list of the monomeres if Agg Id
-        ListSphere MonoRep(spheres, AggLabels[id]);
-        int nr = MonoRep.size();
-
-        //$ Update the position of the spheres in Agg Id
-        for (int j = 1; j <= nr; j++)
-        {
-            MonoRep[j].Translate(trans);
-        }
     }
 }
 //###############################################################################################################################
@@ -389,7 +373,7 @@ void SupprimeLigne(int ligne)
         Aggregates[i-1].Position(newpos);
 
     }
-    verlet.Supprime(NAgg,Aggregates[NAgg].VerletIndex());
+    verlet.Remove(NAgg,Aggregates[NAgg].VerletIndex());
 
     for (i=ligne+1;i<=NAgg;i++)
     {
@@ -401,6 +385,17 @@ void SupprimeLigne(int ligne)
         }
     }
     NAgg--;
+
+
+    //$ Update of the labels of every sphere that is in an aggregate indexed highger than the one absorbed
+    ListSphere SpheresToReLabel(spheres, AggLabels,ligne,NAgg);
+    int nselect = SpheresToReLabel.size();
+
+    for (i = 1; i <= nselect; i++)
+        SpheresToReLabel[i].DecreaseLabel();
+
+    for (i=ligne;i<=NAgg;i++)
+        Aggregates[i].UpdatesSpheres(spheres, AggLabels[i]);
 }
 
 void InsertionSort(int n, double arr[], int index[])
@@ -762,16 +757,10 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 //################################################# Réunion de deux agrégats ####################################################
 int Reunit(int AggI, int AggJ, int &err)
 {// This function will merge the aggregates AggI and AggJ
-    int i, numreject, numstudy,nmonoi;
+    int i, numreject, numstudy;
     int* TamponValeurs; // Buffer variable
 
     err = 0;
-
-    //$Translation of the spheres in AggI
-    ListSphere mySpheres = ListSphere(spheres, AggLabels[AggI]);
-    nmonoi = mySpheres.size();
-    for (i = 1; i <= nmonoi; i++)
-            mySpheres[i].Translate(Vectdir);
 
     //$ Check wich one has the smallest index
     if (AggI < AggJ)
@@ -784,6 +773,7 @@ int Reunit(int AggI, int AggJ, int &err)
         numstudy = AggJ;
         numreject = AggI;
     }
+
 
     //$ Creation of the new sub array in Agglabels
     TamponValeurs= new int[AggLabels[AggI][0]+AggLabels[AggJ][0]+1];
@@ -818,13 +808,7 @@ int Reunit(int AggI, int AggJ, int &err)
     SupprimeLigne(numreject);
     delete[] TamponValeurs;
 
-    //$ Update of the labels of every sphere that is in an aggregate indexed highger than the one absorbed
-    ListSphere SpheresToRelabel(spheres, AggLabels,numreject,NAgg);
-    nselect = SpheresToRelabel.size();
-
-    for (i = 1; i <= nselect; i++)
-        SpheresToRelabel[i].DecreaseLabel();
-
+    Aggregates[numstudy].UpdatesSpheres(spheres, AggLabels[numstudy]);
 
     //$ Index of the Reunited aggregate is returned
     return numstudy;
@@ -979,21 +963,22 @@ void Init()
     double x, masse, surface, Dp, Diff, Vit, lpm, rg, dist;
 
     testmem = 0;
-    spheres.Init(physicalmodel, physicalmodel.N);
+    NAgg = physicalmodel.N;
+    spheres.Init(physicalmodel, NAgg);
     Vectdir = new double[4];
-    TriCum = new double[physicalmodel.N+1];
-    IdPossible = new int* [physicalmodel.N+1];
-    Aggregates = new Aggregate[physicalmodel.N+1];
-    OldAggregates = new double* [physicalmodel.N+1];
-    IndexPourTri.assign(physicalmodel.N+1,0);
+    TriCum = new double[NAgg+1];
+    IdPossible = new int* [NAgg+1];
+    Aggregates = new Aggregate[NAgg+1];
+    OldAggregates = new double* [NAgg+1];
+    IndexPourTri.assign(NAgg+1,0);
 
 
     verlet.Init(physicalmodel.GridDiv);
 
     // Agglabels
-    AggLabels= new int*[physicalmodel.N+1];// Array containing the labels of the spheres in each aggregate
+    AggLabels= new int*[NAgg+1];// Array containing the labels of the spheres in each aggregate
 
-    for (i=1;i<=physicalmodel.N;i++)
+    for (i=1;i<=NAgg;i++)
     {                               //_____
         AggLabels[i]= new int[2];   //     |
         AggLabels[i][0]=1;          //     |--- Initialisation of Agglabels, at the start there are N aggregates of 1 sphere.
@@ -1005,13 +990,13 @@ void Init()
     AggLabels[0][0]=0;
     AggLabels[0][1]=0;
 
-    for (i = 1; i <= physicalmodel.N; i++)
+    for (i = 1; i <= NAgg; i++)
     {
         OldAggregates[i] = new double[12];
         IdPossible[i] = new int[5];
     }
 
-    for (i = 1; i <= physicalmodel.N; i++)
+    for (i = 1; i <= NAgg; i++)
     {          
 
         array<double, 4> newpos;
@@ -1044,15 +1029,10 @@ void Init()
             i--;
         else
         {
-            Aggregates[i].Init(physicalmodel,verlet,newpos,i);
-            //initialize the sphere :
-            // This is a real sphere
-            spheres[i].SetLabel(i);
-            // position and size
-            spheres[i].Init(Aggregates[i].Position(), Dp/2);
+            Aggregates[i].Init(physicalmodel,verlet,newpos,i,spheres,Dp/2);
         }
 
-        if (testmem > physicalmodel.N)
+        if (testmem > NAgg)
         {
             printf("Impossible de générer tous les monomères sans superposition.\n");
             printf("La fraction volumique doit être diminuée.\n");
@@ -1102,8 +1082,6 @@ void Init()
             OldAggregates[i][11] = PI*pow(Dp, 2);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
         }
     }
-
-    NAgg = physicalmodel.N;
 }
 
 void Fermeture()
@@ -1306,15 +1284,17 @@ void Calcul() //Coeur du programme
 {
     double deltatemps, distmin, lpm;
     double thetarandom, phirandom;
-    int IdAggContact,aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
+    int aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
     //int tmp,superpo;
-    int i, j,kom, co, err;
+    int i, j, co, err;
     bool contact;
     time_t t, t0;
 
 
     physicalmodel.L = physicalmodel.X*physicalmodel.Dpm*1E-9;
-    physicalmodel.Init(physicalmodel.P,physicalmodel.T,physicalmodel.dfe,physicalmodel.kfe,physicalmodel.Dpm,physicalmodel.sigmaDpm,physicalmodel.xsurfgrowth,physicalmodel.coeffB,physicalmodel.Rho);
+    physicalmodel.Init(physicalmodel.P,physicalmodel.T,physicalmodel.dfe,
+                       physicalmodel.kfe,physicalmodel.Dpm,physicalmodel.sigmaDpm,
+                       physicalmodel.xsurfgrowth,physicalmodel.coeffB,physicalmodel.Rho);
 
 
     if (physicalmodel.ActiveModulephysique)
@@ -1352,7 +1332,8 @@ void Calcul() //Coeur du programme
             GUI->print(commentaires);
     }
 
-    sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n", physicalmodel.dfe, physicalmodel.kfe, physicalmodel.coeffB, physicalmodel.xsurfgrowth);
+    sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n",
+                          physicalmodel.dfe, physicalmodel.kfe, physicalmodel.coeffB, physicalmodel.xsurfgrowth);
     if (GUI == NULL)
         printf("%s",commentaires);
     else
@@ -1403,8 +1384,6 @@ void Calcul() //Coeur du programme
 
         // -- --
 
-
-
         if (physicalmodel.ActiveModulephysique)
         {
             //$ Choice of an aggregate according to his MFP
@@ -1427,7 +1406,7 @@ void Calcul() //Coeur du programme
                 finmem = finfichiersuivitempo;
             }
 
-            //$ Surface Growth
+            //$ Surface Growth of all spheres
             spheres.CroissanceSurface(deltatemps);
 
             //$ Aggregates parameter update
@@ -1436,8 +1415,6 @@ void Calcul() //Coeur du programme
             {
                 ParametresAgg(i);
             }
-            //$ looking for potential contacts
-            CalculDistance(NumAgg, distmin, aggcontact);
             lpm = OldAggregates[NumAgg][4];
         }
         else
@@ -1446,36 +1423,39 @@ void Calcul() //Coeur du programme
             NumAgg = int(Random()*double(NAgg))+1;
             deltatemps = 0.0;
             physicalmodel.temps = physicalmodel.temps + 1E-9;
-
-            //$ looking for potential contacts
-
-            CalculDistance(NumAgg, distmin, aggcontact);
             lpm = physicalmodel.Dpm*1E-9; //On fixe le lpm au Dpm
-
         }
+
+        double distmove = lpm;
+
+        //$ looking for potential contacts
+        CalculDistance(NumAgg, distmin, aggcontact);
+
         contact = (aggcontact != 0);
+        if (contact)
+            distmove = distmin;
+
+        //$ Translation of the aggregate
+        for (i = 1; i <= 3; i++)
+        {
+            Vectdir[i] = Vectdir[i]*distmove;
+        }
+
+        Aggregates[NumAgg].Translate(Vectdir);
 
         if (contact)
         {
-            //$ Translation of the aggregate
-            for (i = 1; i <= 3; i++)
-            {
-                Vectdir[i] = Vectdir[i]*distmin;
-            }
-            //$ The aggregate in contact is moved to the right box
+
+            //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
+            //It gets in box on one side, then has to go out on the other one.
 
             double* trans = new double[4];
             trans[1] = IdPossible[aggcontact][2]*physicalmodel.L;
             trans[2] = IdPossible[aggcontact][3]*physicalmodel.L;
             trans[3] = IdPossible[aggcontact][4]*physicalmodel.L;
 
-            ListSphere mySpheres = ListSphere(spheres, AggLabels[IdPossible[aggcontact][1]]);
-            int nmonoi = mySpheres.size();
+            Aggregates[IdPossible[aggcontact][1]].Translate(trans);
 
-            //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
-            //It gets in box on one side, then has to go out on the other one.
-            for (j = 1; j <= nmonoi; j++)
-                    mySpheres[j].Translate(trans);
             delete[] trans;
 
             //$ Aggregates in contact are reunited
@@ -1498,20 +1478,6 @@ void Calcul() //Coeur du programme
         }
         else
         {
-
-            //$ Translation of the aggregate on his full lpm distance
-            for (i = 1; i <= 3; i++)
-                Vectdir[i] = Vectdir[i]*lpm;
-
-            ListSphere mySpheres = ListSphere(spheres, AggLabels[NumAgg]);
-            int nmonoi = mySpheres.size();
-            for (i = 1; i <= nmonoi; i++)
-            {
-                mySpheres[i].Translate(Vectdir);
-            }
-
-            Aggregates[NumAgg].Translate(Vectdir);
-
             newnumagg = NumAgg;
             it_without_contact++;
         }
@@ -1524,7 +1490,7 @@ void Calcul() //Coeur du programme
             if (co > physicalmodel.DeltaSauve)
             {
                 co = 0;
-                if (contact == false)
+                if (!contact)
                     SauveASCII(NSauve++, newnumagg);
             }
         }

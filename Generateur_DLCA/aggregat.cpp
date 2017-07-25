@@ -86,7 +86,7 @@ void Aggregate::setpointers(void)
     z=&(*Storage)[14][Label];
 }
 
-void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 4> position ,const int _label)
+void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 4> position ,const int _label, ListSphere& spheres,const double _r)
 {
     physicalmodel = &_physicalmodel;
     verlet = &_verlet;
@@ -98,6 +98,16 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
         InVerlet=true;
     }
     Position(position);
+    int listlabel[2] = {1,Label};
+    spheres[Label].SetLabel(Label);
+    spheres[Label].Init(position, _r);
+    myspheres = ListSphere(spheres,listlabel);
+
+}
+
+void Aggregate::UpdatesSpheres(ListSphere& spheres,int* index)
+{
+    myspheres = ListSphere(spheres,index);
 }
 
 const array<double, 4> Aggregate::Position(void)
@@ -138,11 +148,25 @@ void Aggregate::Position(const array<double, 4> position)
 
 void Aggregate::Translate(const array<double, 4> vector)
 {
+
+    int nmonoi = myspheres.size();
+    for (int i = 1; i <= nmonoi; i++)
+    {
+        myspheres[i].Translate(vector);
+    }
+
     Position(*x +vector[1], *y + vector[2], *z +vector[3]);
 }
 
 void Aggregate::Translate(const double* vector)
 {
+
+    int nmonoi = myspheres.size();
+    for (int i = 1; i <= nmonoi; i++)
+    {
+        myspheres[i].Translate(vector);
+    }
+
     Position(*x +vector[1], *y + vector[2], *z +vector[3]);
 }
 
@@ -224,7 +248,7 @@ void Aggregate::AfficheVerlet()
 
 
 
-void Verlet::Supprime(const int id,const array<int, 4> Index)
+void Verlet::Remove(const int id,const array<int, 4> Index)
 {
     verletlist[Index[1]][Index[2]][Index[3]]->remove(id);
 }
@@ -254,131 +278,3 @@ list<int>* Verlet::GetCell(const int i,const int j,const int k)const
     return verletlist[i][j][k];
 }
 
-
-/*
-Aggregat::Aggregat(Sphere _mysphere)
-{
-    InclusiveSphere = &_mysphere;
-    parents[0] = NULL;
-    parents[1] = NULL;
-    son = NULL;
-    physicalmodel = InclusiveSphere->physicalmodel;
-    creation_date = physicalmodel->temps;
-}
-
-Aggregat::Aggregat(Aggregat Agg1, Aggregat Agg2)
-{
-    InclusiveSphere = new Sphere(*(Agg1.physicalmodel));
-
-    parents[0] = &Agg1;
-    parents[1] = &Agg2;
-    son = NULL;
-    parents[0]->son = this;
-    parents[1]->son = this;
-    physicalmodel = InclusiveSphere->physicalmodel;
-    creation_date = physicalmodel->temps;
-}
-
-
-Sphere::Sphere(PhysicalModel& _physicalmodel)
-{
-    Storage = new array< vector<double>, 15>;
-
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].assign(1, 0.);
-
-    external_storage=NULL;
-    physicalmodel = &_physicalmodel;
-    AggLabel = 0;
-    SphereLabel = 0;
-
-    Init();
-}
-
-Sphere::Sphere(ListSphere& aggregat,const int id)
-{
-    external_storage =&aggregat;
-
-    Storage = aggregat.Storage;
-    physicalmodel = aggregat.physicalmodel;
-    AggLabel = 0;
-    SphereLabel = id;
-
-    Init();
-
-    external_storage->setpointers();
-}
-
-
-Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr)
-{
-    Storage = new array< vector<double>, 7>;
-
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].assign(1, 0.);
-
-    external_storage=NULL;
-    physicalmodel = &_physicalmodel;
-    AggLabel = 0;
-    SphereLabel = 0;
-
-    Init();
-
-    *x = newx;
-    *y = newy;
-    *z = newz;
-    *r = newr;
-    UpdateVolAndSurf();
-}
-
-Sphere::Sphere(PhysicalModel& _physicalmodel, const double* newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
-
-Sphere::Sphere(Sphere& c) : Sphere(*(c.physicalmodel), *c.x,*c.y,*c.z,*c.r){}
-
-void Sphere::add(void)
-{
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].push_back(0.);
-    SphereLabel = (*Storage)[0].size()-1;
-
-    Init();
-}
-
-void Sphere::Init(void)
-{
-    setpointers();
-
-    *x = 0.;
-    *y = 0;
-    *z = 0;
-    *r = 0;
-    *volume = 0.;
-    *surface = 0.;
-}
-
-
-Sphere::~Sphere(void)
-{
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].erase((*Storage)[j].begin() + SphereLabel);
-
-    //setpointers();
-    if(external_storage!=NULL)
-        external_storage->setpointers();
-    else if (Storage!=NULL)
-        delete Storage;
-
-    external_storage=NULL;
-    SphereLabel = 0;
-    AggLabel = 0;
-
-    x = NULL;
-    y = NULL;
-    z = NULL;
-    r = NULL;
-    volume = NULL;
-    surface = NULL;
-    physicalmodel = NULL;
-
-}
-*/
