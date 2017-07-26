@@ -41,6 +41,8 @@ class Aggregate
 
         double *x,*y,*z; // position of the gravity center
 
+        double nctmp,nptmp;
+
         ListSphere myspheres;
     public:
         Aggregate(Sphere);
@@ -55,6 +57,8 @@ class Aggregate
         array<int, 4> VerletIndex();
         void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
         void UpdatesSpheres(ListSphere&, int* index);
+        void ReplacePosi();
+        double RayonGiration(double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat);
 
 
     /* Storage specific */
@@ -70,6 +74,7 @@ class Aggregate
         Aggregate(Sphere&);
 
         void AfficheVerlet();
+        double& operator[](const int);
 
 
     private:
@@ -78,7 +83,6 @@ class Aggregate
 
         void setpointers(void);
         void add(void);
-        double operator[](const int);
 
 
 };

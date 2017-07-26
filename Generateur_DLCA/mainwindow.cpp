@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <time.h>
@@ -38,7 +39,6 @@ int NSauve; // last file number
 // Nagg
 int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
 Aggregate *Aggregates; // Position of the center of gravity
-double** OldAggregates; // Array of the different aggregates and their caracteristics
 int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
                 // Aggregate, and then , the labels of saif spheres
 double* TriCum; // Cumulated probabilities
@@ -82,10 +82,10 @@ double Maxi2D(int colonne, int nmax)
 {
     //Maximum of a column in the Aggregate table
     int i;
-    double m = OldAggregates[1][colonne];
+    double m = Aggregates[1][colonne];
 
     for (i = 2;i <= nmax; i++)
-        if (OldAggregates[i][colonne] > m)    m = OldAggregates[i][colonne];
+        if (Aggregates[i][colonne] > m)    m = Aggregates[i][colonne];
 
     return m;
 }
@@ -110,187 +110,6 @@ double MinEtIndex(double* tableau, int size, int& position)
     return m;
 }
 
-//############################################# Conditions aux limites périodiques ##############################################
-
-void ReplacePosi(int id)
-{// This function will relocate an aggregate when it gets out of the box limiting the space
-    array<double, 4> trans;
-    bool move=false;
-
-    const array<double, 4> pos = Aggregates[id].Position();
-
-    //$ for every dimension
-    for (int i = 1; i <= 3; i++)
-    {
-        //$ Check if it is getting out
-        if (pos[i] > physicalmodel.L)
-        {
-            trans[i] = - physicalmodel.L;
-            move = true;
-        }
-        else if (pos[i] < 0)
-        {
-            trans[i] = physicalmodel.L;
-            move = true;
-        }
-        else
-        {
-            trans[i] = 0;
-        }
-    }
-
-    //$ If it is getting out
-    if (move)
-    {
-        //$ Update the position of aggregate
-        Aggregates[id].Translate(trans);
-    }
-}
-//###############################################################################################################################
-
-
-
-//############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
-
-double RayonGiration(int id, double &rmax, double &Tv, int &Nc, double &cov, double &volAgregat, double &surfAgregat)
-{// This function determines the Gyration Radius of the Aggregate Id.
-    double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
-    int i, j, k, nmonoi;
-    double * tabVol;
-    double* tabSurf;
-
-    cov = 0.0;// Coeficient of mean covering
-    Nc = 0; // Number of contacts
-    volAgregat = surfAgregat = terme = 0.0; // Volume and surface of Agg Id
-    rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
-                // It is used to assimilate the aggregate to a sphere when checking for intersections
-    Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
-    Tv = 0.0;
-
-    //$ Identification of the spheres in Agg id
-
-    //$ Determination of the monomeres in Agg Id
-    ListSphere mySpheres = ListSphere(spheres, AggLabels[id]);
-    nmonoi = mySpheres.size();
-
-    tabVol = new double[nmonoi+1];
-    tabSurf = new double[nmonoi+1];
-
-    //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
-    array<double, 4> newpos={0.,0.,0.,0.};
-
-    for (i = 1; i <= nmonoi; i++)
-    {
-        tabVol[i] =0.;
-        tabSurf[i] =0.;
-    }
-
-    //$ For the Spheres i in Agg Id
-    for (i = 1; i <= nmonoi; i++)
-    {
-        //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] += mySpheres[i].Volume(); //Calculation of the volume of i
-        tabSurf[i] += mySpheres[i].Surface();    //Calculation of the surface of i
-
-        for (j = i+1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
-        {
-
-            double voli, volj, surfi, surfj;
-            voli = volj = surfi = surfj = 0.;
-
-            //$ Calculation of the intersection between the spheres i and j
-            dist = mySpheres[i].Intersection(mySpheres[j],voli,volj,surfi,surfj);
-
-            rpmoy = (mySpheres[i].Radius()+mySpheres[j].Radius())/2.0; //Mean Radius between i and j monomeres
-            dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
-            //$ Check if i is covering j
-            //$ [dbordabord <= 1]
-            if (dbordabord <= 1.)
-            {
-                //$ Calculation of the Number of contacts
-                cov = cov - dbordabord; //Coefficient of total Covering of Agg id
-                Nc = Nc + 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
-            }
-
-            //$ The volume and surface covered by j is substracted from those of i
-            tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
-                                             //la calotte due à la sphérule j
-            tabSurf[i] = tabSurf[i] - surfi; //Calcul de la surface de la sphérule i moins la surface de
-                                             //la calotte due à la sphérule j
-
-            //$ The volume and surface covered by i is substracted from those of j
-            tabVol[j] = tabVol[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
-                                             //la calotte due à la sphérule i
-            tabSurf[j] = tabSurf[j] - surfj; //Calcul de la surface de la sphérule j moins la surface de
-                                             //la calotte due à la sphérule i
-        }
-        //$ Calculation of the total volume and surface of the aggregate
-        volAgregat = volAgregat + tabVol[i];    //Total Volume of Agg id
-        surfAgregat = surfAgregat + tabSurf[i]; //Total Surface of Agg id
-
-        terme = terme + tabVol[i]/mySpheres[i].Volume();
-
-        //$ Calculation of the position of the center of mass
-        const array<double, 4> pos = mySpheres[i].Position();
-        for (k = 1; k <= 3; k++)
-        {
-            newpos[k] += pos[k]*tabVol[i];
-        }
-    }
-    Tv = 1 - terme /nmonoi;
-
-    Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
-    //$ Check if there is more than one monomere in the aggregate
-    //$ [nmonoi == 1]
-    if (nmonoi == 1 || Nc == 0)
-    {
-        //$ Cov = 0
-        cov = 0;
-    }
-    else
-    {
-        //$ Determination of the coefficient of mean covering, using the one determined in the precedent loop
-        cov = cov/(double(Nc))/2.0;
-    }
-    //$ Filling of PosiGravite
-
-    for (k = 1; k <= 3; k++)
-    {
-        newpos[k] = newpos[k]/volAgregat;
-    } //Centre of mass of Agg Id
-
-
-    Aggregates[id].Position(newpos);
-
-    ReplacePosi(id);
-
-    //$ Determination of the maximal radius of Agg Id and the Radius of gyration
-
-    for (i = 1; i <= nmonoi; i++)
-    {
-        //$ Determination of the distance between each monomere and the center of mass of Agg Id
-        li = mySpheres[i].Distance(Aggregates[id].Position()); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
-
-        r = li + mySpheres[i].Radius();
-
-        //$ Calculation of rmax
-        rmax=MAX(rmax,r);
-
-        //$ Calculation of Rg
-        Arg = Arg + tabVol[i]*pow(li, 2);
-        Brg = Brg + tabVol[i]*pow(mySpheres[i].Radius(), 2);
-    }
-
-    delete[] tabVol;
-    delete[] tabSurf;
-
-    double rg = fabs((Arg+3.0/5.0*Brg)/volAgregat);
-    volAgregat=fabs(volAgregat);
-
-    return sqrt(rg); //Rayon de giration de l'agrégat n°id
-}
-//###############################################################################################################################
-
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void ParametresAgg(int Agg)
 {// This function will update the parameter of Agg
@@ -300,7 +119,7 @@ void ParametresAgg(int Agg)
 
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
     //$ Determination of the Radius of gyration of Agg using RayonGiration()
-    rg = RayonGiration(Agg, rmax, Tv, Nc, cov, volAgregat, surfAgregat);
+    rg = Aggregates[Agg].RayonGiration(rmax, Tv, Nc, cov, volAgregat, surfAgregat);
 
     masse = physicalmodel.Rho*volAgregat;//Determination of the real mass of Agg
     //$Determination of the spheres in Agg
@@ -332,29 +151,29 @@ void ParametresAgg(int Agg)
 
 
     //$ Update of Aggregate[] with the parameters
-    OldAggregates[Agg][0] = rg; //Gyration Radius
-    OldAggregates[Agg][1] = np; //Number of spheres in Agg
-    OldAggregates[Agg][2] = Nc; //Cumber of contacts
-    OldAggregates[Agg][3] = dm; //Mobility Diameter
+    Aggregates[Agg][0] = rg; //Gyration Radius
+    Aggregates[Agg][1] = np; //Number of spheres in Agg
+    Aggregates[Agg][2] = Nc; //Cumber of contacts
+    Aggregates[Agg][3] = dm; //Mobility Diameter
 
     if (physicalmodel.ActiveModulephysique == 1)
     {
-        OldAggregates[Agg][4] = lpm;     //Mean Free Path
-        OldAggregates[Agg][5] = lpm/vit; //Displacement duration
+        Aggregates[Agg][4] = lpm;     //Mean Free Path
+        Aggregates[Agg][5] = lpm/vit; //Displacement duration
     }
     else
     {
-        OldAggregates[Agg][4] = physicalmodel.Dpm*1E-9;
-        OldAggregates[Agg][5] = 1E-6;
+        Aggregates[Agg][4] = physicalmodel.Dpm*1E-9;
+        Aggregates[Agg][5] = 1E-6;
     }
     if(rmax>RayonAggMax)
     {RayonAggMax=rmax;}
-    OldAggregates[Agg][6] = rmax;          //Radius of the sphere containing Agg
-    OldAggregates[Agg][7] = volAgregat;    //Etimation of the Aggregate's volume
-    OldAggregates[Agg][8] = surfAgregat;   //Estimation of the sufrace of the aggregate
-    OldAggregates[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
-    OldAggregates[Agg][10] = cov;          //Covering Parameter
-    OldAggregates[Agg][11] = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+    Aggregates[Agg][6] = rmax;          //Radius of the sphere containing Agg
+    Aggregates[Agg][7] = volAgregat;    //Etimation of the Aggregate's volume
+    Aggregates[Agg][8] = surfAgregat;   //Estimation of the sufrace of the aggregate
+    Aggregates[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
+    Aggregates[Agg][10] = cov;          //Covering Parameter
+    Aggregates[Agg][11] = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
 }
 
 
@@ -367,7 +186,7 @@ void SupprimeLigne(int ligne)
     {
 
         for (j = 0; j <= 11; j++)
-            OldAggregates[i-1][j] = OldAggregates[i][j];
+            Aggregates[i-1][j] = Aggregates[i][j];
         const array<double, 4> newpos = Aggregates[i].Position();
 
         Aggregates[i-1].Position(newpos);
@@ -483,11 +302,11 @@ int Probabilite(bool trier,double &deltatemps)
 
     if (trier)
     {
-        double TpT[physicalmodel.N+1];
+        double* TpT = new double [physicalmodel.N+1];
 
     //$ Sort the timesteps
         for (i=1; i <= NAgg; i++)
-            TpT[i] = max/OldAggregates[i][5];
+            TpT[i] = max/Aggregates[i][5];
 
         MonTri(NAgg, TpT, IndexPourTri); //$
 
@@ -495,6 +314,7 @@ int Probabilite(bool trier,double &deltatemps)
         TriCum[1] = TpT[1];
         for (i=2; i <= NAgg; i++)
             TriCum[i] = TriCum[i-1]+TpT[i];
+        delete[] TpT;
     }
     else
     {
@@ -569,13 +389,11 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 {   _List_iterator<int> p;
     double lpm,dist;
     double dc,tampon;
-    int nmonoi;
     int bornei1,bornei2,bornej1,bornej2,bornek1,bornek2;
     int i,s,j,k;
     int npossible;
     int dx,dy,dz;
-    nmonoi =0;
-    lpm = OldAggregates[id][4]; // mean free path of the agregate labeled id
+    lpm = Aggregates[id][4]; // mean free path of the agregate labeled id
     npossible = 0;
     aggcontact = 0;
     distmin = 1.0;
@@ -585,7 +403,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
     //$ Find potential contacts between agregates
 
-    Sphere s1(physicalmodel, Aggregates[id].Position(), OldAggregates[id][6]); // Represents the sphere containing the agregate we're testing
+    Sphere s1(physicalmodel, Aggregates[id].Position(), Aggregates[id][6]); // Represents the sphere containing the agregate we're testing
     //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
 
     if (! physicalmodel.use_verlet)
@@ -600,7 +418,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                 inix = pos[1];
                 iniy = pos[2];
                 iniz = pos[3];
-                inir = OldAggregates[i][6]; //represents the different agregates
+                inir = Aggregates[i][6]; //represents the different agregates
 
                 //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
                 for (dx = -1;dx <= 1; dx++)
@@ -636,52 +454,52 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     {
 
 
-        double mindist = (OldAggregates[id][6]+RayonAggMax);
-        const array<double, 4> pos = Aggregates[id].Position();
+        double mindist = (Aggregates[id][6]+RayonAggMax);
+        const array<double, 4> posid = Aggregates[id].Position();
 
         // Détermination des bornes
         if(Vectdir[1]>=0)
         {
-            tampon=pos[1]-mindist;
+            tampon=posid[1]-mindist;
             bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=pos[1]+mindist+lpm*Vectdir[1];
+            tampon=posid[1]+mindist+lpm*Vectdir[1];
             bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
-            tampon=pos[1]-mindist+lpm*Vectdir[1];
+            tampon=posid[1]-mindist+lpm*Vectdir[1];
             bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=pos[1]+mindist;
+            tampon=posid[1]+mindist;
             bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
         if(Vectdir[2]>=0)
         {
-            tampon=pos[2]-mindist;
+            tampon=posid[2]-mindist;
             bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=pos[2]+mindist+lpm*Vectdir[2];
+            tampon=posid[2]+mindist+lpm*Vectdir[2];
             bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
-            tampon=pos[2]-mindist+lpm*Vectdir[2];
+            tampon=posid[2]-mindist+lpm*Vectdir[2];
             bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=pos[2]+mindist;
+            tampon=posid[2]+mindist;
             bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
         if(Vectdir[3]>=0)
         {
-            tampon=pos[3]-mindist;
+            tampon=posid[3]-mindist;
             bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=pos[3]+mindist+lpm*Vectdir[3];
+            tampon=posid[3]+mindist+lpm*Vectdir[3];
             bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
         else
         {
-            tampon=pos[3]-mindist+lpm*Vectdir[3];
+            tampon=posid[3]-mindist+lpm*Vectdir[3];
             bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
-            tampon=pos[3]+mindist;
+            tampon=posid[3]+mindist;
             bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
         }
 
@@ -710,11 +528,11 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                         if (*p != id)
                         {
                             double inix,iniy,iniz,inir;
-                            const array<double, 4> pos = Aggregates[*p].Position();
-                            inix = pos[1];
-                            iniy = pos[2];
-                            iniz = pos[3];
-                            inir = OldAggregates[*p][6]; //represents the different agregates
+                            const array<double, 4> posp = Aggregates[*p].Position();
+                            inix = posp[1];
+                            iniy = posp[2];
+                            iniz = posp[3];
+                            inir = Aggregates[*p][6]; //represents the different agregates
 
                             Sphere s2(physicalmodel,inix+physicalmodel.L*dx,iniy+physicalmodel.L*dy,iniz+physicalmodel.L*dz,inir);
 
@@ -812,41 +630,6 @@ int Reunit(int AggI, int AggJ, int &err)
 
     //$ Index of the Reunited aggregate is returned
     return numstudy;
-}
-//###############################################################################################################################
-
-//################################### Test de superposition des sphérules dans un agrégat #######################################
-int CalculSuperposition(int id)
-{
-    double d, dsuperpos, mem;
-    int i, j, nmonoi;
-
-    ListSphere mySpheres = ListSphere(spheres, AggLabels[id]);
-    nmonoi = mySpheres.size();
-    mem = 0;
-
-    for (i = 1;i <= nmonoi; i++)
-    {
-        for (j = 1;j <= i-1; j++)
-        {
-            d = mySpheres[j].Distance(mySpheres[i]);
-            double rj = mySpheres[j].Radius();
-            double ri = mySpheres[i].Radius();
-            dsuperpos = (d-(rj+ri))/(rj+ri);
-            if (dsuperpos < mem)
-            {
-                mem = dsuperpos;
-            }
-        }
-    }
-    mem = mem*1E6;
-
-    if (mem < 0)
-    {
-        printf("Superposition pour Numfichier %d,   agrégat n°%d    mem=%d\n", NSauve, id, int(mem));
-        return 1;
-    }
-    else return 0;
 }
 //###############################################################################################################################
 
@@ -959,17 +742,14 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 
 void Init()
 {
-    int i, j, k, test, testmem;
-    double x, masse, surface, Dp, Diff, Vit, lpm, rg, dist;
 
-    testmem = 0;
+    int testmem = 0;
     NAgg = physicalmodel.N;
     spheres.Init(physicalmodel, NAgg);
     Vectdir = new double[4];
     TriCum = new double[NAgg+1];
     IdPossible = new int* [NAgg+1];
     Aggregates = new Aggregate[NAgg+1];
-    OldAggregates = new double* [NAgg+1];
     IndexPourTri.assign(NAgg+1,0);
 
 
@@ -978,7 +758,7 @@ void Init()
     // Agglabels
     AggLabels= new int*[NAgg+1];// Array containing the labels of the spheres in each aggregate
 
-    for (i=1;i<=NAgg;i++)
+    for (int i=1;i<=NAgg;i++)
     {                               //_____
         AggLabels[i]= new int[2];   //     |
         AggLabels[i][0]=1;          //     |--- Initialisation of Agglabels, at the start there are N aggregates of 1 sphere.
@@ -990,23 +770,22 @@ void Init()
     AggLabels[0][0]=0;
     AggLabels[0][1]=0;
 
-    for (i = 1; i <= NAgg; i++)
+    for (int i = 1; i <= NAgg; i++)
     {
-        OldAggregates[i] = new double[12];
         IdPossible[i] = new int[5];
     }
 
-    for (i = 1; i <= NAgg; i++)
+    for (int i = 1; i <= NAgg; i++)
     {          
 
         array<double, 4> newpos;
         //random position
-        for (j = 1; j<= 3 ; j++)
+        for (int j = 1; j<= 3 ; j++)
             newpos[j] = Random()*physicalmodel.L;
 
         //random size
-        x = Random();
-
+        double x = Random();
+        double Dp =0;
         if (physicalmodel.Mode == 1)
             Dp = physicalmodel.Dpm+sqrt(2.0)*physicalmodel.sigmaDpm*inverf(2*x-1); //Loi normale
         else
@@ -1016,10 +795,10 @@ void Init()
         if (Dp <= 0)  Dp = physicalmodel.Dpm*1E-9;
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
-        test=0;
-        for (k = 1; k <= i-1; k++)
+        int test=0;
+        for (int k = 1; k <= i-1; k++)
         {
-            dist = spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
+            double dist = spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
             if (dist <= spheres[k].Radius()+Dp/2)
                 test++;
         }
@@ -1029,9 +808,13 @@ void Init()
             i--;
         else
         {
-            Aggregates[i].Init(physicalmodel,verlet,newpos,i,spheres,Dp/2);
-        }
+            Aggregates[i].Init(physicalmodel,verlet,newpos,i,spheres,Dp);
 
+            if(Dp/2>RayonAggMax)
+            {
+                RayonAggMax=Dp/2;
+            }
+        }
         if (testmem > NAgg)
         {
             printf("Impossible de générer tous les monomères sans superposition.\n");
@@ -1039,48 +822,6 @@ void Init()
             exit(0);
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-        masse = physicalmodel.Rho*PI*pow(Dp,3)/6;
-        surface = PI*pow(Dp,2);
-        Diff = physicalmodel.diffusivity(Dp);
-        Vit =  physicalmodel.velocity(masse);
-        lpm = 8*Diff/PI/Vit;
-        rg = sqrt(3.0/5.0)*Dp/2;
-
-        if(Dp/2>RayonAggMax)
-        {
-            RayonAggMax=Dp/2;
-        }
-        if (physicalmodel.ActiveModulephysique==1)
-        {
-            OldAggregates[i][0] = rg;                   //Rayon de gyration
-            OldAggregates[i][1] = 1;                    //Nommbre de sphérules par agrégat Np
-            OldAggregates[i][2] = 0;                    //Nombre de coordination Nc
-            OldAggregates[i][3] = Dp;                   //Diamètre de mobilité
-            OldAggregates[i][4] = lpm;                  //Libre parcours moyen
-            OldAggregates[i][5] = lpm/Vit;              //Durée du déplacement
-            OldAggregates[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
-            OldAggregates[i][7] = masse/physicalmodel.Rho;            //Volume estimé de l'agrégat réunifié
-            OldAggregates[i][8] = surface;              //Surface estimée de l'agrégat réunifié
-            OldAggregates[i][9] = PI*pow(Dp, 3)/6;      //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
-            OldAggregates[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            OldAggregates[i][11] = PI*pow(Dp, 2);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
-        }
-        else
-        {
-            OldAggregates[i][0] = rg;                   //Rayon de gyration
-            OldAggregates[i][1] = 1;                    //Nommbre de sphérules par agrégat Np
-            OldAggregates[i][2] = 0;                    //Nombre de coordination Nc
-            OldAggregates[i][3] = Dp;                   //Diamètre de mobilité
-            OldAggregates[i][4] = physicalmodel.Dpm*1E-9;             //Libre parcours moyen
-            OldAggregates[i][5] = 1E-6;                 //Durée du déplacement
-            OldAggregates[i][6] = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
-            OldAggregates[i][7] = masse/physicalmodel.Rho;            //Volume de l'agrégat réunifié
-            OldAggregates[i][8] = surface;              //Surface de l'agrégat réunifié
-            OldAggregates[i][9] = PI*pow(Dp, 3);        //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
-            OldAggregates[i][10] = 0;                   //Coefficient de pénétration (paramètre de recouvrement Cov)
-            OldAggregates[i][11] = PI*pow(Dp, 2);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
-        }
     }
 }
 
@@ -1089,7 +830,6 @@ void Fermeture()
 
     for (int i = 1; i <= physicalmodel.N; i++)
     {
-        delete[] OldAggregates[i];
         delete[] IdPossible[i];
 
     }
@@ -1097,7 +837,6 @@ void Fermeture()
     delete[] TriCum;
     delete[] IdPossible;
     delete[] Aggregates;
-    delete[] OldAggregates;
     delete[] tab;
 }
 
@@ -1140,31 +879,31 @@ void SauveASCII(int value, int id)
 
     for (i = 1; i <= NAgg; i++)
     {
-        fprintf(f, "%10.3f\t", OldAggregates[i][0]*1E9);
-        fprintf(f, "%d\t", int(OldAggregates[i][1]));
-        fprintf(f, "%d\t", int(OldAggregates[i][2])); //Nombre de coordination
-        fprintf(f, "%10.3f\t", OldAggregates[i][3]*1E9);
-        fprintf(f, "%10.3f\t", OldAggregates[i][4]*1E9);
-        fprintf(f, "%10.3f\t", OldAggregates[i][5]*1E6);
-        fprintf(f, "%10.3f\t", OldAggregates[i][6]*1E9);
+        fprintf(f, "%10.3f\t", Aggregates[i][0]*1E9);
+        fprintf(f, "%d\t", int(Aggregates[i][1]));
+        fprintf(f, "%d\t", int(Aggregates[i][2])); //Nombre de coordination
+        fprintf(f, "%10.3f\t", Aggregates[i][3]*1E9);
+        fprintf(f, "%10.3f\t", Aggregates[i][4]*1E9);
+        fprintf(f, "%10.3f\t", Aggregates[i][5]*1E6);
+        fprintf(f, "%10.3f\t", Aggregates[i][6]*1E9);
 
         const array<double, 4> pos = Aggregates[i].Position();
         for (j = 1; j <= 3; j++)
             fprintf(f, "%10.3f\t", pos[j]*1E9);
 
-        fprintf(f, "%10.3f\t", OldAggregates[i][7]*1E25);  //Estimation du volume d'un agrégat
-        fprintf(f, "%10.3f\t", OldAggregates[i][8]*1E16);  //Estimation de la surface d'un agrégat
-        fprintf(f, "%10.3f\t", OldAggregates[i][9]*1E25);       //Volume d'un agrégat sans recouvrement (Avant c'était Taux de recouvrement volumique)
-        fprintf(f, "%10.3f\t", OldAggregates[i][10]);      //Coefficient de pénétration (paramètre de recouvrement Cov)
-        fprintf(f, "%10.3f\n", OldAggregates[i][11]*1E16); //Surface d'un agrégat sans recouvrement (Avant c'était Rapport surface/volume)
+        fprintf(f, "%10.3f\t", Aggregates[i][7]*1E25);  //Estimation du volume d'un agrégat
+        fprintf(f, "%10.3f\t", Aggregates[i][8]*1E16);  //Estimation de la surface d'un agrégat
+        fprintf(f, "%10.3f\t", Aggregates[i][9]*1E25);       //Volume d'un agrégat sans recouvrement (Avant c'était Taux de recouvrement volumique)
+        fprintf(f, "%10.3f\t", Aggregates[i][10]);      //Coefficient de pénétration (paramètre de recouvrement Cov)
+        fprintf(f, "%10.3f\n", Aggregates[i][11]*1E16); //Surface d'un agrégat sans recouvrement (Avant c'était Rapport surface/volume)
     }
     fclose(f);
 
     sprintf(NomComplet, "%s/AFractalPlot.txt", CheminSauve);
-    if (OldAggregates[id][1] > 10)
+    if (Aggregates[id][1] > 10)
     {
         f=fopen(NomComplet, "a");
-        fprintf(f, "%e\t%e\n", OldAggregates[id][0]/(physicalmodel.Dpm*1E-9), OldAggregates[id][1]);
+        fprintf(f, "%e\t%e\n", Aggregates[id][0]/(physicalmodel.Dpm*1E-9), Aggregates[id][1]);
         fclose(f);
     }
 }
@@ -1265,6 +1004,24 @@ void LectureParams()
         physicalmodel.DeltaSauve=atoi(commentaires);
         fgets(com,500,f);
         sscanf(com,"%s  %s",sauve,com);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        physicalmodel.coeffB=atof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        physicalmodel.xsurfgrowth=atof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        physicalmodel.dfe=atof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        physicalmodel.kfe=atof(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        physicalmodel.ActiveModulephysique=atoi(commentaires);
+        fgets(com,500,f);
+        sscanf(com,"%s  %s",commentaires,com);
+        physicalmodel.ActiveVariationTempo=atof(commentaires);
         fclose(f);
     }
     if (physicalmodel.Mode == 1)
@@ -1415,7 +1172,7 @@ void Calcul() //Coeur du programme
             {
                 ParametresAgg(i);
             }
-            lpm = OldAggregates[NumAgg][4];
+            lpm = Aggregates[NumAgg][4];
         }
         else
         {
@@ -1481,7 +1238,8 @@ void Calcul() //Coeur du programme
             newnumagg = NumAgg;
             it_without_contact++;
         }
-        ReplacePosi(newnumagg);
+        Aggregates[newnumagg].ReplacePosi();
+
 
 
         if (physicalmodel.DeltaSauve>0)
@@ -1515,7 +1273,7 @@ void Calcul() //Coeur du programme
         const array<double, 4> pos = Aggregates[i].Position();
         for (j = 1; j <= 3; j++)
             printf("%e\t", pos[j]*1E9);
-        printf("\t%e\t%e\n",OldAggregates[i][7]*1E25,OldAggregates[i][9]*1E25);
+        printf("\t%e\t%e\n",Aggregates[i][7]*1E25,Aggregates[i][9]*1E25);
     }
     printf("\n\n");
 
@@ -1576,6 +1334,14 @@ void MainWindow::BoutonRechercheParam()
     LectureParams();
     ui->AfficheurRep->append(commentaires);
     ui->ActModulePhysique->setEnabled(true);
+
+    ui->ActModulePhysique->setChecked(physicalmodel.ActiveModulephysique);
+    ui->SuiviTempo->setChecked(physicalmodel.ActiveVariationTempo);
+    ui->doubleSpinBoxCoeffCroissance->setValue(physicalmodel.coeffB);
+    ui->doubleSpinBoxPuissancex->setValue(physicalmodel.xsurfgrowth);
+    ui->doubleSpinBoxDimFractale->setValue(physicalmodel.dfe);
+    ui->doubleSpinBoxPrefFractal->setValue(physicalmodel.kfe);
+
     ui->BoutonExecDLCA->setEnabled(true);
 }
 
@@ -1645,13 +1411,6 @@ int No_GUI(int argc, char *argv[]){
     QFileInfo tmp2 = FichierParam;
     pathParam = tmp2.absolutePath(); //Cette variable ne retient que le chemin du fichier param
     LectureParams();
-
-    physicalmodel.coeffB = 1.0;
-    physicalmodel.xsurfgrowth = 2.0;
-    physicalmodel.dfe = 1.80;
-    physicalmodel.kfe = 1.40;
-    physicalmodel.ActiveModulephysique = 1;
-    physicalmodel.ActiveVariationTempo = 0;
 
     Calcul();
 
