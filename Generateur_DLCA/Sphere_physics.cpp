@@ -47,21 +47,21 @@ const double facsurf = 4*PI;
 /* #############################################################################################################
  * ################################# Distance between a sphere and a point #####################################
  * #############################################################################################################*/
-double Sphere::Distance(Sphere& c)
+__attribute((pure)) double Sphere::Distance(Sphere& c)
 {
     return Distance(*c.x,*c.y,*c.z);
 }
 
-double Sphere::Distance(const double* point)
+__attribute((pure)) double Sphere::Distance(const double* point)
 {
     return Distance(point[1],point[2],point[3]);
 }
-double Sphere::Distance(const array<double, 4> point)
+__attribute((pure)) double Sphere::Distance(const array<double, 4> point)
 {
     return Distance(point[1],point[2],point[3]);
 }
 
-double Sphere::Distance(const double otherx, const double othery, const double otherz)
+ __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz)
 {
     return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
 }
@@ -81,7 +81,7 @@ void Sphere::UpdateVolAndSurf(void)
 /* #############################################################################################################
  * ########################################## Distance before collision ########################################
  * #############################################################################################################*/
-double Sphere::Collision(Sphere& c,const array<double,4> vd,const double distmax)
+ __attribute__((pure)) double Sphere::Collision(Sphere& c,const array<double,4> vd,const double distmax)
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé

@@ -32,7 +32,7 @@ PhysicalModel physicalmodel;
 const double PI = atan(1.0)*4; // 3.14159
 array<double,4> Vectdir; // Direction of the translation of an aggregate
 int NumAgg; // Number of the aggregate in translation
-int secondes; // CPU Time variable
+time_t secondes; // CPU Time variable
 int NSauve; // last file number
 
 
@@ -108,15 +108,6 @@ double MinEtIndex(double* tableau, int size, int& position)
     }
 
     return m;
-}
-
-//######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
-void ParametresAgg(int Agg)
-{
-    Aggregates[Agg].Update();
-    double rmax = Aggregates[Agg][6];
-    if(rmax>RayonAggMax)
-        RayonAggMax=rmax;
 }
 
 
@@ -359,51 +350,51 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
         if(Vectdir[1]>=0)
         {
             tampon=posid[1]-mindist;
-            bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
+            bornei1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
             tampon=posid[1]+mindist+lpm*Vectdir[1];
-            bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
+            bornei2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
         }
         else
         {
             tampon=posid[1]-mindist+lpm*Vectdir[1];
-            bornei1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
+            bornei1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
             tampon=posid[1]+mindist;
-            bornei2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
+            bornei2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
         }
 
         if(Vectdir[2]>=0)
         {
             tampon=posid[2]-mindist;
-            bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
+            bornej1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
             tampon=posid[2]+mindist+lpm*Vectdir[2];
-            bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
+            bornej2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
         }
         else
         {
             tampon=posid[2]-mindist+lpm*Vectdir[2];
-            bornej1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
+            bornej1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
             tampon=posid[2]+mindist;
-            bornej2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
+            bornej2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
         }
 
         if(Vectdir[3]>=0)
         {
             tampon=posid[3]-mindist;
-            bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
+            bornek1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
             tampon=posid[3]+mindist+lpm*Vectdir[3];
-            bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
+            bornek2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
         }
         else
         {
             tampon=posid[3]-mindist+lpm*Vectdir[3];
-            bornek1=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1;
+            bornek1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
             tampon=posid[3]+mindist;
-            bornek2=floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2;
+            bornek2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
         }
 
-        bornei1 = fmax(bornei1,-physicalmodel.GridDiv+1) ; bornei2 = fmin(bornei2,2*physicalmodel.GridDiv);
-        bornej1 = fmax(bornej1,-physicalmodel.GridDiv+1) ; bornej2 = fmin(bornej2,2*physicalmodel.GridDiv);
-        bornek1 = fmax(bornek1,-physicalmodel.GridDiv+1) ; bornek2 = fmin(bornek2,2*physicalmodel.GridDiv);
+        bornei1 = MAX(bornei1,-physicalmodel.GridDiv+1) ; bornei2 = MIN(bornei2,2*physicalmodel.GridDiv);
+        bornej1 = MAX(bornej1,-physicalmodel.GridDiv+1) ; bornej2 = MIN(bornej2,2*physicalmodel.GridDiv);
+        bornek1 = MAX(bornek1,-physicalmodel.GridDiv+1) ; bornek2 = MIN(bornek2,2*physicalmodel.GridDiv);
 
         // ///////
         for (i=bornei1+physicalmodel.GridDiv;i<=bornei2+physicalmodel.GridDiv;i++)
@@ -413,9 +404,9 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                 for (k=bornek1+physicalmodel.GridDiv;k<=bornek2+physicalmodel.GridDiv;k++)
                 {
 
-                    dx=floor((i-1)/physicalmodel.GridDiv)-1;
-                    dy=floor((j-1)/physicalmodel.GridDiv)-1;
-                    dz=floor((k-1)/physicalmodel.GridDiv)-1;
+                    dx=int(floor((i-1.)/physicalmodel.GridDiv)-1);
+                    dy=int(floor((j-1.)/physicalmodel.GridDiv)-1);
+                    dz=int(floor((k-1.)/physicalmodel.GridDiv)-1);
 
                     list<int>* cell = verlet.GetCell(i-dx*physicalmodel.GridDiv,
                                                     j-dy*physicalmodel.GridDiv,
@@ -541,19 +532,23 @@ int Reunit(int AggI, int AggJ, int &err)
 //################################ Lecture des données physiques d'entrée variables dans le temps ###############################
 int LectureSuiviTempo()
 {
-    FILE* f = NULL;
+    FILE* f = nullptr;
     f = fopen(qPrintable(FichierSuiviTempo), "rt");
     int i, j, k;
     char skip_line[500], data[500];
 
     nb_line=0;
 
-    if (f != NULL)
+    if (f != nullptr)
     {
         //On lit la première ligne pour la sauter
-        fgets(skip_line, 500, f);
+        if( fgets(skip_line, 500, f) == nullptr)
+        {
+            cout << "le fichier d'entrée est vide !" << endl;
+            exit(1);
+        }
 
-        while(fgets(data, 500, f) != NULL)
+        while(fgets(data, 500, f) != nullptr)
         {
             nb_line++; //On compte le nombre de lignes ...
         }
@@ -564,8 +559,12 @@ int LectureSuiviTempo()
         //On se replace au début du fichier ...
         fseek(f, 0, SEEK_SET);
 
-        //... puis on relit la première ligne pour la sauter
-        fgets(skip_line, 500, f);
+        //On lit la première ligne pour la sauter
+        if( fgets(skip_line, 500, f) == nullptr)
+        {
+            cout << "le fichier d'entrée est vide !" << endl;
+            exit(1);
+        }
 
         //On déclare un tableau de type double de deux colonnes qui contiendra les valeurs lues
         tab = new double* [nb_line];
@@ -578,7 +577,7 @@ int LectureSuiviTempo()
         for (i = 0; i < nb_line; i++)
         {
             //On lit la ligne
-            if (fgets(data, 500, f) != NULL)
+            if (fgets(data, 500, f) != nullptr)
             {
                 //On crée une chaine qui contiendra le token
                 char *token;
@@ -586,7 +585,7 @@ int LectureSuiviTempo()
                 //On découpe selon les tabulations
                 token = strtok(data, "\t");
 
-                while(token != NULL)
+                while(token != nullptr)
                 {
                     for (j = 0; j < 2; j++)
                     {
@@ -596,7 +595,7 @@ int LectureSuiviTempo()
                         //On affiche le tableau
                         //printf("ligne %d : tableau[%d][%d] = %.6f\n",i, i, j, tab[i][j]);
 
-                        token = strtok(NULL, "\t");
+                        token = strtok(nullptr, "\t");
                     }
                 }
             }
@@ -845,7 +844,7 @@ double latof(const char* _char)
     string mystring = _char;
     if (!locale_with_dots())
     {
-        int f = mystring.find(".");
+        size_t f = mystring.find(".");
         if (f>0)
             mystring.replace(f, 1, ",");
     }
@@ -861,7 +860,7 @@ void LectureParams()
     //char t[500] ;
     f = fopen(qPrintable(FichierParam), "rt");
     QDir lDir;
-    if (f == NULL)
+    if (f == nullptr)
     {
         physicalmodel.N = 2500;
         physicalmodel.T = 1500;
@@ -878,53 +877,165 @@ void LectureParams()
     {
         char com[500]; // Char array used in the ASCII Save
 
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.N=atoi(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.T=latof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.Dpm=latof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.sigmaDpm=latof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.FV=latof(commentaires)*1E-6;
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.P=latof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.Rho=latof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.Mode=atoi(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.DeltaSauve=atoi(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",sauve,com);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.coeffB=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.xsurfgrowth=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.dfe=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.kfe=atof(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.ActiveModulephysique=atoi(commentaires);
-        fgets(com,500,f);
-        sscanf(com,"%s  %s",commentaires,com);
-        physicalmodel.ActiveVariationTempo=atof(commentaires);
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the N parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.N=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the T parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.T=latof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the Dpm parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.Dpm=latof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the sigmaDpm parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.sigmaDpm=latof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the FV parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.FV=latof(commentaires)*1E-6;
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the P parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.P=latof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the Rho parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.Rho=latof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the Mode parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.Mode=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the DeltaSauve parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.DeltaSauve=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the sauve parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",sauve,com);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the coeffB parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.coeffB=atof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the xsurfgrowth parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.xsurfgrowth=atof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the dfe parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.dfe=atof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the kfe parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.kfe=atof(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the ActiveModulephysique parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.ActiveModulephysique=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the ActiveVariationTempo parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.ActiveVariationTempo=atoi(commentaires);
+        }
         fclose(f);
     }
     if (physicalmodel.Mode == 1)
@@ -960,7 +1071,7 @@ void Calcul() //Coeur du programme
     if (physicalmodel.ActiveModulephysique)
     {
         sprintf(commentaires, "Le module physique est activé.\n");
-        if (GUI == NULL)
+        if (GUI == nullptr)
             printf("%s",commentaires);
         else
             GUI->print(commentaires);
@@ -968,7 +1079,7 @@ void Calcul() //Coeur du programme
     else
     {
         sprintf(commentaires, "Le module physique n'est pas activé.\n");
-        if (GUI == NULL)
+        if (GUI == nullptr)
             printf("%s",commentaires);
         else
             GUI->print(commentaires);
@@ -978,7 +1089,7 @@ void Calcul() //Coeur du programme
     {
         LectureSuiviTempo();
         sprintf(commentaires, "Le fichier de données de suivi temporel est lu.\n");
-        if (GUI == NULL)
+        if (GUI == nullptr)
             printf("%s",commentaires);
         else
             GUI->print(commentaires);
@@ -986,7 +1097,7 @@ void Calcul() //Coeur du programme
     else
     {
         sprintf(commentaires, "Le fichier de données sélectionné est le fichier 'params.txt'.\n");
-        if (GUI == NULL)
+        if (GUI == nullptr)
             printf("%s",commentaires);
         else
             GUI->print(commentaires);
@@ -994,14 +1105,14 @@ void Calcul() //Coeur du programme
 
     sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n",
                           physicalmodel.dfe, physicalmodel.kfe, physicalmodel.coeffB, physicalmodel.xsurfgrowth);
-    if (GUI == NULL)
+    if (GUI == nullptr)
         printf("%s",commentaires);
     else
         GUI->print(commentaires);
 
     double Asurfgrowth = physicalmodel.coeffB*1E-3;
     sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
-    if (GUI == NULL)
+    if (GUI == nullptr)
         printf("%s",commentaires);
     else
         GUI->print(commentaires);
@@ -1058,7 +1169,7 @@ void Calcul() //Coeur du programme
                 if (finmem != finfichiersuivitempo)
                 {
                     sprintf(commentaires, "Attention le suivi temporel est plus long que celui du fichier lu.\n");
-                    if (GUI == NULL)
+                    if (GUI == nullptr)
                         printf("%s",commentaires);
                     else
                         GUI->print(commentaires);
@@ -1073,7 +1184,10 @@ void Calcul() //Coeur du programme
 
             for (i = 1; i<= NAgg; i++)
             {
-                ParametresAgg(i);
+                Aggregates[i].Update();
+                double rmax = Aggregates[i][6];
+                if(rmax>RayonAggMax)
+                    RayonAggMax=rmax;
             }
             lpm = Aggregates[NumAgg][4];
         }
@@ -1121,7 +1235,10 @@ void Calcul() //Coeur du programme
             //$ Aggregates in contact are reunited
             newnumagg = Reunit(NumAgg, IdPossible[aggcontact][1], err);
 
-            ParametresAgg(newnumagg);
+            Aggregates[newnumagg].Update();
+            double rmax = Aggregates[newnumagg][6];
+            if(rmax>RayonAggMax)
+                RayonAggMax=rmax;
 
             physicalmodel.temps = physicalmodel.temps-deltatemps*(1-distmin/lpm);
             /*
@@ -1130,9 +1247,9 @@ void Calcul() //Coeur du programme
             if (tmp == 1)     {superpo++;}
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             */
-             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.temps*1E6, secondes,it_without_contact);
+             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.temps*1E6, int(secondes),it_without_contact);
             it_without_contact = 0;
-             if (!(GUI == NULL)            )
+             if (!(GUI == nullptr)            )
                 GUI->progress(physicalmodel.N-NAgg+1);
 
         }
@@ -1181,13 +1298,13 @@ void Calcul() //Coeur du programme
     printf("\n\n");
 
     Fermeture();
-    if (GUI == NULL)
+    if (GUI == nullptr)
         printf("%s",CheminSauve);
     else
         GUI->print(CheminSauve);
 
     sprintf(commentaires,"\nFin du calcul  ...\n");
-    if (GUI == NULL)
+    if (GUI == nullptr)
         printf("%s",commentaires);
     else
         GUI->print(commentaires);

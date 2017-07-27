@@ -45,10 +45,11 @@ equals(COMPILATOR, "INTEL"){
     QMAKE_LFLAGS   += -g -traceback -qopenmp -std=c++11
 
     ### WARNINGS ###
-    QMAKE_CXXFLAGS += -w3 -Wall
+    QMAKE_CXXFLAGS +=  -Wall -w3 -diag-enable=3 -Wremarks -Wtrigraphs -Wcomment -Wdeprecated -Weffc -Wextra-tokens -Wformat -Wformat-security -Wic-pointer -Winline -Wmain
+    QMAKE_CXXFLAGS += -Wnon-virtual-dtor -Wpointer-arith -Wreorder -Wreturn-type -Wshadow -Wsign-compare -Wuninitialized -Wunknown-pragmas -Wunused-function
+    QMAKE_CXXFLAGS += -Wwrite-strings
 
-
-    QMAKE_CXXFLAGS_DEBUG += -fp-trap=common -ansi-alias-check -check=conversions,stack,uninit -fp-stack-check -fstack-security-check -ftrapuv -par-runtime-control=3 -vec-guard-write  -Wcheck
+    QMAKE_CXXFLAGS_DEBUG += -fp-trap=common -ansi-alias-check -check=conversions,stack,uninit -fp-stack-check -fstack-security-check -ftrapuv -par-runtime-control=3 -vec-guard-write  -Wcheck -O0
     #QMAKE_CXXFLAGS_DEBUG += -check-pointers=rw -check-pointers-dangling=all -check-pointers-narrowing -check-pointers-undimensioned
     #LIBS += -lchkp -lchkpwrap
 
@@ -70,14 +71,18 @@ equals(COMPILATOR, "GNU"){
     QMAKE_CXXFLAGS += -Wvector-operation-performance -Wdisabled-optimization -Wnoexcept  -fext-numeric-literals -Wstrict-null-sentinel -Wold-style-cast -Woverloaded-virtual -Wsign-promo
     QMAKE_CXXFLAGS += -Wzero-as-null-pointer-constant -Wmissing-declarations -Weffc++ -Wpadded -Waggregate-return
     # Not interesting
-    #QMAKE_CXXFLAGS += -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
-    QMAKE_CXXFLAGS += -Wno-missing-declarations -Wno-effc++ -Wno-padded -Wno-aggregate-return -Wno-unused-variable -Wno-unused-result -Wno-unused-parameter
+    QMAKE_CXXFLAGS += -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
+    QMAKE_CXXFLAGS += -Weffc++ -Wno-padded -Wunused-variable -Wunused-result -Wunused-parameter
     # QT problems
     QMAKE_CXXFLAGS += -Wno-zero-as-null-pointer-constant -Wno-long-long -Wno-useless-cast -Wno-conversion -Wno-float-equal -Wno-packed -Wno-switch-default -Wno-strict-overflow
+    QMAKE_CXXFLAGS += -Wno-missing-declarations
+    # Not a problems
+    QMAKE_CXXFLAGS += -Wno-aggregate-return
+
 
 
     #CHECKS
-    QMAKE_CXXFLAGS_DEBUG += -fcheck-new -ggdb3 -gpubnames -g3
+    QMAKE_CXXFLAGS_DEBUG += -fcheck-new -ggdb3 -gpubnames -g3  -O0
     #QMAKE_CXXFLAGS_DEBUG += -fsanitize=address
     #QMAKE_LFLAGS_DEBUG   += -fsanitize=address
     #QMAKE_CXXFLAGS_DEBUG += -fsanitize=leak
@@ -109,7 +114,7 @@ equals(COMPILATOR, "CLANG"){
 
 
     #CHECKS
-    QMAKE_CXXFLAGS_DEBUG += -fcheck-new -ggdb3 -g3
+    QMAKE_CXXFLAGS_DEBUG += -fcheck-new -ggdb3 -g3 -O0 -ftrapv
     #QMAKE_CXXFLAGS_DEBUG += -fsanitize=address
     #QMAKE_LFLAGS_DEBUG   += -fsanitize=address
     #QMAKE_CXXFLAGS_DEBUG += -fsanitize=leak

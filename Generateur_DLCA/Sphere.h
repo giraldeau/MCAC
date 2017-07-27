@@ -49,6 +49,9 @@ class Sphere
 
         int AggLabel, SphereLabel;
 
+        array< vector<double>, 7>* Storage;
+        ListSphere* external_storage;
+
         void UpdateVolAndSurf(void);
 
     public:
@@ -92,15 +95,15 @@ class Sphere
         Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
         Sphere(PhysicalModel&, const array<double, 4> position, const double r);
         Sphere(PhysicalModel&, const double* position, const double r);
-        Sphere(Sphere&);
+        Sphere(const Sphere&);
 
     private:
-        array< vector<double>, 7>* Storage;
-        ListSphere* external_storage;
 
         void setpointers(void);
         void add(void);
         double& operator[](const int);
+        Sphere& operator=(const Sphere& other);
+        Sphere& operator=(const Sphere&& other) noexcept;
 
     };
 
@@ -112,19 +115,20 @@ class ListSphere
     /* Generic */
 
     private:
-        int N;
-        vector < Sphere* > spheres;
         PhysicalModel* physicalmodel;
+        vector < Sphere* > spheres;
+        vector < int > index;
+
+        array< vector<double>, 7>* Storage;
+        const ListSphere* external_storage;
+
+        int N;
 
     public:
         void CroissanceSurface(const double dt);
 
     /* Storage specific */
     private:
-        array< vector<double>, 7>* Storage;
-        const ListSphere* external_storage;
-        vector < int > index;
-
         void setpointers();
 
     public:
@@ -140,7 +144,10 @@ class ListSphere
         void Destroy();
 
         int size() const;
+        ListSphere(const ListSphere& other);
 
+        ListSphere& operator=(ListSphere other);
+        friend void swap(ListSphere& first, ListSphere& second);
 
 };
 #endif // SPHERE

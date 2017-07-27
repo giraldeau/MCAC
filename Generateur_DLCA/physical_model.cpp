@@ -101,7 +101,7 @@ void PhysicalModel::print(void) const
 
 //###############################################################################################################################
 
-double PhysicalModel::Cunningham(const double R) const //Facteur correctif de Cunningham
+ __attribute__((pure)) double PhysicalModel::Cunningham(const double R) const //Facteur correctif de Cunningham
 {
     double A = 1.142;
     double B = 0.558;
@@ -117,26 +117,26 @@ double PhysicalModel::Cunningham(const double R) const //Facteur correctif de Cu
  On obtient le bon rayon de mobilité lorsque la fonction retourne 0
 */
 
-double PhysicalModel::ModeleBeta(const double rm,const double np, const double rg) const
+double PhysicalModel::ModeleBeta(const double rm) const
 {
     if (rm<0.) {throw 42;}
     return Cunningham(rm) - FactorModelBeta*rm;
 }
 
-double PhysicalModel::Dichotomie(const double np, const double rg, const double rpmoy, const double x0) const
+double PhysicalModel::Dichotomie(const double x0) const
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax;
     int ite=1;
     rmin = x0/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
     rmax = 2*x0; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
 
-    frmin = ModeleBeta(rmin, np, rg);
-    frmax = ModeleBeta(rmax, np, rg);
+    frmin = ModeleBeta(rmin);
+    frmax = ModeleBeta(rmax);
 
     if (frmin*frmax>=0) {printf("Intervalle incorrect : %e %e \n",frmin,frmax); return -1;} //Intervalle incorrect
 
     rmed = (rmin+rmax)/2 ;
-    frmed = ModeleBeta(rmed, np, rg);
+    frmed = ModeleBeta(rmed);
 
     while (fabs(frmed)>precision)
     {
@@ -152,13 +152,13 @@ double PhysicalModel::Dichotomie(const double np, const double rg, const double 
             frmin = frmed;
         }
         rmed = (rmin+rmax)/2 ;
-        frmed = ModeleBeta(rmed, np, rg);
+        frmed = ModeleBeta(rmed);
         ite++;
     }
     return rmed;
 }
 
-double PhysicalModel::brentq(const double np, const double rg, const double rpmoy, const double x0) const
+double PhysicalModel::brentq(const double x0) const
 {
     double xa,xb,xtol,rtol;
     int iter=500;
@@ -174,16 +174,17 @@ double PhysicalModel::brentq(const double np, const double rg, const double rpmo
     double stry, dpre, dblk;
     int i;
 
-    fpre = ModeleBeta(xpre, np, rg);
-    fcur = ModeleBeta(xcur, np, rg);
-    if (fpre*fcur > 0) {printf("Intervalle incorrect : %e %e \n",fpre,fcur); return -1;} //Intervalle incorrect
-
-    if (fpre == 0) {
+    fpre = ModeleBeta(xpre);
+    if (fabs(fpre) < precision) {
         return xpre;
     }
-    if (fcur == 0) {
+    fcur = ModeleBeta(xcur);
+    if (fabs(fcur) < precision) {
         return xcur;
     }
+
+    if (fpre*fcur > 0) {printf("Intervalle incorrect : %e %e \n",fpre,fcur); return -1;} //Intervalle incorrect
+
 
     for (i = 0; i < iter; i++) {
         if (fpre*fcur < 0) {
@@ -244,19 +245,19 @@ double PhysicalModel::brentq(const double np, const double rg, const double rpmo
             xcur += (sbis > 0 ? delta : -delta);
         }
 
-        fcur = ModeleBeta(xcur, np, rg);
+        fcur = ModeleBeta(xcur);
     }
     return xcur;
 }
 
-double PhysicalModel::Secante(const double np,const double rg,const double rpmoy, const double xsave) const
+double PhysicalModel::Secante(const double xsave) const
 {
     double x[2];
     double fx[2];
     bool i=1;
 
     x[0]=xsave+4.e-13;
-    fx[0] = ModeleBeta(x[0], np, rg);
+    fx[0] = ModeleBeta(x[0]);
 
     x[1]=xsave;
 
@@ -264,26 +265,26 @@ double PhysicalModel::Secante(const double np,const double rg,const double rpmoy
     {
         while ((fabs(fx[!i])>precision))
         {
-            fx[i]=ModeleBeta(x[i],np,rg);
+            fx[i]=ModeleBeta(x[i]);
             x[!i]=x[i]-fx[i]*(x[i]-x[!i])/(fx[i]-fx[!i]);
             i = !i;
         }
     }
-    catch (int e)
+    catch (int)
     {
         printf("FAILSAFE\n");
-        return brentq(np,rg,rpmoy,xsave);
+        return brentq(xsave);
     }
     return x[i];
 }
 
-double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy)
+__attribute((pure)) double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy)
 {
     double start = rpmoy*pow(np,gamma_/dfe);
-    return ConvertRg2Dm(np,rg,rpmoy,start);
+    return ConvertRg2Dm(np,rg,start);
 }
 
-double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy, const double start)
+double PhysicalModel::ConvertRg2DmFromStart(const double np, const double rg, const double start)
 {
     FactorModelBeta = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass)/rg;
 /*
@@ -292,26 +293,26 @@ double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double
     FactorModelBeta = 1./(rpeqmass*pow(nptmp,gamma_/dfe)/Cunningham(rpeqmass));
 */
     if (root_method==0)
-        return Dichotomie(np,rg,rpmoy,start)*2;
+        return Dichotomie(start)*2;
     else if (root_method==1)
-        return brentq(np,rg,rpmoy,start)*2;
+        return brentq(start)*2;
     else if (root_method==2)
-        return Secante(np,rg,rpmoy,start)*2;
+        return Secante(start)*2;
 
-    return  Dichotomie(np,rg,rpmoy,start)*2;
+    return  Dichotomie(start)*2;
 }
 
-double PhysicalModel::Grow(const double R,const double dt) const
+ __attribute__((pure)) double PhysicalModel::Grow(const double R,const double dt) const
 {
     return R + Asurfgrowth*pow(R, xsurfgrowth-2)*dt;
 }
 
-double PhysicalModel::diffusivity(const double dm) const
+__attribute((pure)) double PhysicalModel::diffusivity(const double dm) const
 {
     double cc = Cunningham(dm/2);
     return K*T/3/PI/Mu/dm*cc;
 }
-double PhysicalModel::velocity(const double masse) const
+ __attribute__((pure)) double PhysicalModel::velocity(const double masse) const
 {
     return sqrt(8*K*T/PI/masse);
 }
@@ -327,7 +328,7 @@ const double cof[28] = {-1.3026537197817094, 6.4196979235649026e-1,
         9.6467911e-11, 2.394038e-12,-6.886027e-12,8.94487e-13, 3.13092e-13,
         -1.12708e-13,3.81e-16,7.106e-15,-1.523e-15,-9.4e-17,1.21e-16,-2.8e-17};
 
-double erfccheb(const double z)
+ __attribute__((const)) double erfccheb(const double z)
 {
         int j;
         double t,ty,tmp,d=0.,dd=0.;
@@ -341,13 +342,13 @@ double erfccheb(const double z)
         }
         return t*exp(-z*z + 0.5*(cof[0] + ty*d) - dd);
 }
-double myerfc(const double x)
+__attribute((const)) double myerfc(const double x)
 {
                 if (x >= 0.) return erfccheb(x);
                 else return 2.0 - erfccheb(-x);
 }
 
-double inverfc(const double p)
+__attribute((const)) double inverfc(const double p)
 {
         double x,err,t,pp;
         if (p >= 2.0) return -100.;
@@ -361,5 +362,5 @@ double inverfc(const double p)
         }
         return (p < 1.0? x : -x);
 }
-double myerf(const double x) { return 1-myerfc(x); }
-double inverf(const double p) {return inverfc(1.-p);}
+__attribute((const)) double myerf(const double x) { return 1-myerfc(x); }
+__attribute((const)) double inverf(const double p) {return inverfc(1.-p);}

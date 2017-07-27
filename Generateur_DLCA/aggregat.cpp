@@ -9,47 +9,44 @@
 
 const double PI = atan(1.0)*4;
 
-Aggregate::Aggregate(void)
+Aggregate::Aggregate(void):
+    physicalmodel(nullptr),
+    InclusiveSphere(new Sphere()),
+    myspheres(),
+    parents(),
+    son(nullptr),
+    verlet(nullptr),
+    IndexVerlet({0,0,0}),
+    Storage(new array< vector<double>, 16>()),
+    external_storage(nullptr),
+    creation_date(0.),
+    nctmp(0.),
+    nptmp(0.),
+    rg(nullptr),
+    dm(nullptr),
+    lpm(nullptr),
+    time_step(nullptr),
+    rmax(nullptr),
+    volAgregat(nullptr),
+    surfAgregat(nullptr),
+    Tv(nullptr),
+    volAgregat_without_cov(nullptr),
+    cov(nullptr),
+    ratio_surf_vol(nullptr),
+    free_surface(nullptr),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    Label(0),
+    Nc(0),
+    Np(0),
+    InVerlet(false)
 {
-    Storage = new array< vector<double>, 16>;
     for (int j=0;j<=15;j++)
         (*Storage)[j].assign(1, 0.);
-    external_storage=NULL;
-
-    InclusiveSphere = new Sphere;
-    parents[0] = NULL;
-    parents[1] = NULL;
-    son = NULL;
-    physicalmodel = NULL;
-    Label = 0;
-    creation_date = 0.;
-    Nc = 0.;
-    InVerlet = false;
-    verlet = NULL;
-
     Init();
 }
-
-Aggregate::Aggregate(PhysicalModel& _physicalmodel)
-{
-    Storage = new array< vector<double>, 16>;
-    for (int j=0;j<=15;j++)
-        (*Storage)[j].assign(1, 0.);
-    external_storage=NULL;
-
-    InclusiveSphere = new Sphere;
-    parents[0] = NULL;
-    parents[1] = NULL;
-    son = NULL;
-    physicalmodel = &_physicalmodel;
-    Label = 0;
-    creation_date = 0.;
-    Nc = 0.;
-    InVerlet = false;
-    verlet = NULL;
-
-    Init();
-}
+Aggregate::Aggregate(PhysicalModel& _physicalmodel) : Aggregate(){ physicalmodel = &_physicalmodel; }
 
 void Aggregate::Init(void)
 {
@@ -199,7 +196,7 @@ void Aggregate::Update()
 
 
     //$ Determination of Dm using ConvertRg2Dm
-    *dm = physicalmodel->ConvertRg2Dm(np,*rg,rpmoy,*dm/2);
+    *dm = physicalmodel->ConvertRg2DmFromStart(np,*rg,*dm/2);
 
     if (physicalmodel->ActiveModulephysique == 1)
     {
@@ -293,7 +290,7 @@ void Aggregate::ReplacePosi()
 {
     // This function will relocate an aggregate when it gets out of the box limiting the space
 
-    if (physicalmodel == NULL)
+    if (physicalmodel == nullptr)
         return;
 
     array<double, 4> trans;
@@ -337,37 +334,37 @@ Aggregate::~Aggregate(void)
         InVerlet=false;
     }
 
-    if (external_storage==NULL)
+    if (external_storage==nullptr)
     {
         delete Storage;
     }
 
-    external_storage=NULL;
+    external_storage=nullptr;
 
     delete InclusiveSphere;
-    parents[0] = NULL;
-    parents[1] = NULL;
-    son = NULL;
-    physicalmodel = NULL;
+    parents[0] = nullptr;
+    parents[1] = nullptr;
+    son = nullptr;
+    physicalmodel = nullptr;
     Label = 0;
     creation_date = 0.;
     Nc = 0.;
 
-    rg=NULL;
-    dm=NULL;
-    lpm=NULL;
-    time_step=NULL;
-    rmax=NULL;
-    volAgregat=NULL;
-    surfAgregat=NULL;
-    Tv=NULL;
-    volAgregat_without_cov=NULL;
-    cov=NULL;
-    ratio_surf_vol=NULL;
-    free_surface=NULL;
-    x=NULL;
-    y=NULL;
-    z=NULL;
+    rg=nullptr;
+    dm=nullptr;
+    lpm=nullptr;
+    time_step=nullptr;
+    rmax=nullptr;
+    volAgregat=nullptr;
+    surfAgregat=nullptr;
+    Tv=nullptr;
+    volAgregat_without_cov=nullptr;
+    cov=nullptr;
+    ratio_surf_vol=nullptr;
+    free_surface=nullptr;
+    x=nullptr;
+    y=nullptr;
+    z=nullptr;
 
 
 
@@ -545,9 +542,9 @@ array<int, 4> Aggregate::VerletIndex()
     double step = physicalmodel->GridDiv/physicalmodel->L;
     int origin = physicalmodel->GridDiv+1;
 
-    index[1]=floor((*x)*step)+origin;
-    index[2]=floor((*y)*step)+origin;
-    index[3]=floor((*z)*step)+origin;
+    index[1]=int(floor((*x)*step)+origin);
+    index[2]=int(floor((*y)*step)+origin);
+    index[3]=int(floor((*z)*step)+origin);
     return index;
 }
 
@@ -597,7 +594,7 @@ void Verlet::Init(const int GridDiv)
     }
 }
 
-list<int>* Verlet::GetCell(const int i,const int j,const int k)const
+__attribute((pure)) list<int>* Verlet::GetCell(const int i,const int j,const int k)const
 {
     return verletlist[i][j][k];
 }

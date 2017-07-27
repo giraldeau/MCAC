@@ -13,18 +13,22 @@ class Verlet;
 class Aggregate
 {
     private:
-        Sphere* InclusiveSphere;
-        Aggregate* parents[2];
-        Aggregate* son;
         PhysicalModel* physicalmodel;
+
+        Sphere* InclusiveSphere;
+        ListSphere myspheres;
+
+        array<Aggregate*,2> parents;
+        Aggregate* son;
+
         Verlet* verlet;
         array<int, 4> IndexVerlet;
 
+        array< vector<double>, 16>* Storage;
+        ListAggregat* external_storage;
+
         double creation_date;
-        int Label;
-        int Nc;     //Number of contacts
-        int Np;     //Number of spheres
-        bool InVerlet;
+        double nctmp,nptmp;
 
         double *rg;  //Gyration Radius
         double *dm;  //Mobility Diameter
@@ -41,9 +45,12 @@ class Aggregate
 
         double *x,*y,*z; // position of the gravity center
 
-        double nctmp,nptmp;
+        int Label;
+        int Nc;     //Number of contacts
+        int Np;     //Number of spheres
 
-        ListSphere myspheres;
+        bool InVerlet;
+
     public:
         Aggregate(Sphere);
         Aggregate(Aggregate Agg1, Aggregate Agg2);
@@ -80,11 +87,12 @@ class Aggregate
 
 
     private:
-        array< vector<double>, 16>* Storage;
-        ListAggregat* external_storage;
 
         void setpointers(void);
         void add(void);
+        Aggregate& operator=(const Aggregate& other);
+        Aggregate& operator=(const Aggregate&& other) noexcept;
+        Aggregate(const Aggregate& other);
 
 
 };

@@ -15,28 +15,25 @@ public:
     double P, T, Mu, K, Rho; // pressure, temperature, diffusivity, ?, density
     double Dpm, sigmaDpm;
     double temps; // Time
+    double X, FV, L; // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
+    double precision;
+    double FactorModelBeta;
 
-    // Simulation
     int N;// Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
     int DeltaSauve;
-    double X, FV, L; // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
-
-    // Options
-    double precision, root_method;
-    bool ActiveModulephysique, ActiveVariationTempo;
+    int root_method;
     int Mode;
-    bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
     int GridDiv; // Number of Divisions of the box
+    bool ActiveModulephysique, ActiveVariationTempo;
+    bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
 private:
 
     // Internal use
-    double FactorModelBeta;
-
-    double ModeleBeta(const double rm, const double np, const double rg) const;
-    double Dichotomie(const double np, const double rg,const double rpmoy,const double x0) const;
-    double brentq(const double np, const double rg,const double rpmoy,const double x0) const;
-    double Secante(const double np,const double rg,const double rpmoy, const double xsave) const;
+    double ModeleBeta(const double rm) const;
+    double Dichotomie(const double x0) const;
+    double brentq(const double x0) const;
+    double Secante(const double x0) const;
 
 public:
     void Init(const double _P, const double _T, const double _dfe, const double _kfe, const double _Dpm, const double _sigmaDpm, const double _xsurfgrowth, const double _coeffB, const double _Rho);
@@ -44,8 +41,8 @@ public:
     void UseDichotomia(void);
     void UseBrent(void);
     void UseSecante(void);
-    double ConvertRg2Dm(const double np, const double rg, const double rpmoy);
-    double ConvertRg2Dm(const double np, const double rg, const double rpmoy, const double start);
+    double ConvertRg2Dm(const double np, const double rg, const double rmoy);
+    double ConvertRg2DmFromStart(const double np, const double rg, const double start);
 
     double Cunningham(const double R) const;
     double Grow(const double R,const double dt) const;
