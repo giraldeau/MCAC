@@ -45,6 +45,8 @@ public:
     void UseBrent(void);
     void UseSecante(void);
     double ConvertRg2Dm(const double np, const double rg, const double rpmoy);
+    double ConvertRg2Dm(const double np, const double rg, const double rpmoy, const double start);
+
     double Cunningham(const double R) const;
     double Grow(const double R,const double dt) const;
     double diffusivity(const double dm) const;

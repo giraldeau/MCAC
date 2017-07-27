@@ -136,13 +136,90 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     {
         *lpm = physicalmodel->Dpm*1E-9;    //Libre parcours moyen
         *time_step = 1e-6;              //Durée du déplacement
-
-
-        cout << "WTF" << endl;
-        exit(42);
     }
 
 }
+
+
+//############################################# Calcul de la distance inter-agrégats ############################################
+double Aggregate::Distance_Aggregate(Aggregate& other,array<double,4> vectorOther,array<double,4> Vectdir)
+{
+    double dist, ret;
+    ret = 1.0;
+
+    //Liste des sphérules constituant l'agrégat n°Agg
+
+    int nmonoi = myspheres.size();
+    int np = other.myspheres.size();
+
+    //$ Loop on all the spheres of the other aggregate
+    for (int j = 1; j <= np; j++)
+    {
+        //$ spheredecale is used to replace the sphere into the corresponding box
+        Sphere spheredecale(other.myspheres[j]);
+        spheredecale.Translate(vectorOther);
+
+        //$ For every sphere in the aggregate :
+        for (int knum = 1; knum <= nmonoi; knum++)
+        {
+            //$ Check if j and k are contact and if not, what is the distance between them
+            dist=myspheres[knum].Collision(spheredecale, Vectdir, *lpm);
+            if (dist < ret)
+            {
+                ret = dist;
+            }
+
+        }
+    }
+    return ret;
+}
+//###############################################################################################################################
+
+
+//######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
+void Aggregate::Update()
+{// This function will update the parameter of Agg
+
+    //$ Determination of the Radius of gyration of Agg using RayonGiration()
+    RayonGiration();
+
+    //$ Determination of the mean radius of degrees 1,2,3 of Agg
+    int np = myspheres.size();
+    double rpmoy, rpmoy2, rpmoy3;
+    rpmoy = rpmoy2 = rpmoy3 = 0.0;
+    for (int i = 1; i <= np; i++)
+    {
+        rpmoy = rpmoy + myspheres[i].Radius(); //Sum of the radius of each sphere in Agg
+        rpmoy2 = rpmoy2 + pow(myspheres[i].Radius(), 2);
+        rpmoy3 = rpmoy3 + pow(myspheres[i].Radius(), 3);
+    }
+    rpmoy = rpmoy/(double(np));
+    rpmoy2 = rpmoy2/(double(np));
+    rpmoy3 = rpmoy3/(double(np));
+
+
+    //$ Determination of Dm using ConvertRg2Dm
+    *dm = physicalmodel->ConvertRg2Dm(np,*rg,rpmoy,*dm/2);
+
+    if (physicalmodel->ActiveModulephysique == 1)
+    {
+        double masse = physicalmodel->Rho*(*volAgregat);//Determination of the real mass of Agg
+        double vit =  physicalmodel->velocity(masse);
+        double diff = physicalmodel->diffusivity(*dm);
+        *lpm = 8*diff/PI/vit;
+        *time_step = *lpm/vit; //Displacement duration
+    }
+    else
+    {
+        *lpm = physicalmodel->Dpm*1E-9;
+        *time_step = 1E-6;
+    }
+
+    *volAgregat_without_cov = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
+    *surfAgregat = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+}
+
+
 
 void Aggregate::UpdatesSpheres(ListSphere& spheres,int* index)
 {
@@ -336,20 +413,19 @@ double& Aggregate::operator[](const int i)
 
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
-double Aggregate::RayonGiration(double &_rmax, double &_Tv, int &_Nc, double &_cov, double &_volAgregat, double &_surfAgregat)
+void Aggregate::RayonGiration(void)
 {// This function determines the Gyration Radius of the Aggregate Id.
     double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
     int nmonoi;
     vector<double> tabVol;
     vector<double> tabSurf;
 
-    _cov = 0.0;// Coeficient of mean covering
-    _Nc = 0; // Number of contacts
-    _volAgregat = _surfAgregat = terme = 0.0; // Volume and surface of Agg Id
-    _rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
+    *cov = 0.0;// Coeficient of mean covering
+    Nc = 0; // Number of contacts
+    *volAgregat = *surfAgregat = terme = 0.0; // Volume and surface of Agg Id
+    *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
                 // It is used to assimilate the aggregate to a sphere when checking for intersections
-    Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
-    _Tv = 0.0;
+    *Tv = 0.0;
 
     nmonoi = myspheres.size();
 
@@ -358,12 +434,6 @@ double Aggregate::RayonGiration(double &_rmax, double &_Tv, int &_Nc, double &_c
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
     array<double, 4> newpos={0.,0.,0.,0.};
-
-    for (int i = 1; i <= nmonoi; i++)
-    {
-        tabVol[i] =0.;
-        tabSurf[i] =0.;
-    }
 
     //$ For the Spheres i in Agg Id
     for (int i = 1; i <= nmonoi; i++)
@@ -388,8 +458,8 @@ double Aggregate::RayonGiration(double &_rmax, double &_Tv, int &_Nc, double &_c
             if (dbordabord <= 1.)
             {
                 //$ Calculation of the Number of contacts
-                _cov = _cov - dbordabord; //Coefficient of total Covering of Agg id
-                _Nc = _Nc + 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
+                *cov = *cov - dbordabord; //Coefficient of total Covering of Agg id
+                Nc += 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
             }
 
             //$ The volume and surface covered by j is substracted from those of i
@@ -405,8 +475,8 @@ double Aggregate::RayonGiration(double &_rmax, double &_Tv, int &_Nc, double &_c
                                              //la calotte due à la sphérule i
         }
         //$ Calculation of the total volume and surface of the aggregate
-        _volAgregat = _volAgregat + tabVol[i];    //Total Volume of Agg id
-        _surfAgregat = _surfAgregat + tabSurf[i]; //Total Surface of Agg id
+        *volAgregat = *volAgregat + tabVol[i];    //Total Volume of Agg id
+        *surfAgregat = *surfAgregat + tabSurf[i]; //Total Surface of Agg id
 
         terme = terme + tabVol[i]/myspheres[i].Volume();
 
@@ -417,33 +487,34 @@ double Aggregate::RayonGiration(double &_rmax, double &_Tv, int &_Nc, double &_c
             newpos[k] += pos[k]*tabVol[i];
         }
     }
-    _Tv = 1 - terme /nmonoi;
+    *Tv = 1 - terme /nmonoi;
 
-    _Nc = _Nc/2;//and determine the coefficient of mean covering of Agg Id
+    Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
     //$ Check if there is more than one monomere in the aggregate
     //$ [nmonoi == 1]
-    if (nmonoi == 1 || _Nc == 0)
+    if (nmonoi == 1 || Nc == 0)
     {
         //$ Cov = 0
-        _cov = 0;
+        *cov = 0;
     }
     else
     {
         //$ Determination of the coefficient of mean covering, using the one determined in the precedent loop
-        _cov = _cov/(double(_Nc))/2.0;
+        *cov = *cov/(double(Nc))/2.0;
     }
     //$ Filling of PosiGravite
 
     for (int k = 1; k <= 3; k++)
     {
-        newpos[k] = newpos[k]/_volAgregat;
+        newpos[k] = newpos[k]/(*volAgregat);
     } //Centre of mass of Agg Id
 
-
+    //cout << Position()<< " "<< newpos <<endl;
     Position(newpos);
     ReplacePosi();
 
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
+    Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
 
     for (int i = 1; i <= nmonoi; i++)
     {
@@ -453,17 +524,15 @@ double Aggregate::RayonGiration(double &_rmax, double &_Tv, int &_Nc, double &_c
         r = li + myspheres[i].Radius();
 
         //$ Calculation of rmax
-        _rmax=MAX(_rmax,r);
+        *rmax=MAX(*rmax,r);
 
         //$ Calculation of Rg
         Arg = Arg + tabVol[i]*pow(li, 2);
         Brg = Brg + tabVol[i]*pow(myspheres[i].Radius(), 2);
     }
 
-    double _rg = fabs((Arg+3.0/5.0*Brg)/_volAgregat);
-    _volAgregat=fabs(_volAgregat);
-
-    return sqrt(_rg); //Rayon de giration de l'agrégat n°id
+    *rg = sqrt(fabs((Arg+3.0/5.0*Brg)/(*volAgregat)));
+    *volAgregat=fabs(*volAgregat);
 }
 //###############################################################################################################################
 

@@ -29,13 +29,6 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <iomanip>
 #include <sstream>
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-
-const double PI = atan(1.0)*4;
-const double facvol = 4*PI/3;
-const double facsurf = 4*PI;
-
 Sphere::Sphere(void)
 {
     Storage = new array< vector<double>, 7>;
@@ -130,14 +123,15 @@ void Sphere::Init(void)
 
 Sphere::~Sphere(void)
 {
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].erase((*Storage)[j].begin() + SphereLabel);
-
     //setpointers();
     if(external_storage!=NULL)
         external_storage->setpointers();
     else if (Storage!=NULL)
+    {
+        for (int j=0;j<=6;j++)
+            (*Storage)[j].erase((*Storage)[j].begin() + SphereLabel);
         delete Storage;
+    }
 
     external_storage=NULL;
     SphereLabel = 0;

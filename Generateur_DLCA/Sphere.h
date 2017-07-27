@@ -78,7 +78,7 @@ class Sphere
         double Distance(const double x, const double y, const double z) ;
 
         double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) ;
-        double Collision(Sphere& c, const double* vector,const  double  distmax) ;
+        double Collision(Sphere& c, const array<double,4> vector,const  double  distmax) ;
         void CroissanceSurface(const double dt);
 
     /* Storage specific */

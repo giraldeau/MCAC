@@ -30,7 +30,7 @@ ListSphere spheres;
 PhysicalModel physicalmodel;
 
 const double PI = atan(1.0)*4; // 3.14159
-double* Vectdir; // Direction of the translation of an aggregate
+array<double,4> Vectdir; // Direction of the translation of an aggregate
 int NumAgg; // Number of the aggregate in translation
 int secondes; // CPU Time variable
 int NSauve; // last file number
@@ -112,68 +112,11 @@ double MinEtIndex(double* tableau, int size, int& position)
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void ParametresAgg(int Agg)
-{// This function will update the parameter of Agg
-    int i, Nc;
-    double masse, dm, diff, vit, lpm, Tv, cov, rmax, rg, rpmoy, rpmoy2, rpmoy3;
-    double volAgregat, surfAgregat;
-
-    rpmoy = rpmoy2 = rpmoy3 = 0.0;
-    //$ Determination of the Radius of gyration of Agg using RayonGiration()
-    rg = Aggregates[Agg].RayonGiration(rmax, Tv, Nc, cov, volAgregat, surfAgregat);
-
-    masse = physicalmodel.Rho*volAgregat;//Determination of the real mass of Agg
-    //$Determination of the spheres in Agg
-    ListSphere MonoSel(spheres, AggLabels[Agg]);
-    int np = MonoSel.size();
-
-    //$ Determination of the mean radius of degrees 1,2,3 of Agg
-    for (i = 1; i <= np; i++)
-    {
-        rpmoy = rpmoy + MonoSel[i].Radius(); //Sum of the radius of each sphere in Agg
-        rpmoy2 = rpmoy2 + pow(MonoSel[i].Radius(), 2);
-        rpmoy3 = rpmoy3 + pow(MonoSel[i].Radius(), 3);
-    }
-
-
-    rpmoy = rpmoy/(double(np));
-    rpmoy2 = rpmoy2/(double(np));
-    rpmoy3 = rpmoy3/(double(np));
-
-
-    //$ Determination of Dm using ConvertRg2Dm
-    dm = physicalmodel.ConvertRg2Dm(np,rg,rpmoy);
-
-    //$Calculation fo it's mean free path, speed, and diff
-
-    diff = physicalmodel.diffusivity(dm);
-    vit =  physicalmodel.velocity(masse);
-    lpm = 8*diff/PI/vit;
-
-
-    //$ Update of Aggregate[] with the parameters
-    Aggregates[Agg][0] = rg; //Gyration Radius
-    Aggregates[Agg][1] = np; //Number of spheres in Agg
-    Aggregates[Agg][2] = Nc; //Cumber of contacts
-    Aggregates[Agg][3] = dm; //Mobility Diameter
-
-    if (physicalmodel.ActiveModulephysique == 1)
-    {
-        Aggregates[Agg][4] = lpm;     //Mean Free Path
-        Aggregates[Agg][5] = lpm/vit; //Displacement duration
-    }
-    else
-    {
-        Aggregates[Agg][4] = physicalmodel.Dpm*1E-9;
-        Aggregates[Agg][5] = 1E-6;
-    }
+{
+    Aggregates[Agg].Update();
+    double rmax = Aggregates[Agg][6];
     if(rmax>RayonAggMax)
-    {RayonAggMax=rmax;}
-    Aggregates[Agg][6] = rmax;          //Radius of the sphere containing Agg
-    Aggregates[Agg][7] = volAgregat;    //Etimation of the Aggregate's volume
-    Aggregates[Agg][8] = surfAgregat;   //Estimation of the sufrace of the aggregate
-    Aggregates[Agg][9] = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
-    Aggregates[Agg][10] = cov;          //Covering Parameter
-    Aggregates[Agg][11] = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+        RayonAggMax=rmax;
 }
 
 
@@ -339,56 +282,11 @@ int Probabilite(bool trier,double &deltatemps)
     return nret;
 }
 
-//############################################# Calcul de la distance inter-agrégats ############################################
-double Distance_Aggregate(int id, int s, double lpm)
-{
-    int agg, j, knum;
-    double dist, ret;
-
-    ret = 1.0;
-    agg = IdPossible[s][1];
-
-    //Liste des sphérules constituant l'agrégat n°Agg
-
-    ListSphere mySpheres(spheres, AggLabels[id]);
-    int nmonoi = mySpheres.size();
-    ListSphere MonoSel(spheres, AggLabels[agg]);
-    int np = MonoSel.size();
-
-    double* trans = new double[4];
-    trans[1] = IdPossible[s][2]*physicalmodel.L;
-    trans[2] = IdPossible[s][3]*physicalmodel.L;
-    trans[3] = IdPossible[s][4]*physicalmodel.L;
-
-    //$ Loop on all the spheres of the other aggregate
-    for (j = 1; j <= np; j++)
-    {
-        //$ spheredecale is used to replace the sphere into the corresponding box
-        Sphere spheredecale(MonoSel[j]);
-        spheredecale.Translate(trans);
-
-        //$ For every sphere in the aggregate :
-        for (knum = 1; knum <= nmonoi; knum++)
-        {
-            //$ Check if j and k are contact and if not, what is the distance between them
-            dist=mySpheres[knum].Collision(spheredecale, Vectdir, lpm);
-            if (dist < ret)
-            {
-                ret = dist;
-            }
-
-        }
-    }
-    delete[] trans;
-    return ret;
-}
-//###############################################################################################################################
-
 //########################################## Determination of the contacts between agrgates ##########################################
 void CalculDistance(int id, double &distmin, int &aggcontact)
 {   _List_iterator<int> p;
     double lpm,dist;
-    double dc,tampon;
+    double tampon;
     int bornei1,bornei2,bornej1,bornej2,bornek1,bornek2;
     int i,s,j,k;
     int npossible;
@@ -561,7 +459,14 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
         //$ loop on the agregates potentially in contact
         for (s = 1; s <= npossible; s++) //For every aggregate that could be in contact
         {
-            dist = Distance_Aggregate(id, s, lpm);
+            int agg = IdPossible[s][1];
+
+            array<double,4> trans;
+            trans[1] = IdPossible[s][2]*physicalmodel.L;
+            trans[2] = IdPossible[s][3]*physicalmodel.L;
+            trans[3] = IdPossible[s][4]*physicalmodel.L;
+
+            dist = Aggregates[id].Distance_Aggregate(Aggregates[agg],trans,Vectdir);
             if (dist != -1 && dist < distmin)
             {
                 distmin = dist;
@@ -746,7 +651,6 @@ void Init()
     int testmem = 0;
     NAgg = physicalmodel.N;
     spheres.Init(physicalmodel, NAgg);
-    Vectdir = new double[4];
     TriCum = new double[NAgg+1];
     IdPossible = new int* [NAgg+1];
     Aggregates = new Aggregate[NAgg+1];
@@ -833,7 +737,6 @@ void Fermeture()
         delete[] IdPossible[i];
 
     }
-    delete[] Vectdir;
     delete[] TriCum;
     delete[] IdPossible;
     delete[] Aggregates;

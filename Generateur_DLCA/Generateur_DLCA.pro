@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-COMPILATOR = "GNU"
+COMPILATOR = "INTEL"
 
 QT       += core gui
 
@@ -87,6 +87,38 @@ equals(COMPILATOR, "GNU"){
     QMAKE_CXXFLAGS_RELEASE += -Ofast -DNDEBUG -fPIC -fomit-frame-pointer
     QMAKE_CXXFLAGS_RELEASE += -flto -fwhole-program
     QMAKE_LFLAGS_RELEASE   += -flto
+}
+
+
+equals(COMPILATOR, "CLANG"){
+
+    QMAKE_CXXFLAGS += -g -march=native -static  -std=c++11
+    QMAKE_LFLAGS   += -g -std=c++11
+
+    ### WARNINGS ###
+    QMAKE_CXXFLAGS += -Wpedantic -Wall -Wextra -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wstrict-overflow=5
+    QMAKE_CXXFLAGS += -Warray-bounds -Wtrampolines -Wfloat-equal -Wundef -Wshadow -Wunsafe-loop-optimizations -Wcast-qual -Wcast-align -Wconversion
+    QMAKE_CXXFLAGS += -Wuseless-cast -Wlogical-op -Wno-aggressive-loop-optimizations -Wnormalized=nfkc -Wpacked -Wredundant-decls -Winline -Winvalid-pch
+    QMAKE_CXXFLAGS += -Wvector-operation-performance -Wdisabled-optimization -Wnoexcept -Wstrict-null-sentinel -Wold-style-cast -Woverloaded-virtual -Wsign-promo
+    QMAKE_CXXFLAGS += -Wzero-as-null-pointer-constant -Wmissing-declarations -Weffc++ -Wpadded -Waggregate-return
+    # Not interesting
+    #QMAKE_CXXFLAGS += -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
+    QMAKE_CXXFLAGS += -Wno-missing-declarations -Wno-effc++ -Wno-padded -Wno-aggregate-return -Wno-unused-variable -Wno-unused-result -Wno-unused-parameter
+    # QT problems
+    QMAKE_CXXFLAGS += -Wno-zero-as-null-pointer-constant -Wno-long-long -Wno-useless-cast -Wno-conversion -Wno-float-equal -Wno-packed -Wno-switch-default -Wno-strict-overflow
+
+
+    #CHECKS
+    QMAKE_CXXFLAGS_DEBUG += -fcheck-new -ggdb3 -g3
+    #QMAKE_CXXFLAGS_DEBUG += -fsanitize=address
+    #QMAKE_LFLAGS_DEBUG   += -fsanitize=address
+    #QMAKE_CXXFLAGS_DEBUG += -fsanitize=leak
+    #QMAKE_LFLAGS_DEBUG   += -fsanitize=leak
+
+    # OPTIMISATION
+    QMAKE_CXXFLAGS_RELEASE += -Ofast -DNDEBUG -fPIC -fomit-frame-pointer
+    #QMAKE_CXXFLAGS_RELEASE += -flto
+    #QMAKE_LFLAGS_RELEASE   += -flto
 }
 
 #PROFILING

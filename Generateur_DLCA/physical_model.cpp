@@ -38,7 +38,7 @@ void PhysicalModel::Init(const double _P, const double _T, const double _dfe, co
     GridDiv = 10;      // Number of Divisions of the box
 
 
-    SetPrecision(1e-4);
+    SetPrecision(1e-5);
     UseSecante();
 
     print();
@@ -279,21 +279,26 @@ double PhysicalModel::Secante(const double np,const double rg,const double rpmoy
 
 double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy)
 {
+    double start = rpmoy*pow(np,gamma_/dfe);
+    return ConvertRg2Dm(np,rg,rpmoy,start);
+}
+
+double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy, const double start)
+{
     FactorModelBeta = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass)/rg;
-    double x0 = rpmoy*pow(np,gamma_/dfe);
 /*
     npeqmass = kfe*pow(rg/rpeqmass,dfe);
     double nptmp = pow(npeqmass*pow(np,gamma_-1),1./gamma_);
     FactorModelBeta = 1./(rpeqmass*pow(nptmp,gamma_/dfe)/Cunningham(rpeqmass));
 */
     if (root_method==0)
-        return Dichotomie(np,rg,rpmoy,x0)*2;
+        return Dichotomie(np,rg,rpmoy,start)*2;
     else if (root_method==1)
-        return brentq(np,rg,rpmoy,x0)*2;
+        return brentq(np,rg,rpmoy,start)*2;
     else if (root_method==2)
-        return Secante(np,rg,rpmoy,x0)*2;
+        return Secante(np,rg,rpmoy,start)*2;
 
-    return  Dichotomie(np,rg,rpmoy,x0)*2;
+    return  Dichotomie(np,rg,rpmoy,start)*2;
 }
 
 double PhysicalModel::Grow(const double R,const double dt) const

@@ -81,7 +81,7 @@ void Sphere::UpdateVolAndSurf(void)
 /* #############################################################################################################
  * ########################################## Distance before collision ########################################
  * #############################################################################################################*/
-double Sphere::Collision(Sphere& c,const  double* vd,const double distmax)
+double Sphere::Collision(Sphere& c,const array<double,4> vd,const double distmax)
 {
 /*
      (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
