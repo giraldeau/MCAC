@@ -281,7 +281,7 @@ double PhysicalModel::Secante(const double xsave) const
 __attribute((pure)) double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy)
 {
     double start = rpmoy*pow(np,gamma_/dfe);
-    return ConvertRg2Dm(np,rg,start);
+    return ConvertRg2DmFromStart(np,rg,start);
 }
 
 double PhysicalModel::ConvertRg2DmFromStart(const double np, const double rg, const double start)

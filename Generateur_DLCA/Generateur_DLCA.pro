@@ -6,29 +6,29 @@
 
 COMPILATOR = "INTEL"
 
-QT       += core gui
+#QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+#greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = DLCA
 TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp\
-    physical_model.cpp \
-    Sphere_storage.cpp \
-    Sphere_physics.cpp \
-    aggregat.cpp
+        physical_model.cpp \
+        Sphere_storage.cpp \
+        Sphere_physics.cpp \
+        aggregat.cpp
 
-HEADERS += mainwindow.h\
-        Sphere.h \
-    physical_model.h \
-    aggregat.h
+#HEADERS += mainwindow.h \
+#           Sphere.h \
+#           physical_model.h \
+#           aggregat.h
 
-FORMS += mainwindow.ui
+#FORMS += mainwindow.ui
 
-RESOURCES += \
-    mainwindow.qrc
+#RESOURCES += \
+#    mainwindow.qrc
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
@@ -107,10 +107,14 @@ equals(COMPILATOR, "CLANG"){
     QMAKE_CXXFLAGS += -Wvector-operation-performance -Wdisabled-optimization -Wnoexcept -Wstrict-null-sentinel -Wold-style-cast -Woverloaded-virtual -Wsign-promo
     QMAKE_CXXFLAGS += -Wzero-as-null-pointer-constant -Wmissing-declarations -Weffc++ -Wpadded -Waggregate-return
     # Not interesting
-    #QMAKE_CXXFLAGS += -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
-    QMAKE_CXXFLAGS += -Wno-missing-declarations -Wno-effc++ -Wno-padded -Wno-aggregate-return -Wno-unused-variable -Wno-unused-result -Wno-unused-parameter
+    QMAKE_CXXFLAGS += -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
+    QMAKE_CXXFLAGS += -Weffc++ -Wno-padded -Wunused-variable -Wunused-result -Wunused-parameter
     # QT problems
     QMAKE_CXXFLAGS += -Wno-zero-as-null-pointer-constant -Wno-long-long -Wno-useless-cast -Wno-conversion -Wno-float-equal -Wno-packed -Wno-switch-default -Wno-strict-overflow
+    QMAKE_CXXFLAGS += -Wno-missing-declarations
+    # Not a problems
+    QMAKE_CXXFLAGS += -Wno-aggregate-return
+
 
 
     #CHECKS
@@ -127,6 +131,6 @@ equals(COMPILATOR, "CLANG"){
 }
 
 #PROFILING
-LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
+#LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
 
 

@@ -16,7 +16,7 @@ Aggregate::Aggregate(void):
     parents(),
     son(nullptr),
     verlet(nullptr),
-    IndexVerlet({0,0,0}),
+    IndexVerlet({{0,0,0}}),
     Storage(new array< vector<double>, 16>()),
     external_storage(nullptr),
     creation_date(0.),
@@ -65,7 +65,7 @@ void Aggregate::Init(void)
     *ratio_surf_vol=0.;         //Ratio surface / volume
     *free_surface=0.;           //Free surface of the aggregate (without covering)
 
-    IndexVerlet = {0,0,0,0};
+    IndexVerlet = {{0,0,0,0}};
 
     Position(0.,0.,0.);
 }
@@ -187,12 +187,12 @@ void Aggregate::Update()
     for (int i = 1; i <= np; i++)
     {
         rpmoy = rpmoy + myspheres[i].Radius(); //Sum of the radius of each sphere in Agg
-        rpmoy2 = rpmoy2 + pow(myspheres[i].Radius(), 2);
-        rpmoy3 = rpmoy3 + pow(myspheres[i].Radius(), 3);
+      //  rpmoy2 = rpmoy2 + pow(myspheres[i].Radius(), 2);
+      //  rpmoy3 = rpmoy3 + pow(myspheres[i].Radius(), 3);
     }
     rpmoy = rpmoy/(double(np));
-    rpmoy2 = rpmoy2/(double(np));
-    rpmoy3 = rpmoy3/(double(np));
+    //rpmoy2 = rpmoy2/(double(np));
+    //rpmoy3 = rpmoy3/(double(np));
 
 
     //$ Determination of Dm using ConvertRg2Dm
@@ -211,9 +211,10 @@ void Aggregate::Update()
         *lpm = physicalmodel->Dpm*1E-9;
         *time_step = 1E-6;
     }
-
+/*
     *volAgregat_without_cov = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
     *surfAgregat = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+*/
 }
 
 
@@ -371,18 +372,15 @@ Aggregate::~Aggregate(void)
 }
 
 
-double& Aggregate::operator[](const int i)
+double& Aggregate::operator[](const int var)
 {
-    switch (i)
+    switch (var)
     {
     case 0:
         return *rg;
     case 1:
         nptmp=double(myspheres.size());
         return nptmp;
-    case 2:
-        nctmp=double(Nc);
-        return nctmp;
     case 3:
         return *dm;
     case 4:
@@ -397,12 +395,83 @@ double& Aggregate::operator[](const int i)
         return *surfAgregat;
     case 9:
         return *volAgregat_without_cov;
-    case 10:
-        return *cov;
     case 11:
         return *free_surface;
+    }
+
+
+
+    *cov = 0.0;// Coeficient of mean covering
+    Nc = 0; // Number of contacts
+    double terme = 0.0; // Volume and surface of Agg Id
+    *Tv = 0.0;
+    vector<double> tabVol;
+
+    int nmonoi = myspheres.size();
+
+    tabVol.assign(nmonoi+1, 0.);
+
+    //$ For the Spheres i in Agg Id
+    for (int i = 1; i <= nmonoi; i++)
+    {
+        //$ Calculation of the volume and surface of monomere i of Agg id
+        tabVol[i] += myspheres[i].Volume(); //Calculation of the volume of i
+
+        for (int j = i+1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
+        {
+
+            double voli, volj, surfi, surfj;
+            voli = volj = surfi = surfj = 0.;
+
+            //$ Calculation of the intersection between the spheres i and j
+            double dist = myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
+            double rpmoy = (myspheres[i].Radius()+myspheres[j].Radius())/2.0; //Mean Radius between i and j monomeres
+            double dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
+            //$ Check if i is covering j
+            //$ [dbordabord <= 1]
+            if (dbordabord <= 1.)
+            {
+                //$ Calculation of the Number of contacts
+                *cov = *cov - dbordabord; //Coefficient of total Covering of Agg id
+                Nc += 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
+            }
+
+            //$ The volume and surface covered by j is substracted from those of i
+            tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
+                                             //la calotte due à la sphérule j
+
+            //$ The volume and surface covered by i is substracted from those of j
+            tabVol[j] = tabVol[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
+                                             //la calotte due à la sphérule i
+        }
+        terme = terme + tabVol[i]/myspheres[i].Volume();
+
+    }
+    *Tv = 1 - terme /nmonoi;
+
+    Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
+    //$ Check if there is more than one monomere in the aggregate
+    //$ [nmonoi == 1]
+    if (nmonoi == 1 || Nc == 0)
+    {
+        //$ Cov = 0
+        *cov = 0;
+    }
+    else
+    {
+        //$ Determination of the coefficient of mean covering, using the one determined in the precedent loop
+        *cov = *cov/(double(Nc))/2.0;
+    }
+
+    switch (var)
+    {
+    case 2:
+        nctmp=double(Nc);
+        return nctmp;
+    case 10:
+        return *cov;
     default:
-        cout << "Unknown element " << i <<endl;
+        cout << "Unknown element " << var <<endl;
     }
     exit(5);
 }
@@ -412,25 +481,20 @@ double& Aggregate::operator[](const int i)
 
 void Aggregate::RayonGiration(void)
 {// This function determines the Gyration Radius of the Aggregate Id.
-    double dist, rpmoy, dbordabord, li, r, Arg, Brg, terme;
-    int nmonoi;
     vector<double> tabVol;
     vector<double> tabSurf;
 
-    *cov = 0.0;// Coeficient of mean covering
-    Nc = 0; // Number of contacts
-    *volAgregat = *surfAgregat = terme = 0.0; // Volume and surface of Agg Id
+    *volAgregat = *surfAgregat = 0.0; // Volume and surface of Agg Id
     *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
                 // It is used to assimilate the aggregate to a sphere when checking for intersections
-    *Tv = 0.0;
 
-    nmonoi = myspheres.size();
+    int nmonoi = myspheres.size();
 
     tabVol.assign(nmonoi+1, 0.);
     tabSurf.assign(nmonoi+1, 0.);
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
-    array<double, 4> newpos={0.,0.,0.,0.};
+    array<double, 4> newpos({{0.,0.,0.,0.}});
 
     //$ For the Spheres i in Agg Id
     for (int i = 1; i <= nmonoi; i++)
@@ -446,18 +510,8 @@ void Aggregate::RayonGiration(void)
             voli = volj = surfi = surfj = 0.;
 
             //$ Calculation of the intersection between the spheres i and j
-            dist = myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
-
-            rpmoy = (myspheres[i].Radius()+myspheres[j].Radius())/2.0; //Mean Radius between i and j monomeres
-            dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
-            //$ Check if i is covering j
-            //$ [dbordabord <= 1]
-            if (dbordabord <= 1.)
-            {
-                //$ Calculation of the Number of contacts
-                *cov = *cov - dbordabord; //Coefficient of total Covering of Agg id
-                Nc += 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
-            }
+            double dist = myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
+            dist = 0;
 
             //$ The volume and surface covered by j is substracted from those of i
             tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
@@ -475,7 +529,6 @@ void Aggregate::RayonGiration(void)
         *volAgregat = *volAgregat + tabVol[i];    //Total Volume of Agg id
         *surfAgregat = *surfAgregat + tabSurf[i]; //Total Surface of Agg id
 
-        terme = terme + tabVol[i]/myspheres[i].Volume();
 
         //$ Calculation of the position of the center of mass
         const array<double, 4> pos = myspheres[i].Position();
@@ -483,21 +536,6 @@ void Aggregate::RayonGiration(void)
         {
             newpos[k] += pos[k]*tabVol[i];
         }
-    }
-    *Tv = 1 - terme /nmonoi;
-
-    Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
-    //$ Check if there is more than one monomere in the aggregate
-    //$ [nmonoi == 1]
-    if (nmonoi == 1 || Nc == 0)
-    {
-        //$ Cov = 0
-        *cov = 0;
-    }
-    else
-    {
-        //$ Determination of the coefficient of mean covering, using the one determined in the precedent loop
-        *cov = *cov/(double(Nc))/2.0;
     }
     //$ Filling of PosiGravite
 
@@ -511,14 +549,15 @@ void Aggregate::RayonGiration(void)
     ReplacePosi();
 
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
+    double Arg, Brg;
     Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
 
     for (int i = 1; i <= nmonoi; i++)
     {
         //$ Determination of the distance between each monomere and the center of mass of Agg Id
-        li = myspheres[i].Distance(Position()); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
+        double li = myspheres[i].Distance(Position()); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
 
-        r = li + myspheres[i].Radius();
+        double r = li + myspheres[i].Radius();
 
         //$ Calculation of rmax
         *rmax=MAX(*rmax,r);
@@ -538,7 +577,7 @@ void Aggregate::RayonGiration(void)
 
 array<int, 4> Aggregate::VerletIndex()
 {
-    array<int, 4>  index= {0,0,0,0};
+    array<int, 4>  index({{0,0,0,0}});
     double step = physicalmodel->GridDiv/physicalmodel->L;
     int origin = physicalmodel->GridDiv+1;
 

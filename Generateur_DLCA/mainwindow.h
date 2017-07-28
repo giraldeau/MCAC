@@ -1,9 +1,16 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
+
+#include <vector>
+#include <array>
 
 using namespace std;
+
+#ifdef WITH_GUI
+
+#include <QMainWindow>
+
 
 namespace Ui {
     class MainWindow;
@@ -30,6 +37,17 @@ private slots:
     void ExecuterDLCA();
     void BoutonRechercheSuiviTempo();
 };
+#else
+#ifdef WITH_QT
+#include <QMainWindow>
+
+class STUB : public QMainWindow
+{
+    Q_OBJECT;
+};
+#endif
+#endif
+
 
 int No_GUI(int argc, char *argv[]);
 void SauveASCII(int value, int id);
@@ -53,4 +71,8 @@ bool locale_with_dots();
 double latof(const char* _char);
 void LectureParams();
 void Calcul();
+void print(char* str);
+int dirExists(const char *path);
+
+
 #endif // MAINWINDOW_H

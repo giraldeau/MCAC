@@ -1,9 +1,9 @@
+#include <libgen.h>
+#include <sys/stat.h>
 #include "mainwindow.h"
 #include <Sphere.h>
 #include <aggregat.h>
 #include <physical_model.h>
-#include "ui_mainwindow.h"
-#include <QFileDialog>
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
@@ -12,19 +12,26 @@
 #include <sstream>
 #include <time.h>
 #include <string.h>
-#include <qdir.h>
-#include <QString>
 #include <stdio.h>
 #include <string>
 #include <list>
 #include <cmath>
+
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 using namespace std;
 
+#ifdef WITH_GUI
+#include "ui_mainwindow.h"
+#include <QFileDialog>
+#include <qdir.h>
+#include <QString>
+
 MainWindow* GUI;
+#endif
+
 Verlet verlet; // Verlet's List
 ListSphere spheres;
 PhysicalModel physicalmodel;
@@ -51,13 +58,13 @@ int** IdPossible;  // Array of the Ids of the aggregates that could be in contac
 
 
 // suivit tempo
+string FichierParam = "___";
+string pathParam = "___";
+string FichierSuiviTempo = "___";
 double** tab; // generic array
 int iValTab=0;
 int nb_line;
 
-QString FichierParam = "___";
-QString pathParam = "___";
-QString FichierSuiviTempo = "___";
 
 char CheminSauve[500];
 char commentaires[500];
@@ -533,7 +540,7 @@ int Reunit(int AggI, int AggJ, int &err)
 int LectureSuiviTempo()
 {
     FILE* f = nullptr;
-    f = fopen(qPrintable(FichierSuiviTempo), "rt");
+    f = fopen(FichierSuiviTempo.c_str(), "rt");
     int i, j, k;
     char skip_line[500], data[500];
 
@@ -858,8 +865,8 @@ void LectureParams()
     char sauve[500];
 
     //char t[500] ;
-    f = fopen(qPrintable(FichierParam), "rt");
-    QDir lDir;
+    f = fopen(FichierParam.c_str(), "rt");
+
     if (f == nullptr)
     {
         physicalmodel.N = 2500;
@@ -1043,12 +1050,22 @@ void LectureParams()
     else
         physicalmodel.X = pow(physicalmodel.N*PI/6.0/physicalmodel.FV*exp(9.0/2.0*log(physicalmodel.sigmaDpm)*log(physicalmodel.sigmaDpm)),1.0/3.0); //Loi log-normale
 
-    strcat(CheminSauve,qPrintable(pathParam));
-    strcat(CheminSauve,"//");
+    strcat(CheminSauve,pathParam.c_str());
+    strcat(CheminSauve,"/");
     strcat(CheminSauve,sauve);
-    lDir.mkdir(CheminSauve);
 
     sprintf(commentaires, "N=%d \nT=%1.3f \nDpm=%1.3f \nsigmaDpm=%1.3f \nFV=%1.3e\nX=%1.3f \nP=%1.3f\nMode=%d\nRho=%1.3f \nDeltaSauve=%d\nCheminSauve=%s\n", physicalmodel.N, physicalmodel.T, physicalmodel.Dpm, physicalmodel.sigmaDpm, physicalmodel.FV, physicalmodel.X, physicalmodel.P, physicalmodel.Mode, physicalmodel.Rho, physicalmodel.DeltaSauve, CheminSauve);
+
+    cout <<  commentaires << endl;
+    if( !dirExists(CheminSauve))
+    {
+        const int dir_err = mkdir(CheminSauve, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        if (-1 == dir_err)
+        {
+            printf("Error creating directory\n");
+            exit(1);
+        }
+    }
 }
 
 void Calcul() //Coeur du programme
@@ -1071,51 +1088,33 @@ void Calcul() //Coeur du programme
     if (physicalmodel.ActiveModulephysique)
     {
         sprintf(commentaires, "Le module physique est activé.\n");
-        if (GUI == nullptr)
-            printf("%s",commentaires);
-        else
-            GUI->print(commentaires);
+        print(commentaires);
     }
     else
     {
         sprintf(commentaires, "Le module physique n'est pas activé.\n");
-        if (GUI == nullptr)
-            printf("%s",commentaires);
-        else
-            GUI->print(commentaires);
+        print(commentaires);
     }
 
     if (physicalmodel.ActiveVariationTempo)
     {
         LectureSuiviTempo();
         sprintf(commentaires, "Le fichier de données de suivi temporel est lu.\n");
-        if (GUI == nullptr)
-            printf("%s",commentaires);
-        else
-            GUI->print(commentaires);
+        print(commentaires);
     }
     else
     {
         sprintf(commentaires, "Le fichier de données sélectionné est le fichier 'params.txt'.\n");
-        if (GUI == nullptr)
-            printf("%s",commentaires);
-        else
-            GUI->print(commentaires);
+        print(commentaires);
     }
 
     sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n",
                           physicalmodel.dfe, physicalmodel.kfe, physicalmodel.coeffB, physicalmodel.xsurfgrowth);
-    if (GUI == nullptr)
-        printf("%s",commentaires);
-    else
-        GUI->print(commentaires);
+    print(commentaires);
 
     double Asurfgrowth = physicalmodel.coeffB*1E-3;
     sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
-    if (GUI == nullptr)
-        printf("%s",commentaires);
-    else
-        GUI->print(commentaires);
+    print(commentaires);
 
     InitRandom();
 
@@ -1141,7 +1140,9 @@ void Calcul() //Coeur du programme
     //$ Loop on the N monomeres
     while (NAgg > end && it_without_contact<lim_it_without_contact) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
     {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
+#ifdef WITH_GUI
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
+#endif
         time(&t);
         secondes = t-t0;
 
@@ -1169,10 +1170,7 @@ void Calcul() //Coeur du programme
                 if (finmem != finfichiersuivitempo)
                 {
                     sprintf(commentaires, "Attention le suivi temporel est plus long que celui du fichier lu.\n");
-                    if (GUI == nullptr)
-                        printf("%s",commentaires);
-                    else
-                        GUI->print(commentaires);
+                    print(commentaires);
                 }
                 finmem = finfichiersuivitempo;
             }
@@ -1249,9 +1247,10 @@ void Calcul() //Coeur du programme
             */
              printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.temps*1E6, int(secondes),it_without_contact);
             it_without_contact = 0;
+#ifdef WITH_GUI
              if (!(GUI == nullptr)            )
                 GUI->progress(physicalmodel.N-NAgg+1);
-
+#endif
         }
         else
         {
@@ -1298,21 +1297,62 @@ void Calcul() //Coeur du programme
     printf("\n\n");
 
     Fermeture();
-    if (GUI == nullptr)
-        printf("%s",CheminSauve);
-    else
-        GUI->print(CheminSauve);
+    print(CheminSauve);
 
     sprintf(commentaires,"\nFin du calcul  ...\n");
-    if (GUI == nullptr)
-        printf("%s",commentaires);
-    else
-        GUI->print(commentaires);
+    print(commentaires);
 }
 
 
 
+int No_GUI(int argc, char *argv[]){
+    FichierParam = argv[1];
 
+    char tmp[500];
+    char* err = realpath(dirname(argv[1]), tmp);
+    pathParam = tmp; //Cette variable ne retient que le chemin du fichier param
+
+    if (err==nullptr)
+    {
+        cout << "Param file does not exist\n" << endl;
+        exit(1);
+    }
+
+    LectureParams();
+
+    Calcul();
+
+    return 0;
+}
+
+
+void print(char* str)
+{
+#ifdef WITH_GUI
+    if (GUI == nullptr)
+        printf("%s",str);
+    else
+        GUI->print(str);
+#else
+    printf("%s",str);
+#endif
+}
+
+int dirExists(const char *path)
+{
+    struct stat info;
+
+    if(stat( path, &info ) != 0)
+        return 0;
+    else if(info.st_mode & S_IFDIR)
+        return 1;
+    else
+        return 0;
+}
+
+
+
+#ifdef WITH_GUI
 
 
 
@@ -1422,18 +1462,6 @@ void MainWindow::progress(int value){
     ui->progressBar->setValue(value);
 }
 
+#endif
 
-
-
-
-int No_GUI(int argc, char *argv[]){
-    FichierParam = argv[1];
-    QFileInfo tmp2 = FichierParam;
-    pathParam = tmp2.absolutePath(); //Cette variable ne retient que le chemin du fichier param
-    LectureParams();
-
-    Calcul();
-
-    return 0;
-}
 
