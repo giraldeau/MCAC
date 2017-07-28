@@ -135,6 +135,6 @@ equals(COMPILATOR, "CLANG"){
 }
 
 #PROFILING
-#LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
+LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
 
 

@@ -31,9 +31,29 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <utility>
 
 
-double periodic(const double x, const double dim)
+double periodicDistance(const double x, const double dim)
 {
-    return dim-fmod(dim-fmod(x,dim),dim);
+    //return periodicPosition(x+0.5*dim,dim)-0.5*dim;
+    double hdim(0.5*dim);
+    if (x<-hdim)
+        return x+dim;
+    if (x>hdim)
+        return x-dim;
+    return x;
+}
+
+
+double periodicPosition(const double x, const double dim)
+{
+    //return x;
+    //return fmod(dim-fmod(dim-x,dim),dim);
+    //return fmod(x+dim,dim);
+    if (x<0)
+        return x+dim;
+    if (x>dim)
+        return x-dim;
+    return x;
+
 }
 
 void Sphere::SetPosition(const double newx, const double newy, const double newz)
@@ -46,12 +66,9 @@ void Sphere::SetPosition(const double newx, const double newy, const double newz
     }
     else
     {
-        //*x = periodic(newx,physicalmodel->L);
-        //*y = periodic(newy,physicalmodel->L);
-        //*z = periodic(newz,physicalmodel->L);
-        *x = newx;
-        *y = newy;
-        *z = newz;
+        *x = periodicPosition(newx,physicalmodel->L);
+        *y = periodicPosition(newy,physicalmodel->L);
+        *z = periodicPosition(newz,physicalmodel->L);
     }
 }
 void Sphere::SetPosition(const double position[])
@@ -131,9 +148,7 @@ void Sphere::Init(void)
 {
     setpointers();
 
-    *x = 0.;
-    *y = 0;
-    *z = 0;
+    SetPosition(0, 0, 0);
     *r = 0;
     *volume = 0.;
     *surface = 0.;
@@ -194,9 +209,7 @@ const array<double, 4> Sphere::Position(void)
 
 void Sphere::Init(const double newx,const double newy,const double newz,const double newr)
 {
-    *x = newx;
-    *y = newy;
-    *z = newz;
+    SetPosition(newx, newy, newz);
     *r = newr;
     UpdateVolAndSurf();
 }
@@ -223,16 +236,12 @@ void Sphere::DecreaseLabel(void)
 
 void Sphere::Translate(const double trans[])
 {
-    *x += trans[1];
-    *y += trans[2];
-    *z += trans[3];
+    SetPosition(*x + trans[1], *y + trans[2], *z + trans[3]);
 }
 
 void Sphere::Translate(const array<double, 4> trans)
 {
-    *x += trans[1];
-    *y += trans[2];
-    *z += trans[3];
+    SetPosition(*x + trans[1], *y + trans[2], *z + trans[3]);
 }
 
 string Sphere::str(const double coef)

@@ -64,7 +64,6 @@ class Aggregate
         array<int, 4> VerletIndex();
         void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
         void UpdatesSpheres(ListSphere&, int index[]);
-        void ReplacePosi();
         void RayonGiration(void);
         double Distance_Aggregate(Aggregate&, array<double,4> vectorOther, array<double,4> Vectdir);
         void Update();

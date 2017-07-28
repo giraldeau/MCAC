@@ -36,7 +36,6 @@ const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
 
-
 /* #############################################################################################################
  * #################################                                       #####################################
  * #################################             SPHERE                    #####################################
@@ -63,7 +62,25 @@ __attribute((pure)) double Sphere::Distance(const array<double, 4> point)
 
  __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz)
 {
-    return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
+     if (physicalmodel == nullptr)
+     {
+          return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
+     }
+     else
+     {
+        double dx = periodicDistance((*x-otherx),physicalmodel->L);
+        double dy = periodicDistance((*y-othery),physicalmodel->L);
+        double dz = periodicDistance((*z-otherz),physicalmodel->L);
+        double dist1 = sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2));
+        double dist2 = sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
+        /*cout << "***  "<< physicalmodel->L << endl
+             << *x << " " << otherx << " "<< (*x - otherx)/physicalmodel->L << " " << dx/physicalmodel->L<< endl
+             << *y << " " << othery << " "<< (*y - othery)/physicalmodel->L << " " << dy/physicalmodel->L<< endl
+             << *z << " " << otherz << " "<< (*z - otherz)/physicalmodel->L << " " << dz/physicalmodel->L<< endl
+             << dist1 << " " << dist2 << endl
+             << "***"<< endl;*/
+        return dist1;
+     }
 }
 
 /* #############################################################################################################
@@ -97,15 +114,14 @@ void Sphere::UpdateVolAndSurf(void)
    *  \image html cCSphereFIntersectionCSphereddd.png
    */
     double B, C;
-    double dx, dy, dz;
     double DELTA;
     double K, K1, K2;
     double dist,dist_contact;
     double distance;
 
-    dx = *c.x - *x;
-    dy = *c.y - *y;
-    dz = *c.z - *z;
+    double dx = periodicDistance((*c.x-*x),physicalmodel->L);
+    double dy = periodicDistance((*c.y-*y),physicalmodel->L);
+    double dz = periodicDistance((*c.z-*z),physicalmodel->L);
 
     dist_contact = pow(*r + *c.r,2);
 

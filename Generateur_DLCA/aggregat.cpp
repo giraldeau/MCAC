@@ -230,9 +230,18 @@ const array<double, 4> Aggregate::GetPosition(void) const
 
 void Aggregate::SetPosition(const double newx,const double newy,const double newz)
 {
-    *x = newx;
-    *y = newy;
-    *z = newz;
+    if (physicalmodel == nullptr)
+    {
+        *x = newx;
+        *y = newy;
+        *z = newz;
+    }
+    else
+    {
+        *x = periodicPosition(newx,physicalmodel->L);
+        *y = periodicPosition(newy,physicalmodel->L);
+        *z = periodicPosition(newz,physicalmodel->L);
+    }
 
     //ReplacePosi();
 
@@ -274,48 +283,6 @@ void Aggregate::Translate(const double vector[])
     }
 
     SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
-}
-
-//############################################# Conditions aux limites périodiques ##############################################
-
-void Aggregate::ReplacePosi()
-{
-    // This function will relocate an aggregate when it gets out of the box limiting the space
-
-    if (physicalmodel == nullptr)
-        return;
-
-    array<double, 4> trans;
-    bool move=false;
-
-    const array<double, 4> pos = GetPosition();
-
-    //$ for every dimension
-    for (int i = 1; i <= 3; i++)
-    {
-        //$ Check if it is getting out
-        if (pos[i] > physicalmodel->L)
-        {
-            trans[i] = - physicalmodel->L;
-            move = true;
-        }
-        else if (pos[i] < 0)
-        {
-            trans[i] = physicalmodel->L;
-            move = true;
-        }
-        else
-        {
-            trans[i] = 0;
-        }
-    }
-
-    //$ If it is getting out
-    if (move)
-    {
-        //$ Update the position of aggregate
-        Translate(trans);
-    }
 }
 
 Aggregate::~Aggregate(void)
@@ -501,7 +468,6 @@ void Aggregate::RayonGiration(void)
 
     //cout << Position()<< " "<< newpos <<endl;
     SetPosition(newpos);
-    ReplacePosi();
 
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
     double Arg, Brg;

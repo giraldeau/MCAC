@@ -315,11 +315,11 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                 inir = Aggregates[i][6]; //represents the different agregates
 
                 //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
-                for (dx = -1;dx <= 1; dx++)
+                for (dx = 0;dx <= 0; dx++)
                 {
-                    for (dy = -1; dy <= 1; dy++)
+                    for (dy = 0; dy <= 0; dy++)
                     {
-                        for (dz = -1; dz <= 1; dz++)
+                        for (dz = 0; dz <= 0; dz++)
                         {
                             Sphere s2(physicalmodel,inix+physicalmodel.L*dx,iniy+physicalmodel.L*dy,iniz+physicalmodel.L*dz,inir);
 
@@ -1264,9 +1264,6 @@ void Calcul() //Coeur du programme
             newnumagg = NumAgg;
             it_without_contact++;
         }
-        Aggregates[newnumagg].ReplacePosi();
-
-
 
         if (physicalmodel.DeltaSauve>0)
         {
@@ -1310,12 +1307,18 @@ void Calcul() //Coeur du programme
     print(commentaires);
 /*
     double l(2);
+    int ntest = 7;
 
-    for (int i = -10;i<=10;i++)
-        cout << l-fmod(l-fmod(i/10.,l),l) << endl;
-*/
+    for (int i = -ntest;i<=ntest;i++)
+        cout << i/3.<<" "<< periodicPosition(i/3.,l)<< " " <<periodicPosition(l+i/3.,l) << endl;
+    cout << "***" << endl;
+
+    for (int i = -ntest;i<=ntest;i++)
+    {
+        for (int j = -ntest;j<=ntest;j++)
+            cout << (i-j)/3. <<" "<<periodicDistance((i-j)/3.,l)<< endl;
+    }*/
 }
-
 
 
 int No_GUI(int argc, char *argv[]){

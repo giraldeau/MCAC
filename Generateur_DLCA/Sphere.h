@@ -153,4 +153,8 @@ class ListSphere
         friend void swap(ListSphere& first, ListSphere& second);
 
 };
+
+double periodicPosition(const double x, const double dim);
+double periodicDistance(const double x, const double dim);
+
 #endif // SPHERE
