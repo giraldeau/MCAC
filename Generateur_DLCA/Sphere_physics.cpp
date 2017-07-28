@@ -52,7 +52,7 @@ __attribute((pure)) double Sphere::Distance(Sphere& c)
     return Distance(*c.x,*c.y,*c.z);
 }
 
-__attribute((pure)) double Sphere::Distance(const double* point)
+__attribute((pure)) double Sphere::Distance(const double point[])
 {
     return Distance(point[1],point[2],point[3]);
 }

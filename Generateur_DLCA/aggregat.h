@@ -56,14 +56,14 @@ class Aggregate
         Aggregate(Aggregate Agg1, Aggregate Agg2);
 
         void Init(void);
-        const array<double, 4> Position(void);
-        void Position(const array<double, 4> position);
-        void Position(const double x,const double y,const double z);
+        const array<double, 4> GetPosition(void) const;
+        void SetPosition(const array<double, 4> position);
+        void SetPosition(const double x,const double y,const double z);
         void Translate(const array<double, 4> vector);
-        void Translate(const double* vector);
+        void Translate(const double vector[]);
         array<int, 4> VerletIndex();
         void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
-        void UpdatesSpheres(ListSphere&, int* index);
+        void UpdatesSpheres(ListSphere&, int index[]);
         void ReplacePosi();
         void RayonGiration(void);
         double Distance_Aggregate(Aggregate&, array<double,4> vectorOther, array<double,4> Vectdir);
@@ -79,7 +79,7 @@ class Aggregate
         ~Aggregate(void);
 
         Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Aggregate(PhysicalModel&, const double* position, const double r);
+        Aggregate(PhysicalModel&, const double position[], const double r);
         Aggregate(Sphere&);
 
         void AfficheVerlet();
@@ -133,10 +133,12 @@ public:
     void Remove(const int id,const array<int, 4> Index);
     list<int>* GetCell(const int i,const int j,const int k)const;
     void Init(const int GridDiv);
+    ~Verlet(void);
+    void destroy(void);
 
     private:
     list<int>**** verletlist;
-
+    int GridDiv;
 };
 
 #endif // AGGREGAT_H

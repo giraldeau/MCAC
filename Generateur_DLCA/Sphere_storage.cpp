@@ -30,6 +30,39 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <sstream>
 #include <utility>
 
+
+double periodic(const double x, const double dim)
+{
+    return dim-fmod(dim-fmod(x,dim),dim);
+}
+
+void Sphere::SetPosition(const double newx, const double newy, const double newz)
+{
+    if (physicalmodel == nullptr)
+    {
+        *x = newx;
+        *y = newy;
+        *z = newz;
+    }
+    else
+    {
+        //*x = periodic(newx,physicalmodel->L);
+        //*y = periodic(newy,physicalmodel->L);
+        //*z = periodic(newz,physicalmodel->L);
+        *x = newx;
+        *y = newy;
+        *z = newz;
+    }
+}
+void Sphere::SetPosition(const double position[])
+{
+    SetPosition(position[1],position[2],position[3]);
+}
+void Sphere::SetPosition(const array<double, 4> position)
+{
+    SetPosition(position[1],position[2],position[3]);
+}
+
 Sphere::Sphere(void):
     x(nullptr),
     y(nullptr),
@@ -56,9 +89,7 @@ Sphere::Sphere(PhysicalModel& _physicalmodel) : Sphere()
 
 Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr) : Sphere(_physicalmodel)
 {
-    *x = newx;
-    *y = newy;
-    *z = newz;
+    SetPosition(newx, newy, newz);
     *r = newr;
     UpdateVolAndSurf();
 }
@@ -82,7 +113,7 @@ Sphere::Sphere(ListSphere& aggregat,const int id):
 
 
 
-Sphere::Sphere(PhysicalModel& _physicalmodel, const double* newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
+Sphere::Sphere(PhysicalModel& _physicalmodel, const double newp[],const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
 Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
 
 Sphere::Sphere(const Sphere& c) : Sphere(*(c.physicalmodel), *c.x,*c.y,*c.z,*c.r){}
@@ -120,19 +151,6 @@ Sphere::~Sphere(void)
             (*Storage)[j].erase((*Storage)[j].begin() + SphereLabel);
         delete Storage;
     }
-
-    external_storage=nullptr;
-    SphereLabel = 0;
-    AggLabel = 0;
-
-    x = nullptr;
-    y = nullptr;
-    z = nullptr;
-    r = nullptr;
-    volume = nullptr;
-    surface = nullptr;
-    physicalmodel = nullptr;
-
 }
 
  __attribute__((pure)) double& Sphere::operator[](const int i)
@@ -183,7 +201,7 @@ void Sphere::Init(const double newx,const double newy,const double newz,const do
     UpdateVolAndSurf();
 }
 
-void Sphere::Init(const double* newp,const double newr)
+void Sphere::Init(const double newp[],const double newr)
 {
     Init(newp[1],newp[2],newp[3],newr);
 }
@@ -203,7 +221,7 @@ void Sphere::DecreaseLabel(void)
     AggLabel--;
 }
 
-void Sphere::Translate(const double* trans)
+void Sphere::Translate(const double trans[])
 {
     *x += trans[1];
     *y += trans[2];
@@ -251,7 +269,7 @@ ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) : ListSphere
 }
 
 
-ListSphere::ListSphere(ListSphere& parent, int* _index):
+ListSphere::ListSphere(ListSphere& parent, int _index[]):
     physicalmodel(parent.physicalmodel),
     spheres(),
     index(),
@@ -263,8 +281,9 @@ ListSphere::ListSphere(ListSphere& parent, int* _index):
         spheres.assign(N, nullptr);
 
         index[0]=N;
+        const int listSize = N;
         //#pragma omp for simd
-        for (int i = 0; i < N; i++)
+        for (int i = 0; i < listSize; i++)
         {
             index[i+1] = _index[i+1];
             int iparent = external_storage->index[index[i+1]]-1;
@@ -274,7 +293,7 @@ ListSphere::ListSphere(ListSphere& parent, int* _index):
 
 
 
-ListSphere::ListSphere(ListSphere& parent, int** _index, const int start, const int end):
+ListSphere::ListSphere(ListSphere& parent, int* _index[], const int start, const int end):
     physicalmodel(parent.physicalmodel),
     spheres(),
     index(),
@@ -292,6 +311,8 @@ ListSphere::ListSphere(ListSphere& parent, int** _index, const int start, const 
     index[0]=N;
     int m=0;
     for(int i=start;i<=end;i++)
+    {
+    #pragma omp for simd
         for(int j=1;j<=_index[i][0];j++)
         {
             index[m+1] = _index[i][j];
@@ -299,6 +320,7 @@ ListSphere::ListSphere(ListSphere& parent, int** _index, const int start, const 
             spheres[m] = external_storage->spheres[iparent];
             m++;
         }
+}
 }
 
 void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
@@ -316,7 +338,8 @@ void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
         (*Storage)[j].assign(_N, 0.);
 
     index[0]=_N;
-    for (N = 0; N < _N; N++)
+    const int listSize = _N;
+    for (N = 0; N < listSize; N++)
     {
         index[N+1] = N+1;
         spheres[N] = new Sphere(*this,N);

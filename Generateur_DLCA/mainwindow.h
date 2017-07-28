@@ -54,7 +54,7 @@ void SauveASCII(int value, int id);
 void InitRandom();
 double Random();
 double Maxi2D(int colonne, int nmax);
-double MinEtIndex(double* tableau, int size, int& position);
+double MinEtIndex(double tableau[], int size, int& position);
 void SupprimeLigne(int ligne);
 void InsertionSort(int n, double arr[], int index[]);
 void quickSort(double arr[], vector<int>& index, int left, int right);

@@ -21,7 +21,7 @@ Aggregate::Aggregate(void):
     external_storage(nullptr),
     creation_date(0.),
     nctmp(0.),
-    nptmp(0.),
+    nptmp(1.),
     rg(nullptr),
     dm(nullptr),
     lpm(nullptr),
@@ -39,7 +39,7 @@ Aggregate::Aggregate(void):
     z(nullptr),
     Label(0),
     Nc(0),
-    Np(0),
+    Np(1),
     InVerlet(false)
 {
     for (int j=0;j<=15;j++)
@@ -67,7 +67,7 @@ void Aggregate::Init(void)
 
     IndexVerlet = {{0,0,0,0}};
 
-    Position(0.,0.,0.);
+    SetPosition(0.,0.,0.);
 }
 
 
@@ -101,12 +101,12 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
         verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(Label);
         InVerlet=true;
     }
-    Position(position);
+    SetPosition(position);
     int listlabel[2] = {1,Label};
     spheres[Label].SetLabel(Label);
     spheres[Label].Init(position, Dp/2);
     myspheres = ListSphere(spheres,listlabel);
-
+    Np = myspheres.size();
 
     *rmax = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
     *dm = Dp;                   //Diamètre de mobilité
@@ -144,20 +144,15 @@ double Aggregate::Distance_Aggregate(Aggregate& other,array<double,4> vectorOthe
     double dist, ret;
     ret = 1.0;
 
-    //Liste des sphérules constituant l'agrégat n°Agg
-
-    int nmonoi = myspheres.size();
-    int np = other.myspheres.size();
-
     //$ Loop on all the spheres of the other aggregate
-    for (int j = 1; j <= np; j++)
+    for (int j = 1; j <= other.Np; j++)
     {
         //$ spheredecale is used to replace the sphere into the corresponding box
         Sphere spheredecale(other.myspheres[j]);
         spheredecale.Translate(vectorOther);
 
         //$ For every sphere in the aggregate :
-        for (int knum = 1; knum <= nmonoi; knum++)
+        for (int knum = 1; knum <= Np; knum++)
         {
             //$ Check if j and k are contact and if not, what is the distance between them
             dist=myspheres[knum].Collision(spheredecale, Vectdir, *lpm);
@@ -181,22 +176,21 @@ void Aggregate::Update()
     RayonGiration();
 
     //$ Determination of the mean radius of degrees 1,2,3 of Agg
-    int np = myspheres.size();
     double rpmoy, rpmoy2, rpmoy3;
     rpmoy = rpmoy2 = rpmoy3 = 0.0;
-    for (int i = 1; i <= np; i++)
+    for (int i = 1; i <= Np; i++)
     {
-        rpmoy = rpmoy + myspheres[i].Radius(); //Sum of the radius of each sphere in Agg
+        rpmoy = rpmoy + *myspheres[i].r; //Sum of the radius of each sphere in Agg
       //  rpmoy2 = rpmoy2 + pow(myspheres[i].Radius(), 2);
       //  rpmoy3 = rpmoy3 + pow(myspheres[i].Radius(), 3);
     }
-    rpmoy = rpmoy/(double(np));
+    rpmoy = rpmoy/(double(Np));
     //rpmoy2 = rpmoy2/(double(np));
     //rpmoy3 = rpmoy3/(double(np));
 
 
     //$ Determination of Dm using ConvertRg2Dm
-    *dm = physicalmodel->ConvertRg2DmFromStart(np,*rg,*dm/2);
+    *dm = physicalmodel->ConvertRg2DmFromStart(Np,*rg,*dm/2);
 
     if (physicalmodel->ActiveModulephysique == 1)
     {
@@ -219,12 +213,13 @@ void Aggregate::Update()
 
 
 
-void Aggregate::UpdatesSpheres(ListSphere& spheres,int* index)
+void Aggregate::UpdatesSpheres(ListSphere& spheres,int index[])
 {
     myspheres = ListSphere(spheres,index);
+    Np = myspheres.size();
 }
 
-const array<double, 4> Aggregate::Position(void)
+const array<double, 4> Aggregate::GetPosition(void) const
 {
     array<double, 4> mypos;
     mypos[1]=*x;
@@ -233,11 +228,13 @@ const array<double, 4> Aggregate::Position(void)
     return mypos;
 }
 
-void Aggregate::Position(const double newx,const double newy,const double newz)
+void Aggregate::SetPosition(const double newx,const double newy,const double newz)
 {
     *x = newx;
     *y = newy;
     *z = newz;
+
+    //ReplacePosi();
 
     if (InVerlet && physicalmodel->use_verlet)
     {
@@ -246,43 +243,37 @@ void Aggregate::Position(const double newx,const double newy,const double newz)
 
         if (newindexVerlet != IndexVerlet)
         {
-
             verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(Label);
             IndexVerlet = newindexVerlet;
             verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(Label);
         }
     }
 
-    //ReplacePosi();
 }
 
-void Aggregate::Position(const array<double, 4> position)
+void Aggregate::SetPosition(const array<double, 4> position)
 {
-    Position(position[1], position[2], position[3]);
+    SetPosition(position[1], position[2], position[3]);
 }
 
 void Aggregate::Translate(const array<double, 4> vector)
 {
-
-    int nmonoi = myspheres.size();
-    for (int i = 1; i <= nmonoi; i++)
+    for (int i = 1; i <= Np; i++)
     {
         myspheres[i].Translate(vector);
     }
 
-    Position(*x +vector[1], *y + vector[2], *z +vector[3]);
+    SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
 }
 
-void Aggregate::Translate(const double* vector)
+void Aggregate::Translate(const double vector[])
 {
-
-    int nmonoi = myspheres.size();
-    for (int i = 1; i <= nmonoi; i++)
+    for (int i = 1; i <= Np; i++)
     {
         myspheres[i].Translate(vector);
     }
 
-    Position(*x +vector[1], *y + vector[2], *z +vector[3]);
+    SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
 }
 
 //############################################# Conditions aux limites périodiques ##############################################
@@ -297,7 +288,7 @@ void Aggregate::ReplacePosi()
     array<double, 4> trans;
     bool move=false;
 
-    const array<double, 4> pos = Position();
+    const array<double, 4> pos = GetPosition();
 
     //$ for every dimension
     for (int i = 1; i <= 3; i++)
@@ -332,7 +323,6 @@ Aggregate::~Aggregate(void)
     if (InVerlet && physicalmodel->use_verlet)
     {
         verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(Label);
-        InVerlet=false;
     }
 
     if (external_storage==nullptr)
@@ -340,35 +330,7 @@ Aggregate::~Aggregate(void)
         delete Storage;
     }
 
-    external_storage=nullptr;
-
     delete InclusiveSphere;
-    parents[0] = nullptr;
-    parents[1] = nullptr;
-    son = nullptr;
-    physicalmodel = nullptr;
-    Label = 0;
-    creation_date = 0.;
-    Nc = 0.;
-
-    rg=nullptr;
-    dm=nullptr;
-    lpm=nullptr;
-    time_step=nullptr;
-    rmax=nullptr;
-    volAgregat=nullptr;
-    surfAgregat=nullptr;
-    Tv=nullptr;
-    volAgregat_without_cov=nullptr;
-    cov=nullptr;
-    ratio_surf_vol=nullptr;
-    free_surface=nullptr;
-    x=nullptr;
-    y=nullptr;
-    z=nullptr;
-
-
-
 }
 
 
@@ -379,7 +341,7 @@ double& Aggregate::operator[](const int var)
     case 0:
         return *rg;
     case 1:
-        nptmp=double(myspheres.size());
+        nptmp=double(Np);
         return nptmp;
     case 3:
         return *dm;
@@ -407,17 +369,15 @@ double& Aggregate::operator[](const int var)
     *Tv = 0.0;
     vector<double> tabVol;
 
-    int nmonoi = myspheres.size();
-
-    tabVol.assign(nmonoi+1, 0.);
+    tabVol.assign(Np+1, 0.);
 
     //$ For the Spheres i in Agg Id
-    for (int i = 1; i <= nmonoi; i++)
+    for (int i = 1; i <= Np; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
         tabVol[i] += myspheres[i].Volume(); //Calculation of the volume of i
 
-        for (int j = i+1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
+        for (int j = i+1; j <= Np; j++) //for the j spheres composing Aggregate n°id
         {
 
             double voli, volj, surfi, surfj;
@@ -425,7 +385,7 @@ double& Aggregate::operator[](const int var)
 
             //$ Calculation of the intersection between the spheres i and j
             double dist = myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
-            double rpmoy = (myspheres[i].Radius()+myspheres[j].Radius())/2.0; //Mean Radius between i and j monomeres
+            double rpmoy = (*myspheres[i].r + *myspheres[j].r)/2.0; //Mean Radius between i and j monomeres
             double dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
             //$ Check if i is covering j
             //$ [dbordabord <= 1]
@@ -444,15 +404,15 @@ double& Aggregate::operator[](const int var)
             tabVol[j] = tabVol[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
                                              //la calotte due à la sphérule i
         }
-        terme = terme + tabVol[i]/myspheres[i].Volume();
+        terme = terme + tabVol[i]/(*myspheres[i].volume);
 
     }
-    *Tv = 1 - terme /nmonoi;
+    *Tv = 1 - terme /Np;
 
     Nc = Nc/2;//and determine the coefficient of mean covering of Agg Id
     //$ Check if there is more than one monomere in the aggregate
     //$ [nmonoi == 1]
-    if (nmonoi == 1 || Nc == 0)
+    if (Np == 1 || Nc == 0)
     {
         //$ Cov = 0
         *cov = 0;
@@ -488,22 +448,20 @@ void Aggregate::RayonGiration(void)
     *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
                 // It is used to assimilate the aggregate to a sphere when checking for intersections
 
-    int nmonoi = myspheres.size();
-
-    tabVol.assign(nmonoi+1, 0.);
-    tabSurf.assign(nmonoi+1, 0.);
+    tabVol.assign(Np+1, 0.);
+    tabSurf.assign(Np+1, 0.);
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
     array<double, 4> newpos({{0.,0.,0.,0.}});
 
     //$ For the Spheres i in Agg Id
-    for (int i = 1; i <= nmonoi; i++)
+    for (int i = 1; i <= Np; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] += myspheres[i].Volume(); //Calculation of the volume of i
-        tabSurf[i] += myspheres[i].Surface();    //Calculation of the surface of i
+        tabVol[i] += *myspheres[i].volume; //Calculation of the volume of i
+        tabSurf[i] += *myspheres[i].surface;    //Calculation of the surface of i
 
-        for (int j = i+1; j <= nmonoi; j++) //for the j spheres composing Aggregate n°id
+        for (int j = i+1; j <= Np; j++) //for the j spheres composing Aggregate n°id
         {
 
             double voli, volj, surfi, surfj;
@@ -511,7 +469,6 @@ void Aggregate::RayonGiration(void)
 
             //$ Calculation of the intersection between the spheres i and j
             double dist = myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
-            dist = 0;
 
             //$ The volume and surface covered by j is substracted from those of i
             tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
@@ -531,11 +488,9 @@ void Aggregate::RayonGiration(void)
 
 
         //$ Calculation of the position of the center of mass
-        const array<double, 4> pos = myspheres[i].Position();
-        for (int k = 1; k <= 3; k++)
-        {
-            newpos[k] += pos[k]*tabVol[i];
-        }
+        newpos[1] += *myspheres[i].x * tabVol[i];
+        newpos[2] += *myspheres[i].y * tabVol[i];
+        newpos[3] += *myspheres[i].z * tabVol[i];
     }
     //$ Filling of PosiGravite
 
@@ -545,26 +500,26 @@ void Aggregate::RayonGiration(void)
     } //Centre of mass of Agg Id
 
     //cout << Position()<< " "<< newpos <<endl;
-    Position(newpos);
+    SetPosition(newpos);
     ReplacePosi();
 
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
     double Arg, Brg;
     Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
 
-    for (int i = 1; i <= nmonoi; i++)
+    for (int i = 1; i <= Np; i++)
     {
         //$ Determination of the distance between each monomere and the center of mass of Agg Id
-        double li = myspheres[i].Distance(Position()); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
+        double li = myspheres[i].Distance(*x,*y,*z); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
 
-        double r = li + myspheres[i].Radius();
+        double r = li + *myspheres[i].r;
 
         //$ Calculation of rmax
         *rmax=MAX(*rmax,r);
 
         //$ Calculation of Rg
         Arg = Arg + tabVol[i]*pow(li, 2);
-        Brg = Brg + tabVol[i]*pow(myspheres[i].Radius(), 2);
+        Brg = Brg + tabVol[i]*pow(*myspheres[i].r, 2);
     }
 
     *rg = sqrt(fabs((Arg+3.0/5.0*Brg)/(*volAgregat)));
@@ -613,8 +568,10 @@ void Verlet::Remove(const int id,const array<int, 4> Index)
     verletlist[Index[1]][Index[2]][Index[3]]->remove(id);
 }
 
-void Verlet::Init(const int GridDiv)
+void Verlet::Init(const int _GridDiv)
 {
+    destroy();
+    GridDiv = _GridDiv;
     verletlist=new list<int>***[3*GridDiv+1];
     for(int i=0;i<=3*GridDiv;i++)
     {
@@ -638,3 +595,28 @@ __attribute((pure)) list<int>* Verlet::GetCell(const int i,const int j,const int
     return verletlist[i][j][k];
 }
 
+Verlet::~Verlet(void)
+{
+    destroy();
+}
+
+
+void Verlet::destroy(void)
+{
+    if (verletlist!=nullptr)
+    {
+        for(int i=0;i<=3*GridDiv;i++)
+        {
+            for(int j=0;j<=3*GridDiv;j++)
+            {
+                for(int k=0;k<=3*GridDiv;k++)
+                {
+                    delete verletlist[i][j][k];
+                }
+                delete verletlist[i][j];
+            }
+            delete verletlist[i];
+        }
+        delete verletlist;
+    }
+}

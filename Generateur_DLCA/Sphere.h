@@ -57,16 +57,19 @@ class Sphere
     public:
 
         void Init(const double x, const double y, const double z, const double r);
-        void Init(const double* position, const double r);
+        void Init(const double position[], const double r);
         void Init(const array<double, 4> position,const double r);
 
         void Init(Sphere&);
         void Init(void);
 
+        void SetPosition(const double x, const double y, const double z);
+        void SetPosition(const double position[]);
+        void SetPosition(const array<double, 4> position);
 
         void SetLabel(const int);
         void DecreaseLabel(void);
-        void Translate(const double* vector);
+        void Translate(const double vector[]);
         void Translate(const array<double, 4>  vector);
         string str(const double coef) ;
         void Aff(const double coef) ;
@@ -76,7 +79,7 @@ class Sphere
         const array<double, 4> Position(void) ;
 
         double Distance(Sphere&) ;
-        double Distance(const double* point) ;
+        double Distance(const double point[]) ;
         double Distance(const array<double, 4> point) ;
         double Distance(const double x, const double y, const double z) ;
 
@@ -94,7 +97,7 @@ class Sphere
 
         Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
         Sphere(PhysicalModel&, const array<double, 4> position, const double r);
-        Sphere(PhysicalModel&, const double* position, const double r);
+        Sphere(PhysicalModel&, const double position[], const double r);
         Sphere(const Sphere&);
 
     private:
@@ -134,8 +137,8 @@ class ListSphere
     public:
         ListSphere(void);
         ListSphere(PhysicalModel& _physicalmodel, const int N);
-        ListSphere(ListSphere& parent,int* index);
-        ListSphere(ListSphere& parent,int** index,const int start,const int end);
+        ListSphere(ListSphere& parent,int index[]);
+        ListSphere(ListSphere& parent,int* index[],const int start,const int end);
 
         ~ListSphere(void);
         Sphere& operator[](const int);

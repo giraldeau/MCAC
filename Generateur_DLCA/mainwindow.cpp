@@ -55,7 +55,7 @@ double RayonAggMax=0.; // Value of the radius of the bigger aggregate in the box
 
 // Collision Agg
 int** IdPossible;  // Array of the Ids of the aggregates that could be in contact with the one moving
-
+int max_npossible;
 
 // suivit tempo
 string FichierParam = "___";
@@ -88,16 +88,14 @@ double Random()
 double Maxi2D(int colonne, int nmax)
 {
     //Maximum of a column in the Aggregate table
-    int i;
     double m = Aggregates[1][colonne];
-
-    for (i = 2;i <= nmax; i++)
-        if (Aggregates[i][colonne] > m)    m = Aggregates[i][colonne];
+    for (int i = 0;i < nmax; i++)
+        m =max(Aggregates[i][colonne], m);
 
     return m;
 }
 
-double MinEtIndex(double* tableau, int size, int& position)
+double MinEtIndex(double tableau[], int size, int& position)
 {
     //Minimum of a table
     int i;
@@ -128,9 +126,9 @@ void SupprimeLigne(int ligne)
 
         for (j = 0; j <= 11; j++)
             Aggregates[i-1][j] = Aggregates[i][j];
-        const array<double, 4> newpos = Aggregates[i].Position();
+        const array<double, 4> newpos = Aggregates[i].GetPosition();
 
-        Aggregates[i-1].Position(newpos);
+        Aggregates[i-1].SetPosition(newpos);
 
     }
     verlet.Remove(NAgg,Aggregates[NAgg].VerletIndex());
@@ -299,7 +297,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
     //$ Find potential contacts between agregates
 
-    Sphere s1(physicalmodel, Aggregates[id].Position(), Aggregates[id][6]); // Represents the sphere containing the agregate we're testing
+    Sphere s1(physicalmodel, Aggregates[id].GetPosition(), Aggregates[id][6]); // Represents the sphere containing the agregate we're testing
     //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
 
     if (! physicalmodel.use_verlet)
@@ -310,7 +308,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
             if (i != id)
             {
                 double inix,iniy,iniz,inir;
-                const array<double, 4> pos = Aggregates[i].Position();
+                const array<double, 4> pos = Aggregates[i].GetPosition();
                 inix = pos[1];
                 iniy = pos[2];
                 iniz = pos[3];
@@ -339,6 +337,11 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                                 IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
                                 IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
                                 IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                                if (npossible == max_npossible)
+                                {
+                                    cout << "Too many possible collisions" << endl;
+                                    exit(2);
+                                }
                             }
                         }
                     }
@@ -351,7 +354,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
 
 
         double mindist = (Aggregates[id][6]+RayonAggMax);
-        const array<double, 4> posid = Aggregates[id].Position();
+        const array<double, 4> posid = Aggregates[id].GetPosition();
 
         // Détermination des bornes
         if(Vectdir[1]>=0)
@@ -424,7 +427,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                         if (*p != id)
                         {
                             double inix,iniy,iniz,inir;
-                            const array<double, 4> posp = Aggregates[*p].Position();
+                            const array<double, 4> posp = Aggregates[*p].GetPosition();
                             inix = posp[1];
                             iniy = posp[2];
                             iniz = posp[3];
@@ -440,6 +443,11 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                                 IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
                                 IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
                                 IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                                if (npossible == max_npossible)
+                                {
+                                    cout << "Too many possible collisions" << endl;
+                                    exit(2);
+                                }
                             }
                         }
                     }
@@ -656,9 +664,10 @@ void Init()
 
     int testmem = 0;
     NAgg = physicalmodel.N;
+    max_npossible = NAgg;
     spheres.Init(physicalmodel, NAgg);
     TriCum = new double[NAgg+1];
-    IdPossible = new int* [NAgg+1];
+    IdPossible = new int* [max_npossible+1];
     Aggregates = new Aggregate[NAgg+1];
     IndexPourTri.assign(NAgg+1,0);
 
@@ -680,7 +689,7 @@ void Init()
     AggLabels[0][0]=0;
     AggLabels[0][1]=0;
 
-    for (int i = 1; i <= NAgg; i++)
+    for (int i = 1; i <= max_npossible; i++)
     {
         IdPossible[i] = new int[5];
     }
@@ -796,7 +805,7 @@ void SauveASCII(int value, int id)
         fprintf(f, "%10.3f\t", Aggregates[i][5]*1E6);
         fprintf(f, "%10.3f\t", Aggregates[i][6]*1E9);
 
-        const array<double, 4> pos = Aggregates[i].Position();
+        const array<double, 4> pos = Aggregates[i].GetPosition();
         for (j = 1; j <= 3; j++)
             fprintf(f, "%10.3f\t", pos[j]*1E9);
 
@@ -1221,14 +1230,12 @@ void Calcul() //Coeur du programme
             //the aggregate that's been tested in contact with the one moving is replaced in the "box" of the space where the contact happened
             //It gets in box on one side, then has to go out on the other one.
 
-            double* trans = new double[4];
+            double trans[4];
             trans[1] = IdPossible[aggcontact][2]*physicalmodel.L;
             trans[2] = IdPossible[aggcontact][3]*physicalmodel.L;
             trans[3] = IdPossible[aggcontact][4]*physicalmodel.L;
 
             Aggregates[IdPossible[aggcontact][1]].Translate(trans);
-
-            delete[] trans;
 
             //$ Aggregates in contact are reunited
             newnumagg = Reunit(NumAgg, IdPossible[aggcontact][1], err);
@@ -1289,7 +1296,7 @@ void Calcul() //Coeur du programme
     for (i = 1; i <= NAgg; i++)
     {
         printf("%d\t", i);
-        const array<double, 4> pos = Aggregates[i].Position();
+        const array<double, 4> pos = Aggregates[i].GetPosition();
         for (j = 1; j <= 3; j++)
             printf("%e\t", pos[j]*1E9);
         printf("\t%e\t%e\n",Aggregates[i][7]*1E25,Aggregates[i][9]*1E25);
@@ -1301,6 +1308,12 @@ void Calcul() //Coeur du programme
 
     sprintf(commentaires,"\nFin du calcul  ...\n");
     print(commentaires);
+/*
+    double l(2);
+
+    for (int i = -10;i<=10;i++)
+        cout << l-fmod(l-fmod(i/10.,l),l) << endl;
+*/
 }
 
 
