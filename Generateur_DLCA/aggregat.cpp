@@ -180,18 +180,6 @@ void Aggregate::Update()
     //$ Determination of the Radius of gyration of Agg using RayonGiration()
     RayonGiration();
 
-    //$ Determination of the mean radius of degrees 1,2,3 of Agg
-    double rpmoy, rpmoy2, rpmoy3;
-    rpmoy = rpmoy2 = rpmoy3 = 0.0;
-    for (int i = 1; i <= Np; i++)
-    {
-        rpmoy = rpmoy + *myspheres[i].r; //Sum of the radius of each sphere in Agg
-      //  rpmoy2 = rpmoy2 + pow(myspheres[i].Radius(), 2);
-      //  rpmoy3 = rpmoy3 + pow(myspheres[i].Radius(), 3);
-    }
-    rpmoy = rpmoy/(double(Np));
-
-
     //$ Determination of Dm using ConvertRg2Dm
     *dm = physicalmodel->ConvertRg2DmFromStart(Np,*rg,*dm/2);
 
@@ -325,8 +313,6 @@ double& Aggregate::operator[](const int var)
         return *free_surface;
     }
 
-
-
     *cov = 0.0;// Coeficient of mean covering
     Nc = 0; // Number of contacts
     double terme = 0.0; // Volume and surface of Agg Id
@@ -432,7 +418,7 @@ void Aggregate::RayonGiration(void)
             voli = volj = surfi = surfj = 0.;
 
             //$ Calculation of the intersection between the spheres i and j
-            double dist = myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
+            myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
 
             //$ The volume and surface covered by j is substracted from those of i
             tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de

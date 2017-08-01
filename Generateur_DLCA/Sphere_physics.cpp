@@ -87,9 +87,9 @@ __attribute((pure)) double Sphere::Distance(const array<double, 4> point)
 {
      if (physicalmodel != nullptr)
      {
-        double dx = periodicDistance((*x-otherx),physicalmodel->L);
-        double dy = periodicDistance((*y-othery),physicalmodel->L);
-        double dz = periodicDistance((*z-otherz),physicalmodel->L);
+        double dx(periodicDistance((*x-otherx),physicalmodel->L));
+        double dy(periodicDistance((*y-othery),physicalmodel->L));
+        double dz(periodicDistance((*z-otherz),physicalmodel->L));
         return sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2));
      }
      else
@@ -187,7 +187,7 @@ double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1,
     Rj = *c.r;
 
 
-    //$ Determination of the distance between the center of the 2 aggregates
+    //$ Determination of the distance between the center of the 2 spheres
     d = Distance(c);
 
     //$ Check if they aren't in contact
