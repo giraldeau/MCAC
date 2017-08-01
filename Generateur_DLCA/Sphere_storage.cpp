@@ -32,17 +32,17 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 void Sphere::SetPosition(const double newx, const double newy, const double newz)
 {
-    if (physicalmodel == nullptr)
-    {
-        *x = newx;
-        *y = newy;
-        *z = newz;
-    }
-    else
+    if (physicalmodel != nullptr)
     {
         *x = periodicPosition(newx,physicalmodel->L);
         *y = periodicPosition(newy,physicalmodel->L);
         *z = periodicPosition(newz,physicalmodel->L);
+    }
+    else
+    {
+        *x = newx;
+        *y = newy;
+        *z = newz;
     }
 }
 void Sphere::SetPosition(const double position[])

@@ -161,17 +161,6 @@ double Aggregate::Distance_Aggregate(Aggregate& other,array<double,4> vectorOthe
             {
                 ret = dist;
                 contact = true;
-
-/*
-                if (dist>0)
-                {
-                cout << "***  "<< Label << " "<< other.Label << " distance aggregate" << endl
-                     << " Me    : " << knum << " " << myspheres[knum].Position()[1]/physicalmodel->L << " " << myspheres[knum].Position()[2]/physicalmodel->L << " " << myspheres[knum].Position()[3]/physicalmodel->L   << endl
-                     << " Other : " << j << " " << spheredecale.Position()[1]/physicalmodel->L << " " << spheredecale.Position()[2]/physicalmodel->L << " " << spheredecale.Position()[3]/physicalmodel->L << endl
-                     << " Distance : " << myspheres[knum].Distance(spheredecale)/physicalmodel->L << endl
-                     << "***"<< endl;
-                }
-*/
             }
 
         }
@@ -221,12 +210,6 @@ void Aggregate::Update()
         *lpm = physicalmodel->Dpm*1E-9;
         *time_step = 1E-6;
     }
-
-/*
-    cout << "Update " << Label
-         << " volume " << *volAgregat
-         << " rg " << *rg << endl;
-*/
 }
 
 
@@ -248,17 +231,17 @@ const array<double, 4> Aggregate::GetPosition(void) const
 
 void Aggregate::SetPosition(const double newx,const double newy,const double newz)
 {
-    if (physicalmodel == nullptr)
-    {
-        *x = newx;
-        *y = newy;
-        *z = newz;
-    }
-    else
+    if (physicalmodel != nullptr)
     {
         *x = periodicPosition(newx,physicalmodel->L);
         *y = periodicPosition(newy,physicalmodel->L);
         *z = periodicPosition(newz,physicalmodel->L);
+    }
+    else
+    {
+        *x = newx;
+        *y = newy;
+        *z = newz;
     }
 
     //ReplacePosi();
@@ -285,7 +268,6 @@ void Aggregate::SetPosition(const array<double, 4> position)
 
 void Aggregate::Translate(const array<double, 4> vector)
 {
-
     for (int i = 1; i <= Np; i++)
     {
         myspheres[i].Translate(vector);
@@ -312,8 +294,6 @@ void Aggregate::ReplacePosi()
 
     if (physicalmodel == nullptr)
         return;
-
-//    return;
 
     array<double, 4> trans;
     bool move=false;
@@ -343,8 +323,6 @@ void Aggregate::ReplacePosi()
     //$ If it is getting out
     if (move)
     {
-
-        cout << "replace posi" <<endl;
         //$ Update the position of aggregate
         Translate(trans);
     }
@@ -545,14 +523,7 @@ void Aggregate::RayonGiration(void)
     {
         //$ Determination of the distance between each monomere and the center of mass of Agg Id
         double li = myspheres[i].Distance(*x,*y,*z); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
-/*
-        if (Label==63)
-        {
-            cout << "li " << li
-                 << " " << *myspheres[i].x<< " " << *myspheres[i].y<< " " << *myspheres[i].z
-                 << " " << *x<< " " << *y<< " " << *z<<endl;
-        }
-*/
+
         double r = li + *myspheres[i].r;
 
         //$ Calculation of rmax

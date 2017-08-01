@@ -291,7 +291,6 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
     npossible = 0;
     aggcontact = 0;
     distmin = 1.0;
-    int step(physicalmodel.step);
 
     //+++++++++++++++++++++++++++++++++ Determination of the potential contacts (= in this part, we're considering aggreghates as spheres  with a diameter of Aggregate[6],+++++++++++++++++
     //+++++++++++++++++++++++++++++++++ the distance between the center of gravity of the aggregate and the furthest sphere in the agregate +++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -316,23 +315,18 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                 inir = Aggregates[i][6]; //represents the different agregates
 
                 //$ [3 imbricated loops on dx,dy,dz to look into the 27 boxes]
-                for (dx = -step;dx <= step; dx++)
+                for (dx = -1;dx <= 1; dx++)
                 {
-                    for (dy = -step; dy <= step; dy++)
+                    for (dy = -1; dy <= 1; dy++)
                     {
-                        for (dz = -step; dz <= step; dz++)
+                        for (dz = -1; dz <= 1; dz++)
                         {
                             Sphere s2(physicalmodel,inix+physicalmodel.L*dx,iniy+physicalmodel.L*dy,iniz+physicalmodel.L*dz,inir);
-
-
-//                            if (id==2 && i == 8)
-//                                cout << "DBG"<<endl;
 
                             // checks if the two spheres will be in contact while
                              //... the first one is moving
                             //$ Intersection check between agregates
                             dist = s1.Collision(s2, Vectdir, lpm);
-
 
                             //$ [Potential Collision]
                             if (dist <= lpm)
@@ -348,28 +342,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                                     cout << "Too many possible collisions" << endl;
                                     exit(2);
                                 }
-/*
-                                if (dist>0)
-                                {
-                                cout << "***  "<< id << " "<< i << " main OK " << dx << " " << dy << " " << dz<< endl
-                                     << " Me    : " << 0 << " " << s1.Position()[1]/physicalmodel.L << " " << s1.Position()[2]/physicalmodel.L << " " << s1.Position()[3]/physicalmodel.L   << endl
-                                     << " Other : " << 0 << " " << s2.Position()[1]/physicalmodel.L << " " << s2.Position()[2]/physicalmodel.L << " " << s2.Position()[3]/physicalmodel.L << endl
-                                     << " Distance : " << s1.Distance(s2) << " " << dist/physicalmodel.L << " "<<lpm/physicalmodel.L << endl
-                                     << "***"<< endl;
                                 }
-*/
-
-                            }
-/*                            else if (id==2 && (i >=7))
-                            {
-                            cout << "***  "<< id << " "<< i << " main NOK " << dx << " " << dy << " " << dz<< endl
-                                 << " Me    : " << 0 << " " << s1.Position()[1]/physicalmodel.L << " " << s1.Position()[2]/physicalmodel.L << " " << s1.Position()[3]/physicalmodel.L   << endl
-                                 << " Other : " << 0 << " " << s2.Position()[1]/physicalmodel.L << " " << s2.Position()[2]/physicalmodel.L << " " << s2.Position()[3]/physicalmodel.L << endl
-                                 << " Distance : " << s1.Distance(s2) << " " << dist/physicalmodel.L << " "<<lpm/physicalmodel.L << endl
-                                 << "***"<< endl;
-                            }
-*/
-
                         }
                     }
                 }
@@ -530,8 +503,6 @@ int Reunit(int AggI, int AggJ, int &err)
         numreject = AggI;
     }
 
-//    cout << "fusing " << numreject << " into " << numstudy<<endl;
-
 
     //$ Creation of the new sub array in Agglabels
     TamponValeurs= new int[AggLabels[AggI][0]+AggLabels[AggJ][0]+1];
@@ -553,16 +524,12 @@ int Reunit(int AggI, int AggJ, int &err)
         AggLabels[numstudy][i]=TamponValeurs[i];
     }
 
-//    array<double,4> pos1=Aggregates[numstudy].GetPosition();
-//    array<double,4> pos2=Aggregates[numreject].GetPosition();
-
     ListSphere SpheresToDelete(spheres, AggLabels[numreject]);
     int nselect = SpheresToDelete.size();
     //$ Update of the labels of the spheres that were in the deleted aggregate
     for (i = 1; i <= nselect; i++)
     {
         SpheresToDelete[i].SetLabel(numstudy);
-//        SpheresToDelete[i].Translate(pos1[1]-pos2[1],pos1[2]-pos2[2],pos1[3]-pos2[3]);
     }
 
     //$ Deletionn of the aggregate that was absorbed, using SupprimeLigne()
@@ -697,7 +664,7 @@ void Init()
 
     int testmem = 0;
     NAgg = physicalmodel.N;
-    max_npossible = 27*NAgg;
+    max_npossible = NAgg;
     spheres.Init(physicalmodel, NAgg);
     TriCum = new double[NAgg+1];
     IdPossible = new int* [max_npossible+1];
@@ -1229,20 +1196,6 @@ void Calcul() //Coeur du programme
                 if(rmax>RayonAggMax)
                     RayonAggMax=rmax;
             }
-
-
-            //$ Get the maximum lpm
-            double max = Maxi2D(4,NAgg)/(0.5*physicalmodel.L);
-            if (max > 1.)
-            {
-                cout << "Not enough particules"<<endl;
-                exit(6);
-                for (i=1; i <= NAgg; i++)
-                    Aggregates[i][4] = Aggregates[i][4] / max;
-            }
-
-
-
             lpm = Aggregates[NumAgg][4];
         }
         else
@@ -1255,8 +1208,6 @@ void Calcul() //Coeur du programme
         }
 
         double distmove = lpm;
-
-//        cout << "With " << NumAgg << " : " << Aggregates[NumAgg][5] << " | " << Aggregates[NumAgg][4] <<endl;
 
         //$ looking for potential contacts
         CalculDistance(NumAgg, distmin, aggcontact);
@@ -1357,19 +1308,6 @@ void Calcul() //Coeur du programme
 
     sprintf(commentaires,"\nFin du calcul  ...\n");
     print(commentaires);
-/*
-    double l(2);
-    int ntest = 7;
-
-    for (int i = -ntest;i<=ntest;i++)
-        cout << i/3.<<" "<< periodicPosition(i/3.,l)<< " " <<periodicPosition(l+i/3.,l) << endl;
-    cout << "***" << endl;
-
-    for (int i = -ntest;i<=ntest;i++)
-    {
-        for (int j = -ntest;j<=ntest;j++)
-            cout << (i-j)/3. <<" "<<periodicDistance((i-j)/3.,l)<< endl;
-    }*/
 }
 
 

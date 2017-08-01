@@ -36,61 +36,24 @@ const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
 
-const bool periodic = true;
-
-
 double periodicDistance(const double x, const double dim)
 {
-
-    if (periodic)
-    {
         double hdim(0.5*dim);
-
-
         if (x<-hdim)
             return x+dim;
         if (x>hdim)
             return x-dim;
-
-
-/*
-
-
-        double toto(x);
-        while (toto<-hdim)
-            toto+=dim;
-        while (toto>hdim)
-            toto-=dim;
-        return toto;
-
-*/
-    }
     return x;
 }
 
 
 double periodicPosition(const double x, const double dim)
 {
-    if (periodic)
-    {
-
-
         if (x<0)
             return x+dim;
         if (x>dim)
             return x-dim;
 
-/*
-
-        double toto(x);
-        while (toto<0)
-            toto+=dim;
-        while (toto>dim)
-            toto-=dim;
-        return toto;
-*/
-
-    }
     return x;
 
 }
@@ -122,26 +85,17 @@ __attribute((pure)) double Sphere::Distance(const array<double, 4> point)
 
  __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz)
 {
-     if (physicalmodel == nullptr)
-     {
-          cout << "WTF" << endl;
-          return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
-     }
-     else
+     if (physicalmodel != nullptr)
      {
         double dx = periodicDistance((*x-otherx),physicalmodel->L);
         double dy = periodicDistance((*y-othery),physicalmodel->L);
         double dz = periodicDistance((*z-otherz),physicalmodel->L);
-        double dist1 = sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2));
-        double dist2 = sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
-        /*cout << "***  "<< physicalmodel->L << endl
-             << *x << " " << otherx << " "<< (*x - otherx)/physicalmodel->L << " " << dx/physicalmodel->L<< endl
-             << *y << " " << othery << " "<< (*y - othery)/physicalmodel->L << " " << dy/physicalmodel->L<< endl
-             << *z << " " << otherz << " "<< (*z - otherz)/physicalmodel->L << " " << dz/physicalmodel->L<< endl
-             << dist1 << " " << dist2 << endl
-             << "***"<< endl;*/
-        return dist1;
+        return sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2));
      }
+     else
+     {
+          return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
+     }   
 }
 
 /* #############################################################################################################

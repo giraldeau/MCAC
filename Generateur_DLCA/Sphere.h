@@ -45,7 +45,6 @@ class Sphere
         double* r;
         double* volume;
         double* surface;
-
         PhysicalModel* physicalmodel;
 
         int AggLabel, SphereLabel;
