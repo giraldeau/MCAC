@@ -36,7 +36,7 @@ void PhysicalModel::Init(const double _P, const double _T, const double _dfe, co
 
     use_verlet = true; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
     GridDiv = 10;      // Number of Divisions of the box
-
+    step = 0;
 
     SetPrecision(1e-5);
     UseSecante();

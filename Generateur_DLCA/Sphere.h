@@ -45,6 +45,7 @@ class Sphere
         double* r;
         double* volume;
         double* surface;
+
         PhysicalModel* physicalmodel;
 
         int AggLabel, SphereLabel;
@@ -69,6 +70,7 @@ class Sphere
 
         void SetLabel(const int);
         void DecreaseLabel(void);
+        void Translate(const double x,const double y,const double z);
         void Translate(const double vector[]);
         void Translate(const array<double, 4>  vector);
         string str(const double coef) ;

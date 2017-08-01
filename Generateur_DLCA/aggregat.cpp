@@ -142,7 +142,8 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 double Aggregate::Distance_Aggregate(Aggregate& other,array<double,4> vectorOther,array<double,4> Vectdir)
 {
     double dist, ret;
-    ret = 1.0;
+    ret = *lpm;
+    bool contact = false;
 
     //$ Loop on all the spheres of the other aggregate
     for (int j = 1; j <= other.Np; j++)
@@ -156,14 +157,29 @@ double Aggregate::Distance_Aggregate(Aggregate& other,array<double,4> vectorOthe
         {
             //$ Check if j and k are contact and if not, what is the distance between them
             dist=myspheres[knum].Collision(spheredecale, Vectdir, *lpm);
-            if (dist < ret)
+            if (dist <= ret)
             {
                 ret = dist;
+                contact = true;
+
+/*
+                if (dist>0)
+                {
+                cout << "***  "<< Label << " "<< other.Label << " distance aggregate" << endl
+                     << " Me    : " << knum << " " << myspheres[knum].Position()[1]/physicalmodel->L << " " << myspheres[knum].Position()[2]/physicalmodel->L << " " << myspheres[knum].Position()[3]/physicalmodel->L   << endl
+                     << " Other : " << j << " " << spheredecale.Position()[1]/physicalmodel->L << " " << spheredecale.Position()[2]/physicalmodel->L << " " << spheredecale.Position()[3]/physicalmodel->L << endl
+                     << " Distance : " << myspheres[knum].Distance(spheredecale)/physicalmodel->L << endl
+                     << "***"<< endl;
+                }
+*/
             }
 
         }
     }
-    return ret;
+    if (contact)
+        return ret;
+    else
+        return -1.;
 }
 //###############################################################################################################################
 
@@ -205,9 +221,11 @@ void Aggregate::Update()
         *lpm = physicalmodel->Dpm*1E-9;
         *time_step = 1E-6;
     }
+
 /*
-    *volAgregat_without_cov = np*4.0*PI*rpmoy3/3.0; //Volume of the aggregate without considering the spheres covering each other (Avant c'était Tv : Taux de recouvrement volumique)
-    *surfAgregat = np*4.0*PI*rpmoy2;  //Free surface of the aggregate (without covering)(Avant c'était surfAgregat/volAgregat : Estimation du rapport surface/volume de l'agrégat)
+    cout << "Update " << Label
+         << " volume " << *volAgregat
+         << " rg " << *rg << endl;
 */
 }
 
@@ -267,6 +285,7 @@ void Aggregate::SetPosition(const array<double, 4> position)
 
 void Aggregate::Translate(const array<double, 4> vector)
 {
+
     for (int i = 1; i <= Np; i++)
     {
         myspheres[i].Translate(vector);
@@ -283,6 +302,52 @@ void Aggregate::Translate(const double vector[])
     }
 
     SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
+}
+
+//############################################# Conditions aux limites périodiques ##############################################
+
+void Aggregate::ReplacePosi()
+{
+    // This function will relocate an aggregate when it gets out of the box limiting the space
+
+    if (physicalmodel == nullptr)
+        return;
+
+//    return;
+
+    array<double, 4> trans;
+    bool move=false;
+
+    const array<double, 4> pos = GetPosition();
+
+    //$ for every dimension
+    for (int i = 1; i <= 3; i++)
+    {
+        //$ Check if it is getting out
+        if (pos[i] > physicalmodel->L)
+        {
+            trans[i] = - physicalmodel->L;
+            move = true;
+        }
+        else if (pos[i] < 0)
+        {
+            trans[i] = physicalmodel->L;
+            move = true;
+        }
+        else
+        {
+            trans[i] = 0;
+        }
+    }
+
+    //$ If it is getting out
+    if (move)
+    {
+
+        cout << "replace posi" <<endl;
+        //$ Update the position of aggregate
+        Translate(trans);
+    }
 }
 
 Aggregate::~Aggregate(void)
@@ -453,11 +518,14 @@ void Aggregate::RayonGiration(void)
         *volAgregat = *volAgregat + tabVol[i];    //Total Volume of Agg id
         *surfAgregat = *surfAgregat + tabSurf[i]; //Total Surface of Agg id
 
+        double dx = periodicDistance(*myspheres[i].x-*x,physicalmodel->L);
+        double dy = periodicDistance(*myspheres[i].y-*y,physicalmodel->L);
+        double dz = periodicDistance(*myspheres[i].z-*z,physicalmodel->L);
 
         //$ Calculation of the position of the center of mass
-        newpos[1] += *myspheres[i].x * tabVol[i];
-        newpos[2] += *myspheres[i].y * tabVol[i];
-        newpos[3] += *myspheres[i].z * tabVol[i];
+        newpos[1] += dx * tabVol[i];
+        newpos[2] += dy * tabVol[i];
+        newpos[3] += dz * tabVol[i];
     }
     //$ Filling of PosiGravite
 
@@ -467,7 +535,7 @@ void Aggregate::RayonGiration(void)
     } //Centre of mass of Agg Id
 
     //cout << Position()<< " "<< newpos <<endl;
-    SetPosition(newpos);
+    SetPosition(newpos[1]+*x,newpos[2]+*y,newpos[3]+*z);
 
     //$ Determination of the maximal radius of Agg Id and the Radius of gyration
     double Arg, Brg;
@@ -477,7 +545,14 @@ void Aggregate::RayonGiration(void)
     {
         //$ Determination of the distance between each monomere and the center of mass of Agg Id
         double li = myspheres[i].Distance(*x,*y,*z); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
-
+/*
+        if (Label==63)
+        {
+            cout << "li " << li
+                 << " " << *myspheres[i].x<< " " << *myspheres[i].y<< " " << *myspheres[i].z
+                 << " " << *x<< " " << *y<< " " << *z<<endl;
+        }
+*/
         double r = li + *myspheres[i].r;
 
         //$ Calculation of rmax

@@ -36,6 +36,66 @@ const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
 
+const bool periodic = true;
+
+
+double periodicDistance(const double x, const double dim)
+{
+
+    if (periodic)
+    {
+        double hdim(0.5*dim);
+
+
+        if (x<-hdim)
+            return x+dim;
+        if (x>hdim)
+            return x-dim;
+
+
+/*
+
+
+        double toto(x);
+        while (toto<-hdim)
+            toto+=dim;
+        while (toto>hdim)
+            toto-=dim;
+        return toto;
+
+*/
+    }
+    return x;
+}
+
+
+double periodicPosition(const double x, const double dim)
+{
+    if (periodic)
+    {
+
+
+        if (x<0)
+            return x+dim;
+        if (x>dim)
+            return x-dim;
+
+/*
+
+        double toto(x);
+        while (toto<0)
+            toto+=dim;
+        while (toto>dim)
+            toto-=dim;
+        return toto;
+*/
+
+    }
+    return x;
+
+}
+
+
 /* #############################################################################################################
  * #################################                                       #####################################
  * #################################             SPHERE                    #####################################
@@ -64,6 +124,7 @@ __attribute((pure)) double Sphere::Distance(const array<double, 4> point)
 {
      if (physicalmodel == nullptr)
      {
+          cout << "WTF" << endl;
           return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
      }
      else
@@ -150,7 +211,7 @@ void Sphere::UpdateVolAndSurf(void)
             K = MIN(K1,K2);
             if (K < 0) K = MAX(K1,K2);
             if (K > 0) dist = K;
-            if (dist > distmax) dist = 1;
+            //if (dist > distmax) dist = 1;
         }
     }
     return dist;

@@ -30,32 +30,6 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <sstream>
 #include <utility>
 
-
-double periodicDistance(const double x, const double dim)
-{
-    //return periodicPosition(x+0.5*dim,dim)-0.5*dim;
-    double hdim(0.5*dim);
-    if (x<-hdim)
-        return x+dim;
-    if (x>hdim)
-        return x-dim;
-    return x;
-}
-
-
-double periodicPosition(const double x, const double dim)
-{
-    //return x;
-    //return fmod(dim-fmod(dim-x,dim),dim);
-    //return fmod(x+dim,dim);
-    if (x<0)
-        return x+dim;
-    if (x>dim)
-        return x-dim;
-    return x;
-
-}
-
 void Sphere::SetPosition(const double newx, const double newy, const double newz)
 {
     if (physicalmodel == nullptr)
@@ -232,6 +206,11 @@ void Sphere::SetLabel(const int value)
 void Sphere::DecreaseLabel(void)
 {
     AggLabel--;
+}
+
+void Sphere::Translate(const double xnew,const double ynew,const double znew)
+{
+    SetPosition(*x + xnew, *y + ynew, *z + znew);
 }
 
 void Sphere::Translate(const double trans[])

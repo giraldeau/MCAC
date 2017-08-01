@@ -29,6 +29,8 @@ public:
     bool ActiveModulephysique, ActiveVariationTempo;
     bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
+    int step;
+
 private:
 
     // Internal use
