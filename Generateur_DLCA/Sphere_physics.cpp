@@ -36,7 +36,7 @@ const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
 
-double periodicDistance(const double x, const double dim)
+__attribute((const)) double periodicDistance(const double x, const double dim)
 {
         double hdim(0.5*dim);
         if (x<-hdim)
@@ -47,7 +47,7 @@ double periodicDistance(const double x, const double dim)
 }
 
 
-double periodicPosition(const double x, const double dim)
+__attribute((const)) double periodicPosition(const double x, const double dim)
 {
         if (x<0)
             return x+dim;

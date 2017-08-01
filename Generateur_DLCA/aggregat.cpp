@@ -190,8 +190,6 @@ void Aggregate::Update()
       //  rpmoy3 = rpmoy3 + pow(myspheres[i].Radius(), 3);
     }
     rpmoy = rpmoy/(double(Np));
-    //rpmoy2 = rpmoy2/(double(np));
-    //rpmoy3 = rpmoy3/(double(np));
 
 
     //$ Determination of Dm using ConvertRg2Dm
@@ -244,8 +242,6 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
         *z = newz;
     }
 
-    //ReplacePosi();
-
     if (InVerlet && physicalmodel->use_verlet)
     {
         //$ Update Verlet
@@ -284,48 +280,6 @@ void Aggregate::Translate(const double vector[])
     }
 
     SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
-}
-
-//############################################# Conditions aux limites périodiques ##############################################
-
-void Aggregate::ReplacePosi()
-{
-    // This function will relocate an aggregate when it gets out of the box limiting the space
-
-    if (physicalmodel == nullptr)
-        return;
-
-    array<double, 4> trans;
-    bool move=false;
-
-    const array<double, 4> pos = GetPosition();
-
-    //$ for every dimension
-    for (int i = 1; i <= 3; i++)
-    {
-        //$ Check if it is getting out
-        if (pos[i] > physicalmodel->L)
-        {
-            trans[i] = - physicalmodel->L;
-            move = true;
-        }
-        else if (pos[i] < 0)
-        {
-            trans[i] = physicalmodel->L;
-            move = true;
-        }
-        else
-        {
-            trans[i] = 0;
-        }
-    }
-
-    //$ If it is getting out
-    if (move)
-    {
-        //$ Update the position of aggregate
-        Translate(trans);
-    }
 }
 
 Aggregate::~Aggregate(void)
@@ -546,11 +500,11 @@ array<int, 4> Aggregate::VerletIndex()
 {
     array<int, 4>  index({{0,0,0,0}});
     double step = physicalmodel->GridDiv/physicalmodel->L;
-    int origin = physicalmodel->GridDiv+1;
 
-    index[1]=int(floor((*x)*step)+origin);
-    index[2]=int(floor((*y)*step)+origin);
-    index[3]=int(floor((*z)*step)+origin);
+    index[1]=int(floor((*x)*step));
+    index[2]=int(floor((*y)*step));
+    index[3]=int(floor((*z)*step));
+
     return index;
 }
 
@@ -584,16 +538,16 @@ void Verlet::Init(const int _GridDiv)
 {
     destroy();
     GridDiv = _GridDiv;
-    verletlist=new list<int>***[3*GridDiv+1];
-    for(int i=0;i<=3*GridDiv;i++)
+    verletlist=new list<int>***[GridDiv];
+    for(int i=0;i<GridDiv;i++)
     {
-        verletlist[i]=new list<int>**[3*GridDiv+1];
+        verletlist[i]=new list<int>**[GridDiv];
 
-        for(int j=0;j<=3*GridDiv;j++)
+        for(int j=0;j<GridDiv;j++)
         {
-            verletlist[i][j]=new list<int>*[3*GridDiv+1];
+            verletlist[i][j]=new list<int>*[GridDiv];
 
-            for(int k=0;k<=3*GridDiv;k++)
+            for(int k=0;k<GridDiv;k++)
             {
                 verletlist[i][j][k]= new list<int>;
             }
@@ -617,11 +571,11 @@ void Verlet::destroy(void)
 {
     if (verletlist!=nullptr)
     {
-        for(int i=0;i<=3*GridDiv;i++)
+        for(int i=0;i<GridDiv;i++)
         {
-            for(int j=0;j<=3*GridDiv;j++)
+            for(int j=0;j<GridDiv;j++)
             {
-                for(int k=0;k<=3*GridDiv;k++)
+                for(int k=0;k<GridDiv;k++)
                 {
                     delete verletlist[i][j][k];
                 }

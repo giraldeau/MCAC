@@ -282,7 +282,6 @@ int Probabilite(bool trier,double &deltatemps)
 void CalculDistance(int id, double &distmin, int &aggcontact)
 {   _List_iterator<int> p;
     double lpm,dist;
-    double tampon;
     int bornei1,bornei2,bornej1,bornej2,bornek1,bornek2;
     int i,s,j,k;
     int npossible;
@@ -356,71 +355,53 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
         double mindist = (Aggregates[id][6]+RayonAggMax);
         const array<double, 4> posid = Aggregates[id].GetPosition();
 
-        // Détermination des bornes
-        if(Vectdir[1]>=0)
-        {
-            tampon=posid[1]-mindist;
-            bornei1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
-            tampon=posid[1]+mindist+lpm*Vectdir[1];
-            bornei2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
-        }
-        else
-        {
-            tampon=posid[1]-mindist+lpm*Vectdir[1];
-            bornei1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
-            tampon=posid[1]+mindist;
-            bornei2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
-        }
+        double xp(posid[1]+mindist+MAX(lpm*Vectdir[1],0));
+        double xm(posid[1]-mindist+MIN(lpm*Vectdir[1],0));
+        double yp(posid[2]+mindist+MAX(lpm*Vectdir[2],0));
+        double ym(posid[2]-mindist+MIN(lpm*Vectdir[2],0));
+        double zp(posid[3]+mindist+MAX(lpm*Vectdir[3],0));
+        double zm(posid[3]-mindist+MIN(lpm*Vectdir[3],0));
 
-        if(Vectdir[2]>=0)
-        {
-            tampon=posid[2]-mindist;
-            bornej1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
-            tampon=posid[2]+mindist+lpm*Vectdir[2];
-            bornej2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
-        }
-        else
-        {
-            tampon=posid[2]-mindist+lpm*Vectdir[2];
-            bornej1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
-            tampon=posid[2]+mindist;
-            bornej2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
-        }
+        bornei1 = int(floor(xm*physicalmodel.GridDiv/physicalmodel.L));
+        bornei2 = int(floor(xp*physicalmodel.GridDiv/physicalmodel.L)+1);
+        bornej1 = int(floor(ym*physicalmodel.GridDiv/physicalmodel.L));
+        bornej2 = int(floor(yp*physicalmodel.GridDiv/physicalmodel.L)+1);
+        bornek1 = int(floor(zm*physicalmodel.GridDiv/physicalmodel.L));
+        bornek2 = int(floor(zp*physicalmodel.GridDiv/physicalmodel.L)+1);
 
-        if(Vectdir[3]>=0)
-        {
-            tampon=posid[3]-mindist;
-            bornek1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
-            tampon=posid[3]+mindist+lpm*Vectdir[3];
-            bornek2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
-        }
-        else
-        {
-            tampon=posid[3]-mindist+lpm*Vectdir[3];
-            bornek1=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+1);
-            tampon=posid[3]+mindist;
-            bornek2=int(floor(tampon*physicalmodel.GridDiv/physicalmodel.L)+2);
-        }
+        if (bornei2-bornei1>=physicalmodel.GridDiv)
+            {bornei1=0 ; bornei2=physicalmodel.GridDiv-1;}
+        if (bornej2-bornej1>=physicalmodel.GridDiv)
+            {bornej1=0 ; bornej2=physicalmodel.GridDiv-1;}
+        if (bornek2-bornek1>=physicalmodel.GridDiv)
+            {bornek1=0 ; bornek2=physicalmodel.GridDiv-1;}
 
-        bornei1 = MAX(bornei1,-physicalmodel.GridDiv+1) ; bornei2 = MIN(bornei2,2*physicalmodel.GridDiv);
-        bornej1 = MAX(bornej1,-physicalmodel.GridDiv+1) ; bornej2 = MIN(bornej2,2*physicalmodel.GridDiv);
-        bornek1 = MAX(bornek1,-physicalmodel.GridDiv+1) ; bornek2 = MIN(bornek2,2*physicalmodel.GridDiv);
 
         // ///////
-        for (i=bornei1+physicalmodel.GridDiv;i<=bornei2+physicalmodel.GridDiv;i++)
+        for (i=bornei1;i<=bornei2;i++)
         {
-            for (j=bornej1+physicalmodel.GridDiv;j<=bornej2+physicalmodel.GridDiv;j++)
+            for (j=bornej1;j<=bornej2;j++)
             {
-                for (k=bornek1+physicalmodel.GridDiv;k<=bornek2+physicalmodel.GridDiv;k++)
+                for (k=bornek1;k<=bornek2;k++)
                 {
+                    int ii(i),jj(j),kk(k);
 
-                    dx=int(floor((i-1.)/physicalmodel.GridDiv)-1);
-                    dy=int(floor((j-1.)/physicalmodel.GridDiv)-1);
-                    dz=int(floor((k-1.)/physicalmodel.GridDiv)-1);
+                    // periodic
+                    while (ii<0)
+                        ii += physicalmodel.GridDiv;
+                    while (jj<0)
+                        jj += physicalmodel.GridDiv;
+                    while (kk<0)
+                        kk += physicalmodel.GridDiv;
+                    while (ii>=physicalmodel.GridDiv)
+                        ii -= physicalmodel.GridDiv;
+                    while (jj>=physicalmodel.GridDiv)
+                        jj -= physicalmodel.GridDiv;
+                    while (kk>=physicalmodel.GridDiv)
+                        kk -= physicalmodel.GridDiv;
 
-                    list<int>* cell = verlet.GetCell(i-dx*physicalmodel.GridDiv,
-                                                    j-dy*physicalmodel.GridDiv,
-                                                    k-dz*physicalmodel.GridDiv);
+
+                    list<int>* cell = verlet.GetCell(ii,jj,kk);
 
                     for(p=cell->begin();p!=cell->end();p++)
                     {
@@ -433,16 +414,16 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                             iniz = posp[3];
                             inir = Aggregates[*p][6]; //represents the different agregates
 
-                            Sphere s2(physicalmodel,inix+physicalmodel.L*dx,iniy+physicalmodel.L*dy,iniz+physicalmodel.L*dz,inir);
+                            Sphere s2(physicalmodel,inix,iniy,iniz,inir);
 
                             dist = s1.Collision(s2, Vectdir, lpm);
                             if (dist <= lpm)
                             {
                                 npossible++; // Number of aggregates that could be hit
                                 IdPossible[npossible][1] = *p;  //Label of an aggregate that could be in contact with the one moving
-                                IdPossible[npossible][2] = dx; //X coordinate of the "box" where this agregate was
-                                IdPossible[npossible][3] = dy; //Y coordinate of the "box" where this agregate was
-                                IdPossible[npossible][4] = dz; //Z coordinate of the "box" where this agregate was
+                                IdPossible[npossible][2] = 0; //X coordinate of the "box" where this agregate was
+                                IdPossible[npossible][3] = 0; //Y coordinate of the "box" where this agregate was
+                                IdPossible[npossible][4] = 0; //Z coordinate of the "box" where this agregate was
                                 if (npossible == max_npossible)
                                 {
                                     cout << "Too many possible collisions" << endl;
@@ -1264,7 +1245,6 @@ void Calcul() //Coeur du programme
             newnumagg = NumAgg;
             it_without_contact++;
         }
-        Aggregates[newnumagg].ReplacePosi();
 
 
 
@@ -1298,7 +1278,7 @@ void Calcul() //Coeur du programme
         printf("%d\t", i);
         const array<double, 4> pos = Aggregates[i].GetPosition();
         for (j = 1; j <= 3; j++)
-            printf("%e\t", pos[j]/physicalmodel.L);
+            printf("%e\t", pos[j]*1E9);
         printf("\t%e\t%e\n",Aggregates[i][7]*1E25,Aggregates[i][9]*1E25);
     }
     printf("\n\n");
