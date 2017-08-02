@@ -247,9 +247,7 @@ ListSphere::ListSphere(void):
     Storage(nullptr),
     external_storage(nullptr),
     N(0)
-{
-
-}
+{}
 
 ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) : ListSphere()
 {

@@ -48,6 +48,46 @@ Aggregate::Aggregate(void):
 }
 Aggregate::Aggregate(PhysicalModel& _physicalmodel) : Aggregate(){ physicalmodel = &_physicalmodel; }
 
+
+Aggregate::Aggregate(ListAggregat& _storage, const int _N):
+    physicalmodel(_storage.physicalmodel),
+    InclusiveSphere(new Sphere()),
+    myspheres(),
+    parents(),
+    son(nullptr),
+    verlet(nullptr),
+    IndexVerlet({{0,0,0}}),
+    Storage(&_storage.Storage),
+    external_storage(&_storage),
+    creation_date(0.),
+    nctmp(0.),
+    nptmp(1.),
+    rg(nullptr),
+    dm(nullptr),
+    lpm(nullptr),
+    time_step(nullptr),
+    rmax(nullptr),
+    volAgregat(nullptr),
+    surfAgregat(nullptr),
+    Tv(nullptr),
+    volAgregat_without_cov(nullptr),
+    cov(nullptr),
+    ratio_surf_vol(nullptr),
+    free_surface(nullptr),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    Label(_N),
+    Nc(0),
+    Np(1),
+    InVerlet(false)
+{
+    Init();
+    external_storage->setpointers();
+
+}
+
+
 void Aggregate::Init(void)
 {
     setpointers();
@@ -272,6 +312,9 @@ void Aggregate::Translate(const double vector[])
 
 Aggregate::~Aggregate(void)
 {
+    if(external_storage!=nullptr)
+        external_storage->setpointers();
+
     if (InVerlet && physicalmodel->use_verlet)
     {
         verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(Label);
@@ -515,6 +558,68 @@ void Aggregate::AfficheVerlet()
 
 
 
+ListAggregat::ListAggregat(void):
+    physicalmodel(nullptr),
+    N(0)
+{}
+ListAggregat::~ListAggregat(void)
+{
+    Destroy();
+}
+
+void ListAggregat::Destroy(void)
+{
+    int _N = N;
+    for (N = _N; N > 0; N--)
+    {
+        delete Aggregats[N-1];
+    }
+}
+
+void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
+{
+
+    Destroy();
+
+    physicalmodel=&_physicalmodel;
+
+    index.assign(_N+1, 0);
+    Aggregats.assign(_N, nullptr);
+
+    for (int j=0;j<=15;j++)
+        Storage[j].assign(_N, 0.);
+
+    index[0]=_N;
+    const int listSize = _N;
+    for (N = 0; N < listSize; N++)
+    {
+        index[N+1] = N+1;
+        Aggregats[N] = new Aggregate(*this,N);
+    }
+
+
+    spheres.Init(_physicalmodel, _N);
+    verlet.Init(_physicalmodel.GridDiv);
+
+}
+
+
+void ListAggregat::setpointers()
+{
+    //#pragma omp for simd
+    for (int i = 0; i < N; i++)
+    {
+        Aggregats[i]->setpointers();
+    }
+}
+
+
+__attribute__((pure)) Aggregate& ListAggregat::operator[](const int i)
+{
+   return *Aggregats[i-1];
+}
+
+
 void Verlet::Remove(const int id,const array<int, 4> Index)
 {
     verletlist[Index[1]][Index[2]][Index[3]]->remove(id);
@@ -546,6 +651,13 @@ __attribute((pure)) list<int>* Verlet::GetCell(const int i,const int j,const int
 {
     return verletlist[i][j][k];
 }
+
+
+Verlet::Verlet(void):
+    verletlist(nullptr),
+    GridDiv(0)
+{}
+
 
 Verlet::~Verlet(void)
 {

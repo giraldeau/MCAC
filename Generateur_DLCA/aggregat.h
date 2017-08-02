@@ -12,6 +12,9 @@ class Verlet;
 
 class Aggregate
 {
+
+    friend class ListAggregat;
+
     private:
         PhysicalModel* physicalmodel;
 
@@ -54,6 +57,8 @@ class Aggregate
     public:
         Aggregate(Sphere);
         Aggregate(Aggregate Agg1, Aggregate Agg2);
+        Aggregate(ListAggregat&, const int label);
+
 
         void Init(void);
         const array<double, 4> GetPosition(void) const;
@@ -64,7 +69,6 @@ class Aggregate
         array<int, 4> VerletIndex();
         void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
         void UpdatesSpheres(ListSphere&, int index[]);
-        void ReplacePosi();
         void RayonGiration(void);
         double Distance_Aggregate(Aggregate&, array<double,4> vectorOther, array<double,4> Vectdir);
         void Update();
@@ -98,35 +102,6 @@ class Aggregate
 };
 
 
-/*
-
-class ListAggregat
-{
-    friend class Aggregate;
-
-    private:
-        int N;
-        vector < Aggregate* > Aggregats;
-        ListSphere spheres;
-        PhysicalModel* physicalmodel;
-
-        ListAggregat(void);
-        ListAggregat(PhysicalModel& _physicalmodel, const int N);
-
-        ~ListAggregat(void);
-        Aggregate& operator[](const int);
-
-        int size() const;
-
-        array< vector<double>, 16> Storage;
-        vector < int > index;
-
-        void setpointers();
-
-};
-
-*/
-
 class Verlet
 {
 public:
@@ -134,11 +109,50 @@ public:
     list<int>* GetCell(const int i,const int j,const int k)const;
     void Init(const int GridDiv);
     ~Verlet(void);
+    Verlet(void);
     void destroy(void);
 
     private:
     list<int>**** verletlist;
     int GridDiv;
 };
+
+
+
+class ListAggregat
+{
+    friend class Aggregate;
+
+    private:
+        vector < Aggregate* > Aggregats;
+        PhysicalModel* physicalmodel;
+
+        array< vector<double>, 16> Storage;
+        vector < int > index;
+
+        int N;
+
+public:
+        ListSphere spheres;
+        Verlet verlet;
+
+
+        void setpointers();
+
+public:
+
+        ListAggregat(void);
+        ListAggregat(PhysicalModel& _physicalmodel, const int N);
+
+        ~ListAggregat(void);
+        Aggregate& operator[](const int);
+
+        void Init(PhysicalModel&, const int N);
+        void Destroy(void);
+        int size() const;
+
+};
+
+
 
 #endif // AGGREGAT_H

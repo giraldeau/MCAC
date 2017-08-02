@@ -32,8 +32,6 @@ using namespace std;
 MainWindow* GUI;
 #endif
 
-Verlet verlet; // Verlet's List
-ListSphere spheres;
 PhysicalModel physicalmodel;
 
 const double PI = atan(1.0)*4; // 3.14159
@@ -45,7 +43,7 @@ int NSauve; // last file number
 
 // Nagg
 int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
-Aggregate *Aggregates; // Position of the center of gravity
+ListAggregat Aggregates; // Position of the center of gravity
 int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
                 // Aggregate, and then , the labels of saif spheres
 double* TriCum; // Cumulated probabilities
@@ -89,7 +87,7 @@ double Maxi2D(int colonne, int nmax)
 {
     //Maximum of a column in the Aggregate table
     double m = Aggregates[1][colonne];
-    for (int i = 0;i < nmax; i++)
+    for (int i = 1;i < nmax; i++)
         m =max(Aggregates[i][colonne], m);
 
     return m;
@@ -131,7 +129,7 @@ void SupprimeLigne(int ligne)
         Aggregates[i-1].SetPosition(newpos);
 
     }
-    verlet.Remove(NAgg,Aggregates[NAgg].VerletIndex());
+    Aggregates.verlet.Remove(NAgg,Aggregates[NAgg].VerletIndex());
 
     for (i=ligne+1;i<=NAgg;i++)
     {
@@ -146,14 +144,14 @@ void SupprimeLigne(int ligne)
 
 
     //$ Update of the labels of every sphere that is in an aggregate indexed highger than the one absorbed
-    ListSphere SpheresToReLabel(spheres, AggLabels,ligne,NAgg);
+    ListSphere SpheresToReLabel(Aggregates.spheres, AggLabels,ligne,NAgg);
     int nselect = SpheresToReLabel.size();
 
     for (i = 1; i <= nselect; i++)
         SpheresToReLabel[i].DecreaseLabel();
 
     for (i=ligne;i<=NAgg;i++)
-        Aggregates[i].UpdatesSpheres(spheres, AggLabels[i]);
+        Aggregates[i].UpdatesSpheres(Aggregates.spheres, AggLabels[i]);
 }
 
 void InsertionSort(int n, double arr[], int index[])
@@ -401,7 +399,7 @@ void CalculDistance(int id, double &distmin, int &aggcontact)
                         kk -= physicalmodel.GridDiv;
 
 
-                    list<int>* cell = verlet.GetCell(ii,jj,kk);
+                    list<int>* cell = Aggregates.verlet.GetCell(ii,jj,kk);
 
                     for(p=cell->begin();p!=cell->end();p++)
                     {
@@ -505,7 +503,7 @@ int Reunit(int AggI, int AggJ, int &err)
         AggLabels[numstudy][i]=TamponValeurs[i];
     }
 
-    ListSphere SpheresToDelete(spheres, AggLabels[numreject]);
+    ListSphere SpheresToDelete(Aggregates.spheres, AggLabels[numreject]);
     int nselect = SpheresToDelete.size();
     //$ Update of the labels of the spheres that were in the deleted aggregate
     for (i = 1; i <= nselect; i++)
@@ -518,7 +516,7 @@ int Reunit(int AggI, int AggJ, int &err)
     SupprimeLigne(numreject);
     delete[] TamponValeurs;
 
-    Aggregates[numstudy].UpdatesSpheres(spheres, AggLabels[numstudy]);
+    Aggregates[numstudy].UpdatesSpheres(Aggregates.spheres, AggLabels[numstudy]);
 
     //$ Index of the Reunited aggregate is returned
     return numstudy;
@@ -646,14 +644,10 @@ void Init()
     int testmem = 0;
     NAgg = physicalmodel.N;
     max_npossible = NAgg;
-    spheres.Init(physicalmodel, NAgg);
     TriCum = new double[NAgg+1];
     IdPossible = new int* [max_npossible+1];
-    Aggregates = new Aggregate[NAgg+1];
     IndexPourTri.assign(NAgg+1,0);
-
-
-    verlet.Init(physicalmodel.GridDiv);
+    Aggregates.Init(physicalmodel, NAgg);
 
     // Agglabels
     AggLabels= new int*[NAgg+1];// Array containing the labels of the spheres in each aggregate
@@ -698,8 +692,8 @@ void Init()
         int test=0;
         for (int k = 1; k <= i-1; k++)
         {
-            double dist = spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
-            if (dist <= spheres[k].Radius()+Dp/2)
+            double dist = Aggregates.spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
+            if (dist <= Aggregates.spheres[k].Radius()+Dp/2)
                 test++;
         }
         testmem = testmem + test; //Comptabilise le nombre d'échecs à positionner une sphère sans superposition
@@ -708,7 +702,7 @@ void Init()
             i--;
         else
         {
-            Aggregates[i].Init(physicalmodel,verlet,newpos,i,spheres,Dp);
+            Aggregates[i].Init(physicalmodel,Aggregates.verlet,newpos,i,Aggregates.spheres,Dp);
 
             if(Dp/2>RayonAggMax)
             {
@@ -735,7 +729,6 @@ void Fermeture()
     }
     delete[] TriCum;
     delete[] IdPossible;
-    delete[] Aggregates;
     delete[] tab;
 }
 
@@ -761,7 +754,7 @@ void SauveASCII(int value, int id)
     fprintf(f, "Label\t      Rp(nm)\t      X(nm)\t     Y(nm)\t     Z(nm)\n");
 
     for (i=1;i<=physicalmodel.N;i++)
-        fprintf(f,"%s\n", spheres[i].str(1e9).c_str());
+        fprintf(f,"%s\n", Aggregates.spheres[i].str(1e9).c_str());
 
     fclose(f);
 
@@ -1166,7 +1159,7 @@ void Calcul() //Coeur du programme
             }
 
             //$ Surface Growth of all spheres
-            spheres.CroissanceSurface(deltatemps);
+            Aggregates.spheres.CroissanceSurface(deltatemps);
 
             //$ Aggregates parameter update
 
