@@ -130,6 +130,9 @@ class ListSphere
 
     public:
         void CroissanceSurface(const double dt);
+        void DecreaseLabel(void);
+
+
 
     /* Storage specific */
     private:

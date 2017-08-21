@@ -333,6 +333,17 @@ void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 
 }
 
+
+void ListSphere::DecreaseLabel(void)
+{
+    #pragma omp for simd
+    for (int i = 0; i < N; i++)
+    {
+        spheres[i]->DecreaseLabel();
+    }
+}
+
+
 void swap(ListSphere& first, ListSphere& second)
 {
     using std::swap;
