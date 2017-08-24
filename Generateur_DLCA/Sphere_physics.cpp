@@ -31,6 +31,8 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define POW2(a) ((a)*(a))
+#define POW3(a) ((a)*(a)*(a))
 
 const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
@@ -82,20 +84,38 @@ __attribute((pure)) double Sphere::Distance(const array<double, 4> point)
 {
     return Distance(point[1],point[2],point[3]);
 }
+__attribute((pure)) double Sphere::Distance2(Sphere& c)
+{
+    return Distance2(*c.x,*c.y,*c.z);
+}
+
+__attribute((pure)) double Sphere::Distance2(const double point[])
+{
+    return Distance2(point[1],point[2],point[3]);
+}
+__attribute((pure)) double Sphere::Distance2(const array<double, 4> point)
+{
+    return Distance2(point[1],point[2],point[3]);
+}
+
+__attribute__((pure)) double Sphere::Distance2(const double otherx, const double othery, const double otherz)
+{
+    if (physicalmodel != nullptr)
+    {
+       double dx(periodicDistance((*x-otherx),physicalmodel->L));
+       double dy(periodicDistance((*y-othery),physicalmodel->L));
+       double dz(periodicDistance((*z-otherz),physicalmodel->L));
+       return POW2(dx)+POW2(dy)+POW2(dz);
+    }
+    else
+    {
+         return POW2(*x-otherx)+POW2(*y-othery)+POW2(*z-otherz);
+    }
+}
 
  __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz)
 {
-     if (physicalmodel != nullptr)
-     {
-        double dx(periodicDistance((*x-otherx),physicalmodel->L));
-        double dy(periodicDistance((*y-othery),physicalmodel->L));
-        double dz(periodicDistance((*z-otherz),physicalmodel->L));
-        return sqrt(pow(dx,2)+pow(dy,2)+pow(dz,2));
-     }
-     else
-     {
-          return sqrt(pow(*x-otherx,2)+pow(*y-othery,2)+pow(*z-otherz,2));
-     }   
+    return sqrt(Distance2(otherx,othery,otherz));
 }
 
 /* #############################################################################################################
@@ -105,8 +125,8 @@ void Sphere::UpdateVolAndSurf(void)
 {
     if (AggLabel > 0)
     {
-        *volume = facvol*pow(*r, 3);
-        *surface =  facsurf*pow(*r, 2);
+        *volume = facvol*POW3(*r);
+        *surface =  facsurf*POW2(*r);
     }
 }
 
@@ -138,7 +158,7 @@ void Sphere::UpdateVolAndSurf(void)
     double dy = periodicDistance((*c.y-*y),physicalmodel->L);
     double dz = periodicDistance((*c.z-*z),physicalmodel->L);
 
-    dist_contact = pow(*r + *c.r,2);
+    dist_contact = POW2(*r + *c.r);
 
     //$ Compute signed distance for contact between two spheres
     distance = dx*dx+dy*dy+dz*dz;
@@ -177,53 +197,43 @@ void Sphere::UpdateVolAndSurf(void)
  * #############################################################################################################*/
 double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 )
 {
-    double d, h;
-    double Ri, Rj;
 
     vol1 = vol2 = 0.;
     surf1 = surf2 = 0.;
 
-    Ri = *r;
-    Rj = *c.r;
-
+    double Ri = *r;
+    double Rj = *c.r;
 
     //$ Determination of the distance between the center of the 2 spheres
-    d = Distance(c);
+    double d = Distance(c);
 
-    //$ Check if they aren't in contact
-    if (d >= Ri + Rj)
+    //$ Check if they are in contact
+    if (d < Ri + Rj)
     {
-        //$ Intersection is empty
-        vol1 = vol2 = 0.;
-        surf1 = surf2 = 0.;
+        if(d >= fabs(Ri - Rj))
+        {
+            //$ Volume of the intersection is returned
+            double h1 = (POW2(Rj)-POW2((Ri-d)))/(2.0*d);
+            double h2 = (POW2(Ri)-POW2((Rj-d)))/(2.0*d);
+            vol1= PI*POW2(h1)*(3*Ri-h1)/3.0;
+            vol2= PI*POW2(h2)*(3*Rj-h2)/3.0;
+            surf1 = 2*PI*Ri*h1;
+            surf2 = 2*PI*Rj*h2;
+        }
+        //$ Check if one is completely absorbed by the other
+        else if (Ri < Rj)
+        {
+            //$ Volcal = VolJ
+            vol1 = *volume;
+            surf1 = *surface;
+        }
+        else // if (Rj < Ri)
+        {
+            //$ Volcal = Voli
+            vol2 = *c.volume;
+            surf2 = *c.surface;
+        }
     }
-    else if(d >= fabs(Ri-Rj))
-    {
-        //$ Volume of the intersection is returned
-        h = (pow(Rj,2)-pow((Ri-d),2))/(2.0*d);
-        vol1= PI*pow(h,2)*(3*Ri-h)/3.0;
-        surf1 = 2*PI*Ri*h;
-        h = (pow(Ri,2)-pow((Rj-d),2))/(2.0*d);
-        vol2= PI*pow(h,2)*(3*Rj-h)/3.0;
-        surf2 = 2*PI*Rj*h;
-    }
-    //$ Check if j is completely absorbed by i
-    else if (d < Ri - Rj)
-    {
-        //$ Volcal = VolJ
-        vol1 = vol2 = *c.volume;
-        surf1 = surf2 = *c.surface;
-    }
-
-    //$ Check if i is completely in j
-
-    else // if (d < Rj - Ri)
-    {
-        //$ Volcal = Voli
-        vol1 = vol2 = *volume;
-        surf1 = surf2 = *surface;
-    }
-
     return d;
 }
 
@@ -257,11 +267,11 @@ void Sphere::CroissanceSurface(const double dt)
  * #############################################################################################################*/
 void ListSphere::CroissanceSurface(const double dt)
 {
-    const int listSize = N;
+    const int listSize = size;
     #pragma omp for simd
     for (int i = 0; i < listSize; i++)
     {
-        spheres[i]->CroissanceSurface(dt);
+        list[i]->CroissanceSurface(dt);
     }
 }
 

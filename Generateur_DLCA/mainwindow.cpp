@@ -16,7 +16,7 @@
 #include <string>
 #include <list>
 #include <cmath>
-
+#include <limits.h> /* PATH_MAX */
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -481,7 +481,7 @@ int Reunit(int AggI, int AggJ, int &err)
     }
 
     ListSphere SpheresToDelete(Aggregates.spheres, AggLabels[numreject]);
-    int nselect = SpheresToDelete.size();
+    int nselect = SpheresToDelete.size;
     //$ Update of the labels of the spheres that were in the deleted aggregate
     for (i = 1; i <= nselect; i++)
     {
@@ -1270,7 +1270,7 @@ void LectureParams()
 int No_GUI(int argc, char *argv[]){
     FichierParam = argv[1];
 
-    char tmp[500];
+    char tmp[PATH_MAX + 1]; /* not sure about the "+ 1" */
     char* err = realpath(dirname(argv[1]), tmp);
     pathParam = tmp; //Cette variable ne retient que le chemin du fichier param
 

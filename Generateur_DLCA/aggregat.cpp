@@ -6,6 +6,10 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define POW2(a) ((a)*(a))
+#define POW3(a) ((a)*(a)*(a))
+
+
 
 const double PI = atan(1.0)*4;
 
@@ -144,26 +148,26 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     SetPosition(position);
     int listlabel[2] = {1,Label};
     spheres[Label].SetLabel(Label);
-    spheres[Label].Init(position, Dp/2);
+    spheres[Label].Set(position, Dp/2);
     myspheres = ListSphere(spheres,listlabel);
-    Np = myspheres.size();
+    Np = myspheres.size;
 
     *rmax = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
     *dm = Dp;                   //Diamètre de mobilité
-    *volAgregat = PI*pow(Dp,3)/6;
-    *surfAgregat = PI*pow(Dp,2);
+    *volAgregat = PI*POW3(Dp)/6;
+    *surfAgregat = PI*POW2(Dp);
 
     Nc = 0;                  //Nombre de coordination Nc
     *cov =0;
     *rg = sqrt(3.0/5.0)*Dp/2;
 
-    *volAgregat_without_cov = PI*pow(Dp, 3)/6;      //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
-    *free_surface = PI*pow(Dp, 2);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
+    *volAgregat_without_cov = PI*POW3(Dp)/6;      //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
+    *free_surface = PI*POW2(Dp);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
 
     if (physicalmodel->ActiveModulephysique==1)
     {
         double Diff = physicalmodel->diffusivity(Dp);
-        double masse = physicalmodel->Rho*PI*pow(Dp,3)/6;
+        double masse = physicalmodel->Rho*PI*POW3(Dp)/6;
         double Vit =  physicalmodel->velocity(masse);
         double tmp = 8*Diff/PI/Vit;
         *lpm = tmp;
@@ -243,7 +247,7 @@ void Aggregate::Update()
 void Aggregate::UpdatesSpheres(ListSphere& spheres,int index[])
 {
     myspheres = ListSphere(spheres,index);
-    Np = myspheres.size();
+    Np = myspheres.size;
 }
 
 const array<double, 4> Aggregate::GetPosition(void) const
@@ -513,8 +517,8 @@ void Aggregate::RayonGiration(void)
         *rmax=MAX(*rmax,r);
 
         //$ Calculation of Rg
-        Arg = Arg + tabVol[i]*pow(li, 2);
-        Brg = Brg + tabVol[i]*pow(*myspheres[i].r, 2);
+        Arg = Arg + tabVol[i]*POW2(li);
+        Brg = Brg + tabVol[i]*POW2(*myspheres[i].r);
     }
 
     *rg = sqrt(fabs((Arg+3.0/5.0*Brg)/(*volAgregat)));
@@ -562,6 +566,7 @@ ListAggregat::ListAggregat(void):
     physicalmodel(nullptr),
     N(0)
 {}
+
 ListAggregat::~ListAggregat(void)
 {
     Destroy();

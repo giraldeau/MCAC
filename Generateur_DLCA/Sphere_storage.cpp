@@ -54,99 +54,6 @@ void Sphere::SetPosition(const array<double, 4> position)
     SetPosition(position[1],position[2],position[3]);
 }
 
-Sphere::Sphere(void):
-    x(nullptr),
-    y(nullptr),
-    z(nullptr),
-    r(nullptr),
-    volume(nullptr),
-    surface(nullptr),
-    physicalmodel(nullptr),
-    AggLabel(0),
-    SphereLabel(0),
-    Storage(new array< vector<double>, 7>),
-    external_storage(nullptr)
-{
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].assign(1, 0.);
-    Init();
-}
-
-Sphere::Sphere(PhysicalModel& _physicalmodel) : Sphere()
-{
-
-    physicalmodel = &_physicalmodel;
-}
-
-Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr) : Sphere(_physicalmodel)
-{
-    SetPosition(newx, newy, newz);
-    *r = newr;
-    UpdateVolAndSurf();
-}
-
-Sphere::Sphere(ListSphere& aggregat,const int id):
-    x(nullptr),
-    y(nullptr),
-    z(nullptr),
-    r(nullptr),
-    volume(nullptr),
-    surface(nullptr),
-    physicalmodel(aggregat.physicalmodel),
-    AggLabel(0),
-    SphereLabel(id),
-    Storage(aggregat.Storage),
-    external_storage(&aggregat)
-{
-    Init();
-    external_storage->setpointers();
-}
-
-
-
-Sphere::Sphere(PhysicalModel& _physicalmodel, const double newp[],const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
-Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
-
-Sphere::Sphere(const Sphere& c) : Sphere(*(c.physicalmodel), *c.x,*c.y,*c.z,*c.r){}
-
-void Sphere::add(void)
-{
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].push_back(0.);
-    SphereLabel = int((*Storage)[0].size()-1);
-
-    Init();
-}
-
-void Sphere::Init(void)
-{
-    setpointers();
-
-    SetPosition(0, 0, 0);
-    *r = 0;
-    *volume = 0.;
-    *surface = 0.;
-}
-
-
-Sphere::~Sphere(void)
-{
-    //setpointers();
-    if(external_storage!=nullptr)
-        external_storage->setpointers();
-    else if (Storage!=nullptr)
-    {
-        for (int j=0;j<=6;j++)
-            (*Storage)[j].erase((*Storage)[j].begin() + SphereLabel);
-        delete Storage;
-    }
-}
-
- __attribute__((pure)) double& Sphere::operator[](const int i)
-{
-    return (*Storage)[i][SphereLabel];
-}
-
 void Sphere::setpointers(void)
 {
     x = &(*this)[1];
@@ -181,21 +88,27 @@ const array<double, 4> Sphere::Position(void)
     return mypos;
 }
 
-void Sphere::Init(const double newx,const double newy,const double newz,const double newr)
+void Sphere::Set(const double newx,const double newy,const double newz,const double newr)
 {
+    setpointers();
     SetPosition(newx, newy, newz);
     *r = newr;
     UpdateVolAndSurf();
 }
 
-void Sphere::Init(const double newp[],const double newr)
+void Sphere::Init(void)
 {
-    Init(newp[1],newp[2],newp[3],newr);
+    Set(0, 0, 0, 0.);
 }
 
-void Sphere::Init(const array<double, 4> newp,const double newr)
+void Sphere::Set(const double newp[],const double newr)
 {
-    Init(newp[1],newp[2],newp[3],newr);
+    Set(newp[1],newp[2],newp[3],newr);
+}
+
+void Sphere::Set(const array<double, 4> newp,const double newr)
+{
+    Set(newp[1],newp[2],newp[3],newr);
 }
 
 void Sphere::SetLabel(const int value)
@@ -240,172 +153,202 @@ void Sphere::Aff(const double coef)
     cout << str(coef) << endl;
 }
 
-ListSphere::ListSphere(void):
+
+
+
+
+/** Default constructor in local storage */
+Sphere::Sphere(void):
+    storage_elem<7,ListSphere>(),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    r(nullptr),
+    volume(nullptr),
+    surface(nullptr),
     physicalmodel(nullptr),
-    spheres(),
-    index(),
-    Storage(nullptr),
-    external_storage(nullptr),
-    N(0)
-{}
-
-ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) : ListSphere()
+    AggLabel(0)
 {
-    Init(_physicalmodel,_N);
+    Init();
 }
 
-
-ListSphere::ListSphere(ListSphere& parent, int _index[]):
-    physicalmodel(parent.physicalmodel),
-    spheres(),
-    index(),
-    Storage(parent.Storage),
-    external_storage(&parent),
-    N(_index[0])
+Sphere::Sphere(PhysicalModel& _physicalmodel) : Sphere()
 {
-        index.assign(N+1, 0);
-        spheres.assign(N, nullptr);
-
-        index[0]=N;
-        const int listSize = N;
-        //#pragma omp for simd
-        for (int i = 0; i < listSize; i++)
-        {
-            index[i+1] = _index[i+1];
-            int iparent = external_storage->index[index[i+1]]-1;
-            spheres[i] = external_storage->spheres[iparent];
-        }
+    physicalmodel = &_physicalmodel;
 }
 
-
-
-ListSphere::ListSphere(ListSphere& parent, int* _index[], const int start, const int end):
-    physicalmodel(parent.physicalmodel),
-    spheres(),
-    index(),
-    Storage(parent.Storage),
-    external_storage(&parent),
-    N(0)
+/** Constructor in local storage with initialization */
+Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr) : Sphere(_physicalmodel)
 {
-
-    for(int i=start;i<=end;i++)
-        N += _index[i][0];
-
-    index.assign(N+1, 0);
-    spheres.assign(N, nullptr);
-
-    index[0]=N;
-    int m=0;
-    for(int i=start;i<=end;i++)
-    {
-    #pragma omp for simd
-        for(int j=1;j<=_index[i][0];j++)
-        {
-            index[m+1] = _index[i][j];
-            int iparent = external_storage->index[index[m+1]]-1;
-            spheres[m] = external_storage->spheres[iparent];
-            m++;
-        }
+    Set(newx, newy, newz, newr);
 }
+Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
+Sphere::Sphere(PhysicalModel& _physicalmodel, const double newp[],const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
+
+/** Constructor with external storage */
+Sphere::Sphere(ListSphere& aggregat,const int id):
+    storage_elem<7,ListSphere>(aggregat,id),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    r(nullptr),
+    volume(nullptr),
+    surface(nullptr),
+    physicalmodel(aggregat.physicalmodel),
+    AggLabel(0)
+{
+    Init();
+    external_storage->setpointers();
 }
+
+///** Copy constructor */
+//Sphere::Sphere(const Sphere& other) :
+//    storage_elem<7,ListSphere>(other),
+//    x(nullptr),
+//    y(nullptr),
+//    z(nullptr),
+//    r(nullptr),
+//    volume(nullptr),
+//    surface(nullptr),
+//    physicalmodel(other.physicalmodel),
+//    AggLabel(other.AggLabel)
+//{
+//    Set(*other.x,*other.y,*other.z,*other.r);
+//}
+
+///** Move constructor */
+//Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimizations in containers */
+//    storage_elem<7,ListSphere>(other),
+//    x(nullptr),
+//    y(nullptr),
+//    z(nullptr),
+//    r(nullptr),
+//    volume(nullptr),
+//    surface(nullptr),
+//    physicalmodel(other.physicalmodel),
+//    AggLabel(other.AggLabel)
+//{
+//    setpointers();
+//    other.x=nullptr;
+//    other.y=nullptr;
+//    other.z=nullptr;
+//    other.r=nullptr;
+//    other.volume=nullptr;
+//    other.surface=nullptr;
+//    other.AggLabel=0;
+//}
+
+///** Destructor */
+//Sphere::~Sphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+//{
+//    // everything is already taken care of in the parent class storage_elem
+//}
+
+///** Copy assignment operator */
+//Sphere& Sphere::operator= (const Sphere& other)
+//{
+//    Sphere tmp(other);      // re-use copy-constructor
+//    *this = std::move(tmp); // re-use move-assignment
+//    return *this;
+//}
+
+///** Move assignment operator */
+//Sphere& Sphere::operator= (Sphere&& other) noexcept
+//{
+//    *this = static_cast<Sphere&>(storage_elem<7,ListSphere>::operator=(other));
+//    physicalmodel = other.physicalmodel;
+//    AggLabel = other.AggLabel;
+//    setpointers();
+//    other.setpointers();
+//    other.AggLabel=0;
+//    return *this;
+//}
+
+
+
+
+
+
+
+
+
 
 void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 {
-    Destroy();
-
     physicalmodel=&_physicalmodel;
-    Storage = new array< vector<double>, 7>;
-    external_storage=nullptr;
-
-
-    index.assign(_N+1, 0);
-    spheres.assign(_N, nullptr);
-    for (int j=0;j<=6;j++)
-        (*Storage)[j].assign(_N, 0.);
-
-    index[0]=_N;
-    const int listSize = _N;
-    for (N = 0; N < listSize; N++)
-    {
-        index[N+1] = N+1;
-        spheres[N] = new Sphere(*this,N);
-    }
-
+    storage_list<7,Sphere>::Init(_N,*this);
 }
 
 
 void ListSphere::DecreaseLabel(void)
 {
     #pragma omp for simd
-    for (int i = 0; i < N; i++)
+    for (int i = 0; i < size; i++)
     {
-        spheres[i]->DecreaseLabel();
+        list[i]->DecreaseLabel();
     }
-}
-
-
-void swap(ListSphere& first, ListSphere& second)
-{
-    using std::swap;
-    swap(first.physicalmodel, second.physicalmodel);
-    swap(first.spheres, second.spheres);
-    swap(first.index, second.index);
-    swap(first.Storage, second.Storage);
-    swap(first.external_storage, second.external_storage);
-    swap(first.N, second.N);
-}
-
-
-
-ListSphere& ListSphere::operator=(ListSphere other)
-{
-    swap(*this, other);
-
-    return *this;
 }
 
 
 void ListSphere::setpointers()
 {
     //#pragma omp for simd
-    for (int i = 0; i < N; i++)
+    for (int i = 0; i < size; i++)
     {
-        spheres[i]->setpointers();
+        list[i]->setpointers();
     }
 }
 
-ListSphere::~ListSphere(void)
-{
-    Destroy();
-}
 
-void ListSphere::Destroy(void)
-{
-    if (external_storage==nullptr)
-    {
-        if (Storage!=nullptr)
-        {
-            int _N = N;
-            for (N = _N; N > 0; N--)
-            {
-                delete spheres[N-1];
-            }
-            delete Storage;
-        }
-    }
-    else
-    {
-        Storage = nullptr;
-    }
-    physicalmodel = nullptr;
-}
 
- __attribute__((pure)) Sphere& ListSphere::operator[](const int i)
-{
-    return *spheres[i-1];
-}
+/** Default constructor in local storage */
+ListSphere::ListSphere(void):
+    storage_list<7,Sphere>(),
+    physicalmodel(nullptr)
+{}
 
- __attribute__((pure)) int ListSphere::size() const
-{
-    return N;
-}
+//ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
+//    ListSphere()
+//{
+//    Init(_physicalmodel,_N);
+//}
+
+/** Constructor with external storage */
+ListSphere::ListSphere(ListSphere& parent,int _index[]):
+    storage_list<7,Sphere>(parent, _index),
+    physicalmodel(parent.physicalmodel)
+{}
+
+ListSphere::ListSphere(ListSphere& parent,int* _index[],const int start,const int end):
+    storage_list<7,Sphere>(parent, _index, start, end),
+    physicalmodel(parent.physicalmodel)
+{}
+
+///** Copy constructor */
+//ListSphere::ListSphere(const ListSphere& other):
+//    storage_list<7,Sphere>(other),
+//    physicalmodel(other.physicalmodel)
+//{}
+
+///** Move constructor */
+//ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
+//    storage_list<7,Sphere>(other),
+//    physicalmodel(other.physicalmodel)
+//{}
+
+///** Copy assignment operator */
+//ListSphere& ListSphere::operator= (const ListSphere& other)
+//{
+//    ListSphere tmp(other);      // re-use copy-constructor
+//    *this = std::move(tmp);     // re-use move-assignment
+//    return *this;
+//}
+
+///** Move assignment operator */
+//ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
+//{
+//    std::swap(static_cast<storage_list<7,Sphere>&>(*this),static_cast<storage_list<7,Sphere>&>(other));
+//    physicalmodel = other.physicalmodel;
+
+//    return *this;
+//}

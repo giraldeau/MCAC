@@ -9,6 +9,8 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define POW2(a) ((a)*(a))
+#define POW3(a) ((a)*(a)*(a))
 
 const double PI = atan(1.0)*4;
 

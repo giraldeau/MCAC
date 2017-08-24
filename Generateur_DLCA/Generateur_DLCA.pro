@@ -13,16 +13,19 @@ COMPILATOR = "INTEL"
 TARGET = DLCA
 TEMPLATE = app
 
-SOURCES += main.cpp\
-        mainwindow.cpp\
+SOURCES +=\
+        mainwindow.h \
+        Sphere.h \
+        physical_model.h \
+        aggregat.h \
+        storage.h \
+        storage.tpp \
         physical_model.cpp \
         Sphere_storage.cpp \
         Sphere_physics.cpp \
         aggregat.cpp \
-        mainwindow.h \
-        Sphere.h \
-        physical_model.h \
-        aggregat.h
+        mainwindow.cpp\
+        main.cpp
 
 #HEADERS += mainwindow.h \
 #           Sphere.h \
@@ -136,5 +139,4 @@ equals(COMPILATOR, "CLANG"){
 
 #PROFILING
 LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
-
 

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <physical_model.h>
+#include <storage.h>
 #include <vector>
 #include <array>
 
@@ -31,7 +32,7 @@ class Aggregate;
 class ListSphere;
 class Sphere;
 
-class Sphere
+class Sphere : public storage_elem<7,ListSphere>
 {
     friend class ListSphere;
     friend class Aggregate;
@@ -47,72 +48,88 @@ class Sphere
         double* surface;
         PhysicalModel* physicalmodel;
 
-        int AggLabel, SphereLabel;
-
-        array< vector<double>, 7>* Storage;
-        ListSphere* external_storage;
+        int AggLabel;
 
         void UpdateVolAndSurf(void);
 
     public:
 
-        void Init(const double x, const double y, const double z, const double r);
-        void Init(const double position[], const double r);
-        void Init(const array<double, 4> position,const double r);
+        void Set(const double x, const double y, const double z, const double r);
+        void Set(const double position[], const double r);
+        void Set(const array<double, 4> position,const double r);
 
-        void Init(Sphere&);
+        void Copy(Sphere&);
         void Init(void);
 
         void SetPosition(const double x, const double y, const double z);
         void SetPosition(const double position[]);
         void SetPosition(const array<double, 4> position);
 
-        void SetLabel(const int);
-        void DecreaseLabel(void);
         void Translate(const double x,const double y,const double z);
         void Translate(const double vector[]);
         void Translate(const array<double, 4>  vector);
-        string str(const double coef) ;
-        void Aff(const double coef) ;
+
+        void SetLabel(const int);
+        void DecreaseLabel(void);
+
         double Volume(void) ;
         double Surface(void) ;
         double Radius(void) ;
         const array<double, 4> Position(void) ;
+
+        string str(const double coef) ;
+        void Aff(const double coef) ;
 
         double Distance(Sphere&) ;
         double Distance(const double point[]) ;
         double Distance(const array<double, 4> point) ;
         double Distance(const double x, const double y, const double z) ;
 
+        double Distance2(Sphere&) ;
+        double Distance2(const double point[]) ;
+        double Distance2(const array<double, 4> point) ;
+        double Distance2(const double x, const double y, const double z) ;
+
         double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) ;
         double Collision(Sphere& c, const array<double,4> vector,const  double  distmax) ;
         void CroissanceSurface(const double dt);
 
     /* Storage specific */
+    private:
+        void setpointers(void);
 
     public:
+        /** Default constructor in local storage */
         Sphere(void);
-        Sphere(ListSphere& Storage, const int id);
         Sphere(PhysicalModel&);
-        ~Sphere(void);
 
+        /** Constructor in local storage with initialization */
         Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
         Sphere(PhysicalModel&, const array<double, 4> position, const double r);
         Sphere(PhysicalModel&, const double position[], const double r);
-        Sphere(const Sphere&);
 
-    private:
+        /** Constructor with external storage */
+        Sphere(ListSphere& Storage, const int id);
 
-        void setpointers(void);
-        void add(void);
-        double& operator[](const int);
-        Sphere& operator=(const Sphere& other);
-        Sphere& operator=(const Sphere&& other) noexcept;
+//        /** Copy constructor */
+//        Sphere(const Sphere&);
+
+//        /** Move constructor */
+//        Sphere (Sphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
+
+//        /** Destructor */
+//        ~Sphere(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+
+//        /** Copy assignment operator */
+//        Sphere& operator= (const Sphere& other);
+
+//        /** Move assignment operator */
+//        Sphere& operator= (Sphere&& other) noexcept;
 
     };
 
 
-class ListSphere
+class ListSphere : public storage_list<7,Sphere>
 {
     friend class Sphere;
 
@@ -120,41 +137,41 @@ class ListSphere
 
     private:
         PhysicalModel* physicalmodel;
-        vector < Sphere* > spheres;
-        vector < int > index;
-
-        array< vector<double>, 7>* Storage;
-        const ListSphere* external_storage;
-
-        int N;
 
     public:
-        void CroissanceSurface(const double dt);
+
+        void Init(PhysicalModel& _physicalmodel, const int size);
         void DecreaseLabel(void);
 
+        void CroissanceSurface(const double dt);
 
 
     /* Storage specific */
     private:
-        void setpointers();
+        void setpointers(void);
 
     public:
+        /** Default constructor in local storage */
         ListSphere(void);
-        ListSphere(PhysicalModel& _physicalmodel, const int N);
+//        ListSphere(PhysicalModel& _physicalmodel, const int size);
+
+        /** Constructor with external storage */
         ListSphere(ListSphere& parent,int index[]);
         ListSphere(ListSphere& parent,int* index[],const int start,const int end);
 
-        ~ListSphere(void);
-        Sphere& operator[](const int);
+//        /** Copy constructor */
+//        ListSphere(const ListSphere& other);
 
-        void Init(PhysicalModel& _physicalmodel, const int N);
-        void Destroy();
+//        /** Move constructor */
+//        ListSphere (ListSphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
 
-        int size() const;
-        ListSphere(const ListSphere& other);
+//        /** Copy assignment operator */
+//        ListSphere& operator= (const ListSphere& other);
 
-        ListSphere& operator=(ListSphere other);
-        friend void swap(ListSphere& first, ListSphere& second);
+//        /** Move assignment operator */
+//        ListSphere& operator= (ListSphere&& other) noexcept;
+
+//        friend void swap(ListSphere& first, ListSphere& second);
 
 };
 
