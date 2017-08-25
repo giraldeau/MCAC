@@ -67,7 +67,8 @@ class Aggregate : public storage_elem<16,ListAggregat>
         void Update();
         void UpdatesSpheres(ListSphere&, int indexInStorage[]);
         void RayonGiration(void);
-        double Distance_Aggregate(Aggregate&, array<double,4> vectorOther, array<double,4> Vectdir);
+        double Contact(Aggregate&);
+        double Distance(Aggregate&, array<double,4> Vectdir);
 
         void AfficheVerlet();
 

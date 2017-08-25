@@ -88,8 +88,10 @@ class Sphere : public storage_elem<7,ListSphere>
         double Distance2(const array<double, 4> point) ;
         double Distance2(const double x, const double y, const double z) ;
 
+        bool Contact(Sphere&) ;
+        double Collision(Sphere&, const array<double,4> vector) ;
+
         double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) ;
-        double Collision(Sphere& c, const array<double,4> vector,const  double  distmax) ;
         void CroissanceSurface(const double dt);
 
     /* Storage specific */

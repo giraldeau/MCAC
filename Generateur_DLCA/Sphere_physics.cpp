@@ -45,24 +45,28 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 __attribute((const)) double periodicDistance(const double x, const double dim)
 {
-        double hdim(0.5*dim);
-        if (x<-hdim)
-            return x+dim;
-        if (x>hdim)
-            return x-dim;
-    return x;
+    double dist(x);
+    double hdim(0.5*dim);
+
+    while (dist < -hdim)
+        dist += dim;
+    while (dist >  hdim)
+        dist -= dim;
+
+    return dist;
 }
 
 
 __attribute((const)) double periodicPosition(const double x, const double dim)
 {
-        if (x<0)
-            return x+dim;
-        if (x>dim)
-            return x-dim;
+    double pos(x);
 
-    return x;
+    while (pos < 0)
+        pos += dim;
+    while (pos > dim)
+        pos -= dim;
 
+    return pos;
 }
 
 void Sphere::SetPosition(const double newx, const double newy, const double newz)
@@ -146,67 +150,75 @@ void Sphere::UpdateVolAndSurf(void)
     }
 }
 
-/* #############################################################################################################
- * ########################################## Distance before collision ########################################
- * #############################################################################################################*/
- __attribute__((pure)) double Sphere::Collision(Sphere& c,const array<double,4> vd,const double distmax)
-{
-/*
-     (vd): vecteur directeur double[4] : vd[1],vd[2],vd[3], vd[0] inutilisé
-     résultat:
-        dist=-1: les sphères se touchent
-        dist=1 : la sphère courante ne peut pas toucher la sphère (c) en
-        se déplaçant suivant le vecteur directeur (vd) et sur une distance maxi
-        égale à (distmax).
-        sinon  : il peut y avoir contact. La sphère courante doit être déplacée
-        de (dist) en suivant (vd) pour toucher la sphère (c)
-*/
-  /*!
-   *  \image html cCSphereFIntersectionCSphereddd.png
-   */
-    double B, C;
-    double DELTA;
-    double K, K1, K2;
-    double dist,dist_contact;
-    double distance;
+ /* #############################################################################################################
+  * ########################################## Distance before collision ########################################
+  * #############################################################################################################*/
+  __attribute__((pure)) bool Sphere::Contact(Sphere& c)
+ {
+     //$ Compute signed distance for contact between two spheres
+     double distance = Distance2(c);
 
-    double dx = periodicDistance((*c.x-*x),physicalmodel->L);
-    double dy = periodicDistance((*c.y-*y),physicalmodel->L);
-    double dz = periodicDistance((*c.z-*z),physicalmodel->L);
+     //$ Compute minimum distance for contact
+     double dist_contact = POW2(*r + *c.r);
 
-    dist_contact = POW2(*r + *c.r);
+     if (distance <= dist_contact)
+        return true;
+     else
+        return false;
+ }
 
-    //$ Compute signed distance for contact between two spheres
-    distance = dx*dx+dy*dy+dz*dz;
+  __attribute__((pure)) double Sphere::Collision(Sphere& c,const array<double,4> vd)
+  {
+      /*
+       * Denoting
+       * V the unitary displacement vector
+       * D the vector from the moving sphere to the other at start
+       * C the vector from the moving sphere to the other at collision
+       * x the distance we are looking for
+       *
+       * We have a triangle so :
+       *  --> --> -->
+       * x V + C - D = 0
+       *
+       * i.e
+       * -->   -->  -->
+       *  D - x V  = C
+       *
+       * taking the norm
+       *              --> -->
+       * d² + x² - 2 x V . D = c²
+       *
+       * i.e x is solution of
+       *         --> -->
+       * x² - 2 x V . D  + d² - c² = 0
+       *
+      */
 
-    if (distance <= dist_contact)
-    {
-       //$ There is contact between these two spheres
-       dist = -1;
-    }
-    else
-    {
-       //$ Computing distance before contact
+      //$ Compute signed distance for contact between two spheres
+      double distance = Distance2(c);
 
-        dist = 1;
-        K = -1;
-        B = -2*(dx*vd[1]+dy*vd[2]+dz*vd[3]);
-        C = distance - dist_contact;
-        DELTA = B*B-4*C;
-        if (DELTA >= 0)
-        {
-            DELTA = sqrt(DELTA);
-            K1=0.5*(-B-DELTA);
-            K2=0.5*(-B+DELTA);
-            K = MIN(K1,K2);
-            if (K < 0) K = MAX(K1,K2);
-            if (K > 0) dist = K;
-            //if (dist > distmax) dist = 1;
-        }
-    }
-    return dist;
+      //$ Compute minimum distance for contact
+      double dist_contact = POW2(*r + *c.r);
+
+      //$ Computing distance before contact
+      double dx = periodicDistance((*c.x-*x),physicalmodel->L);
+      double dy = periodicDistance((*c.y-*y),physicalmodel->L);
+      double dz = periodicDistance((*c.z-*z),physicalmodel->L);
+      double VD = -2*(dx*vd[1] + dy*vd[2] + dz*vd[3]);
+      double DC = distance - dist_contact;
+      double DELTA = VD*VD - 4*DC;
+
+      if (DELTA >= 0)
+      {
+          DELTA = sqrt(DELTA);
+          if (DELTA <= -VD)
+              return 0.5*(-VD-DELTA);
+          else
+              return 0.5*(-VD+DELTA);
+      }
+      else
+          return -1.;
 }
-
 
 /* #############################################################################################################
  * ######################## Surface and volume of the intersection of two sphere ###############################

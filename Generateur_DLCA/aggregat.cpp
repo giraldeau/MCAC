@@ -181,34 +181,42 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 
 
 //############################################# Calcul de la distance inter-agrégats ############################################
-double Aggregate::Distance_Aggregate(Aggregate& other,array<double,4> vectorOther,array<double,4> Vectdir)
+double Aggregate::Contact(Aggregate& other)
 {
-    double dist, ret;
-    ret = *lpm;
-    bool contact = false;
+    //$ Loop on all the spheres of the other aggregate
+    for (int j = 1; j <= other.Np; j++)
+    {
+        //$ For every sphere in the aggregate :
+        for (int knum = 1; knum <= Np; knum++)
+        {
+            if (myspheres[knum].Contact(other.myspheres[j]))
+                return true;
+        }
+    }
+    return false;
+}
+
+double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir)
+{
+    double mindist(*lpm);
+    bool contact(false);
 
     //$ Loop on all the spheres of the other aggregate
     for (int j = 1; j <= other.Np; j++)
     {
-        //$ spheredecale is used to replace the sphere into the corresponding box
-        Sphere spheredecale(other.myspheres[j]);
-        spheredecale.Translate(vectorOther);
-
         //$ For every sphere in the aggregate :
         for (int knum = 1; knum <= Np; knum++)
         {
-            //$ Check if j and k are contact and if not, what is the distance between them
-            dist=myspheres[knum].Collision(spheredecale, Vectdir, *lpm);
-            if (dist <= ret)
+            double dist=myspheres[knum].Collision(other.myspheres[j], Vectdir);;
+            if (0. <= dist && dist <= mindist)
             {
-                ret = dist;
-                    contact = true;
+                mindist = dist;
+                contact = true;
             }
-
         }
     }
     if (contact)
-        return ret;
+        return mindist;
     else
         return -1.;
 }
