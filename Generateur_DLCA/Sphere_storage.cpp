@@ -30,39 +30,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <sstream>
 #include <utility>
 
-void Sphere::SetPosition(const double newx, const double newy, const double newz)
-{
-    if (physicalmodel != nullptr)
-    {
-        *x = periodicPosition(newx,physicalmodel->L);
-        *y = periodicPosition(newy,physicalmodel->L);
-        *z = periodicPosition(newz,physicalmodel->L);
-    }
-    else
-    {
-        *x = newx;
-        *y = newy;
-        *z = newz;
-    }
-}
-void Sphere::SetPosition(const double position[])
-{
-    SetPosition(position[1],position[2],position[3]);
-}
-void Sphere::SetPosition(const array<double, 4> position)
-{
-    SetPosition(position[1],position[2],position[3]);
-}
-
-void Sphere::setpointers(void)
-{
-    x = &(*this)[1];
-    y = &(*this)[2];
-    z = &(*this)[3];
-    r = &(*this)[4];
-    volume = &(*this)[5];
-    surface =&(*this)[6];
-}
+/* Getters */
 
  __attribute__((pure)) double Sphere::Volume(void)
 {
@@ -88,28 +56,7 @@ const array<double, 4> Sphere::Position(void)
     return mypos;
 }
 
-void Sphere::Set(const double newx,const double newy,const double newz,const double newr)
-{
-    setpointers();
-    SetPosition(newx, newy, newz);
-    *r = newr;
-    UpdateVolAndSurf();
-}
-
-void Sphere::Init(void)
-{
-    Set(0, 0, 0, 0.);
-}
-
-void Sphere::Set(const double newp[],const double newr)
-{
-    Set(newp[1],newp[2],newp[3],newr);
-}
-
-void Sphere::Set(const array<double, 4> newp,const double newr)
-{
-    Set(newp[1],newp[2],newp[3],newr);
-}
+/* Setters */
 
 void Sphere::SetLabel(const int value)
 {
@@ -136,6 +83,44 @@ void Sphere::Translate(const array<double, 4> trans)
     SetPosition(*x + trans[1], *y + trans[2], *z + trans[3]);
 }
 
+/* Alias for different type of arguments*/
+
+void Sphere::SetPosition(const double position[])
+{
+    SetPosition(position[1],position[2],position[3]);
+}
+void Sphere::SetPosition(const array<double, 4> position)
+{
+    SetPosition(position[1],position[2],position[3]);
+}
+
+/* Basic initializer */
+
+void Sphere::InitVal(void)
+{
+    InitVal(0, 0, 0, 0.);
+}
+
+void Sphere::InitVal(const double newx,const double newy,const double newz,const double newr)
+{
+    setpointers();
+    SetPosition(newx, newy, newz);
+    *r = newr;
+    UpdateVolAndSurf();
+}
+
+void Sphere::InitVal(const double newp[],const double newr)
+{
+    InitVal(newp[1],newp[2],newp[3],newr);
+}
+
+void Sphere::InitVal(const array<double, 4> newp,const double newr)
+{
+    InitVal(newp[1],newp[2],newp[3],newr);
+}
+
+/* format */
+
 string Sphere::str(const double coef)
 {
     stringstream res;
@@ -155,6 +140,19 @@ void Sphere::Aff(const double coef)
 
 
 
+/* Storage specific */
+
+void Sphere::setpointers(void)
+{
+    x = &(*this)[1];
+    y = &(*this)[2];
+    z = &(*this)[3];
+    r = &(*this)[4];
+    volume = &(*this)[5];
+    surface =&(*this)[6];
+}
+
+
 
 
 /** Default constructor in local storage */
@@ -169,7 +167,7 @@ Sphere::Sphere(void):
     physicalmodel(nullptr),
     AggLabel(0)
 {
-    Init();
+    InitVal();
 }
 
 Sphere::Sphere(PhysicalModel& _physicalmodel) : Sphere()
@@ -180,7 +178,7 @@ Sphere::Sphere(PhysicalModel& _physicalmodel) : Sphere()
 /** Constructor in local storage with initialization */
 Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr) : Sphere(_physicalmodel)
 {
-    Set(newx, newy, newz, newr);
+    InitVal(newx, newy, newz, newr);
 }
 Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
 Sphere::Sphere(PhysicalModel& _physicalmodel, const double newp[],const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
@@ -197,72 +195,72 @@ Sphere::Sphere(ListSphere& aggregat,const int id):
     physicalmodel(aggregat.physicalmodel),
     AggLabel(0)
 {
-    Init();
+    InitVal();
     external_storage->setpointers();
 }
 
-///** Copy constructor */
-//Sphere::Sphere(const Sphere& other) :
-//    storage_elem<7,ListSphere>(other),
-//    x(nullptr),
-//    y(nullptr),
-//    z(nullptr),
-//    r(nullptr),
-//    volume(nullptr),
-//    surface(nullptr),
-//    physicalmodel(other.physicalmodel),
-//    AggLabel(other.AggLabel)
-//{
-//    Set(*other.x,*other.y,*other.z,*other.r);
-//}
+/** Copy constructor */
+Sphere::Sphere(const Sphere& other) :
+    storage_elem<7,ListSphere>(other),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    r(nullptr),
+    volume(nullptr),
+    surface(nullptr),
+    physicalmodel(other.physicalmodel),
+    AggLabel(other.AggLabel)
+{
+    InitVal(*other.x,*other.y,*other.z,*other.r);
+}
 
-///** Move constructor */
-//Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimizations in containers */
-//    storage_elem<7,ListSphere>(other),
-//    x(nullptr),
-//    y(nullptr),
-//    z(nullptr),
-//    r(nullptr),
-//    volume(nullptr),
-//    surface(nullptr),
-//    physicalmodel(other.physicalmodel),
-//    AggLabel(other.AggLabel)
-//{
-//    setpointers();
-//    other.x=nullptr;
-//    other.y=nullptr;
-//    other.z=nullptr;
-//    other.r=nullptr;
-//    other.volume=nullptr;
-//    other.surface=nullptr;
-//    other.AggLabel=0;
-//}
+/** Move constructor */
+Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimizations in containers */
+    storage_elem<7,ListSphere>(other),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    r(nullptr),
+    volume(nullptr),
+    surface(nullptr),
+    physicalmodel(other.physicalmodel),
+    AggLabel(other.AggLabel)
+{
+    setpointers();
+    other.x=nullptr;
+    other.y=nullptr;
+    other.z=nullptr;
+    other.r=nullptr;
+    other.volume=nullptr;
+    other.surface=nullptr;
+    other.AggLabel=0;
+}
 
-///** Destructor */
-//Sphere::~Sphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
-//{
-//    // everything is already taken care of in the parent class storage_elem
-//}
+/** Destructor */
+Sphere::~Sphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+{
+    // everything is already taken care of in the parent class storage_elem
+}
 
-///** Copy assignment operator */
-//Sphere& Sphere::operator= (const Sphere& other)
-//{
-//    Sphere tmp(other);      // re-use copy-constructor
-//    *this = std::move(tmp); // re-use move-assignment
-//    return *this;
-//}
+/** Copy assignment operator */
+Sphere& Sphere::operator= (const Sphere& other)
+{
+    Sphere tmp(other);      // re-use copy-constructor
+    *this = std::move(tmp); // re-use move-assignment
+    return *this;
+}
 
-///** Move assignment operator */
-//Sphere& Sphere::operator= (Sphere&& other) noexcept
-//{
-//    *this = static_cast<Sphere&>(storage_elem<7,ListSphere>::operator=(other));
-//    physicalmodel = other.physicalmodel;
-//    AggLabel = other.AggLabel;
-//    setpointers();
-//    other.setpointers();
-//    other.AggLabel=0;
-//    return *this;
-//}
+/** Move assignment operator */
+Sphere& Sphere::operator= (Sphere&& other) noexcept
+{
+    *this = static_cast<Sphere&>(storage_elem<7,ListSphere>::operator=(other));
+    physicalmodel = other.physicalmodel;
+    AggLabel = other.AggLabel;
+    setpointers();
+    other.setpointers();
+    other.AggLabel=0;
+    return *this;
+}
 
 
 
@@ -307,11 +305,11 @@ ListSphere::ListSphere(void):
     physicalmodel(nullptr)
 {}
 
-//ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
-//    ListSphere()
-//{
-//    Init(_physicalmodel,_N);
-//}
+ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
+    ListSphere()
+{
+    Init(_physicalmodel,_N);
+}
 
 /** Constructor with external storage */
 ListSphere::ListSphere(ListSphere& parent,int _index[]):
@@ -324,31 +322,35 @@ ListSphere::ListSphere(ListSphere& parent,int* _index[],const int start,const in
     physicalmodel(parent.physicalmodel)
 {}
 
-///** Copy constructor */
-//ListSphere::ListSphere(const ListSphere& other):
-//    storage_list<7,Sphere>(other),
-//    physicalmodel(other.physicalmodel)
-//{}
+/** Copy constructor */
+ListSphere::ListSphere(const ListSphere& other):
+    storage_list<7,Sphere>(other),
+    physicalmodel(other.physicalmodel)
+{}
 
-///** Move constructor */
-//ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
-//    storage_list<7,Sphere>(other),
-//    physicalmodel(other.physicalmodel)
-//{}
+/** Move constructor */
+ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
+    storage_list<7,Sphere>(other),
+    physicalmodel(other.physicalmodel)
+{}
 
-///** Copy assignment operator */
-//ListSphere& ListSphere::operator= (const ListSphere& other)
-//{
-//    ListSphere tmp(other);      // re-use copy-constructor
-//    *this = std::move(tmp);     // re-use move-assignment
-//    return *this;
-//}
+/** Destructor */
+ListSphere::~ListSphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+{}
 
-///** Move assignment operator */
-//ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
-//{
-//    std::swap(static_cast<storage_list<7,Sphere>&>(*this),static_cast<storage_list<7,Sphere>&>(other));
-//    physicalmodel = other.physicalmodel;
+/** Copy assignment operator */
+ListSphere& ListSphere::operator= (const ListSphere& other)
+{
+    ListSphere tmp(other);      // re-use copy-constructor
+    *this = std::move(tmp);     // re-use move-assignment
+    return *this;
+}
 
-//    return *this;
-//}
+/** Move assignment operator */
+ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
+{
+    std::swap(static_cast<storage_list<7,Sphere>&>(*this),static_cast<storage_list<7,Sphere>&>(other));
+    physicalmodel = other.physicalmodel;
+
+    return *this;
+}

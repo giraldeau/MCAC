@@ -13,11 +13,13 @@ class storage_elem
     template<int,class>
     friend class storage_list;
 
-public:
+protected:
 
     array< vector<double>, N>* Storage;
     mystorage* external_storage;
-    int index;
+    int indexInStorage;
+
+public:
 
     double& operator[](const int);
 
@@ -52,22 +54,21 @@ class storage_list
     friend class storage_elem;
 
 public:
+    int size;
+
+protected:
     vector < elem* > list;
-    vector < int > index;
+    vector < int > indexInStorage;
 
     array< vector<double>, N>* Storage;
     const storage_list* external_storage;
 
-    int size;
-
-
+public:
 
     elem& operator[](const int);
 
     template<class mylist>
     void Init(const int size, mylist&);
-    void Destroy();
-
 
     /** Default constructor in local storage */
     storage_list(void);
@@ -93,6 +94,10 @@ public:
     storage_list& operator= (storage_list&& other) noexcept;
 
     friend void swap<>(storage_list& first, storage_list& second);
+
+private:
+    void Destroy();
+
 };
 
 #include "storage.tpp"

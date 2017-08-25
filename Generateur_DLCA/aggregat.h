@@ -2,6 +2,7 @@
 #define AGGREGAT_H
 
 #include "Sphere.h"
+#include <storage.h>
 #include <list>
 
 using namespace std;
@@ -10,7 +11,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class Aggregate
+class Aggregate : public storage_elem<16,ListAggregat>
 {
 
     friend class ListAggregat;
@@ -26,9 +27,6 @@ class Aggregate
 
         Verlet* verlet;
         array<int, 4> IndexVerlet;
-
-        array< vector<double>, 16>* Storage;
-        ListAggregat* external_storage;
 
         double creation_date;
         double nctmp,nptmp;
@@ -48,109 +46,143 @@ class Aggregate
 
         double *x,*y,*z; // position of the gravity center
 
-        int Label;
         int Nc;     //Number of contacts
         int Np;     //Number of spheres
 
         bool InVerlet;
 
     public:
-        Aggregate(Sphere);
-        Aggregate(Aggregate Agg1, Aggregate Agg2);
-        Aggregate(ListAggregat&, const int label);
-
 
         void Init(void);
-        const array<double, 4> GetPosition(void) const;
+        void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
+
         void SetPosition(const array<double, 4> position);
         void SetPosition(const double x,const double y,const double z);
         void Translate(const array<double, 4> vector);
         void Translate(const double vector[]);
+
+        const array<double, 4> GetPosition(void) const;
         array<int, 4> VerletIndex();
-        void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
-        void UpdatesSpheres(ListSphere&, int index[]);
+
+        void Update();
+        void UpdatesSpheres(ListSphere&, int indexInStorage[]);
         void RayonGiration(void);
         double Distance_Aggregate(Aggregate&, array<double,4> vectorOther, array<double,4> Vectdir);
-        void Update();
-
-
-    /* Storage specific */
-
-    public:
-        Aggregate(void);
-        Aggregate(ListSphere& Storage, const int id);
-        Aggregate(PhysicalModel&);
-        ~Aggregate(void);
-
-        Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Aggregate(PhysicalModel&, const double position[], const double r);
-        Aggregate(Sphere&);
 
         void AfficheVerlet();
-        double& operator[](const int);
 
+        double& operator[](const int var);
 
+        /* Storage specific */
     private:
-
         void setpointers(void);
-        void add(void);
-        Aggregate& operator=(const Aggregate& other);
-        Aggregate& operator=(const Aggregate&& other) noexcept;
-        Aggregate(const Aggregate& other);
 
+    public:
+        /** Default constructor in local storage */
+        Aggregate(void);
+        Aggregate(PhysicalModel&);
+
+        /** Constructor in local storage with initialization */
+        Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
+        Aggregate(PhysicalModel&, const array<double, 4> position, const double r);
+        Aggregate(PhysicalModel&, const double position[], const double r);
+        Aggregate(const Sphere&);
+
+
+        /** Constructor with external storage */
+        Aggregate(ListSphere& Storage, const int id);
+        Aggregate(Sphere);
+        Aggregate(Aggregate Agg1, Aggregate Agg2);
+        Aggregate(ListAggregat&, const int label);
+
+        /** Copy constructor */
+        Aggregate(const Aggregate&);
+
+        /** Move constructor */
+        Aggregate (Aggregate&&) noexcept; /* noexcept needed to enable optimizations in containers */
+
+        /** Destructor */
+        ~Aggregate(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+
+        /** Copy assignment operator */
+        Aggregate& operator= (const Aggregate& other);
+
+        /** Move assignment operator */
+        Aggregate& operator= (Aggregate&& other) noexcept;
 
 };
 
 
 class Verlet
 {
+private:
+    list<int>**** verletlist;
+    int GridDiv;
+
 public:
     void Remove(const int id,const array<int, 4> Index);
     list<int>* GetCell(const int i,const int j,const int k)const;
     void Init(const int GridDiv);
-    ~Verlet(void);
-    Verlet(void);
     void destroy(void);
 
-    private:
-    list<int>**** verletlist;
-    int GridDiv;
+public:
+    /** Default constructor */
+    Verlet(void);
+
+    /** Copy constructor */
+    Verlet(const Verlet&);
+
+    /** Move constructor */
+    Verlet (Verlet&&) noexcept; /* noexcept needed to enable optimizations in containers */
+
+    /** Destructor */
+    ~Verlet(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+
+    /** Copy assignment operator */
+    Verlet& operator= (const Verlet& other);
+
+    /** Move assignment operator */
+    Verlet& operator= (Verlet&& other) noexcept;
 };
 
 
 
-class ListAggregat
+class ListAggregat : public storage_list<16,Aggregate>
 {
     friend class Aggregate;
 
     private:
-        vector < Aggregate* > Aggregats;
         PhysicalModel* physicalmodel;
 
-        array< vector<double>, 16> Storage;
-        vector < int > index;
-
-        int N;
-
-public:
+    public:
         ListSphere spheres;
         Verlet verlet;
+        void Init(PhysicalModel&, const int size);
 
 
+        /* Storage specific */
+    private:
         void setpointers();
 
-public:
-
+    public:
+        /** Default constructor in local storage */
         ListAggregat(void);
-        ListAggregat(PhysicalModel& _physicalmodel, const int N);
+        ListAggregat(PhysicalModel& _physicalmodel, const int size);
 
-        ~ListAggregat(void);
-        Aggregate& operator[](const int);
+        /** Copy constructor */
+        ListAggregat(const ListAggregat& other);
 
-        void Init(PhysicalModel&, const int N);
-        void Destroy(void);
-        int size() const;
+        /** Move constructor */
+        ListAggregat (ListAggregat&&) noexcept; /* noexcept needed to enable optimizations in containers */
 
+        /** Destructor */
+        ~ListAggregat(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+
+        /** Copy assignment operator */
+        ListAggregat& operator= (const ListAggregat& other);
+
+        /** Move assignment operator */
+        ListAggregat& operator= (ListAggregat&& other) noexcept;
 };
 
 

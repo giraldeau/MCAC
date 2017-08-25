@@ -53,13 +53,11 @@ class Sphere : public storage_elem<7,ListSphere>
         void UpdateVolAndSurf(void);
 
     public:
+        void InitVal(void);
+        void InitVal(const double x, const double y, const double z, const double r);
+        void InitVal(const double position[], const double r);
+        void InitVal(const array<double, 4> position,const double r);
 
-        void Set(const double x, const double y, const double z, const double r);
-        void Set(const double position[], const double r);
-        void Set(const array<double, 4> position,const double r);
-
-        void Copy(Sphere&);
-        void Init(void);
 
         void SetPosition(const double x, const double y, const double z);
         void SetPosition(const double position[]);
@@ -111,20 +109,20 @@ class Sphere : public storage_elem<7,ListSphere>
         /** Constructor with external storage */
         Sphere(ListSphere& Storage, const int id);
 
-//        /** Copy constructor */
-//        Sphere(const Sphere&);
+        /** Copy constructor */
+        Sphere(const Sphere&);
 
-//        /** Move constructor */
-//        Sphere (Sphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
+        /** Move constructor */
+        Sphere (Sphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
 
-//        /** Destructor */
-//        ~Sphere(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+        /** Destructor */
+        ~Sphere(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
-//        /** Copy assignment operator */
-//        Sphere& operator= (const Sphere& other);
+        /** Copy assignment operator */
+        Sphere& operator= (const Sphere& other);
 
-//        /** Move assignment operator */
-//        Sphere& operator= (Sphere&& other) noexcept;
+        /** Move assignment operator */
+        Sphere& operator= (Sphere&& other) noexcept;
 
     };
 
@@ -153,25 +151,26 @@ class ListSphere : public storage_list<7,Sphere>
     public:
         /** Default constructor in local storage */
         ListSphere(void);
-//        ListSphere(PhysicalModel& _physicalmodel, const int size);
+        ListSphere(PhysicalModel& _physicalmodel, const int size);
 
         /** Constructor with external storage */
-        ListSphere(ListSphere& parent,int index[]);
-        ListSphere(ListSphere& parent,int* index[],const int start,const int end);
+        ListSphere(ListSphere& parent,int indexInStorage[]);
+        ListSphere(ListSphere& parent,int* indexInStorage[],const int start,const int end);
 
-//        /** Copy constructor */
-//        ListSphere(const ListSphere& other);
+        /** Copy constructor */
+        ListSphere(const ListSphere& other);
 
-//        /** Move constructor */
-//        ListSphere (ListSphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
+        /** Move constructor */
+        ListSphere (ListSphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
 
-//        /** Copy assignment operator */
-//        ListSphere& operator= (const ListSphere& other);
+        /** Destructor */
+        ~ListSphere(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
-//        /** Move assignment operator */
-//        ListSphere& operator= (ListSphere&& other) noexcept;
+        /** Copy assignment operator */
+        ListSphere& operator= (const ListSphere& other);
 
-//        friend void swap(ListSphere& first, ListSphere& second);
+        /** Move assignment operator */
+        ListSphere& operator= (ListSphere&& other) noexcept;
 
 };
 

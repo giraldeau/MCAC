@@ -3,7 +3,7 @@
 template <int N,class mystorage>
 __attribute__((pure)) double& storage_elem<N,mystorage>::operator[](const int i)
 {
-   return (*Storage)[i][index];
+   return (*Storage)[i][indexInStorage];
 }
 
 
@@ -12,7 +12,7 @@ template <int N,class mystorage>
 storage_elem<N,mystorage>::storage_elem(void) :
     Storage(new array< vector<double>, N>),
     external_storage(nullptr),
-    index(0)
+    indexInStorage(0)
 {
     for (int j=0;j<=6;j++)
         (*Storage)[j].assign(1, 0.);
@@ -23,7 +23,7 @@ template <int N,class mystorage>
 storage_elem<N,mystorage>::storage_elem(mystorage& ext_storage, const int id):
     Storage(ext_storage.Storage),
     external_storage(&ext_storage),
-    index(id)
+    indexInStorage(id)
 {
 }
 
@@ -32,7 +32,7 @@ template <int N,class mystorage>
 storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other):
     Storage(nullptr),
     external_storage(other.external_storage),
-    index(other.index)
+    indexInStorage(other.indexInStorage)
 {
     if(external_storage==nullptr)
         Storage = new array< vector<double>, N>;
@@ -45,7 +45,7 @@ template <int N,class mystorage>
 storage_elem<N,mystorage>::storage_elem (storage_elem<N,mystorage>&& other) noexcept :/* noexcept needed to enable optimizations in containers */
     Storage(other.Storage),
     external_storage(other.external_storage),
-    index(other.index)
+    indexInStorage(other.indexInStorage)
 {
     other.Storage = nullptr;
     other.external_storage = nullptr;
@@ -60,7 +60,7 @@ storage_elem<N,mystorage>::~storage_elem(void) noexcept /* explicitly specified 
     if(external_storage==nullptr && Storage!=nullptr)
     {
         for (int j=0;j<=6;j++)
-            (*Storage)[j].erase((*Storage)[j].begin() + index);
+            (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
         delete Storage;
     }
 }
@@ -83,15 +83,15 @@ storage_elem<N,mystorage>& storage_elem<N,mystorage>::operator=(storage_elem<N,m
     if(external_storage==nullptr && Storage!=nullptr)
     {
         for (int j=0;j<=6;j++)
-            (*Storage)[j].erase((*Storage)[j].begin() + index);
+            (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
         delete Storage;
     }
     Storage = other.Storage;
     external_storage = other.external_storage;
-    index = other.index;
+    indexInStorage = other.indexInStorage;
     other.Storage = nullptr;
     other.external_storage = nullptr;
-    other.index=0;
+    other.indexInStorage=0;
     return *this;
 }
 
@@ -106,20 +106,20 @@ void storage_list<N,elem>::Init(const int _N, mylist& owner)
 {
     Destroy();
 
-    Storage = new array< vector<double>, 7>;
+    Storage = new array< vector<double>, N>;
     external_storage=nullptr;
 
 
-    index.assign(_N+1, 0);
+    indexInStorage.assign(_N+1, 0);
     list.assign(_N, nullptr);
-    for (int j=0;j<=6;j++)
+    for (int j=0;j<N;j++)
         (*Storage)[j].assign(_N, 0.);
 
-    index[0]=_N;
+    indexInStorage[0]=_N;
     const int listSize = _N;
     for (size = 0; size < listSize; size++)
     {
-        index[size+1] = size+1;
+        indexInStorage[size+1] = size+1;
         list[size] = new elem(owner,size);
     }
 
@@ -157,11 +157,11 @@ void storage_list<N,elem>::Destroy(void)
 /** Default constructor in local storage */
 template <int N,class elem>
 storage_list<N,elem>::storage_list(void):
+    size(0),
     list(),
-    index(),
+    indexInStorage(),
     Storage(nullptr),
-    external_storage(nullptr),
-    size(0)
+    external_storage(nullptr)
 {}
 
 //storage_list(const int size);
@@ -169,50 +169,50 @@ storage_list<N,elem>::storage_list(void):
 /** Constructor with external storage */
 template <int N,class elem>
 storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, int _index[]):
+    size(_index[0]),
     list(),
-    index(),
+    indexInStorage(),
     Storage(parent.Storage),
-    external_storage(&parent),
-    size(_index[0])
+    external_storage(&parent)
 {
-        index.assign(size+1, 0);
+        indexInStorage.assign(size+1, 0);
         list.assign(size, nullptr);
 
-        index[0]=size;
+        indexInStorage[0]=size;
         const int listSize = size;
         //#pragma omp for simd
         for (int i = 0; i < listSize; i++)
         {
-            index[i+1] = _index[i+1];
-            int iparent = external_storage->index[index[i+1]]-1;
+            indexInStorage[i+1] = _index[i+1];
+            int iparent = external_storage->indexInStorage[indexInStorage[i+1]]-1;
             list[i] = external_storage->list[iparent];
         }
 }
 
 template <int N,class elem>
 storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, int* _index[], const int start, const int end):
+    size(0),
     list(),
-    index(),
+    indexInStorage(),
     Storage(parent.Storage),
-    external_storage(&parent),
-    size(0)
+    external_storage(&parent)
 {
 
     for(int i=start;i<=end;i++)
         size += _index[i][0];
 
-    index.assign(size+1, 0);
+    indexInStorage.assign(size+1, 0);
     list.assign(size, nullptr);
 
-    index[0]=size;
+    indexInStorage[0]=size;
     int m=0;
     for(int i=start;i<=end;i++)
     {
     #pragma omp for simd
         for(int j=1;j<=_index[i][0];j++)
         {
-            index[m+1] = _index[i][j];
-            int iparent = external_storage->index[index[m+1]]-1;
+            indexInStorage[m+1] = _index[i][j];
+            int iparent = external_storage->indexInStorage[indexInStorage[m+1]]-1;
             list[m] = external_storage->list[iparent];
             m++;
         }
@@ -222,11 +222,11 @@ storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, int* _index[], 
 /** Copy constructor */
 template <int N,class elem>
 storage_list<N,elem>::storage_list(const storage_list<N,elem>& other):
+    size(other.size),
     list(other.list),
-    index(other.index),
+    indexInStorage(other.indexInStorage),
     Storage(nullptr),
-    external_storage(other.external_storage),
-    size(other.size)
+    external_storage(other.external_storage)
 {
     if(external_storage==nullptr)
     {
@@ -241,11 +241,11 @@ storage_list<N,elem>::storage_list(const storage_list<N,elem>& other):
 /** Move constructor */
 template <int N,class elem>
 storage_list<N,elem>::storage_list (storage_list&& other) noexcept :/* noexcept needed to enable optimizations in containers */
+    size(other.size),
     list(other.list),
-    index(other.index),
+    indexInStorage(other.indexInStorage),
     Storage(other.Storage),
-    external_storage(other.external_storage),
-    size(other.size)
+    external_storage(other.external_storage)
 {
     Storage=nullptr;
     external_storage=nullptr;
@@ -278,7 +278,7 @@ storage_list<N,elem>& storage_list<N,elem>::operator= (storage_list<N,elem>&& ot
     external_storage = other.external_storage;
 
     list = std::move(other.list);
-    index = std::move(other.index);
+    indexInStorage = std::move(other.indexInStorage);
     size = std::move(other.size);
 
     other.Storage = nullptr;
