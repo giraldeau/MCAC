@@ -102,6 +102,7 @@ class Sphere : public storage_elem<7,ListSphere>
         /** Default constructor in local storage */
         Sphere(void);
         Sphere(PhysicalModel&);
+        Sphere(const Aggregate&);
 
         /** Constructor in local storage with initialization */
         Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);

@@ -48,12 +48,6 @@ int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the 
                 // Aggregate, and then , the labels of saif spheres
 double* TriCum; // Cumulated probabilities
 vector<int> IndexPourTri;
-double RayonAggMax=0.; // Value of the radius of the bigger aggregate in the box
-
-
-// Collision Agg
-int** IdPossible;  // Array of the Ids of the aggregates that could be in contact with the one moving
-int max_npossible;
 
 // suivit tempo
 string FichierParam = "___";
@@ -83,17 +77,6 @@ double Random()
     return v;
 }
 
-double Maxi2D(int colonne, int nmax)
-{
-    //Maximum of a column in the Aggregate table
-    double m = Aggregates[1][colonne];
-    for (int i = 1;i < nmax; i++)
-        m =max(Aggregates[i][colonne], m);
-
-    return m;
-}
-
-
 void SupprimeLigne(int ligne)
 {// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
     int i, j;
@@ -109,7 +92,7 @@ void SupprimeLigne(int ligne)
         Aggregates[i-1].SetPosition(newpos);
 
     }
-    Aggregates.verlet.Remove(NAgg,Aggregates[NAgg].VerletIndex());
+    Aggregates.verlet.Remove(NAgg,Aggregates[NAgg].GetVerletIndex());
 
     for (i=ligne+1;i<=NAgg;i++)
     {
@@ -212,7 +195,7 @@ int Probabilite(bool trier,double &deltatemps)
     int i,n,nret;
 
     //$ Get the maximum timestep
-    max = Maxi2D(5,NAgg);
+    max = Aggregates.GetMaxTimeStep();
 
     if (trier)
     {
@@ -252,173 +235,6 @@ int Probabilite(bool trier,double &deltatemps)
 
     return nret;
 }
-
-//########################################## Determination of the contacts between agrgates ##########################################
-void CalculDistance(int id, double &distmin, int &aggcontact)
-{
-    int npossible(0);
-    aggcontact = 0;
-    distmin = 1.0;
-
-    //+++++++++++++++++++++++++++++++++ Determination of the potential contacts (= in this part, we're considering aggreghates as spheres  with a diameter of Aggregate[6],+++++++++++++++++
-    //+++++++++++++++++++++++++++++++++ the distance between the center of gravity of the aggregate and the furthest sphere in the agregate +++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    //$ Find potential contacts between agregates
-
-    Sphere s1(physicalmodel, Aggregates[id].GetPosition(), Aggregates[id][6]); // Represents the sphere containing the agregate we're testing
-
-    if (! physicalmodel.use_verlet)
-    {
-        //$ [For all other agregate]
-        for (int i = 1;i <= NAgg; i++)
-        {
-            if (i != id)
-            {
-
-                Sphere s2(physicalmodel, Aggregates[i].GetPosition(), Aggregates[i][6]); // Represents the sphere containing the other agregate
-
-                double distForContact;
-
-                if (s1.Contact(s2))
-                    distForContact = 0;
-                else
-                    distForContact = s1.Collision(s2,Vectdir);
-
-                if(0. <= distForContact && distForContact <= Aggregates[id][4] )
-                {
-                    //$ Aggregate is stocked into IdPossible
-                    npossible++; // Number of aggregates that could be hit
-                    IdPossible[npossible][1] = i;  //Label of an aggregate that could be in contact with the one moving
-                    IdPossible[npossible][2] = 0; //X coordinate of the "box" where this agregate was
-                    IdPossible[npossible][3] = 0; //Y coordinate of the "box" where this agregate was
-                    IdPossible[npossible][4] = 0; //Z coordinate of the "box" where this agregate was
-                    if (npossible == max_npossible)
-                    {
-                        cout << "Too many possible collisions" << endl;
-                        exit(2);
-                    }
-                }
-            }
-        }    
-    }
-    else
-    {
-        double lpm = Aggregates[id][4]; // mean free path of the agregate labeled id
-
-        double mindist = (Aggregates[id][6]+RayonAggMax);
-        const array<double, 4> posid = Aggregates[id].GetPosition();
-
-        double xp(posid[1]+mindist+MAX(lpm*Vectdir[1],0));
-        double xm(posid[1]-mindist+MIN(lpm*Vectdir[1],0));
-        double yp(posid[2]+mindist+MAX(lpm*Vectdir[2],0));
-        double ym(posid[2]-mindist+MIN(lpm*Vectdir[2],0));
-        double zp(posid[3]+mindist+MAX(lpm*Vectdir[3],0));
-        double zm(posid[3]-mindist+MIN(lpm*Vectdir[3],0));
-
-        int bornei1,bornei2,bornej1,bornej2,bornek1,bornek2;
-
-
-        bornei1 = int(floor(xm*physicalmodel.GridDiv/physicalmodel.L));
-        bornei2 = int(floor(xp*physicalmodel.GridDiv/physicalmodel.L)+1);
-        bornej1 = int(floor(ym*physicalmodel.GridDiv/physicalmodel.L));
-        bornej2 = int(floor(yp*physicalmodel.GridDiv/physicalmodel.L)+1);
-        bornek1 = int(floor(zm*physicalmodel.GridDiv/physicalmodel.L));
-        bornek2 = int(floor(zp*physicalmodel.GridDiv/physicalmodel.L)+1);
-
-        if (bornei2-bornei1>=physicalmodel.GridDiv)
-            {bornei1=0 ; bornei2=physicalmodel.GridDiv-1;}
-        if (bornej2-bornej1>=physicalmodel.GridDiv)
-            {bornej1=0 ; bornej2=physicalmodel.GridDiv-1;}
-        if (bornek2-bornek1>=physicalmodel.GridDiv)
-            {bornek1=0 ; bornek2=physicalmodel.GridDiv-1;}
-
-
-        // ///////
-        for (int i=bornei1;i<=bornei2;i++)
-        {
-            for (int j=bornej1;j<=bornej2;j++)
-            {
-                for (int k=bornek1;k<=bornek2;k++)
-                {
-                    int ii(i),jj(j),kk(k);
-
-                    // periodic
-                    while (ii<0)
-                        ii += physicalmodel.GridDiv;
-                    while (jj<0)
-                        jj += physicalmodel.GridDiv;
-                    while (kk<0)
-                        kk += physicalmodel.GridDiv;
-                    while (ii>=physicalmodel.GridDiv)
-                        ii -= physicalmodel.GridDiv;
-                    while (jj>=physicalmodel.GridDiv)
-                        jj -= physicalmodel.GridDiv;
-                    while (kk>=physicalmodel.GridDiv)
-                        kk -= physicalmodel.GridDiv;
-
-                    list<int>* cell = Aggregates.verlet.GetCell(ii,jj,kk);
-
-                    for(_List_iterator<int> p=cell->begin();p!=cell->end();p++)
-                    {
-                        if (*p != id)
-                        {
-                            Sphere s2(physicalmodel, Aggregates[*p].GetPosition(), Aggregates[*p][6]);
-
-                            double distForContact;
-
-                            if (s1.Contact(s2))
-                                distForContact = 0.;
-                            else
-                                distForContact = s1.Collision(s2,Vectdir);
-
-                            if(0. <= distForContact && distForContact <= lpm )
-                            {
-                                npossible++; // Number of aggregates that could be hit
-                                IdPossible[npossible][1] = *p;  //Label of an aggregate that could be in contact with the one moving
-                                IdPossible[npossible][2] = 0; //X coordinate of the "box" where this agregate was
-                                IdPossible[npossible][3] = 0; //Y coordinate of the "box" where this agregate was
-                                IdPossible[npossible][4] = 0; //Z coordinate of the "box" where this agregate was
-                                if (npossible == max_npossible)
-                                {
-                                    cout << "Too many possible collisions" << endl;
-                                    exit(2);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //$ Number of agregates possibly in contact
-    if (npossible > 0)
-    {
-        //$ loop on the agregates potentially in contact
-        for (int s = 1; s <= npossible; s++) //For every aggregate that could be in contact
-        {
-            int agg = IdPossible[s][1];
-
-            if (Aggregates[id].Contact(Aggregates[agg]))
-            {
-                cout << "Already contact !! " << endl;
-            }
-            else
-            {
-                double dist = Aggregates[id].Distance(Aggregates[agg],Vectdir);
-                if (dist >= 0 && dist < distmin)
-                {
-                    distmin = dist;
-                    aggcontact = s; //Prise en compte de l'image par translation d'un agrégat cible
-                }
-            }
-        }
-    }
-}
-//###############################################################################################################################
 
 //################################################# Réunion de deux agrégats ####################################################
 int Reunit(int AggI, int AggJ, int &err)
@@ -596,9 +412,6 @@ void Calcul() //Coeur du programme
             for (i = 1; i<= NAgg; i++)
             {
                 Aggregates[i].Update();
-                double rmax = Aggregates[i][6];
-                if(rmax>RayonAggMax)
-                    RayonAggMax=rmax;
             }
             lpm = Aggregates[NumAgg][4];
         }
@@ -614,7 +427,7 @@ void Calcul() //Coeur du programme
         double distmove = lpm;
 
         //$ looking for potential contacts
-        CalculDistance(NumAgg, distmin, aggcontact);
+        aggcontact = Aggregates.DistanceToNextContact(NumAgg, Vectdir, distmin);
 
         contact = (aggcontact != 0);
         if (contact)
@@ -631,12 +444,9 @@ void Calcul() //Coeur du programme
         if (contact)
         {
             //$ Aggregates in contact are reunited
-            newnumagg = Reunit(NumAgg, IdPossible[aggcontact][1], err);
+            newnumagg = Reunit(NumAgg, aggcontact, err);
 
             Aggregates[newnumagg].Update();
-            double rmax = Aggregates[newnumagg][6];
-            if(rmax>RayonAggMax)
-                RayonAggMax=rmax;
 
             physicalmodel.temps = physicalmodel.temps-deltatemps*(1-distmin/lpm);
             /*
@@ -708,9 +518,7 @@ void Init()
 
     int testmem = 0;
     NAgg = physicalmodel.N;
-    max_npossible = NAgg;
     TriCum = new double[NAgg+1];
-    IdPossible = new int* [max_npossible+1];
     IndexPourTri.assign(NAgg+1,0);
     Aggregates.Init(physicalmodel, NAgg);
 
@@ -728,11 +536,6 @@ void Init()
     AggLabels[0]=new int[2];
     AggLabels[0][0]=0;
     AggLabels[0][1]=0;
-
-    for (int i = 1; i <= max_npossible; i++)
-    {
-        IdPossible[i] = new int[5];
-    }
 
     for (int i = 1; i <= NAgg; i++)
     {          
@@ -768,11 +571,6 @@ void Init()
         else
         {
             Aggregates[i].Init(physicalmodel,Aggregates.verlet,newpos,i,Aggregates.spheres,Dp);
-
-            if(Dp/2>RayonAggMax)
-            {
-                RayonAggMax=Dp/2;
-            }
         }
         if (testmem > NAgg)
         {
@@ -787,13 +585,7 @@ void Init()
 void Fermeture()
 {
 
-    for (int i = 1; i <= physicalmodel.N; i++)
-    {
-        delete[] IdPossible[i];
-
-    }
     delete[] TriCum;
-    delete[] IdPossible;
     delete[] tab;
 }
 

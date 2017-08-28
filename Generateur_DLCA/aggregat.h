@@ -15,6 +15,7 @@ class Aggregate : public storage_elem<16,ListAggregat>
 {
 
     friend class ListAggregat;
+    friend class Sphere;
 
     private:
         PhysicalModel* physicalmodel;
@@ -62,7 +63,9 @@ class Aggregate : public storage_elem<16,ListAggregat>
         void Translate(const double vector[]);
 
         const array<double, 4> GetPosition(void) const;
-        array<int, 4> VerletIndex();
+        Sphere GetInclusiveSphere(void) const;
+
+        array<int, 4> GetVerletIndex();
 
         void Update();
         void UpdatesSpheres(ListSphere&, int indexInStorage[]);
@@ -119,12 +122,14 @@ class Verlet
 private:
     list<int>**** verletlist;
     int GridDiv;
+    double L;
 
 public:
     void Remove(const int id,const array<int, 4> Index);
     list<int>* GetCell(const int i,const int j,const int k)const;
-    void Init(const int GridDiv);
+    void Init(const int GridDiv, const double L);
     void destroy(void);
+    vector<int> GetSearchSpace(array<double, 4> sourceposition , const double mindist, const array<double, 4> Vector);
 
 public:
     /** Default constructor */
@@ -154,12 +159,19 @@ class ListAggregat : public storage_list<16,Aggregate>
 
     private:
         PhysicalModel* physicalmodel;
+        double maxradius;
+        double maxtime_step;
 
     public:
         ListSphere spheres;
         Verlet verlet;
         void Init(PhysicalModel&, const int size);
 
+        vector<int> PotentialContacts(int id,array<double,4> Vectdir, vector<int> SearchSpace);
+        vector<int> GetSearchSpace(int source, array<double,4> Vectdir);
+        int DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin);
+
+        double GetMaxTimeStep();
 
         /* Storage specific */
     private:

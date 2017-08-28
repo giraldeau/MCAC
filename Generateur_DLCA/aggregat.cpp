@@ -177,6 +177,16 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
         *time_step = 1e-6;              //Durée du déplacement
     }
 
+    if(!(external_storage==nullptr))
+    {
+        if (*rmax > external_storage->maxradius)
+            external_storage->maxradius = *rmax;
+        if (*time_step > external_storage->maxtime_step)
+            external_storage->maxtime_step = *time_step;
+    }
+
+
+
 }
 
 
@@ -246,6 +256,14 @@ void Aggregate::Update()
         *lpm = physicalmodel->Dpm*1E-9;
         *time_step = 1E-6;
     }
+
+    if(!(external_storage==nullptr))
+    {
+        if (*rmax > external_storage->maxradius)
+            external_storage->maxradius = *rmax;
+        if (*time_step > external_storage->maxtime_step)
+            external_storage->maxtime_step = *time_step;
+    }
 }
 
 
@@ -283,7 +301,7 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
     if (InVerlet && physicalmodel->use_verlet)
     {
         //$ Update Verlet
-        array<int, 4> newindexVerlet = VerletIndex();
+        array<int, 4> newindexVerlet = GetVerletIndex();
 
         if (newindexVerlet != IndexVerlet)
         {
@@ -524,10 +542,14 @@ void Aggregate::RayonGiration(void)
 }
 //###############################################################################################################################
 
+Sphere Aggregate::GetInclusiveSphere(void) const
+{
+    Sphere InclusiveSphere1(*physicalmodel, *x, *y, *z, *rmax);
+    return InclusiveSphere1;
+}
 
 
-
-array<int, 4> Aggregate::VerletIndex()
+array<int, 4> Aggregate::GetVerletIndex()
 {
     array<int, 4>  index({{0,0,0,0}});
     double step = physicalmodel->GridDiv/physicalmodel->L;
@@ -559,6 +581,11 @@ void Aggregate::AfficheVerlet()
 }
 
 
+Sphere::Sphere(const Aggregate& Agg) : Sphere()
+{
+    physicalmodel = Agg.physicalmodel;
+    InitVal(*Agg.x,*Agg.y,*Agg.z,*Agg.rmax);
+}
 
 
 
@@ -566,20 +593,123 @@ void Aggregate::AfficheVerlet()
 
 ListAggregat::ListAggregat(void):
     physicalmodel(nullptr),
+    maxradius(0.),
+    maxtime_step(0.),
     spheres(),
     verlet()
 {}
+
+double ListAggregat::GetMaxTimeStep()
+{
+    return maxtime_step;
+}
 
 void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
 {
     physicalmodel=&_physicalmodel;
     spheres.Init(_physicalmodel, _N);
-    verlet.Init(_physicalmodel.GridDiv);
+    verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
     storage_list<16,Aggregate>::Init(_N,*this);
-
-
 }
+
+
+//########################################## Determination of the contacts between agrgates ##########################################
+vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, vector<int> SearchSpace)
+{
+    vector<int> listOfPotentialContacts;
+
+    Sphere SphereMe(*list[AggMe-1]);
+    Sphere SphereOther(*list[AggMe-1]);
+
+    //$ [For all other agregate]
+    for (unsigned i = 0;i < SearchSpace.size(); i++)
+    {
+        int AggOther = SearchSpace[i];
+
+        if (AggOther != AggMe)
+        {
+            SphereOther.InitVal(*list[AggOther-1]->x,
+                                *list[AggOther-1]->y,
+                                *list[AggOther-1]->z,
+                                *list[AggOther-1]->rmax);
+
+            double distForContact;
+
+            if (SphereMe.Contact(SphereOther))
+                distForContact = 0;
+            else
+                distForContact = SphereMe.Collision(SphereOther,Vectdir);
+
+            if(0. <= distForContact && distForContact <= *list[AggMe-1]->lpm )
+                listOfPotentialContacts.push_back(AggOther);
+        }
+    }
+    return listOfPotentialContacts;
+}
+//###############################################################################################################################
+
+
+vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4> Vectdir)
+{
+    if (!physicalmodel->use_verlet)
+        return indexInStorage;
+    else
+    {
+        double lpm ( *list[source-1]->lpm );
+        double mindist ( *list[source-1]->rmax + maxradius );
+        array<double, 4> sourceposition = list[source-1]->GetPosition();
+
+        array<double, 4> Vector;
+        Vector[0] = 0;
+        Vector[1] = lpm * Vectdir[1];
+        Vector[2] = lpm * Vectdir[2];
+        Vector[3] = lpm * Vectdir[3];
+
+        return verlet.GetSearchSpace(sourceposition , mindist, Vector);
+    }
+}
+
+
+
+//########################################## Determination of the contacts between agrgates ##########################################
+int ListAggregat::DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin)
+{
+    // Use Verlet to reduce search
+    vector<int> SearchSpace(GetSearchSpace(source,Vectdir));
+
+    // Assimilate Aggregate as sphere to drasticly speed-up search
+    vector<int> PotentialContact(PotentialContacts(source,Vectdir,SearchSpace));
+
+    const int npossible(PotentialContact.size());
+    int aggcontact(0);
+    distmin = *list[source-1]->lpm;
+
+    //$ loop on the agregates potentially in contact
+    for (int s = 0; s < npossible; s++) //For every aggregate that could be in contact
+    {
+        int agg = PotentialContact[s];
+
+        if (list[source-1]->Contact(*list[agg-1]))
+        {
+            cout << "Already contact !! " << endl;
+            cout << " ignoring" << endl;
+        }
+        else
+        {
+            double dist = list[source-1]->Distance(*list[agg-1],Vectdir);
+            if (dist >= 0 && dist <= distmin)
+            {
+                distmin = dist;
+                aggcontact = agg; //Prise en compte de l'image par translation d'un agrégat cible
+            }
+        }
+    }
+
+    return aggcontact;
+}
+//###############################################################################################################################
+
 
 
 void ListAggregat::setpointers()
@@ -612,10 +742,12 @@ void Verlet::Remove(const int id,const array<int, 4> Index)
     verletlist[Index[1]][Index[2]][Index[3]]->remove(id);
 }
 
-void Verlet::Init(const int _GridDiv)
+void Verlet::Init(const int _GridDiv, const double _L)
 {
     destroy();
+
     GridDiv = _GridDiv;
+    L=_L;
     verletlist=new list<int>***[GridDiv];
     for(int i=0;i<GridDiv;i++)
     {
@@ -640,9 +772,77 @@ __attribute((pure)) list<int>* Verlet::GetCell(const int i,const int j,const int
 }
 
 
+
+
+vector<int> Verlet::GetSearchSpace(array<double, 4> sourceposition , const double witdh, const array<double, 4> Vector)
+{
+
+    vector<int> SearchSpace;
+
+    double xp(sourceposition[1]+witdh+MAX(Vector[1],0));
+    double xm(sourceposition[1]-witdh+MIN(Vector[1],0));
+    double yp(sourceposition[2]+witdh+MAX(Vector[2],0));
+    double ym(sourceposition[2]-witdh+MIN(Vector[2],0));
+    double zp(sourceposition[3]+witdh+MAX(Vector[3],0));
+    double zm(sourceposition[3]-witdh+MIN(Vector[3],0));
+
+    int bornei1 (int(floor(xm*GridDiv/L)));
+    int bornei2 (int(floor(xp*GridDiv/L)+1));
+    int bornej1 (int(floor(ym*GridDiv/L)));
+    int bornej2 (int(floor(yp*GridDiv/L)+1));
+    int bornek1 (int(floor(zm*GridDiv/L)));
+    int bornek2 (int(floor(zp*GridDiv/L)+1));
+
+    if (bornei2-bornei1>=GridDiv)
+        {bornei1=0 ; bornei2=GridDiv-1;}
+    if (bornej2-bornej1>=GridDiv)
+        {bornej1=0 ; bornej2=GridDiv-1;}
+    if (bornek2-bornek1>=GridDiv)
+        {bornek1=0 ; bornek2=GridDiv-1;}
+
+
+    // ///////
+    for (int i=bornei1;i<=bornei2;i++)
+    {
+        for (int j=bornej1;j<=bornej2;j++)
+        {
+            for (int k=bornek1;k<=bornek2;k++)
+            {
+                int ii(i),jj(j),kk(k);
+
+                // periodic
+                while (ii<0)
+                    ii += GridDiv;
+                while (jj<0)
+                    jj += GridDiv;
+                while (kk<0)
+                    kk += GridDiv;
+                while (ii>=GridDiv)
+                    ii -= GridDiv;
+                while (jj>=GridDiv)
+                    jj -= GridDiv;
+                while (kk>=GridDiv)
+                    kk -= GridDiv;
+
+                list<int>* cell = GetCell(ii,jj,kk);
+                SearchSpace.insert(SearchSpace.end(),cell->begin(),cell->end());
+            }
+        }
+    }
+    return SearchSpace;
+}
+
+
+
+
+
+
+
+
 Verlet::Verlet(void):
     verletlist(nullptr),
-    GridDiv(0)
+    GridDiv(0),
+    L(0)
 {}
 
 
@@ -656,9 +856,6 @@ void Verlet::destroy(void)
 {
     if (verletlist!=nullptr)
     {
-
-        cout << "destroying a verlet list ?" << endl;
-
         for(int i=0;i<GridDiv;i++)
         {
             for(int j=0;j<GridDiv;j++)
@@ -674,3 +871,6 @@ void Verlet::destroy(void)
         delete verletlist;
     }
 }
+
+
+
