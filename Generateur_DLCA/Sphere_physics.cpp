@@ -43,31 +43,6 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #################################                                       #####################################
  * #############################################################################################################*/
 
-__attribute((const)) double periodicDistance(const double x, const double dim)
-{
-    double dist(x);
-    double hdim(0.5*dim);
-
-    while (dist < -hdim)
-        dist += dim;
-    while (dist >  hdim)
-        dist -= dim;
-
-    return dist;
-}
-
-
-__attribute((const)) double periodicPosition(const double x, const double dim)
-{
-    double pos(x);
-
-    while (pos < 0)
-        pos += dim;
-    while (pos > dim)
-        pos -= dim;
-
-    return pos;
-}
 
 void Sphere::SetPosition(const double newx, const double newy, const double newz)
 {
@@ -279,27 +254,3 @@ void Sphere::CroissanceSurface(const double dt)
     *volume = facvol*newR3;
     *surface = facsurf*newR2;
 }
-
-
-
-/* #############################################################################################################
- * #################################                                       #####################################
- * #################################              AGREGATE                 #####################################
- * #################################                                       #####################################
- * #############################################################################################################*/
-
-
-
-/* #############################################################################################################
- * ########################################### Grow all spheres ################################################
- * #############################################################################################################*/
-void ListSphere::CroissanceSurface(const double dt)
-{
-    const int listSize = size;
-    #pragma omp for simd
-    for (int i = 0; i < listSize; i++)
-    {
-        list[i]->CroissanceSurface(dt);
-    }
-}
-

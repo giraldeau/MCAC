@@ -13,24 +13,51 @@ COMPILATOR = "INTEL"
 TARGET = DLCA
 TEMPLATE = app
 
+#SOURCES +=\
+#        mainwindow.h \
+#        Sphere.h \
+#        Spherelist.h \
+#        physical_model.h \
+#        aggregat.h \
+#        aggregatList.h \
+#        verlet.h \
+#        storage.h \
+#        storagelist.h \
+#        storage.tpp \
+#        storagelist.tpp \
+#        physical_model.cpp \
+#        Sphere_storage.cpp \
+#        Spherelist_storage.cpp \
+#        Sphere_physics.cpp \
+#        Spherelist_physics.cpp \
+#        aggregat.cpp \
+#        mainwindow.cpp\
+#        main.cpp
+
 SOURCES +=\
-        mainwindow.h \
-        Sphere.h \
-        physical_model.h \
-        aggregat.h \
-        storage.h \
+        verlet.cpp \
         storage.tpp \
+        storagelist.tpp \
         physical_model.cpp \
         Sphere_storage.cpp \
+        Spherelist_storage.cpp \
         Sphere_physics.cpp \
+        Spherelist_physics.cpp \
         aggregat.cpp \
+        aggregatList.cpp \
         mainwindow.cpp\
         main.cpp
 
-#HEADERS += mainwindow.h \
-#           Sphere.h \
-#           physical_model.h \
-#           aggregat.h
+HEADERS += \
+        mainwindow.h \
+        Sphere.h \
+        Spherelist.h \
+        physical_model.h \
+        aggregat.h \
+        aggregatList.h \
+        verlet.h \
+        storage.h \
+        storagelist.h
 
 #FORMS += mainwindow.ui
 
@@ -38,6 +65,8 @@ SOURCES +=\
 #    mainwindow.qrc
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
+DEFINES += WITH_QT
+
 
 release: DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/release
 debug:   DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/debug
@@ -52,7 +81,7 @@ equals(COMPILATOR, "INTEL"){
     QMAKE_LFLAGS   += -g -traceback -qopenmp -std=c++11
 
     ### WARNINGS ###
-    QMAKE_CXXFLAGS +=  -Wall -w3 -diag-enable=3 -Wremarks -Wtrigraphs -Wcomment -Wdeprecated -Weffc -Wextra-tokens -Wformat -Wformat-security -Wic-pointer -Winline -Wmain
+    QMAKE_CXXFLAGS +=  -Wall -w3 -diag-enable=3 -Wremarks -Wtrigraphs -Wcomment -Wdeprecated -Wno-effc++ -Wextra-tokens -Wformat -Wformat-security -Wic-pointer -Winline -Wmain
     QMAKE_CXXFLAGS += -Wnon-virtual-dtor -Wpointer-arith -Wreorder -Wreturn-type -Wshadow -Wsign-compare -Wuninitialized -Wunknown-pragmas -Wunused-function
     QMAKE_CXXFLAGS += -Wwrite-strings
 

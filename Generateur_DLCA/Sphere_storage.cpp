@@ -239,7 +239,14 @@ Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimiza
 /** Destructor */
 Sphere::~Sphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
-    // everything is already taken care of in the parent class storage_elem
+    x=nullptr;
+    y=nullptr;
+    z=nullptr;
+    r=nullptr;
+    volume=nullptr;
+    surface=nullptr;
+    physicalmodel=nullptr;
+    AggLabel=0;
 }
 
 /** Copy assignment operator */
@@ -259,98 +266,5 @@ Sphere& Sphere::operator= (Sphere&& other) noexcept
     setpointers();
     other.setpointers();
     other.AggLabel=0;
-    return *this;
-}
-
-
-
-
-
-
-
-
-
-
-void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
-{
-    physicalmodel=&_physicalmodel;
-    storage_list<7,Sphere>::Init(_N,*this);
-}
-
-
-void ListSphere::DecreaseLabel(void)
-{
-    #pragma omp for simd
-    for (int i = 0; i < size; i++)
-    {
-        list[i]->DecreaseLabel();
-    }
-}
-
-
-void ListSphere::setpointers()
-{
-    //#pragma omp for simd
-    for (int i = 0; i < size; i++)
-    {
-        list[i]->setpointers();
-    }
-}
-
-
-
-/** Default constructor in local storage */
-ListSphere::ListSphere(void):
-    storage_list<7,Sphere>(),
-    physicalmodel(nullptr)
-{}
-
-ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
-    ListSphere()
-{
-    Init(_physicalmodel,_N);
-}
-
-/** Constructor with external storage */
-ListSphere::ListSphere(ListSphere& parent,int _index[]):
-    storage_list<7,Sphere>(parent, _index),
-    physicalmodel(parent.physicalmodel)
-{}
-
-ListSphere::ListSphere(ListSphere& parent,int* _index[],const int start,const int end):
-    storage_list<7,Sphere>(parent, _index, start, end),
-    physicalmodel(parent.physicalmodel)
-{}
-
-/** Copy constructor */
-ListSphere::ListSphere(const ListSphere& other):
-    storage_list<7,Sphere>(other),
-    physicalmodel(other.physicalmodel)
-{}
-
-/** Move constructor */
-ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
-    storage_list<7,Sphere>(other),
-    physicalmodel(other.physicalmodel)
-{}
-
-/** Destructor */
-ListSphere::~ListSphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
-{}
-
-/** Copy assignment operator */
-ListSphere& ListSphere::operator= (const ListSphere& other)
-{
-    ListSphere tmp(other);      // re-use copy-constructor
-    *this = std::move(tmp);     // re-use move-assignment
-    return *this;
-}
-
-/** Move assignment operator */
-ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
-{
-    std::swap(static_cast<storage_list<7,Sphere>&>(*this),static_cast<storage_list<7,Sphere>&>(other));
-    physicalmodel = other.physicalmodel;
-
     return *this;
 }

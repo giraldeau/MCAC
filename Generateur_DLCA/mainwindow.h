@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "physical_model.h"
+#include "aggregatList.h"
 
 #include <vector>
 #include <array>

@@ -366,3 +366,31 @@ __attribute((const)) double inverfc(const double p)
 }
 __attribute((const)) double myerf(const double x) { return 1-myerfc(x); }
 __attribute((const)) double inverf(const double p) {return inverfc(1.-p);}
+
+
+
+__attribute((const)) double periodicDistance(const double x, const double dim)
+{
+    double dist(x);
+    double hdim(0.5*dim);
+
+    while (dist < -hdim)
+        dist += dim;
+    while (dist >  hdim)
+        dist -= dim;
+
+    return dist;
+}
+
+
+__attribute((const)) double periodicPosition(const double x, const double dim)
+{
+    double pos(x);
+
+    while (pos < 0)
+        pos += dim;
+    while (pos > dim)
+        pos -= dim;
+
+    return pos;
+}

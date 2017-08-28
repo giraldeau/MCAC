@@ -1,9 +1,11 @@
-#ifndef SPHERE
-#define SPHERE
+#ifndef SPHERE_H
+#define SPHERE_H
 
 #include <iostream>
-#include <physical_model.h>
-#include <storage.h>
+#include "Sphere.h"
+#include "Spherelist.h"
+#include "storage.h"
+#include "physical_model.h"
 #include <vector>
 #include <array>
 
@@ -28,9 +30,11 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 using namespace std;
 
-class Aggregate;
-class ListSphere;
 class Sphere;
+class ListSphere;
+class Aggregate;
+class ListAggregat;
+class Verlet;
 
 class Sphere : public storage_elem<7,ListSphere>
 {
@@ -127,57 +131,6 @@ class Sphere : public storage_elem<7,ListSphere>
         /** Move assignment operator */
         Sphere& operator= (Sphere&& other) noexcept;
 
-    };
-
-
-class ListSphere : public storage_list<7,Sphere>
-{
-    friend class Sphere;
-
-    /* Generic */
-
-    private:
-        PhysicalModel* physicalmodel;
-
-    public:
-
-        void Init(PhysicalModel& _physicalmodel, const int size);
-        void DecreaseLabel(void);
-
-        void CroissanceSurface(const double dt);
-
-
-    /* Storage specific */
-    private:
-        void setpointers(void);
-
-    public:
-        /** Default constructor in local storage */
-        ListSphere(void);
-        ListSphere(PhysicalModel& _physicalmodel, const int size);
-
-        /** Constructor with external storage */
-        ListSphere(ListSphere& parent,int indexInStorage[]);
-        ListSphere(ListSphere& parent,int* indexInStorage[],const int start,const int end);
-
-        /** Copy constructor */
-        ListSphere(const ListSphere& other);
-
-        /** Move constructor */
-        ListSphere (ListSphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
-
-        /** Destructor */
-        ~ListSphere(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
-
-        /** Copy assignment operator */
-        ListSphere& operator= (const ListSphere& other);
-
-        /** Move assignment operator */
-        ListSphere& operator= (ListSphere&& other) noexcept;
-
 };
 
-double periodicPosition(const double x, const double dim);
-double periodicDistance(const double x, const double dim);
-
-#endif // SPHERE
+#endif // SPHERE_H

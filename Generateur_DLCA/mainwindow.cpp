@@ -1,9 +1,6 @@
+#include "mainwindow.h"
 #include <libgen.h>
 #include <sys/stat.h>
-#include "mainwindow.h"
-#include <Sphere.h>
-#include <aggregat.h>
-#include <physical_model.h>
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>

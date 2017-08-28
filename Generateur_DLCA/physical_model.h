@@ -1,5 +1,5 @@
-#ifndef PHYSICAL_MODEL
-#define PHYSICAL_MODEL
+#ifndef PHYSICAL_MODEL_H
+#define PHYSICAL_MODEL_H
 
 #include <iostream>
 
@@ -60,5 +60,8 @@ double inverfc(const double p);
 double myerf(const double x);
 double inverf(const double p);
 
-#endif // PHYSICAL_MODEL
+double periodicPosition(const double x, const double dim);
+double periodicDistance(const double x, const double dim);
+
+#endif // PHYSICAL_MODEL_H
 
