@@ -19,7 +19,11 @@ ListAggregat::ListAggregat(void):
 
 double ListAggregat::GetMaxTimeStep()
 {
-    return maxtime_step;
+    double m = *list[1]->time_step;
+    for (int i = 0;i < size; i++)
+        m =max(*list[i]->time_step, m);
+
+    return m;
 }
 
 void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
