@@ -38,6 +38,9 @@ class ListAggregat : public storage_list<16,Aggregate>
 
         double GetMaxTimeStep();
 
+        int Merge(const int first, const int second);
+
+
         /* Storage specific */
     private:
         void setpointers();

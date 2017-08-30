@@ -74,43 +74,6 @@ double Random()
     return v;
 }
 
-void SupprimeLigne(int ligne)
-{// This functions deletes a line in the arrays Aggregates Agglabels, it is called in Reunit(), when 2 aggregates are in contact and merge into one aggregate
-    int i, j;
-    //printf("SupLigne  : ");
-
-    for (i = ligne + 1; i<= NAgg; i++)
-    {
-
-        for (j = 0; j <= 11; j++)
-            Aggregates[i-1][j] = Aggregates[i][j];
-        const array<double, 4> newpos = Aggregates[i].GetPosition();
-
-        Aggregates[i-1].SetPosition(newpos);
-
-    }
-    Aggregates.verlet.Remove(NAgg,Aggregates[NAgg].GetVerletIndex());
-
-    for (i=ligne+1;i<=NAgg;i++)
-    {
-        delete[] AggLabels[i-1]; // Considering the 2nd dimension of Agglabels doesn't always have the same size, we have to delete
-        AggLabels[i-1]=new int[AggLabels[i][0]+1];//and reallocate each of these sub-arrays
-        for (j=0;j<=AggLabels[i][0];j++)
-        {
-            AggLabels[i-1][j]=AggLabels[i][j];
-        }
-    }
-    NAgg--;
-
-
-    //$ Update of the labels of every sphere that is in an aggregate indexed highger than the one absorbed
-    ListSphere SpheresToReLabel(Aggregates.spheres, AggLabels,ligne,NAgg);
-    SpheresToReLabel.DecreaseLabel();
-
-    for (i=ligne;i<=NAgg;i++)
-        Aggregates[i].UpdatesSpheres(Aggregates.spheres, AggLabels[i]);
-}
-
 void InsertionSort(int n, double arr[], int index[])
 {
 
@@ -233,74 +196,13 @@ int Probabilite(bool trier,double &deltatemps)
     return nret;
 }
 
-//################################################# Réunion de deux agrégats ####################################################
-int Reunit(int AggI, int AggJ, int &err)
-{// This function will merge the aggregates AggI and AggJ
-    int i, numreject, numstudy;
-    int* TamponValeurs; // Buffer variable
-
-    err = 0;
-
-    //$ Check wich one has the smallest index
-    if (AggI < AggJ)
-    {
-        numstudy = AggI;
-        numreject = AggJ;
-    }
-    else
-    {
-        numstudy = AggJ;
-        numreject = AggI;
-    }
-
-
-    //$ Creation of the new sub array in Agglabels
-    TamponValeurs= new int[AggLabels[AggI][0]+AggLabels[AggJ][0]+1];
-    TamponValeurs[0]=AggLabels[AggI][0]+AggLabels[AggJ][0];
-    for(i=1;i<=AggLabels[AggI][0];i++)
-    {
-        TamponValeurs[i]= AggLabels[AggI][i];
-    }
-    for(i=AggLabels[AggI][0]+1;i<=AggLabels[AggJ][0]+AggLabels[AggI][0];i++)
-    {
-        TamponValeurs[i]=AggLabels[AggJ][i-AggLabels[AggI][0]];
-    }
-
-    //$ Reallocation of the subarray that will contain the labels of the spheres in the reunited aggregate
-    delete[] AggLabels[numstudy];
-    AggLabels[numstudy] = new int [TamponValeurs[0]+1];
-    for (i=0;i<=TamponValeurs[0];i++)
-    {
-        AggLabels[numstudy][i]=TamponValeurs[i];
-    }
-
-    ListSphere SpheresToDelete(Aggregates.spheres, AggLabels[numreject]);
-    int nselect = SpheresToDelete.size;
-    //$ Update of the labels of the spheres that were in the deleted aggregate
-    for (i = 1; i <= nselect; i++)
-    {
-        SpheresToDelete[i].SetLabel(numstudy);
-    }
-
-    //$ Deletionn of the aggregate that was absorbed, using SupprimeLigne()
-
-    SupprimeLigne(numreject);
-    delete[] TamponValeurs;
-
-    Aggregates[numstudy].UpdatesSpheres(Aggregates.spheres, AggLabels[numstudy]);
-
-    //$ Index of the Reunited aggregate is returned
-    return numstudy;
-}
-//###############################################################################################################################
-
 void Calcul() //Coeur du programme
 {
     double deltatemps, distmin, lpm;
     double thetarandom, phirandom;
     int aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
     //int tmp,superpo;
-    int i, j, co, err;
+    int i, j, co;
     bool contact;
     time_t t, t0;
 
@@ -440,8 +342,9 @@ void Calcul() //Coeur du programme
 
         if (contact)
         {
-            //$ Aggregates in contact are reunited
-            newnumagg = Reunit(NumAgg, aggcontact, err);
+            //$ Aggregates in contact are reunited;
+            newnumagg = Aggregates.Merge(NumAgg,aggcontact);
+            NAgg--;
 
             Aggregates[newnumagg].Update();
 

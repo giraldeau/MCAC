@@ -199,3 +199,42 @@ void swap(storage_list<N,elem>& first, storage_list<N,elem>& second)
     swap(first.external_storage, second.external_storage);
     swap(first.size, second.size);
 }
+
+template <int N,class elem>
+void storage_list<N,elem>::merge(storage_list<N,elem>& other)
+{
+    if(external_storage==nullptr)
+    {
+        for (int i=0;i<N;i++)
+        {
+            (*Storage)[i].insert((*Storage)[i].end(),(*other.Storage)[i].begin(),(*other.Storage)[i].end());
+        }
+        for (int j=1;j<=other.size;j++)
+        {
+            list.push_back(new elem(*other.list[j]));
+            size += 1;
+            indexInStorage.push_back(size);
+        }
+    }
+    else
+    {
+        list.insert(list.end(),other.list.begin(),other.list.end());
+        indexInStorage.insert(indexInStorage.end(),other.indexInStorage.begin()+1,other.indexInStorage.end());
+        indexInStorage[0]+=other.indexInStorage[0];
+        size += other.size;
+    }
+}
+
+template <int N,class elem>
+void storage_list<N,elem>::remove(elem& ToBeRemoved)
+{
+    const int id = ToBeRemoved.indexInStorage;
+    delete list[id];
+    list.erase(list.begin()+id);
+    indexInStorage.erase(indexInStorage.begin()+id+1);
+    for (int i=0;i<N;i++)
+    {
+        (*Storage)[i].erase((*Storage)[i].begin()+id);
+    }
+    size--;
+}

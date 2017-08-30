@@ -16,13 +16,9 @@ const double PI = atan(1.0)*4;
 Aggregate::Aggregate(void):
     storage_elem<16,ListAggregat>(),
     physicalmodel(nullptr),
-    InclusiveSphere(new Sphere()),
     myspheres(),
-    parents(),
-    son(nullptr),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    creation_date(0.),
     nctmp(0.),
     nptmp(1.),
     rg(nullptr),
@@ -56,13 +52,9 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) : Aggregate()
 Aggregate::Aggregate(ListAggregat& _storage, const int _N):
     storage_elem<16,ListAggregat>(_storage, _N),
     physicalmodel(_storage.physicalmodel),
-    InclusiveSphere(new Sphere()),
     myspheres(),
-    parents(),
-    son(nullptr),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    creation_date(0.),
     nctmp(0.),
     nptmp(1.),
     rg(nullptr),
@@ -85,13 +77,13 @@ Aggregate::Aggregate(ListAggregat& _storage, const int _N):
     InVerlet(false)
 {
     Init();
-    external_storage->setpointers();
-
 }
 
 
 void Aggregate::Init(void)
 {
+    if(!(external_storage==nullptr))
+        external_storage->setpointers();
     setpointers();
 
     *rg=0.;  //Gyration Radius
@@ -136,17 +128,21 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 {
     physicalmodel = &_physicalmodel;
     verlet = &_verlet;
-    indexInStorage = _label;
+    indexInStorage = _label-1;
+
+    if(!(external_storage==nullptr))
+        external_storage->setpointers();
+    setpointers();
 
     if (physicalmodel->use_verlet)
     {
-        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(indexInStorage);
+        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(_label);
         InVerlet=true;
     }
     SetPosition(position);
-    int listlabel[2] = {1,indexInStorage};
-    spheres[indexInStorage].SetLabel(indexInStorage);
-    spheres[indexInStorage].InitVal(position, Dp/2);
+    int listlabel[2] = {1,_label};
+    spheres[_label].SetLabel(_label);
+    spheres[_label].InitVal(position, Dp/2);
     myspheres = ListSphere(spheres,listlabel);
     Np = myspheres.size;
 
@@ -235,7 +231,8 @@ double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir)
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void Aggregate::Update()
-{// This function will update the parameter of Agg
+{
+    // This function will update the parameter of Agg
 
     //$ Determination of the Radius of gyration of Agg using RayonGiration()
     RayonGiration();
@@ -305,9 +302,9 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
 
         if (newindexVerlet != IndexVerlet)
         {
-            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(indexInStorage);
+            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(indexInStorage+1);
             IndexVerlet = newindexVerlet;
-            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(indexInStorage);
+            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(indexInStorage+1);
         }
     }
 
@@ -342,10 +339,8 @@ Aggregate::~Aggregate(void)
 {
     if (InVerlet && physicalmodel->use_verlet)
     {
-        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(indexInStorage);
+        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(indexInStorage+1);
     }
-
-    delete InclusiveSphere;
 }
 
 
@@ -453,7 +448,9 @@ double& Aggregate::operator[](const int var)
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
 
 void Aggregate::RayonGiration(void)
-{// This function determines the Gyration Radius of the Aggregate Id.
+{
+    // This function determines the Gyration Radius of the Aggregate Id.
+
     vector<double> tabVol;
     vector<double> tabSurf;
 
@@ -563,7 +560,8 @@ array<int, 4> Aggregate::GetVerletIndex()
 
 
 void Aggregate::AfficheVerlet()
-{   _List_iterator<int> i;
+{
+    _List_iterator<int> i;
 
     if (physicalmodel->use_verlet && InVerlet)
     {
@@ -585,4 +583,24 @@ Sphere::Sphere(const Aggregate& Agg) : Sphere()
 {
     physicalmodel = Agg.physicalmodel;
     InitVal(*Agg.x,*Agg.y,*Agg.z,*Agg.rmax);
+}
+
+
+
+void Aggregate::Merge(Aggregate& other)
+{
+    const int nselect = other.myspheres.size;
+    //$ Update of the labels of the spheres that were in the deleted aggregate
+    for (int i = 1; i <= nselect; i++)
+    {
+        other.myspheres[i].SetLabel(indexInStorage+1);
+    }
+    myspheres.merge(other.myspheres);
+    Np = myspheres.size;
+}
+
+void Aggregate::DecreaseLabel(void)
+{
+    indexInStorage--;
+    myspheres.DecreaseLabel();
 }

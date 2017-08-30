@@ -26,16 +26,11 @@ class Aggregate : public storage_elem<16,ListAggregat>
     private:
         PhysicalModel* physicalmodel;
 
-        Sphere* InclusiveSphere;
         ListSphere myspheres;
-
-        array<Aggregate*,2> parents;
-        Aggregate* son;
 
         Verlet* verlet;
         array<int, 4> IndexVerlet;
 
-        double creation_date;
         double nctmp,nptmp;
 
         double *rg;  //Gyration Radius
@@ -78,6 +73,10 @@ class Aggregate : public storage_elem<16,ListAggregat>
         void RayonGiration(void);
         double Contact(Aggregate&);
         double Distance(Aggregate&, array<double,4> Vectdir);
+        void Merge(Aggregate&);
+        void DecreaseLabel(void);
+
+
 
         void AfficheVerlet();
 

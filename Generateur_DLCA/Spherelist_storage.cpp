@@ -34,6 +34,7 @@ void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 {
     physicalmodel=&_physicalmodel;
     storage_list<7,Sphere>::Init(_N,*this);
+    setpointers();
 }
 
 
@@ -74,24 +75,32 @@ ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
 ListSphere::ListSphere(ListSphere& parent,int _index[]):
     storage_list<7,Sphere>(parent, _index),
     physicalmodel(parent.physicalmodel)
-{}
+{
+    setpointers();
+}
 
 ListSphere::ListSphere(ListSphere& parent,int* _index[],const int start,const int end):
     storage_list<7,Sphere>(parent, _index, start, end),
     physicalmodel(parent.physicalmodel)
-{}
+{
+    setpointers();
+}
 
 /** Copy constructor */
 ListSphere::ListSphere(const ListSphere& other):
     storage_list<7,Sphere>(other),
     physicalmodel(other.physicalmodel)
-{}
+{
+    setpointers();
+}
 
 /** Move constructor */
 ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
     storage_list<7,Sphere>(other),
     physicalmodel(other.physicalmodel)
-{}
+{
+    setpointers();
+}
 
 /** Destructor */
 ListSphere::~ListSphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
@@ -102,6 +111,7 @@ ListSphere& ListSphere::operator= (const ListSphere& other)
 {
     ListSphere tmp(other);      // re-use copy-constructor
     *this = std::move(tmp);     // re-use move-assignment
+    setpointers();
     return *this;
 }
 
@@ -110,6 +120,7 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 {
     std::swap(static_cast<storage_list<7,Sphere>&>(*this),static_cast<storage_list<7,Sphere>&>(other));
     physicalmodel = other.physicalmodel;
-
+    setpointers();
+    other.setpointers();
     return *this;
 }

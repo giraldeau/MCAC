@@ -29,6 +29,10 @@ public:
     template<class mylist>
     void Init(const int size, mylist&);
 
+    void merge(storage_list&);
+    void remove(elem&);
+
+
     /** Default constructor in local storage */
     storage_list(void);
     //storage_list(const int size);

@@ -13,28 +13,16 @@ COMPILATOR = "INTEL"
 TARGET = DLCA
 TEMPLATE = app
 
-#SOURCES +=\
-#        mainwindow.h \
-#        Sphere.h \
-#        Spherelist.h \
-#        physical_model.h \
-#        aggregat.h \
-#        aggregatList.h \
-#        verlet.h \
-#        storage.h \
-#        storagelist.h \
-#        storage.tpp \
-#        storagelist.tpp \
-#        physical_model.cpp \
-#        Sphere_storage.cpp \
-#        Spherelist_storage.cpp \
-#        Sphere_physics.cpp \
-#        Spherelist_physics.cpp \
-#        aggregat.cpp \
-#        mainwindow.cpp\
-#        main.cpp
-
 SOURCES +=\
+        mainwindow.h \
+        Sphere.h \
+        Spherelist.h \
+        physical_model.h \
+        aggregat.h \
+        aggregatList.h \
+        verlet.h \
+        storage.h \
+        storagelist.h \
         verlet.cpp \
         storage.tpp \
         storagelist.tpp \
@@ -48,16 +36,31 @@ SOURCES +=\
         mainwindow.cpp\
         main.cpp
 
-HEADERS += \
-        mainwindow.h \
-        Sphere.h \
-        Spherelist.h \
-        physical_model.h \
-        aggregat.h \
-        aggregatList.h \
-        verlet.h \
-        storage.h \
-        storagelist.h
+#DEFINES += WITH_QT
+#SOURCES +=\
+#        verlet.cpp \
+#        storage.tpp \
+#        storagelist.tpp \
+#        physical_model.cpp \
+#        Sphere_storage.cpp \
+#        Spherelist_storage.cpp \
+#        Sphere_physics.cpp \
+#        Spherelist_physics.cpp \
+#        aggregat.cpp \
+#        aggregatList.cpp \
+#        mainwindow.cpp\
+#        main.cpp
+
+#HEADERS += \
+#        mainwindow.h \
+#        Sphere.h \
+#        Spherelist.h \
+#        physical_model.h \
+#        aggregat.h \
+#        aggregatList.h \
+#        verlet.h \
+#        storage.h \
+#        storagelist.h
 
 #FORMS += mainwindow.ui
 
@@ -65,7 +68,7 @@ HEADERS += \
 #    mainwindow.qrc
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
-DEFINES += WITH_QT
+
 
 
 release: DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/release

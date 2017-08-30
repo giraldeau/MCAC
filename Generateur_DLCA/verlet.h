@@ -16,6 +16,8 @@ private:
 
 public:
     void Remove(const int id,const array<int, 4> Index);
+    void Add(const int id,const array<int, 4> Index);
+
     list<int>* GetCell(const int i,const int j,const int k)const;
     void Init(const int GridDiv, const double L);
     void destroy(void);

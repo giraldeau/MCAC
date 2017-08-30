@@ -14,6 +14,10 @@ void Verlet::Remove(const int id,const array<int, 4> Index)
 {
     verletlist[Index[1]][Index[2]][Index[3]]->remove(id);
 }
+void Verlet::Add(const int id,const array<int, 4> Index)
+{
+    verletlist[Index[1]][Index[2]][Index[3]]->push_front(id);
+}
 
 void Verlet::Init(const int _GridDiv, const double _L)
 {

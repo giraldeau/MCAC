@@ -10,15 +10,19 @@
 #define POW3(a) ((a)*(a)*(a))
 
 ListAggregat::ListAggregat(void):
+    storage_list<16,Aggregate>(),
     physicalmodel(nullptr),
     maxradius(0.),
     maxtime_step(0.),
     spheres(),
     verlet()
-{}
-
-double ListAggregat::GetMaxTimeStep()
 {
+    setpointers();
+}
+
+  __attribute__((pure)) double ListAggregat::GetMaxTimeStep()
+{
+
     double m = *list[1]->time_step;
     for (int i = 0;i < size; i++)
         m =max(*list[i]->time_step, m);
@@ -33,6 +37,7 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
     storage_list<16,Aggregate>::Init(_N,*this);
+    setpointers();
 }
 
 
@@ -75,7 +80,12 @@ vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, v
 vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4> Vectdir)
 {
     if (!physicalmodel->use_verlet)
-        return indexInStorage;
+    {
+        vector < int > SearchSpace(indexInStorage);
+        for (int i=0;i<size;i++)
+            SearchSpace[i]++;
+        return SearchSpace;
+    }
     else
     {
         double lpm ( *list[source-1]->lpm );
@@ -152,3 +162,32 @@ ListAggregat::~ListAggregat(void) noexcept
         list[i]->InVerlet=false;
     }
 }
+
+
+
+int ListAggregat::Merge(const int first, const int second)
+{
+    const int keeped(MIN(first,second)-1);
+    const int removed(MAX(first,second)-1);
+
+    list[keeped]->Merge(*list[removed]);
+
+    if (list[removed]->InVerlet)
+        verlet.Remove(removed+1,list[removed]->GetVerletIndex());
+    for (int i=removed+1;i<size;i++)
+    {
+        if (list[i]->InVerlet)
+        {
+            verlet.Remove(i+1,list[i]->IndexVerlet);
+            verlet.Add(i,list[i]->IndexVerlet);
+        }
+        list[i]->DecreaseLabel();
+    }
+
+    remove(*list[removed]);
+
+    setpointers();
+
+    return keeped+1;
+}
+
