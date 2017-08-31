@@ -32,22 +32,22 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 /* Getters */
 
- __attribute__((pure)) double Sphere::Volume(void)
+ __attribute__((pure)) double Sphere::Volume(void) const noexcept
 {
     return *volume;
 }
 
- __attribute__((pure)) double Sphere::Surface(void)
+ __attribute__((pure)) double Sphere::Surface(void) const noexcept
 {
     return *surface;
 }
 
- __attribute__((pure)) double Sphere::Radius(void)
+ __attribute__((pure)) double Sphere::Radius(void) const noexcept
 {
     return *r;
 }
 
-const array<double, 4> Sphere::Position(void)
+const array<double, 4> Sphere::Position(void) const noexcept
 {
     array<double, 4> mypos;
     mypos[1]=*x;
@@ -58,38 +58,38 @@ const array<double, 4> Sphere::Position(void)
 
 /* Setters */
 
-void Sphere::SetLabel(const int value)
+void Sphere::SetLabel(const int value) noexcept
 {
     AggLabel = value;
 }
 
-void Sphere::DecreaseLabel(void)
+void Sphere::DecreaseLabel(void) noexcept
 {
     AggLabel--;
 }
 
-void Sphere::Translate(const double xnew,const double ynew,const double znew)
+void Sphere::Translate(const double xnew,const double ynew,const double znew) noexcept
 {
     SetPosition(*x + xnew, *y + ynew, *z + znew);
 }
 
-void Sphere::Translate(const double trans[])
+void Sphere::Translate(const double trans[]) noexcept
 {
     SetPosition(*x + trans[1], *y + trans[2], *z + trans[3]);
 }
 
-void Sphere::Translate(const array<double, 4> trans)
+void Sphere::Translate(const array<double, 4> trans) noexcept
 {
     SetPosition(*x + trans[1], *y + trans[2], *z + trans[3]);
 }
 
 /* Alias for different type of arguments*/
 
-void Sphere::SetPosition(const double position[])
+void Sphere::SetPosition(const double position[]) noexcept
 {
     SetPosition(position[1],position[2],position[3]);
 }
-void Sphere::SetPosition(const array<double, 4> position)
+void Sphere::SetPosition(const array<double, 4> position) noexcept
 {
     SetPosition(position[1],position[2],position[3]);
 }
@@ -121,7 +121,7 @@ void Sphere::InitVal(const array<double, 4> newp,const double newr)
 
 /* format */
 
-string Sphere::str(const double coef)
+string Sphere::str(const double coef) const
 {
     stringstream res;
     res
@@ -133,7 +133,7 @@ string Sphere::str(const double coef)
     return res.str();
 }
 
-void Sphere::Aff(const double coef)
+void Sphere::Aff(const double coef) const
 {  
     cout << str(coef) << endl;
 }

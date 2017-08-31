@@ -25,20 +25,23 @@ class ListAggregat : public storage_list<16,Aggregate>
     private:
         PhysicalModel* physicalmodel;
         double maxradius;
-        double maxtime_step;
+        vector<int> indexSortedTimeSteps;
+        vector<double> CumulativeTimeSteps;
 
     public:
         ListSphere spheres;
         Verlet verlet;
-        void Init(PhysicalModel&, const int size);
+        void Init(PhysicalModel&, const int _size);
 
-        vector<int> PotentialContacts(int id,array<double,4> Vectdir, vector<int> SearchSpace);
-        vector<int> GetSearchSpace(int source, array<double,4> Vectdir);
-        int DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin);
+        vector<int> PotentialContacts(int id,array<double,4> Vectdir, vector<int> SearchSpace) const;
+        vector<int> GetSearchSpace(int source, array<double,4> Vectdir) const;
+        int DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin) const;
 
-        double GetMaxTimeStep();
+        double GetMaxTimeStep() const;
 
         int Merge(const int first, const int second);
+        void SortTimeSteps(double factor);
+        int RandomPick(double &deltatemps, const double random);
 
 
         /* Storage specific */
@@ -48,7 +51,7 @@ class ListAggregat : public storage_list<16,Aggregate>
     public:
         /** Default constructor in local storage */
         ListAggregat(void);
-        ListAggregat(PhysicalModel& _physicalmodel, const int size);
+        ListAggregat(PhysicalModel& _physicalmodel, const int _size);
 
         /** Copy constructor */
         ListAggregat(const ListAggregat& other);

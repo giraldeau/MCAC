@@ -38,22 +38,20 @@ void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 }
 
 
-void ListSphere::DecreaseLabel(void)
+void ListSphere::DecreaseLabel(void) noexcept
 {
-    #pragma omp for simd
-    for (int i = 0; i < size; i++)
+    for (Sphere* mysphere : list)
     {
-        list[i]->DecreaseLabel();
+        mysphere->DecreaseLabel();
     }
 }
 
 
 void ListSphere::setpointers()
 {
-    //#pragma omp for simd
-    for (int i = 0; i < size; i++)
+    for (Sphere* mysphere : list)
     {
-        list[i]->setpointers();
+        mysphere->setpointers();
     }
 }
 

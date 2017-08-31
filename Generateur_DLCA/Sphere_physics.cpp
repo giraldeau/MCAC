@@ -44,7 +44,7 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #############################################################################################################*/
 
 
-void Sphere::SetPosition(const double newx, const double newy, const double newz)
+void Sphere::SetPosition(const double newx, const double newy, const double newz) noexcept
 {
     if (physicalmodel != nullptr)
     {
@@ -62,34 +62,34 @@ void Sphere::SetPosition(const double newx, const double newy, const double newz
 /* #############################################################################################################
  * ################################# Distance between a sphere and a point #####################################
  * #############################################################################################################*/
-__attribute((pure)) double Sphere::Distance(Sphere& c)
+__attribute((pure)) double Sphere::Distance(Sphere& c) const noexcept
 {
     return Distance(*c.x,*c.y,*c.z);
 }
 
-__attribute((pure)) double Sphere::Distance(const double point[])
+__attribute((pure)) double Sphere::Distance(const double point[]) const noexcept
 {
     return Distance(point[1],point[2],point[3]);
 }
-__attribute((pure)) double Sphere::Distance(const array<double, 4> point)
+__attribute((pure)) double Sphere::Distance(const array<double, 4> point) const noexcept
 {
     return Distance(point[1],point[2],point[3]);
 }
-__attribute((pure)) double Sphere::Distance2(Sphere& c)
+__attribute((pure)) double Sphere::Distance2(Sphere& c) const noexcept
 {
     return Distance2(*c.x,*c.y,*c.z);
 }
 
-__attribute((pure)) double Sphere::Distance2(const double point[])
+__attribute((pure)) double Sphere::Distance2(const double point[]) const noexcept
 {
     return Distance2(point[1],point[2],point[3]);
 }
-__attribute((pure)) double Sphere::Distance2(const array<double, 4> point)
+__attribute((pure)) double Sphere::Distance2(const array<double, 4> point) const noexcept
 {
     return Distance2(point[1],point[2],point[3]);
 }
 
-__attribute__((pure)) double Sphere::Distance2(const double otherx, const double othery, const double otherz)
+__attribute__((pure)) double Sphere::Distance2(const double otherx, const double othery, const double otherz) const noexcept
 {
     if (physicalmodel != nullptr)
     {
@@ -104,7 +104,7 @@ __attribute__((pure)) double Sphere::Distance2(const double otherx, const double
     }
 }
 
- __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz)
+ __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz) const noexcept
 {
     return sqrt(Distance2(otherx,othery,otherz));
 }
@@ -116,7 +116,7 @@ __attribute__((pure)) double Sphere::Distance2(const double otherx, const double
 const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
-void Sphere::UpdateVolAndSurf(void)
+void Sphere::UpdateVolAndSurf(void) noexcept
 {
     if (AggLabel > 0)
     {
@@ -128,7 +128,7 @@ void Sphere::UpdateVolAndSurf(void)
  /* #############################################################################################################
   * ########################################## Distance before collision ########################################
   * #############################################################################################################*/
-  __attribute__((pure)) bool Sphere::Contact(Sphere& c)
+  __attribute__((pure)) bool Sphere::Contact(Sphere& c) const noexcept
  {
      //$ Compute signed distance for contact between two spheres
      double distance = Distance2(c);
@@ -136,13 +136,10 @@ void Sphere::UpdateVolAndSurf(void)
      //$ Compute minimum distance for contact
      double dist_contact = POW2(*r + *c.r);
 
-     if (distance <= dist_contact)
-        return true;
-     else
-        return false;
+     return (distance <= dist_contact);
  }
 
-  __attribute__((pure)) double Sphere::Collision(Sphere& c,const array<double,4> vd)
+  __attribute__((pure)) double Sphere::Collision(Sphere& c,const array<double,4> vd) const
   {
       /*
        * Denoting
@@ -198,7 +195,7 @@ void Sphere::UpdateVolAndSurf(void)
 /* #############################################################################################################
  * ######################## Surface and volume of the intersection of two sphere ###############################
  * #############################################################################################################*/
-double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 )
+double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
 {
 
     vol1 = vol2 = 0.;

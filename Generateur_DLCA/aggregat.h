@@ -58,27 +58,25 @@ class Aggregate : public storage_elem<16,ListAggregat>
         void Init(void);
         void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
 
-        void SetPosition(const array<double, 4> position);
-        void SetPosition(const double x,const double y,const double z);
-        void Translate(const array<double, 4> vector);
-        void Translate(const double vector[]);
+        void SetPosition(const array<double, 4> position) noexcept;
+        void SetPosition(const double x,const double y,const double z) noexcept;
+        void Translate(const array<double, 4> vector) noexcept;
+        void Translate(const double vector[]) noexcept;
 
-        const array<double, 4> GetPosition(void) const;
+        const array<double, 4> GetPosition(void) const noexcept;
         Sphere GetInclusiveSphere(void) const;
 
-        array<int, 4> GetVerletIndex();
+        array<int, 4> GetVerletIndex() noexcept;
 
         void Update();
         void UpdatesSpheres(ListSphere&, int indexInStorage[]);
         void RayonGiration(void);
-        double Contact(Aggregate&);
-        double Distance(Aggregate&, array<double,4> Vectdir);
+        bool Contact(Aggregate&) const noexcept;
+        double Distance(Aggregate&, array<double,4> Vectdir) const;
         void Merge(Aggregate&);
-        void DecreaseLabel(void);
+        void DecreaseLabel(void) noexcept;
 
-
-
-        void AfficheVerlet();
+        void AfficheVerlet() const;
 
         double& operator[](const int var);
 

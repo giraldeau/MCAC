@@ -44,8 +44,8 @@ class ListSphere : public storage_list<7,Sphere>
 
     public:
 
-        void Init(PhysicalModel& _physicalmodel, const int size);
-        void DecreaseLabel(void);
+        void Init(PhysicalModel& _physicalmodel, const int _size);
+        void DecreaseLabel(void) noexcept;
 
         void CroissanceSurface(const double dt);
 
@@ -57,7 +57,7 @@ class ListSphere : public storage_list<7,Sphere>
     public:
         /** Default constructor in local storage */
         ListSphere(void);
-        ListSphere(PhysicalModel& _physicalmodel, const int size);
+        ListSphere(PhysicalModel& _physicalmodel, const int _size);
 
         /** Constructor with external storage */
         ListSphere(ListSphere& parent,int indexInStorage[]);

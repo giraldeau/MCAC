@@ -48,11 +48,9 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #############################################################################################################*/
 void ListSphere::CroissanceSurface(const double dt)
 {
-    const int listSize = size;
-    #pragma omp for simd
-    for (int i = 0; i < listSize; i++)
+    for (Sphere* mysphere : list)
     {
-        list[i]->CroissanceSurface(dt);
+        mysphere->CroissanceSurface(dt);
     }
 }
 

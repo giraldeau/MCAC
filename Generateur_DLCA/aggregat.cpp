@@ -136,7 +136,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 
     if (physicalmodel->use_verlet)
     {
-        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(_label);
+        (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].push_front(_label);
         InVerlet=true;
     }
     SetPosition(position);
@@ -144,7 +144,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     spheres[_label].SetLabel(_label);
     spheres[_label].InitVal(position, Dp/2);
     myspheres = ListSphere(spheres,listlabel);
-    Np = myspheres.size;
+    Np = myspheres.size();
 
     *rmax = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
     *dm = Dp;                   //Diamètre de mobilité
@@ -177,8 +177,6 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     {
         if (*rmax > external_storage->maxradius)
             external_storage->maxradius = *rmax;
-        if (*time_step > external_storage->maxtime_step)
-            external_storage->maxtime_step = *time_step;
     }
 
 
@@ -187,7 +185,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 
 
 //############################################# Calcul de la distance inter-agrégats ############################################
-double Aggregate::Contact(Aggregate& other)
+bool Aggregate::Contact(Aggregate& other) const noexcept
 {
     //$ Loop on all the spheres of the other aggregate
     for (int j = 1; j <= other.Np; j++)
@@ -202,7 +200,7 @@ double Aggregate::Contact(Aggregate& other)
     return false;
 }
 
-double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir)
+double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir) const
 {
     double mindist(*lpm);
     bool contact(false);
@@ -258,8 +256,6 @@ void Aggregate::Update()
     {
         if (*rmax > external_storage->maxradius)
             external_storage->maxradius = *rmax;
-        if (*time_step > external_storage->maxtime_step)
-            external_storage->maxtime_step = *time_step;
     }
 }
 
@@ -268,10 +264,10 @@ void Aggregate::Update()
 void Aggregate::UpdatesSpheres(ListSphere& spheres,int index[])
 {
     myspheres = ListSphere(spheres,index);
-    Np = myspheres.size;
+    Np = myspheres.size();
 }
 
-const array<double, 4> Aggregate::GetPosition(void) const
+const array<double, 4> Aggregate::GetPosition(void) const noexcept
 {
     array<double, 4> mypos;
     mypos[1]=*x;
@@ -280,7 +276,7 @@ const array<double, 4> Aggregate::GetPosition(void) const
     return mypos;
 }
 
-void Aggregate::SetPosition(const double newx,const double newy,const double newz)
+void Aggregate::SetPosition(const double newx,const double newy,const double newz) noexcept
 {
     if (physicalmodel != nullptr)
     {
@@ -302,20 +298,20 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
 
         if (newindexVerlet != IndexVerlet)
         {
-            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(indexInStorage+1);
+            (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].remove(indexInStorage+1);
             IndexVerlet = newindexVerlet;
-            verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->push_front(indexInStorage+1);
+            (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].push_front(indexInStorage+1);
         }
     }
 
 }
 
-void Aggregate::SetPosition(const array<double, 4> position)
+void Aggregate::SetPosition(const array<double, 4> position) noexcept
 {
     SetPosition(position[1], position[2], position[3]);
 }
 
-void Aggregate::Translate(const array<double, 4> vector)
+void Aggregate::Translate(const array<double, 4> vector) noexcept
 {
     for (int i = 1; i <= Np; i++)
     {
@@ -325,7 +321,7 @@ void Aggregate::Translate(const array<double, 4> vector)
     SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
 }
 
-void Aggregate::Translate(const double vector[])
+void Aggregate::Translate(const double vector[]) noexcept
 {
     for (int i = 1; i <= Np; i++)
     {
@@ -335,11 +331,11 @@ void Aggregate::Translate(const double vector[])
     SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
 }
 
-Aggregate::~Aggregate(void)
+Aggregate::~Aggregate(void) noexcept
 {
     if (InVerlet && physicalmodel->use_verlet)
     {
-        verlet->GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3])->remove(indexInStorage+1);
+        (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].remove(indexInStorage+1);
     }
 }
 
@@ -546,7 +542,7 @@ Sphere Aggregate::GetInclusiveSphere(void) const
 }
 
 
-array<int, 4> Aggregate::GetVerletIndex()
+array<int, 4> Aggregate::GetVerletIndex() noexcept
 {
     array<int, 4>  index({{0,0,0,0}});
     double step = physicalmodel->GridDiv/physicalmodel->L;
@@ -559,18 +555,18 @@ array<int, 4> Aggregate::GetVerletIndex()
 }
 
 
-void Aggregate::AfficheVerlet()
+void Aggregate::AfficheVerlet() const
 {
     _List_iterator<int> i;
 
     if (physicalmodel->use_verlet && InVerlet)
     {
-        list<int>* cell = (*verlet).GetCell(IndexVerlet[1],IndexVerlet[2],IndexVerlet[3]);
+        list<int> cell = (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]];
         cout<<"Coordinates: "<< IndexVerlet[1] << " " << IndexVerlet[2] << " " << IndexVerlet[3] << endl;
-        cout<<"Taille: "<<cell->size()<< endl;
+        cout<<"Taille: "<<cell.size()<< endl;
         cout << " friends :"<< endl;
-        for(i = cell->begin();
-            i!= cell->end();
+        for(i = cell.begin();
+            i!= cell.end();
             i++)
         {
             cout << " " << *i<<endl;
@@ -589,17 +585,17 @@ Sphere::Sphere(const Aggregate& Agg) : Sphere()
 
 void Aggregate::Merge(Aggregate& other)
 {
-    const int nselect = other.myspheres.size;
+    const int nselect = other.myspheres.size();
     //$ Update of the labels of the spheres that were in the deleted aggregate
     for (int i = 1; i <= nselect; i++)
     {
         other.myspheres[i].SetLabel(indexInStorage+1);
     }
     myspheres.merge(other.myspheres);
-    Np = myspheres.size;
+    Np = myspheres.size();
 }
 
-void Aggregate::DecreaseLabel(void)
+void Aggregate::DecreaseLabel(void) noexcept
 {
     indexInStorage--;
     myspheres.DecreaseLabel();

@@ -41,10 +41,6 @@ int NSauve; // last file number
 // Nagg
 int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
 ListAggregat Aggregates; // Position of the center of gravity
-int** AggLabels; // 2 dimensionnal array. It stocks in its first dimensions the Ids of the different aggregates, The second dimensions stocks at the index 0, the number of spheres in the
-                // Aggregate, and then , the labels of saif spheres
-double* TriCum; // Cumulated probabilities
-vector<int> IndexPourTri;
 
 // suivit tempo
 string FichierParam = "___";
@@ -72,128 +68,6 @@ double Random()
     double v = rand();
     v = v/RAND_MAX;
     return v;
-}
-
-void InsertionSort(int n, double arr[], int index[])
-{
-
-    for (int i = 1; i <= n; i++)
-        index[i] = i;
-    for (int j = 2; j <= n; j++)
-    {
-        double a = arr[j];
-        int id = index[j];
-        int i = j-1;
-
-        while (i > 0 && arr[i] > a)
-        {
-            arr[i+1] = arr[i];
-            index[i+1] = index[i];
-            i--;
-        }
-
-        arr[i+1] = a;
-        index[i+1] = id;
-    }
-}
-
-
-
-void quickSort(double arr[], vector<int>& index, int left, int right) {
-
-      int i = left, j = right;
-      double pivot = arr[(left + right) / 2];
-
-      /* partition */
-      while (i <= j) {
-            while (arr[i] < pivot)
-                  i++;
-            while (arr[j] > pivot)
-                  j--;
-            if (i <= j) {
-                  double dtmp = arr[i];
-                  arr[i] = arr[j];
-                  arr[j] = dtmp;
-                  int itmp = index[i];
-                  index[i] = index[j];
-                  index[j] = itmp;
-                  i++;
-                  j--;
-            }
-      };
-
-      /* recursion */
-      if (left < j)
-            quickSort(arr, index, left, j);
-      if (i < right)
-            quickSort(arr, index, i, right);
-}
-
-void quickSort(int n, double arr[], vector<int>& index)
-{
-      quickSort(arr, index, 1, n);
-}
-
-void MonTri(int n, double arr[], vector<int>& index)
-{
-    for (int i = 1; i <= n; i++)
-        index[i] = i;
-
-    //InsertionSort(n, arr, index);
-    quickSort(n, arr, index);
-
-}
-
-int Probabilite(bool trier,double &deltatemps)
-{
-  /*!
-   *  \image html cFProbabilitebd.png
-   */
-
-
-    double valAlea,max;
-    int i,n,nret;
-
-    //$ Get the maximum timestep
-    max = Aggregates.GetMaxTimeStep();
-
-    if (trier)
-    {
-        double* TpT = new double [physicalmodel.N+1];
-
-    //$ Sort the timesteps
-        for (i=1; i <= NAgg; i++)
-            TpT[i] = max/Aggregates[i][5];
-
-        MonTri(NAgg, TpT, IndexPourTri); //$
-
-    //$ Accumulate the timesteps
-        TriCum[1] = TpT[1];
-        for (i=2; i <= NAgg; i++)
-            TriCum[i] = TriCum[i-1]+TpT[i];
-        delete[] TpT;
-    }
-    else
-    {
-    //$ Keep previously sorted TriCum
-    }
-
-    //$ Pick a random sphere
-    valAlea=Random()*TriCum[NAgg];
-    n = 0;
-    for (i=1; i<= NAgg; i++)
-    {
-        if (TriCum[i] < valAlea)
-            n++;
-    }
-    n++;
-
-    if (n > NAgg)     n = NAgg;
-
-    nret = IndexPourTri[n];
-    deltatemps = max/TriCum[NAgg];
-
-    return nret;
 }
 
 void Calcul() //Coeur du programme
@@ -287,7 +161,12 @@ void Calcul() //Coeur du programme
         if (physicalmodel.ActiveModulephysique)
         {
             //$ Choice of an aggregate according to his MFP
-            NumAgg = Probabilite(contact, deltatemps);// Choice of an agrgegate, the probability of said agrgegate to be chosen proportionnal to his lpm
+            //NumAgg = Probabilite(contact, deltatemps);// Choice of an agrgegate, the probability of said agrgegate to be chosen proportionnal to his lpm
+            double max = Aggregates.GetMaxTimeStep();
+            if (contact)
+                Aggregates.SortTimeSteps(max);
+            NumAgg = Aggregates.RandomPick(deltatemps,Random());
+            deltatemps = max/deltatemps;
 
             physicalmodel.temps = physicalmodel.temps + deltatemps; // Time incrementation with a value given by Probabilite
 
@@ -418,24 +297,7 @@ void Init()
 
     int testmem = 0;
     NAgg = physicalmodel.N;
-    TriCum = new double[NAgg+1];
-    IndexPourTri.assign(NAgg+1,0);
     Aggregates.Init(physicalmodel, NAgg);
-
-    // Agglabels
-    AggLabels= new int*[NAgg+1];// Array containing the labels of the spheres in each aggregate
-
-    for (int i=1;i<=NAgg;i++)
-    {                               //_____
-        AggLabels[i]= new int[2];   //     |
-        AggLabels[i][0]=1;          //     |--- Initialisation of Agglabels, at the start there are N aggregates of 1 sphere.
-        AggLabels[i][1]=i;          //_____|
-                                    //
-    }
-    // Agglabels[0] isn't used
-    AggLabels[0]=new int[2];
-    AggLabels[0][0]=0;
-    AggLabels[0][1]=0;
 
     for (int i = 1; i <= NAgg; i++)
     {          
@@ -484,8 +346,6 @@ void Init()
 
 void Fermeture()
 {
-
-    delete[] TriCum;
     delete[] tab;
 }
 

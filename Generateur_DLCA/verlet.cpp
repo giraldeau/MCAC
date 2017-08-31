@@ -12,49 +12,36 @@
 
 void Verlet::Remove(const int id,const array<int, 4> Index)
 {
-    verletlist[Index[1]][Index[2]][Index[3]]->remove(id);
+    (*this)[Index[1]][Index[2]][Index[3]].remove(id);
 }
 void Verlet::Add(const int id,const array<int, 4> Index)
 {
-    verletlist[Index[1]][Index[2]][Index[3]]->push_front(id);
+    (*this)[Index[1]][Index[2]][Index[3]].push_front(id);
 }
 
 void Verlet::Init(const int _GridDiv, const double _L)
 {
-    destroy();
+    (*this).clear();
 
     GridDiv = _GridDiv;
     L=_L;
-    verletlist=new list<int>***[GridDiv];
-    for(int i=0;i<GridDiv;i++)
+
+    (*this).resize(GridDiv);
+    for(vector< vector< list< int > > >& Vx : (*this))
     {
-        verletlist[i]=new list<int>**[GridDiv];
+        Vx.resize(GridDiv);
 
-        for(int j=0;j<GridDiv;j++)
+        for(vector< list< int > >& Vy : Vx)
         {
-            verletlist[i][j]=new list<int>*[GridDiv];
-
-            for(int k=0;k<GridDiv;k++)
-            {
-                verletlist[i][j][k]= new list<int>;
-            }
+            Vy.resize(GridDiv);
         }
 
     }
 }
 
-__attribute((pure)) list<int>* Verlet::GetCell(const int i,const int j,const int k)const
+
+vector<int> Verlet::GetSearchSpace(const array<double, 4> sourceposition , const double witdh, const array<double, 4> Vector) const
 {
-    return verletlist[i][j][k];
-}
-
-
-
-
-vector<int> Verlet::GetSearchSpace(array<double, 4> sourceposition , const double witdh, const array<double, 4> Vector)
-{
-
-    vector<int> SearchSpace;
 
     double xp(sourceposition[1]+witdh+MAX(Vector[1],0));
     double xm(sourceposition[1]-witdh+MIN(Vector[1],0));
@@ -77,6 +64,8 @@ vector<int> Verlet::GetSearchSpace(array<double, 4> sourceposition , const doubl
     if (bornek2-bornek1>=GridDiv)
         {bornek1=0 ; bornek2=GridDiv-1;}
 
+
+    list<int> tmpSearchSpace;
 
     // ///////
     for (int i=bornei1;i<=bornei2;i++)
@@ -101,53 +90,16 @@ vector<int> Verlet::GetSearchSpace(array<double, 4> sourceposition , const doubl
                 while (kk>=GridDiv)
                     kk -= GridDiv;
 
-                list<int>* cell = GetCell(ii,jj,kk);
-                SearchSpace.insert(SearchSpace.end(),cell->begin(),cell->end());
+                tmpSearchSpace.insert(tmpSearchSpace.end(),
+                                      (*this)[ii][jj][kk].begin(),
+                                      (*this)[ii][jj][kk].end());
             }
         }
     }
+    vector<int> SearchSpace{ make_move_iterator(tmpSearchSpace.begin()),
+                             make_move_iterator(tmpSearchSpace.end()) };
+
     return SearchSpace;
 }
-
-
-
-
-
-
-
-
-Verlet::Verlet(void):
-    verletlist(nullptr),
-    GridDiv(0),
-    L(0)
-{}
-
-
-Verlet::~Verlet(void) noexcept
-{
-    destroy();
-}
-
-
-void Verlet::destroy(void)
-{
-    if (verletlist!=nullptr)
-    {
-        for(int i=0;i<GridDiv;i++)
-        {
-            for(int j=0;j<GridDiv;j++)
-            {
-                for(int k=0;k<GridDiv;k++)
-                {
-                    delete verletlist[i][j][k];
-                }
-                delete verletlist[i][j];
-            }
-            delete verletlist[i];
-        }
-        delete verletlist;
-    }
-}
-
 
 

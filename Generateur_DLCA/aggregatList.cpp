@@ -2,6 +2,7 @@
 #include <math.h>
 #include <cmath>
 #include <iomanip>
+#include <algorithm>
 
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -13,19 +14,20 @@ ListAggregat::ListAggregat(void):
     storage_list<16,Aggregate>(),
     physicalmodel(nullptr),
     maxradius(0.),
-    maxtime_step(0.),
+    indexSortedTimeSteps(),
+    CumulativeTimeSteps(),
     spheres(),
     verlet()
 {
     setpointers();
 }
 
-  __attribute__((pure)) double ListAggregat::GetMaxTimeStep()
+  __attribute__((pure)) double ListAggregat::GetMaxTimeStep() const
 {
 
-    double m = *list[1]->time_step;
-    for (int i = 0;i < size; i++)
-        m =max(*list[i]->time_step, m);
+    double m = *list[0]->time_step;
+    for (const Aggregate* Agg : list)
+        m =max(*Agg->time_step, m);
 
     return m;
 }
@@ -42,7 +44,7 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, vector<int> SearchSpace)
+vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, vector<int> SearchSpace) const
 {
     vector<int> listOfPotentialContacts;
 
@@ -50,10 +52,8 @@ vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, v
     Sphere SphereOther(*list[AggMe-1]);
 
     //$ [For all other agregate]
-    for (unsigned i = 0;i < SearchSpace.size(); i++)
+    for (const int& AggOther : SearchSpace)
     {
-        int AggOther = SearchSpace[i];
-
         if (AggOther != AggMe)
         {
             SphereOther.InitVal(*list[AggOther-1]->x,
@@ -77,13 +77,13 @@ vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, v
 //###############################################################################################################################
 
 
-vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4> Vectdir)
+vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4> Vectdir) const
 {
     if (!physicalmodel->use_verlet)
     {
         vector < int > SearchSpace(indexInStorage);
-        for (int i=0;i<size;i++)
-            SearchSpace[i]++;
+        for (int& idx : SearchSpace)
+            idx++;
         return SearchSpace;
     }
     else
@@ -105,7 +105,7 @@ vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4>
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-int ListAggregat::DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin)
+int ListAggregat::DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin) const
 {
     // Use Verlet to reduce search
     vector<int> SearchSpace(GetSearchSpace(source,Vectdir));
@@ -113,14 +113,12 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,4> 
     // Assimilate Aggregate as sphere to drasticly speed-up search
     vector<int> PotentialContact(PotentialContacts(source,Vectdir,SearchSpace));
 
-    const int npossible(PotentialContact.size());
     int aggcontact(0);
     distmin = *list[source-1]->lpm;
 
     //$ loop on the agregates potentially in contact
-    for (int s = 0; s < npossible; s++) //For every aggregate that could be in contact
+    for (const int & agg : PotentialContact) //For every aggregate that could be in contact
     {
-        int agg = PotentialContact[s];
 
         if (list[source-1]->Contact(*list[agg-1]))
         {
@@ -146,10 +144,9 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,4> 
 
 void ListAggregat::setpointers()
 {
-    //#pragma omp for simd
-    for (int i = 0; i < size; i++)
+    for (Aggregate* Agg : list)
     {
-        list[i]->setpointers();
+        Agg->setpointers();
     }
 }
 
@@ -157,9 +154,9 @@ void ListAggregat::setpointers()
 ListAggregat::~ListAggregat(void) noexcept
 {
     //#pragma omp for simd
-    for (int i = 0; i < size; i++)
+    for (Aggregate* Agg : list)
     {
-        list[i]->InVerlet=false;
+        Agg->InVerlet=false;
     }
 }
 
@@ -174,7 +171,7 @@ int ListAggregat::Merge(const int first, const int second)
 
     if (list[removed]->InVerlet)
         verlet.Remove(removed+1,list[removed]->GetVerletIndex());
-    for (int i=removed+1;i<size;i++)
+    for (int i=removed+1;i<_size;i++)
     {
         if (list[i]->InVerlet)
         {
@@ -189,5 +186,53 @@ int ListAggregat::Merge(const int first, const int second)
     setpointers();
 
     return keeped+1;
+}
+
+
+template <typename T>
+vector<int> sort_indexes(const vector<T> &v) {
+
+  // initialize original index locations
+  vector<int> idx(v.size());
+  iota(idx.begin(), idx.end(), 0);
+
+  // sort indexes based on comparing values in v
+  sort(idx.begin(), idx.end(),
+       [&v](int i1, int i2) {return v[i1] < v[i2];});
+
+  return idx;
+}
+
+void ListAggregat::SortTimeSteps(double factor)
+{
+    vector<double> TpT(_size);
+
+    #pragma omp for simd
+    for (int i=0; i < _size; i++)
+        TpT[i] = factor/(*list[i]->time_step);
+
+    indexSortedTimeSteps = sort_indexes(TpT);
+
+    CumulativeTimeSteps.resize(_size);
+
+    //$ Accumulate the timesteps
+    CumulativeTimeSteps[0] = TpT[indexSortedTimeSteps[0]];
+    for (int i=1; i < _size; i++)
+    {
+        CumulativeTimeSteps[i] = CumulativeTimeSteps[i-1]+TpT[indexSortedTimeSteps[i]];
+        CumulativeTimeSteps[i-1] = CumulativeTimeSteps[i-1];
+    }
+    CumulativeTimeSteps[_size-1] = CumulativeTimeSteps[_size-1];
+}
+
+int ListAggregat::RandomPick(double &deltatemps, const double random)
+{
+    //$ Pick a random sphere
+    double valAlea=random*CumulativeTimeSteps[_size-1];
+    long int n = lower_bound(CumulativeTimeSteps.begin(), CumulativeTimeSteps.end(), valAlea) - CumulativeTimeSteps.begin();
+
+    deltatemps = CumulativeTimeSteps[_size-1];
+
+    return indexSortedTimeSteps[n]+1;
 }
 

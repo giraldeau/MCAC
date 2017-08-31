@@ -54,7 +54,7 @@ class Sphere : public storage_elem<7,ListSphere>
 
         int AggLabel;
 
-        void UpdateVolAndSurf(void);
+        void UpdateVolAndSurf(void) noexcept;
 
     public:
         void InitVal(void);
@@ -63,40 +63,41 @@ class Sphere : public storage_elem<7,ListSphere>
         void InitVal(const array<double, 4> position,const double r);
 
 
-        void SetPosition(const double x, const double y, const double z);
-        void SetPosition(const double position[]);
-        void SetPosition(const array<double, 4> position);
+        void SetPosition(const double x, const double y, const double z) noexcept;
+        void SetPosition(const double position[]) noexcept;
+        void SetPosition(const array<double, 4> position) noexcept;
 
-        void Translate(const double x,const double y,const double z);
-        void Translate(const double vector[]);
-        void Translate(const array<double, 4>  vector);
+        void Translate(const double x,const double y,const double z) noexcept;
+        void Translate(const double vector[]) noexcept;
+        void Translate(const array<double, 4>  vector) noexcept;
 
-        void SetLabel(const int);
-        void DecreaseLabel(void);
+        void SetLabel(const int) noexcept;
+        void DecreaseLabel(void) noexcept;
 
-        double Volume(void) ;
-        double Surface(void) ;
-        double Radius(void) ;
-        const array<double, 4> Position(void) ;
-
-        string str(const double coef) ;
-        void Aff(const double coef) ;
-
-        double Distance(Sphere&) ;
-        double Distance(const double point[]) ;
-        double Distance(const array<double, 4> point) ;
-        double Distance(const double x, const double y, const double z) ;
-
-        double Distance2(Sphere&) ;
-        double Distance2(const double point[]) ;
-        double Distance2(const array<double, 4> point) ;
-        double Distance2(const double x, const double y, const double z) ;
-
-        bool Contact(Sphere&) ;
-        double Collision(Sphere&, const array<double,4> vector) ;
-
-        double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) ;
         void CroissanceSurface(const double dt);
+
+        double Volume(void) const noexcept;
+        double Surface(void) const noexcept;
+        double Radius(void) const noexcept;
+        const array<double, 4> Position(void) const noexcept;
+
+        string str(const double coef) const ;
+        void Aff(const double coef) const ;
+
+        double Distance(Sphere&) const noexcept;
+        double Distance(const double point[]) const noexcept;
+        double Distance(const array<double, 4> point) const noexcept;
+        double Distance(const double x, const double y, const double z) const noexcept;
+
+        double Distance2(Sphere&) const noexcept;
+        double Distance2(const double point[]) const noexcept;
+        double Distance2(const array<double, 4> point) const noexcept;
+        double Distance2(const double x, const double y, const double z) const noexcept;
+
+        bool Contact(Sphere&) const noexcept;
+
+        double Collision(Sphere&, const array<double,4> vector) const;
+        double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
 
     /* Storage specific */
     private:

@@ -24,8 +24,6 @@ SOURCES +=\
         storage.h \
         storagelist.h \
         verlet.cpp \
-        storage.tpp \
-        storagelist.tpp \
         physical_model.cpp \
         Sphere_storage.cpp \
         Spherelist_storage.cpp \
@@ -39,8 +37,6 @@ SOURCES +=\
 #DEFINES += WITH_QT
 #SOURCES +=\
 #        verlet.cpp \
-#        storage.tpp \
-#        storagelist.tpp \
 #        physical_model.cpp \
 #        Sphere_storage.cpp \
 #        Spherelist_storage.cpp \
@@ -109,12 +105,11 @@ equals(COMPILATOR, "GNU"){
     QMAKE_CXXFLAGS += -Wuseless-cast -Wlogical-op -Wno-aggressive-loop-optimizations -Wnormalized=nfkc -Wpacked -Wredundant-decls -Winline -Winvalid-pch
     QMAKE_CXXFLAGS += -Wvector-operation-performance -Wdisabled-optimization -Wnoexcept  -fext-numeric-literals -Wstrict-null-sentinel -Wold-style-cast -Woverloaded-virtual -Wsign-promo
     QMAKE_CXXFLAGS += -Wzero-as-null-pointer-constant -Wmissing-declarations -Weffc++ -Wpadded -Waggregate-return
-    # Not interesting
     QMAKE_CXXFLAGS += -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format
     QMAKE_CXXFLAGS += -Weffc++ -Wno-padded -Wunused-variable -Wunused-result -Wunused-parameter
     # QT problems
-    QMAKE_CXXFLAGS += -Wno-zero-as-null-pointer-constant -Wno-long-long -Wno-useless-cast -Wno-conversion -Wno-float-equal -Wno-packed -Wno-switch-default -Wno-strict-overflow
-    QMAKE_CXXFLAGS += -Wno-missing-declarations
+    QMAKE_CXXFLAGS += -Wzero-as-null-pointer-constant -Wlong-long -Wuseless-cast -Wconversion -Wfloat-equal -Wpacked -Wswitch-default -Wstrict-overflow
+    QMAKE_CXXFLAGS += -Wmissing-declarations
     # Not a problems
     QMAKE_CXXFLAGS += -Wno-aggregate-return
 

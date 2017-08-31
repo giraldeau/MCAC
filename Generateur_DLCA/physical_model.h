@@ -60,8 +60,34 @@ double inverfc(const double p);
 double myerf(const double x);
 double inverf(const double p);
 
-double periodicPosition(const double x, const double dim);
-double periodicDistance(const double x, const double dim);
+
+
+__attribute((const)) inline double periodicDistance(const double x, const double dim) noexcept
+{
+    double dist(x);
+    double hdim(0.5*dim);
+
+    while (dist < -hdim)
+        dist += dim;
+    while (dist >  hdim)
+        dist -= dim;
+
+    return dist;
+}
+
+
+__attribute((const)) inline double periodicPosition(const double x, const double dim) noexcept
+{
+    double pos(x);
+
+    while (pos < 0)
+        pos += dim;
+    while (pos > dim)
+        pos -= dim;
+
+    return pos;
+}
+
 
 #endif // PHYSICAL_MODEL_H
 
