@@ -60,6 +60,11 @@ public:
 
     friend void swap<>(storage_list& first, storage_list& second);
 
+    typename vector<elem*>::iterator begin(void);
+    typename vector<elem*>::iterator end(void);
+    typename vector<elem*>::const_iterator begin(void) const;
+    typename vector<elem*>::const_iterator end(void) const;
+
 private:
     void Destroy();
 
@@ -315,6 +320,31 @@ void storage_list<N,elem>::remove(elem& ToBeRemoved)
         (*Storage)[i].erase((*Storage)[i].begin()+id);
     }
     _size--;
+}
+
+
+template <int N,class elem>
+typename vector<elem*>::iterator storage_list<N,elem>::begin(void)
+{
+    return list.begin();
+}
+
+template <int N,class elem>
+typename vector<elem*>::iterator storage_list<N,elem>::end(void)
+{
+    return list.end();
+}
+
+template <int N,class elem>
+typename vector<elem*>::const_iterator storage_list<N,elem>::begin(void) const
+{
+    return list.begin();
+}
+
+template <int N,class elem>
+typename vector<elem*>::const_iterator storage_list<N,elem>::end(void) const
+{
+    return list.end();
 }
 
 #endif // STORAGELIST_H

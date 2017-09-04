@@ -84,20 +84,21 @@ class Sphere : public storage_elem<7,ListSphere>
         string str(const double coef) const ;
         void Aff(const double coef) const ;
 
-        double Distance(Sphere&) const noexcept;
+        double Distance(const Sphere&) const noexcept;
         double Distance(const double point[]) const noexcept;
         double Distance(const array<double, 4> point) const noexcept;
         double Distance(const double x, const double y, const double z) const noexcept;
 
-        double Distance2(Sphere&) const noexcept;
+        double Distance2(const Sphere&) const noexcept;
         double Distance2(const double point[]) const noexcept;
         double Distance2(const array<double, 4> point) const noexcept;
         double Distance2(const double x, const double y, const double z) const noexcept;
 
-        bool Contact(Sphere&) const noexcept;
+        bool Contact(const Sphere&) const noexcept;
 
-        double Collision(Sphere&, const array<double,4> vector) const;
-        double Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
+        double Collision(const Sphere&, const array<double,4> vector) const;
+        double Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
+        double Intersection(const Sphere& c, const double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
 
     /* Storage specific */
     private:

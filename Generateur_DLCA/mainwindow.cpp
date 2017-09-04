@@ -134,7 +134,7 @@ void Calcul() //Coeur du programme
     int it_without_contact=0;
     int lim_it_without_contact = 200;
 
-    end = 20;
+    end = 40;
 
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);

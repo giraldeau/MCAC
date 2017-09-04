@@ -62,7 +62,7 @@ void Sphere::SetPosition(const double newx, const double newy, const double newz
 /* #############################################################################################################
  * ################################# Distance between a sphere and a point #####################################
  * #############################################################################################################*/
-__attribute((pure)) double Sphere::Distance(Sphere& c) const noexcept
+__attribute((pure)) double Sphere::Distance(const Sphere& c) const noexcept
 {
     return Distance(*c.x,*c.y,*c.z);
 }
@@ -75,7 +75,7 @@ __attribute((pure)) double Sphere::Distance(const array<double, 4> point) const 
 {
     return Distance(point[1],point[2],point[3]);
 }
-__attribute((pure)) double Sphere::Distance2(Sphere& c) const noexcept
+__attribute((pure)) double Sphere::Distance2(const Sphere& c) const noexcept
 {
     return Distance2(*c.x,*c.y,*c.z);
 }
@@ -128,7 +128,7 @@ void Sphere::UpdateVolAndSurf(void) noexcept
  /* #############################################################################################################
   * ########################################## Distance before collision ########################################
   * #############################################################################################################*/
-  __attribute__((pure)) bool Sphere::Contact(Sphere& c) const noexcept
+  __attribute__((pure)) bool Sphere::Contact(const Sphere& c) const noexcept
  {
      //$ Compute signed distance for contact between two spheres
      double distance = Distance2(c);
@@ -139,7 +139,7 @@ void Sphere::UpdateVolAndSurf(void) noexcept
      return (distance <= dist_contact);
  }
 
-  __attribute__((pure)) double Sphere::Collision(Sphere& c,const array<double,4> vd) const
+  __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,4> vd) const
   {
       /*
        * Denoting
@@ -195,7 +195,13 @@ void Sphere::UpdateVolAndSurf(void) noexcept
 /* #############################################################################################################
  * ######################## Surface and volume of the intersection of two sphere ###############################
  * #############################################################################################################*/
-double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
+double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
+{
+    double dist = Distance(c);
+    return Intersection(c,dist,vol1,vol2,surf1,surf2);
+}
+
+double Sphere::Intersection(const Sphere& c, const double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const
 {
 
     vol1 = vol2 = 0.;
@@ -204,17 +210,14 @@ double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1,
     double Ri = *r;
     double Rj = *c.r;
 
-    //$ Determination of the distance between the center of the 2 spheres
-    double d = Distance(c);
-
     //$ Check if they are in contact
-    if (d < Ri + Rj)
+    if (dist < Ri + Rj)
     {
-        if(d >= fabs(Ri - Rj))
+        if(dist >= fabs(Ri - Rj))
         {
             //$ Volume of the intersection is returned
-            double h1 = (POW2(Rj)-POW2((Ri-d)))/(2.0*d);
-            double h2 = (POW2(Ri)-POW2((Rj-d)))/(2.0*d);
+            double h1 = (POW2(Rj)-POW2((Ri-dist)))/(2.0*dist);
+            double h2 = (POW2(Ri)-POW2((Rj-dist)))/(2.0*dist);
             vol1= PI*POW2(h1)*(3*Ri-h1)/3.0;
             vol2= PI*POW2(h2)*(3*Rj-h2)/3.0;
             surf1 = 2*PI*Ri*h1;
@@ -234,7 +237,7 @@ double Sphere::Intersection(Sphere& c,double& vol1, double& vol2, double& surf1,
             surf2 = *c.surface;
         }
     }
-    return d;
+    return dist;
 }
 
 

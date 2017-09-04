@@ -19,6 +19,9 @@ Aggregate::Aggregate(void):
     myspheres(),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
+    distances(),
+    volumes(),
+    surfaces(),
     nctmp(0.),
     nptmp(1.),
     rg(nullptr),
@@ -55,6 +58,9 @@ Aggregate::Aggregate(ListAggregat& _storage, const int _N):
     myspheres(),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
+    distances(),
+    volumes(),
+    surfaces(),
     nctmp(0.),
     nptmp(1.),
     rg(nullptr),
@@ -102,6 +108,7 @@ void Aggregate::Init(void)
     IndexVerlet = {{0,0,0,0}};
 
     SetPosition(0.,0.,0.);
+    UpdateDistances();
 }
 
 
@@ -179,7 +186,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
             external_storage->maxradius = *rmax;
     }
 
-
+    UpdateDistances();
 
 }
 
@@ -188,12 +195,12 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 bool Aggregate::Contact(Aggregate& other) const noexcept
 {
     //$ Loop on all the spheres of the other aggregate
-    for (int j = 1; j <= other.Np; j++)
+    for (const Sphere* othersphere : other.myspheres)
     {
         //$ For every sphere in the aggregate :
-        for (int knum = 1; knum <= Np; knum++)
+        for (const Sphere* mysphere: myspheres)
         {
-            if (myspheres[knum].Contact(other.myspheres[j]))
+            if (mysphere->Contact(*othersphere))
                 return true;
         }
     }
@@ -206,12 +213,12 @@ double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir) const
     bool contact(false);
 
     //$ Loop on all the spheres of the other aggregate
-    for (int j = 1; j <= other.Np; j++)
+    for (const Sphere* othersphere : other.myspheres)
     {
         //$ For every sphere in the aggregate :
-        for (int knum = 1; knum <= Np; knum++)
+        for (const Sphere* mysphere: myspheres)
         {
-            double dist=myspheres[knum].Collision(other.myspheres[j], Vectdir);;
+            double dist=mysphere->Collision(*othersphere, Vectdir);;
             if (0. <= dist && dist <= mindist)
             {
                 mindist = dist;
@@ -260,13 +267,6 @@ void Aggregate::Update()
 }
 
 
-
-void Aggregate::UpdatesSpheres(ListSphere& spheres,int index[])
-{
-    myspheres = ListSphere(spheres,index);
-    Np = myspheres.size();
-}
-
 const array<double, 4> Aggregate::GetPosition(void) const noexcept
 {
     array<double, 4> mypos;
@@ -313,9 +313,9 @@ void Aggregate::SetPosition(const array<double, 4> position) noexcept
 
 void Aggregate::Translate(const array<double, 4> vector) noexcept
 {
-    for (int i = 1; i <= Np; i++)
+    for (Sphere* mysphere: myspheres)
     {
-        myspheres[i].Translate(vector);
+        mysphere->Translate(vector);
     }
 
     SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
@@ -323,9 +323,9 @@ void Aggregate::Translate(const array<double, 4> vector) noexcept
 
 void Aggregate::Translate(const double vector[]) noexcept
 {
-    for (int i = 1; i <= Np; i++)
+    for (Sphere* mysphere: myspheres)
     {
-        myspheres[i].Translate(vector);
+        mysphere->Translate(vector);
     }
 
     SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
@@ -371,24 +371,13 @@ double& Aggregate::operator[](const int var)
     Nc = 0; // Number of contacts
     double terme = 0.0; // Volume and surface of Agg Id
     *Tv = 0.0;
-    vector<double> tabVol;
-
-    tabVol.assign(Np+1, 0.);
 
     //$ For the Spheres i in Agg Id
     for (int i = 1; i <= Np; i++)
     {
-        //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] += myspheres[i].Volume(); //Calculation of the volume of i
-
         for (int j = i+1; j <= Np; j++) //for the j spheres composing Aggregate n°id
         {
-
-            double voli, volj, surfi, surfj;
-            voli = volj = surfi = surfj = 0.;
-
-            //$ Calculation of the intersection between the spheres i and j
-            double dist = myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
+            double dist = distances[i][j];
             double rpmoy = (*myspheres[i].r + *myspheres[j].r)/2.0; //Mean Radius between i and j monomeres
             double dbordabord = ((dist-2.0*rpmoy)/(2.0*rpmoy))*1E6; //distance between the two particles
             //$ Check if i is covering j
@@ -399,16 +388,8 @@ double& Aggregate::operator[](const int var)
                 *cov = *cov - dbordabord; //Coefficient of total Covering of Agg id
                 Nc += 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
             }
-
-            //$ The volume and surface covered by j is substracted from those of i
-            tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
-                                             //la calotte due à la sphérule j
-
-            //$ The volume and surface covered by i is substracted from those of j
-            tabVol[j] = tabVol[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
-                                             //la calotte due à la sphérule i
         }
-        terme = terme + tabVol[i]/(*myspheres[i].volume);
+        terme = terme + volumes[i]/(*myspheres[i].volume);
 
     }
     *Tv = 1 - terme /Np;
@@ -447,15 +428,12 @@ void Aggregate::RayonGiration(void)
 {
     // This function determines the Gyration Radius of the Aggregate Id.
 
-    vector<double> tabVol;
-    vector<double> tabSurf;
-
     *volAgregat = *surfAgregat = 0.0; // Volume and surface of Agg Id
     *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
                 // It is used to assimilate the aggregate to a sphere when checking for intersections
 
-    tabVol.assign(Np+1, 0.);
-    tabSurf.assign(Np+1, 0.);
+    volumes.assign(Np+1, 0.);
+    surfaces.assign(Np+1, 0.);
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
     array<double, 4> newpos({{0.,0.,0.,0.}});
@@ -464,8 +442,8 @@ void Aggregate::RayonGiration(void)
     for (int i = 1; i <= Np; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        tabVol[i] += *myspheres[i].volume; //Calculation of the volume of i
-        tabSurf[i] += *myspheres[i].surface;    //Calculation of the surface of i
+        volumes[i] += *myspheres[i].volume; //Calculation of the volume of i
+        surfaces[i] += *myspheres[i].surface;    //Calculation of the surface of i
 
         for (int j = i+1; j <= Np; j++) //for the j spheres composing Aggregate n°id
         {
@@ -474,32 +452,32 @@ void Aggregate::RayonGiration(void)
             voli = volj = surfi = surfj = 0.;
 
             //$ Calculation of the intersection between the spheres i and j
-            myspheres[i].Intersection(myspheres[j],voli,volj,surfi,surfj);
+            myspheres[i].Intersection(myspheres[j],distances[i][j], voli,volj,surfi,surfj);
 
             //$ The volume and surface covered by j is substracted from those of i
-            tabVol[i] = tabVol[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
+            volumes[i] = volumes[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
                                              //la calotte due à la sphérule j
-            tabSurf[i] = tabSurf[i] - surfi; //Calcul de la surface de la sphérule i moins la surface de
+            surfaces[i] = surfaces[i] - surfi; //Calcul de la surface de la sphérule i moins la surface de
                                              //la calotte due à la sphérule j
 
             //$ The volume and surface covered by i is substracted from those of j
-            tabVol[j] = tabVol[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
+            volumes[j] = volumes[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
                                              //la calotte due à la sphérule i
-            tabSurf[j] = tabSurf[j] - surfj; //Calcul de la surface de la sphérule j moins la surface de
+            surfaces[j] = surfaces[j] - surfj; //Calcul de la surface de la sphérule j moins la surface de
                                              //la calotte due à la sphérule i
         }
         //$ Calculation of the total volume and surface of the aggregate
-        *volAgregat = *volAgregat + tabVol[i];    //Total Volume of Agg id
-        *surfAgregat = *surfAgregat + tabSurf[i]; //Total Surface of Agg id
+        *volAgregat = *volAgregat + volumes[i];    //Total Volume of Agg id
+        *surfAgregat = *surfAgregat + surfaces[i]; //Total Surface of Agg id
 
         double dx = periodicDistance(*myspheres[i].x-*x,physicalmodel->L);
         double dy = periodicDistance(*myspheres[i].y-*y,physicalmodel->L);
         double dz = periodicDistance(*myspheres[i].z-*z,physicalmodel->L);
 
         //$ Calculation of the position of the center of mass
-        newpos[1] += dx * tabVol[i];
-        newpos[2] += dy * tabVol[i];
-        newpos[3] += dz * tabVol[i];
+        newpos[1] += dx * volumes[i];
+        newpos[2] += dy * volumes[i];
+        newpos[3] += dz * volumes[i];
     }
     //$ Filling of PosiGravite
 
@@ -526,8 +504,8 @@ void Aggregate::RayonGiration(void)
         *rmax=MAX(*rmax,r);
 
         //$ Calculation of Rg
-        Arg = Arg + tabVol[i]*POW2(li);
-        Brg = Brg + tabVol[i]*POW2(*myspheres[i].r);
+        Arg = Arg + volumes[i]*POW2(li);
+        Brg = Brg + volumes[i]*POW2(*myspheres[i].r);
     }
 
     *rg = sqrt(fabs((Arg+3.0/5.0*Brg)/(*volAgregat)));
@@ -565,11 +543,9 @@ void Aggregate::AfficheVerlet() const
         cout<<"Coordinates: "<< IndexVerlet[1] << " " << IndexVerlet[2] << " " << IndexVerlet[3] << endl;
         cout<<"Taille: "<<cell.size()<< endl;
         cout << " friends :"<< endl;
-        for(i = cell.begin();
-            i!= cell.end();
-            i++)
+        for(const int member : cell)
         {
-            cout << " " << *i<<endl;
+            cout << " " << member <<endl;
         }
     }
 }
@@ -585,18 +561,38 @@ Sphere::Sphere(const Aggregate& Agg) : Sphere()
 
 void Aggregate::Merge(Aggregate& other)
 {
-    const int nselect = other.myspheres.size();
     //$ Update of the labels of the spheres that were in the deleted aggregate
-    for (int i = 1; i <= nselect; i++)
+    for (Sphere* othersphere : other.myspheres)
     {
-        other.myspheres[i].SetLabel(indexInStorage+1);
+        othersphere->SetLabel(indexInStorage+1);
     }
     myspheres.merge(other.myspheres);
     Np = myspheres.size();
+    UpdateDistances();
 }
 
 void Aggregate::DecreaseLabel(void) noexcept
 {
     indexInStorage--;
     myspheres.DecreaseLabel();
+}
+
+void Aggregate::UpdateDistances(void) noexcept
+{
+    distances.resize(Np+1);
+
+    //$ For the Spheres i in Agg Id
+    for (int i = 1; i <= Np; i++)
+        distances[i].resize(Np+1)
+                ;
+    //$ For the Spheres i in Agg Id
+    for (int i = 1; i <= Np; i++)
+    {
+        distances[i][i]=0;
+        for (int j = i+1; j <= Np; j++) //for the j spheres composing Aggregate n°id
+        {
+            distances[i][j]=myspheres[i].Distance(myspheres[j]);
+            distances[j][i] = distances[i][j];
+        }
+    }
 }

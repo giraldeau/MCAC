@@ -31,6 +31,10 @@ class Aggregate : public storage_elem<16,ListAggregat>
         Verlet* verlet;
         array<int, 4> IndexVerlet;
 
+        vector<vector <double > > distances;
+        vector<double> volumes;
+        vector<double> surfaces;
+
         double nctmp,nptmp;
 
         double *rg;  //Gyration Radius
@@ -75,6 +79,9 @@ class Aggregate : public storage_elem<16,ListAggregat>
         double Distance(Aggregate&, array<double,4> Vectdir) const;
         void Merge(Aggregate&);
         void DecreaseLabel(void) noexcept;
+
+        void UpdateDistances(void) noexcept;
+
 
         void AfficheVerlet() const;
 
