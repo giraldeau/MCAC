@@ -8,6 +8,8 @@ using namespace std;
 class PhysicalModel
 {
 public:
+    friend struct ModeleBeta2;
+
 
     // Physics
     double Asurfgrowth; // surface growth coefficient
@@ -29,6 +31,7 @@ public:
     bool ActiveModulephysique, ActiveVariationTempo;
     bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
+    bool toBeDestroyed;
 private:
 
     // Internal use
@@ -38,6 +41,7 @@ private:
     double Secante(const double x0) const;
 
 public:
+    PhysicalModel(void);
     void Init(const double _P, const double _T, const double _dfe, const double _kfe, const double _Dpm, const double _sigmaDpm, const double _xsurfgrowth, const double _coeffB, const double _Rho);
     void SetPrecision(const double _precision);
     void UseDichotomia(void);
@@ -64,6 +68,7 @@ double inverf(const double p);
 
 __attribute((const)) inline double periodicDistance(const double x, const double dim) noexcept
 {
+    //return periodicPosition(x+0.5*dim,dim)-0.5*dim;
     double dist(x);
     double hdim(0.5*dim);
 
@@ -78,6 +83,9 @@ __attribute((const)) inline double periodicDistance(const double x, const double
 
 __attribute((const)) inline double periodicPosition(const double x, const double dim) noexcept
 {
+    //return fmod(dim-fmod(dim-x,dim),dim);
+    //return fmod(x+dim,dim);
+
     double pos(x);
 
     while (pos < 0)

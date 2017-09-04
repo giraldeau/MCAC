@@ -15,7 +15,7 @@ const double PI = atan(1.0)*4;
 
 Aggregate::Aggregate(void):
     storage_elem<16,ListAggregat>(),
-    physicalmodel(nullptr),
+    physicalmodel(new PhysicalModel),
     myspheres(),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
@@ -40,15 +40,43 @@ Aggregate::Aggregate(void):
     y(nullptr),
     z(nullptr),
     Nc(0),
-    Np(1),
+    Np(0),
     InVerlet(false)
 {
     Init();
 }
 
-Aggregate::Aggregate(PhysicalModel& _physicalmodel) : Aggregate()
+Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
+    storage_elem<16,ListAggregat>(),
+    physicalmodel(&_physicalmodel),
+    myspheres(),
+    verlet(nullptr),
+    IndexVerlet({{0,0,0}}),
+    distances(),
+    volumes(),
+    surfaces(),
+    nctmp(0.),
+    nptmp(1.),
+    rg(nullptr),
+    dm(nullptr),
+    lpm(nullptr),
+    time_step(nullptr),
+    rmax(nullptr),
+    volAgregat(nullptr),
+    surfAgregat(nullptr),
+    Tv(nullptr),
+    volAgregat_without_cov(nullptr),
+    cov(nullptr),
+    ratio_surf_vol(nullptr),
+    free_surface(nullptr),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    Nc(0),
+    Np(0),
+    InVerlet(false)
 {
-    physicalmodel = &_physicalmodel;
+    Init();
 }
 
 
@@ -79,7 +107,7 @@ Aggregate::Aggregate(ListAggregat& _storage, const int _N):
     y(nullptr),
     z(nullptr),
     Nc(0),
-    Np(1),
+    Np(0),
     InVerlet(false)
 {
     Init();
@@ -133,7 +161,10 @@ void Aggregate::setpointers(void)
 
 void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 4> position ,const int _label, ListSphere& spheres,const double Dp)
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
     physicalmodel = &_physicalmodel;
+
     verlet = &_verlet;
     indexInStorage = _label-1;
 
@@ -233,40 +264,6 @@ double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir) const
 }
 //###############################################################################################################################
 
-
-//######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
-void Aggregate::Update()
-{
-    // This function will update the parameter of Agg
-
-    //$ Determination of the Radius of gyration of Agg using RayonGiration()
-    RayonGiration();
-
-    //$ Determination of Dm using ConvertRg2Dm
-    *dm = physicalmodel->ConvertRg2DmFromStart(Np,*rg,*dm/2);
-
-    if (physicalmodel->ActiveModulephysique == 1)
-    {
-        double masse = physicalmodel->Rho*(*volAgregat);//Determination of the real mass of Agg
-        double vit =  physicalmodel->velocity(masse);
-        double diff = physicalmodel->diffusivity(*dm);
-        *lpm = 8*diff/PI/vit;
-        *time_step = *lpm/vit; //Displacement duration
-    }
-    else
-    {
-        *lpm = physicalmodel->Dpm*1E-9;
-        *time_step = 1E-6;
-    }
-
-    if(!(external_storage==nullptr))
-    {
-        if (*rmax > external_storage->maxradius)
-            external_storage->maxradius = *rmax;
-    }
-}
-
-
 const array<double, 4> Aggregate::GetPosition(void) const noexcept
 {
     array<double, 4> mypos;
@@ -278,18 +275,9 @@ const array<double, 4> Aggregate::GetPosition(void) const noexcept
 
 void Aggregate::SetPosition(const double newx,const double newy,const double newz) noexcept
 {
-    if (physicalmodel != nullptr)
-    {
-        *x = periodicPosition(newx,physicalmodel->L);
-        *y = periodicPosition(newy,physicalmodel->L);
-        *z = periodicPosition(newz,physicalmodel->L);
-    }
-    else
-    {
-        *x = newx;
-        *y = newy;
-        *z = newz;
-    }
+    *x = periodicPosition(newx,physicalmodel->L);
+    *y = periodicPosition(newy,physicalmodel->L);
+    *z = periodicPosition(newz,physicalmodel->L);
 
     if (InVerlet && physicalmodel->use_verlet)
     {
@@ -333,6 +321,9 @@ void Aggregate::Translate(const double vector[]) noexcept
 
 Aggregate::~Aggregate(void) noexcept
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
+
     if (InVerlet && physicalmodel->use_verlet)
     {
         (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].remove(indexInStorage+1);
@@ -422,21 +413,53 @@ double& Aggregate::operator[](const int var)
 }
 
 
-//############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
-
-void Aggregate::RayonGiration(void)
+//######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
+void Aggregate::Update()
 {
-    // This function determines the Gyration Radius of the Aggregate Id.
+    // This function will update the parameter of Agg
+    Volume();
 
+    MassCenter();
+
+    CalcRadius();
+
+    //$ Determination of the Radius of gyration of Agg using RayonGiration()
+    RayonGiration();
+
+    //$ Determination of Dm using ConvertRg2Dm
+    *dm = physicalmodel->ConvertRg2DmFromStart(Np,*rg,*dm);
+
+    if (physicalmodel->ActiveModulephysique == 1)
+    {
+        double masse = physicalmodel->Rho*(*volAgregat);//Determination of the real mass of Agg
+        double vit =  physicalmodel->velocity(masse);
+        double diff = physicalmodel->diffusivity(*dm);
+        *lpm = 8*diff/PI/vit;
+        *time_step = *lpm/vit; //Displacement duration
+    }
+    else
+    {
+        *lpm = physicalmodel->Dpm*1E-9;
+        *time_step = 1E-6;
+    }
+
+    if(!(external_storage==nullptr))
+    {
+        if (*rmax > external_storage->maxradius)
+            external_storage->maxradius = *rmax;
+    }
+}
+
+
+
+//############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
+void Aggregate::Volume(void)
+{
     *volAgregat = *surfAgregat = 0.0; // Volume and surface of Agg Id
-    *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
-                // It is used to assimilate the aggregate to a sphere when checking for intersections
-
-    volumes.assign(Np+1, 0.);
-    surfaces.assign(Np+1, 0.);
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
-    array<double, 4> newpos({{0.,0.,0.,0.}});
+    volumes.assign(Np+1, 0.);
+    surfaces.assign(Np+1, 0.);
 
     //$ For the Spheres i in Agg Id
     for (int i = 1; i <= Np; i++)
@@ -469,6 +492,17 @@ void Aggregate::RayonGiration(void)
         //$ Calculation of the total volume and surface of the aggregate
         *volAgregat = *volAgregat + volumes[i];    //Total Volume of Agg id
         *surfAgregat = *surfAgregat + surfaces[i]; //Total Surface of Agg id
+    }
+}
+
+void Aggregate::MassCenter(void)
+{
+    array<double, 4> newpos({{0.,0.,0.,0.}});
+
+    //$ For the Spheres i in Agg Id
+    for (int i = 1; i <= Np; i++)
+    {
+        //$ Calculation of the total volume and surface of the aggregate
 
         double dx = periodicDistance(*myspheres[i].x-*x,physicalmodel->L);
         double dy = periodicDistance(*myspheres[i].y-*y,physicalmodel->L);
@@ -482,29 +516,39 @@ void Aggregate::RayonGiration(void)
     //$ Filling of PosiGravite
 
     for (int k = 1; k <= 3; k++)
-    {
         newpos[k] = newpos[k]/(*volAgregat);
-    } //Centre of mass of Agg Id
 
     //cout << Position()<< " "<< newpos <<endl;
     SetPosition(newpos[1]+*x,newpos[2]+*y,newpos[3]+*z);
 
-    //$ Determination of the maximal radius of Agg Id and the Radius of gyration
-    double Arg, Brg;
-    Arg = Brg = 0.0; // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
+    const int loopsize(Np);
+    for (int i = 1; i <= loopsize; i++)
+        distances[i][0]=myspheres[i].Distance(*x,*y,*z);
+
+}
+
+void Aggregate::CalcRadius(void)
+{
+
+    *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
+                // It is used to assimilate the aggregate to a sphere when checking for intersections
+
+    for (int i = 1; i <= Np; i++)
+        *rmax=MAX(*rmax,*myspheres[i].r+distances[i][0]);
+}
+
+void Aggregate::RayonGiration(void)
+{
+    // This function determines the Gyration Radius of the Aggregate Id.
+
+    // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
+    double Arg(0.);
+    double Brg(0.);
 
     for (int i = 1; i <= Np; i++)
     {
-        //$ Determination of the distance between each monomere and the center of mass of Agg Id
-        double li = myspheres[i].Distance(*x,*y,*z); //Distance entre les centres de masse de la sphérule i et de l'agrégat n°id
-
-        double r = li + *myspheres[i].r;
-
-        //$ Calculation of rmax
-        *rmax=MAX(*rmax,r);
-
         //$ Calculation of Rg
-        Arg = Arg + volumes[i]*POW2(li);
+        Arg = Arg + volumes[i]*POW2(distances[i][0]); // distance to the gravity center
         Brg = Brg + volumes[i]*POW2(*myspheres[i].r);
     }
 

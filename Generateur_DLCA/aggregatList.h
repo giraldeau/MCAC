@@ -28,6 +28,9 @@ class ListAggregat : public storage_list<16,Aggregate>
         vector<int> indexSortedTimeSteps;
         vector<double> CumulativeTimeSteps;
 
+        vector<double>::iterator ptr_deb;
+        vector<double>::iterator ptr_fin;
+
     public:
         ListSphere spheres;
         Verlet verlet;

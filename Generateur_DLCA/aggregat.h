@@ -73,7 +73,9 @@ class Aggregate : public storage_elem<16,ListAggregat>
         array<int, 4> GetVerletIndex() noexcept;
 
         void Update();
-        void UpdatesSpheres(ListSphere&, int indexInStorage[]);
+        void Volume();
+        void MassCenter();
+        void CalcRadius();
         void RayonGiration(void);
         bool Contact(Aggregate&) const noexcept;
         double Distance(Aggregate&, array<double,4> Vectdir) const;

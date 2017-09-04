@@ -42,23 +42,13 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #################################             SPHERE                    #####################################
  * #################################                                       #####################################
  * #############################################################################################################*/
-
-
 void Sphere::SetPosition(const double newx, const double newy, const double newz) noexcept
 {
-    if (physicalmodel != nullptr)
-    {
-        *x = periodicPosition(newx,physicalmodel->L);
-        *y = periodicPosition(newy,physicalmodel->L);
-        *z = periodicPosition(newz,physicalmodel->L);
-    }
-    else
-    {
-        *x = newx;
-        *y = newy;
-        *z = newz;
-    }
+    *x = periodicPosition(newx,physicalmodel->L);
+    *y = periodicPosition(newy,physicalmodel->L);
+    *z = periodicPosition(newz,physicalmodel->L);
 }
+
 /* #############################################################################################################
  * ################################# Distance between a sphere and a point #####################################
  * #############################################################################################################*/
@@ -91,17 +81,10 @@ __attribute((pure)) double Sphere::Distance2(const array<double, 4> point) const
 
 __attribute__((pure)) double Sphere::Distance2(const double otherx, const double othery, const double otherz) const noexcept
 {
-    if (physicalmodel != nullptr)
-    {
-       double dx(periodicDistance((*x-otherx),physicalmodel->L));
-       double dy(periodicDistance((*y-othery),physicalmodel->L));
-       double dz(periodicDistance((*z-otherz),physicalmodel->L));
-       return POW2(dx)+POW2(dy)+POW2(dz);
-    }
-    else
-    {
-         return POW2(*x-otherx)+POW2(*y-othery)+POW2(*z-otherz);
-    }
+   double dx(periodicDistance((*x-otherx),physicalmodel->L));
+   double dy(periodicDistance((*y-othery),physicalmodel->L));
+   double dz(periodicDistance((*z-otherz),physicalmodel->L));
+   return POW2(dx)+POW2(dy)+POW2(dz);
 }
 
  __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz) const noexcept

@@ -49,10 +49,16 @@ void ListSphere::DecreaseLabel(void) noexcept
 
 void ListSphere::setpointers()
 {
+    vector<double>::iterator newdeb((*Storage)[1].begin());
+    vector<double>::iterator newfin((*Storage)[1].end());
+    if ((newdeb == ptr_deb) && (newfin == ptr_fin))
+        return;
     for (Sphere* mysphere : list)
     {
         mysphere->setpointers();
     }
+    ptr_deb = newdeb;
+    ptr_fin = newfin;
 }
 
 
@@ -60,11 +66,16 @@ void ListSphere::setpointers()
 /** Default constructor in local storage */
 ListSphere::ListSphere(void):
     storage_list<7,Sphere>(),
-    physicalmodel(nullptr)
+    physicalmodel(new PhysicalModel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr)
 {}
 
 ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
-    ListSphere()
+    storage_list<7,Sphere>(),
+    physicalmodel(&_physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr)
 {
     Init(_physicalmodel,_N);
 }
@@ -72,14 +83,18 @@ ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
 /** Constructor with external storage */
 ListSphere::ListSphere(ListSphere& parent,int _index[]):
     storage_list<7,Sphere>(parent, _index),
-    physicalmodel(parent.physicalmodel)
+    physicalmodel(parent.physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr)
 {
     setpointers();
 }
 
 ListSphere::ListSphere(ListSphere& parent,int* _index[],const int start,const int end):
     storage_list<7,Sphere>(parent, _index, start, end),
-    physicalmodel(parent.physicalmodel)
+    physicalmodel(parent.physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr)
 {
     setpointers();
 }
@@ -87,7 +102,9 @@ ListSphere::ListSphere(ListSphere& parent,int* _index[],const int start,const in
 /** Copy constructor */
 ListSphere::ListSphere(const ListSphere& other):
     storage_list<7,Sphere>(other),
-    physicalmodel(other.physicalmodel)
+    physicalmodel(other.physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr)
 {
     setpointers();
 }
@@ -95,14 +112,19 @@ ListSphere::ListSphere(const ListSphere& other):
 /** Move constructor */
 ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
     storage_list<7,Sphere>(other),
-    physicalmodel(other.physicalmodel)
+    physicalmodel(other.physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr)
 {
     setpointers();
 }
 
 /** Destructor */
 ListSphere::~ListSphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
-{}
+{
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
+}
 
 /** Copy assignment operator */
 ListSphere& ListSphere::operator= (const ListSphere& other)
@@ -116,9 +138,12 @@ ListSphere& ListSphere::operator= (const ListSphere& other)
 /** Move assignment operator */
 ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
+
     std::swap(static_cast<storage_list<7,Sphere>&>(*this),static_cast<storage_list<7,Sphere>&>(other));
     physicalmodel = other.physicalmodel;
+    other.physicalmodel = new PhysicalModel;
     setpointers();
-    other.setpointers();
     return *this;
 }

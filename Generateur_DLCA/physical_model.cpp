@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <cfloat>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -14,8 +15,47 @@
 
 const double PI = atan(1.0)*4;
 
+PhysicalModel::PhysicalModel(void) :
+    Asurfgrowth(0),
+    dfe(0),
+    kfe(0),
+    xsurfgrowth(0),
+    coeffB(0),
+    lambda(0),
+    Dpeqmass(0),
+    rpeqmass(0),
+    gamma_(0),
+    P(0),
+    T(0),
+    Mu(0),
+    K(0),
+    Rho(0),
+    Dpm(0),
+    sigmaDpm(0),
+    temps(0),
+    X(0),
+    FV(0),
+    L(DBL_MAX),
+    precision(0),
+    FactorModelBeta(0),
+    N(0),
+    DeltaSauve(0),
+    root_method(0),
+    Mode(0),
+    GridDiv(0),
+    ActiveModulephysique(false),
+    ActiveVariationTempo(false),
+    use_verlet(false),
+    toBeDestroyed(true)
+    {}
+
+
+
+
 void PhysicalModel::Init(const double _P, const double _T, const double _dfe, const double _kfe, const double _Dpm, const double _sigmaDpm, const double _xsurfgrowth, const double _coeffB, const double _Rho)
 {
+    toBeDestroyed = false;
+
     dfe=_dfe;
     kfe=_kfe;
     P = _P;
@@ -282,7 +322,7 @@ double PhysicalModel::Secante(const double xsave) const
 
 __attribute((pure)) double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy)
 {
-    double start = rpmoy*pow(np,gamma_/dfe);
+    double start = 2*rpmoy*pow(np,gamma_/dfe);
     return ConvertRg2DmFromStart(np,rg,start);
 }
 
@@ -294,14 +334,15 @@ double PhysicalModel::ConvertRg2DmFromStart(const double np, const double rg, co
     double nptmp = pow(npeqmass*pow(np,gamma_-1),1./gamma_);
     FactorModelBeta = 1./(rpeqmass*pow(nptmp,gamma_/dfe)/Cunningham(rpeqmass));
 */
-    if (root_method==0)
-        return Dichotomie(start)*2;
-    else if (root_method==1)
-        return brentq(start)*2;
-    else if (root_method==2)
-        return Secante(start)*2;
-
-    return  Dichotomie(start)*2;
+    switch (root_method)
+    {
+    case 2:
+        return Secante(start*0.5)*2;
+    case 1:
+        return brentq(start*0.5)*2;
+    default:
+        return Dichotomie(start*0.5)*2;
+    }
 }
 
  __attribute__((pure)) double PhysicalModel::Grow(const double R,const double dt) const

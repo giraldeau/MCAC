@@ -41,7 +41,8 @@ class ListSphere : public storage_list<7,Sphere>
 
     private:
         PhysicalModel* physicalmodel;
-
+        vector<double>::iterator ptr_deb;
+        vector<double>::iterator ptr_fin;
     public:
 
         void Init(PhysicalModel& _physicalmodel, const int _size);

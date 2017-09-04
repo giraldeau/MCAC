@@ -186,10 +186,9 @@ void Calcul() //Coeur du programme
             Aggregates.spheres.CroissanceSurface(deltatemps);
 
             //$ Aggregates parameter update
-
-            for (i = 1; i<= NAgg; i++)
+            for (Aggregate* Agg : Aggregates)
             {
-                Aggregates[i].Update();
+                Agg->Update();
             }
             lpm = Aggregates[NumAgg][4];
         }

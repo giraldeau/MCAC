@@ -12,14 +12,15 @@
 
 ListAggregat::ListAggregat(void):
     storage_list<16,Aggregate>(),
-    physicalmodel(nullptr),
+    physicalmodel(new PhysicalModel),
     maxradius(0.),
     indexSortedTimeSteps(),
     CumulativeTimeSteps(),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr),
     spheres(),
     verlet()
 {
-    setpointers();
 }
 
   __attribute__((pure)) double ListAggregat::GetMaxTimeStep() const
@@ -34,6 +35,9 @@ ListAggregat::ListAggregat(void):
 
 void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
+
     physicalmodel=&_physicalmodel;
     spheres.Init(_physicalmodel, _N);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
@@ -144,15 +148,24 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,4> 
 
 void ListAggregat::setpointers()
 {
+    vector<double>::iterator newdeb((*Storage)[1].begin());
+    vector<double>::iterator newfin((*Storage)[1].end());
+    if ((newdeb == ptr_deb) && (newfin == ptr_fin))
+        return;
     for (Aggregate* Agg : list)
     {
         Agg->setpointers();
     }
+    ptr_deb = newdeb;
+    ptr_fin = newfin;
 }
 
 
 ListAggregat::~ListAggregat(void) noexcept
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
+
     //#pragma omp for simd
     for (Aggregate* Agg : list)
     {
@@ -220,9 +233,7 @@ void ListAggregat::SortTimeSteps(double factor)
     for (int i=1; i < _size; i++)
     {
         CumulativeTimeSteps[i] = CumulativeTimeSteps[i-1]+TpT[indexSortedTimeSteps[i]];
-        CumulativeTimeSteps[i-1] = CumulativeTimeSteps[i-1];
     }
-    CumulativeTimeSteps[_size-1] = CumulativeTimeSteps[_size-1];
 }
 
 int ListAggregat::RandomPick(double &deltatemps, const double random)

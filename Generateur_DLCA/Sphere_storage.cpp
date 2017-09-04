@@ -164,16 +164,26 @@ Sphere::Sphere(void):
     r(nullptr),
     volume(nullptr),
     surface(nullptr),
-    physicalmodel(nullptr),
+    physicalmodel(new PhysicalModel),
     AggLabel(0)
 {
     InitVal();
 }
 
-Sphere::Sphere(PhysicalModel& _physicalmodel) : Sphere()
+Sphere::Sphere(PhysicalModel& _physicalmodel):
+    storage_elem<7,ListSphere>(),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    r(nullptr),
+    volume(nullptr),
+    surface(nullptr),
+    physicalmodel(&_physicalmodel),
+    AggLabel(0)
 {
-    physicalmodel = &_physicalmodel;
+    InitVal();
 }
+
 
 /** Constructor in local storage with initialization */
 Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr) : Sphere(_physicalmodel)
@@ -239,14 +249,8 @@ Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimiza
 /** Destructor */
 Sphere::~Sphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
-    x=nullptr;
-    y=nullptr;
-    z=nullptr;
-    r=nullptr;
-    volume=nullptr;
-    surface=nullptr;
-    physicalmodel=nullptr;
-    AggLabel=0;
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
 }
 
 /** Copy assignment operator */
@@ -260,11 +264,15 @@ Sphere& Sphere::operator= (const Sphere& other)
 /** Move assignment operator */
 Sphere& Sphere::operator= (Sphere&& other) noexcept
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
+
     *this = static_cast<Sphere&>(storage_elem<7,ListSphere>::operator=(other));
     physicalmodel = other.physicalmodel;
     AggLabel = other.AggLabel;
     setpointers();
     other.setpointers();
     other.AggLabel=0;
+    other.physicalmodel=new PhysicalModel;
     return *this;
 }
