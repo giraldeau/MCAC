@@ -586,6 +586,8 @@ void Aggregate::AfficheVerlet() const
 
 Sphere::Sphere(const Aggregate& Agg) : Sphere()
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
     physicalmodel = Agg.physicalmodel;
     InitVal(*Agg.x,*Agg.y,*Agg.z,*Agg.rmax);
 }

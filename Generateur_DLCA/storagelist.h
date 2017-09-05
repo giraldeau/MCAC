@@ -150,7 +150,7 @@ storage_list<N,elem>::storage_list(void):
 /** Constructor with external storage */
 template <int N,class elem>
 storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, vector<int> _index):
-    _size(_index.size()),
+    _size(int(_index.size())),
     list(),
     indexInStorage(),
     Storage(parent.Storage),
