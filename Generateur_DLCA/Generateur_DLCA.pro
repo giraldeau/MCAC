@@ -6,6 +6,7 @@
 
 COMPILATOR = "INTEL"
 
+QT=""
 #QT       += core gui
 
 #greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -66,7 +67,6 @@ SOURCES +=\
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
 
-
 release: DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/release
 debug:   DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/debug
 
@@ -77,7 +77,7 @@ UI_DIR = $$DESTDIR/.ui
 
 equals(COMPILATOR, "INTEL"){
     QMAKE_CXXFLAGS += -g -traceback -xHost -qopenmp -static -std=c++11
-    QMAKE_LFLAGS   += -g -traceback -qopenmp -std=c++11
+    QMAKE_LFLAGS   += -g -traceback -xHost -qopenmp -std=c++11
 
     ### WARNINGS ###
     QMAKE_CXXFLAGS +=  -Wall -w3 -diag-enable=3 -Wremarks -Wtrigraphs -Wcomment -Wdeprecated -Wno-effc++ -Wextra-tokens -Wformat -Wformat-security -Wic-pointer -Winline -Wmain
@@ -88,7 +88,7 @@ equals(COMPILATOR, "INTEL"){
     #QMAKE_CXXFLAGS_DEBUG += -check-pointers=rw -check-pointers-dangling=all -check-pointers-narrowing -check-pointers-undimensioned
     #LIBS += -lchkp -lchkpwrap
 
-    QMAKE_CXXFLAGS_RELEASE += -fast -ansi-alias -xHost -DNDEBUG -fp-model fast=2 -fPIC
+    QMAKE_CXXFLAGS_RELEASE += -fast -ansi-alias -DNDEBUG -fp-model fast=2 -fPIC
     QMAKE_CXXFLAGS_RELEASE += -ip -ipo # -prof-gen:srcpos
     QMAKE_CXXFLAGS_RELEASE += -qopt-report=5
     QMAKE_LFLAGS_RELEASE   += -qopt-report=5
