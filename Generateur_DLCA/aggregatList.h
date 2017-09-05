@@ -36,9 +36,9 @@ class ListAggregat : public storage_list<15,Aggregate>
         Verlet verlet;
         void Init(PhysicalModel&, const int _size);
 
-        vector<int> PotentialContacts(int id,array<double,4> Vectdir, vector<int> SearchSpace) const;
-        vector<int> GetSearchSpace(int source, array<double,4> Vectdir) const;
-        int DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin) const;
+        vector<int> PotentialContacts(int id,array<double,3> Vectdir, vector<int> SearchSpace) const;
+        vector<int> GetSearchSpace(int source, array<double,3> Vectdir) const;
+        int DistanceToNextContact(const int source, const array<double,3> Vectdir, double &distmin) const;
 
         double GetMaxTimeStep() const;
 

@@ -10,13 +10,13 @@
 #define POW3(a) ((a)*(a)*(a))
 
 
-void Verlet::Remove(const int id,const array<int, 4> Index)
+void Verlet::Remove(const int id,const array<int, 3> Index)
 {
-    (*this)[Index[1]][Index[2]][Index[3]].remove(id);
+    (*this)[Index[0]][Index[1]][Index[2]].remove(id);
 }
-void Verlet::Add(const int id,const array<int, 4> Index)
+void Verlet::Add(const int id,const array<int, 3> Index)
 {
-    (*this)[Index[1]][Index[2]][Index[3]].push_front(id);
+    (*this)[Index[0]][Index[1]][Index[2]].push_front(id);
 }
 
 void Verlet::Init(const int _GridDiv, const double _L)
@@ -40,15 +40,15 @@ void Verlet::Init(const int _GridDiv, const double _L)
 }
 
 
-vector<int> Verlet::GetSearchSpace(const array<double, 4> sourceposition , const double witdh, const array<double, 4> Vector) const
+vector<int> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double witdh, const array<double, 3> Vector) const
 {
 
-    double xp(sourceposition[1]+witdh+MAX(Vector[1],0));
-    double xm(sourceposition[1]-witdh+MIN(Vector[1],0));
-    double yp(sourceposition[2]+witdh+MAX(Vector[2],0));
-    double ym(sourceposition[2]-witdh+MIN(Vector[2],0));
-    double zp(sourceposition[3]+witdh+MAX(Vector[3],0));
-    double zm(sourceposition[3]-witdh+MIN(Vector[3],0));
+    double xp(sourceposition[0]+witdh+MAX(Vector[0],0));
+    double xm(sourceposition[0]-witdh+MIN(Vector[0],0));
+    double yp(sourceposition[1]+witdh+MAX(Vector[1],0));
+    double ym(sourceposition[1]-witdh+MIN(Vector[1],0));
+    double zp(sourceposition[2]+witdh+MAX(Vector[2],0));
+    double zm(sourceposition[2]-witdh+MIN(Vector[2],0));
 
     int bornei1 (int(floor(xm*GridDiv/L)));
     int bornei2 (int(floor(xp*GridDiv/L)+1));

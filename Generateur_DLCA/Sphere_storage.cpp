@@ -47,12 +47,12 @@ Sphere.h and Sphere.cpp defines the data storage.
     return *r;
 }
 
-const array<double, 4> Sphere::Position(void) const noexcept
+const array<double, 3> Sphere::Position(void) const noexcept
 {
-    array<double, 4> mypos;
-    mypos[1]=*x;
-    mypos[2]=*y;
-    mypos[3]=*z;
+    array<double, 3> mypos;
+    mypos[0]=*x;
+    mypos[1]=*y;
+    mypos[2]=*z;
     return mypos;
 }
 
@@ -73,25 +73,16 @@ void Sphere::Translate(const double xnew,const double ynew,const double znew) no
     SetPosition(*x + xnew, *y + ynew, *z + znew);
 }
 
-void Sphere::Translate(const double trans[]) noexcept
+void Sphere::Translate(const array<double, 3> trans) noexcept
 {
-    SetPosition(*x + trans[1], *y + trans[2], *z + trans[3]);
-}
-
-void Sphere::Translate(const array<double, 4> trans) noexcept
-{
-    SetPosition(*x + trans[1], *y + trans[2], *z + trans[3]);
+    SetPosition(*x + trans[0], *y + trans[1], *z + trans[2]);
 }
 
 /* Alias for different type of arguments*/
 
-void Sphere::SetPosition(const double position[]) noexcept
+void Sphere::SetPosition(const array<double, 3> position) noexcept
 {
-    SetPosition(position[1],position[2],position[3]);
-}
-void Sphere::SetPosition(const array<double, 4> position) noexcept
-{
-    SetPosition(position[1],position[2],position[3]);
+    SetPosition(position[0],position[1],position[2]);
 }
 
 /* Basic initializer */
@@ -109,14 +100,9 @@ void Sphere::InitVal(const double newx,const double newy,const double newz,const
     UpdateVolAndSurf();
 }
 
-void Sphere::InitVal(const double newp[],const double newr)
+void Sphere::InitVal(const array<double, 3> newp,const double newr)
 {
-    InitVal(newp[1],newp[2],newp[3],newr);
-}
-
-void Sphere::InitVal(const array<double, 4> newp,const double newr)
-{
-    InitVal(newp[1],newp[2],newp[3],newr);
+    InitVal(newp[0],newp[1],newp[2],newr);
 }
 
 /* format */
@@ -190,8 +176,7 @@ Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double new
 {
     InitVal(newx, newy, newz, newr);
 }
-Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 4> newp,const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
-Sphere::Sphere(PhysicalModel& _physicalmodel, const double newp[],const double newr) : Sphere(_physicalmodel,newp[1],newp[2],newp[3],newr){}
+Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 3> newp,const double newr) : Sphere(_physicalmodel,newp[0],newp[1],newp[2],newr){}
 
 /** Constructor with external storage */
 Sphere::Sphere(ListSphere& aggregat,const int id):

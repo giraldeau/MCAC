@@ -32,7 +32,7 @@ MainWindow* GUI;
 PhysicalModel physicalmodel;
 
 const double PI = atan(1.0)*4; // 3.14159
-array<double,4> Vectdir; // Direction of the translation of an aggregate
+array<double,3> Vectdir; // Direction of the translation of an aggregate
 int NumAgg; // Number of the aggregate in translation
 time_t secondes; // CPU Time variable
 int NSauve; // last file number
@@ -152,9 +152,9 @@ void Calcul() //Coeur du programme
 
         thetarandom = Random()*PI*2;
         phirandom = acos(1-2*Random());
-        Vectdir[1] = sin(phirandom)*cos(thetarandom);
-        Vectdir[2] = sin(phirandom)*sin(thetarandom);
-        Vectdir[3] = cos(phirandom);
+        Vectdir[0] = sin(phirandom)*cos(thetarandom);
+        Vectdir[1] = sin(phirandom)*sin(thetarandom);
+        Vectdir[2] = cos(phirandom);
 
         // -- --
 
@@ -211,7 +211,7 @@ void Calcul() //Coeur du programme
             distmove = distmin;
 
         //$ Translation of the aggregate
-        for (i = 1; i <= 3; i++)
+        for (i = 0; i < 3; i++)
         {
             Vectdir[i] = Vectdir[i]*distmove;
         }
@@ -276,8 +276,8 @@ void Calcul() //Coeur du programme
     for (i = 0; i < NAgg; i++)
     {
         printf("%d\t", i);
-        const array<double, 4> pos = Aggregates[i].GetPosition();
-        for (j = 1; j <= 3; j++)
+        const array<double, 3> pos = Aggregates[i].GetPosition();
+        for (j = 0; j < 3; j++)
             printf("%e\t", pos[j]*1E9);
         printf("\t%e\t%e\n",Aggregates[i][7]*1E25,Aggregates[i][9]*1E25);
     }
@@ -301,9 +301,9 @@ void Init()
     for (int i = 0; i < NAgg; i++)
     {          
 
-        array<double, 4> newpos;
+        array<double, 3> newpos;
         //random position
-        for (int j = 1; j<= 3 ; j++)
+        for (int j = 0; j< 3 ; j++)
             newpos[j] = Random()*physicalmodel.L;
 
         //random size
@@ -514,8 +514,8 @@ void SauveASCII(int value, int id)
         fprintf(f, "%10.3f\t", Aggregates[i][5]*1E6);
         fprintf(f, "%10.3f\t", Aggregates[i][6]*1E9);
 
-        const array<double, 4> pos = Aggregates[i].GetPosition();
-        for (j = 1; j <= 3; j++)
+        const array<double, 3> pos = Aggregates[i].GetPosition();
+        for (j = 0; j < 3; j++)
             fprintf(f, "%10.3f\t", pos[j]*1E9);
 
         fprintf(f, "%10.3f\t", Aggregates[i][7]*1E25);  //Estimation du volume d'un agrégat

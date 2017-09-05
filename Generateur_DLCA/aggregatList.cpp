@@ -48,7 +48,7 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, vector<int> SearchSpace) const
+vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,3> Vectdir, vector<int> SearchSpace) const
 {
     vector<int> listOfPotentialContacts;
 
@@ -81,7 +81,7 @@ vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, v
 //###############################################################################################################################
 
 
-vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4> Vectdir) const
+vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,3> Vectdir) const
 {
     if (!physicalmodel->use_verlet)
     {
@@ -92,13 +92,12 @@ vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4>
     {
         double lpm ( *list[source]->lpm );
         double mindist ( *list[source]->rmax + maxradius );
-        array<double, 4> sourceposition = list[source]->GetPosition();
+        array<double, 3> sourceposition = list[source]->GetPosition();
 
-        array<double, 4> Vector;
-        Vector[0] = 0;
+        array<double, 3> Vector;
+        Vector[0] = lpm * Vectdir[0];
         Vector[1] = lpm * Vectdir[1];
         Vector[2] = lpm * Vectdir[2];
-        Vector[3] = lpm * Vectdir[3];
 
         return verlet.GetSearchSpace(sourceposition , mindist, Vector);
     }
@@ -107,7 +106,7 @@ vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4>
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-int ListAggregat::DistanceToNextContact(const int source, const array<double,4> Vectdir, double &distmin) const
+int ListAggregat::DistanceToNextContact(const int source, const array<double,3> Vectdir, double &distmin) const
 {
     // Use Verlet to reduce search
     vector<int> SearchSpace(GetSearchSpace(source,Vectdir));

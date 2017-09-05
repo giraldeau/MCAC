@@ -57,26 +57,18 @@ __attribute((pure)) double Sphere::Distance(const Sphere& c) const noexcept
     return Distance(*c.x,*c.y,*c.z);
 }
 
-__attribute((pure)) double Sphere::Distance(const double point[]) const noexcept
+__attribute((pure)) double Sphere::Distance(const array<double, 3> point) const noexcept
 {
-    return Distance(point[1],point[2],point[3]);
-}
-__attribute((pure)) double Sphere::Distance(const array<double, 4> point) const noexcept
-{
-    return Distance(point[1],point[2],point[3]);
+    return Distance(point[0],point[1],point[2]);
 }
 __attribute((pure)) double Sphere::Distance2(const Sphere& c) const noexcept
 {
     return Distance2(*c.x,*c.y,*c.z);
 }
 
-__attribute((pure)) double Sphere::Distance2(const double point[]) const noexcept
+__attribute((pure)) double Sphere::Distance2(const array<double, 3> point) const noexcept
 {
-    return Distance2(point[1],point[2],point[3]);
-}
-__attribute((pure)) double Sphere::Distance2(const array<double, 4> point) const noexcept
-{
-    return Distance2(point[1],point[2],point[3]);
+    return Distance2(point[0],point[1],point[2]);
 }
 
 __attribute__((pure)) double Sphere::Distance2(const double otherx, const double othery, const double otherz) const noexcept
@@ -122,7 +114,7 @@ void Sphere::UpdateVolAndSurf(void) noexcept
      return (distance <= dist_contact);
  }
 
-  __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,4> vd) const
+  __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,3> vd) const
   {
       /*
        * Denoting
@@ -159,7 +151,7 @@ void Sphere::UpdateVolAndSurf(void) noexcept
       double dx = periodicDistance((*c.x-*x),physicalmodel->L);
       double dy = periodicDistance((*c.y-*y),physicalmodel->L);
       double dz = periodicDistance((*c.z-*z),physicalmodel->L);
-      double VD = -2*(dx*vd[1] + dy*vd[2] + dz*vd[3]);
+      double VD = -2*(dx*vd[0] + dy*vd[1] + dz*vd[2]);
       double DC = distance - dist_contact;
       double DELTA = VD*VD - 4*DC;
 

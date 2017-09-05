@@ -133,7 +133,7 @@ void Aggregate::Init(void)
     *ratio_surf_vol=0.;         //Ratio surface / volume
     *free_surface=0.;           //Free surface of the aggregate (without covering)
 
-    IndexVerlet = {{0,0,0,0}};
+    IndexVerlet = {{0,0,0}};
 
     SetPosition(0.,0.,0.);
     UpdateDistances();
@@ -159,7 +159,7 @@ void Aggregate::setpointers(void)
     z=&(*Storage)[14][indexInStorage];
 }
 
-void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 4> position ,const int _label, ListSphere& spheres,const double Dp)
+void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const int _label, ListSphere& spheres,const double Dp)
 {
     if(physicalmodel->toBeDestroyed)
         delete physicalmodel;
@@ -174,7 +174,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 
     if (physicalmodel->use_verlet)
     {
-        (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].push_front(_label);
+        (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].push_front(_label);
         InVerlet=true;
     }
     SetPosition(position);
@@ -237,7 +237,7 @@ bool Aggregate::Contact(Aggregate& other) const noexcept
     return false;
 }
 
-double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir) const
+double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
 {
     double mindist(*lpm);
     bool contact(false);
@@ -263,12 +263,12 @@ double Aggregate::Distance(Aggregate& other,array<double,4> Vectdir) const
 }
 //###############################################################################################################################
 
-const array<double, 4> Aggregate::GetPosition(void) const noexcept
+const array<double, 3> Aggregate::GetPosition(void) const noexcept
 {
-    array<double, 4> mypos;
-    mypos[1]=*x;
-    mypos[2]=*y;
-    mypos[3]=*z;
+    array<double, 3> mypos;
+    mypos[0]=*x;
+    mypos[1]=*y;
+    mypos[2]=*z;
     return mypos;
 }
 
@@ -281,41 +281,31 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
     if (InVerlet && physicalmodel->use_verlet)
     {
         //$ Update Verlet
-        array<int, 4> newindexVerlet = GetVerletIndex();
+        array<int, 3> newindexVerlet = GetVerletIndex();
 
         if (newindexVerlet != IndexVerlet)
         {
-            (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].remove(indexInStorage);
+            (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].remove(indexInStorage);
             IndexVerlet = newindexVerlet;
-            (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].push_front(indexInStorage);
+            (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].push_front(indexInStorage);
         }
     }
 
 }
 
-void Aggregate::SetPosition(const array<double, 4> position) noexcept
+void Aggregate::SetPosition(const array<double, 3> position) noexcept
 {
-    SetPosition(position[1], position[2], position[3]);
+    SetPosition(position[0], position[1], position[2]);
 }
 
-void Aggregate::Translate(const array<double, 4> vector) noexcept
+void Aggregate::Translate(const array<double, 3> vector) noexcept
 {
     for (Sphere* mysphere: myspheres)
     {
         mysphere->Translate(vector);
     }
 
-    SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
-}
-
-void Aggregate::Translate(const double vector[]) noexcept
-{
-    for (Sphere* mysphere: myspheres)
-    {
-        mysphere->Translate(vector);
-    }
-
-    SetPosition(*x +vector[1], *y + vector[2], *z +vector[3]);
+    SetPosition(*x +vector[0], *y + vector[1], *z +vector[2]);
 }
 
 Aggregate::~Aggregate(void) noexcept
@@ -325,7 +315,7 @@ Aggregate::~Aggregate(void) noexcept
 
     if (InVerlet && physicalmodel->use_verlet)
     {
-        (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]].remove(indexInStorage);
+        (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].remove(indexInStorage);
     }
 }
 
@@ -496,7 +486,7 @@ void Aggregate::Volume(void)
 
 void Aggregate::MassCenter(void)
 {
-    array<double, 4> newpos({{0.,0.,0.,0.}});
+    array<double, 3> newpos({{0.,0.,0.}});
 
     //$ For the Spheres i in Agg Id
     for (int i = 0; i < Np; i++)
@@ -508,17 +498,17 @@ void Aggregate::MassCenter(void)
         double dz = periodicDistance(*myspheres[i].z-*z,physicalmodel->L);
 
         //$ Calculation of the position of the center of mass
-        newpos[1] += dx * volumes[i];
-        newpos[2] += dy * volumes[i];
-        newpos[3] += dz * volumes[i];
+        newpos[0] += dx * volumes[i];
+        newpos[1] += dy * volumes[i];
+        newpos[2] += dz * volumes[i];
     }
     //$ Filling of PosiGravite
 
-    for (int k = 1; k <= 3; k++)
+    for (int k = 0; k < 3; k++)
         newpos[k] = newpos[k]/(*volAgregat);
 
     //cout << Position()<< " "<< newpos <<endl;
-    SetPosition(newpos[1]+*x,newpos[2]+*y,newpos[3]+*z);
+    SetPosition(newpos[0]+*x,newpos[1]+*y,newpos[2]+*z);
 
     const int loopsize(Np);
     for (int i = 0; i < loopsize; i++)
@@ -563,14 +553,14 @@ Sphere Aggregate::GetInclusiveSphere(void) const
 }
 
 
-array<int, 4> Aggregate::GetVerletIndex() noexcept
+array<int, 3> Aggregate::GetVerletIndex() noexcept
 {
-    array<int, 4>  index({{0,0,0,0}});
+    array<int, 3>  index({{0,0,0}});
     double step = physicalmodel->GridDiv/physicalmodel->L;
 
-    index[1]=int(floor((*x)*step));
-    index[2]=int(floor((*y)*step));
-    index[3]=int(floor((*z)*step));
+    index[0]=int(floor((*x)*step));
+    index[1]=int(floor((*y)*step));
+    index[2]=int(floor((*z)*step));
 
     return index;
 }
@@ -582,8 +572,8 @@ void Aggregate::AfficheVerlet() const
 
     if (physicalmodel->use_verlet && InVerlet)
     {
-        list<int> cell = (*verlet)[IndexVerlet[1]][IndexVerlet[2]][IndexVerlet[3]];
-        cout<<"Coordinates: "<< IndexVerlet[1] << " " << IndexVerlet[2] << " " << IndexVerlet[3] << endl;
+        list<int> cell = (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]];
+        cout<<"Coordinates: "<< IndexVerlet[0] << " " << IndexVerlet[1] << " " << IndexVerlet[2] << endl;
         cout<<"Taille: "<<cell.size()<< endl;
         cout << " friends :"<< endl;
         for(const int member : cell)

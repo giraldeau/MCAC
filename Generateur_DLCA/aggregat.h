@@ -29,7 +29,7 @@ class Aggregate : public storage_elem<15,ListAggregat>
         ListSphere myspheres;
 
         Verlet* verlet;
-        array<int, 4> IndexVerlet;
+        array<int, 3> IndexVerlet;
 
         vector<vector <double > > distances;
         vector<double> volumes;
@@ -60,17 +60,16 @@ class Aggregate : public storage_elem<15,ListAggregat>
     public:
 
         void Init(void);
-        void Init(PhysicalModel& ,Verlet&,const array<double, 4> position ,const int _label, ListSphere&,double r);
+        void Init(PhysicalModel& ,Verlet&,const array<double, 3> position ,const int _label, ListSphere&,double r);
 
-        void SetPosition(const array<double, 4> position) noexcept;
+        void SetPosition(const array<double, 3> position) noexcept;
         void SetPosition(const double x,const double y,const double z) noexcept;
-        void Translate(const array<double, 4> vector) noexcept;
-        void Translate(const double vector[]) noexcept;
+        void Translate(const array<double, 3> vector) noexcept;
 
-        const array<double, 4> GetPosition(void) const noexcept;
+        const array<double, 3> GetPosition(void) const noexcept;
         Sphere GetInclusiveSphere(void) const;
 
-        array<int, 4> GetVerletIndex() noexcept;
+        array<int, 3> GetVerletIndex() noexcept;
 
         void Update();
         void Volume();
@@ -78,7 +77,7 @@ class Aggregate : public storage_elem<15,ListAggregat>
         void CalcRadius();
         void RayonGiration(void);
         bool Contact(Aggregate&) const noexcept;
-        double Distance(Aggregate&, array<double,4> Vectdir) const;
+        double Distance(Aggregate&, array<double,3> Vectdir) const;
         void Merge(Aggregate&);
         void DecreaseLabel(void) noexcept;
 
@@ -100,8 +99,7 @@ class Aggregate : public storage_elem<15,ListAggregat>
 
         /** Constructor in local storage with initialization */
         Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Aggregate(PhysicalModel&, const array<double, 4> position, const double r);
-        Aggregate(PhysicalModel&, const double position[], const double r);
+        Aggregate(PhysicalModel&, const array<double, 3> position, const double r);
         Aggregate(const Sphere&);
 
 
