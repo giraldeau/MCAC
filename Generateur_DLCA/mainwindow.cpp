@@ -134,7 +134,7 @@ void Calcul() //Coeur du programme
     int it_without_contact=0;
     int lim_it_without_contact = 200;
 
-    end = 40;
+    end = 20;
 
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);
@@ -195,7 +195,7 @@ void Calcul() //Coeur du programme
         else
         {
             //$ Random Choice of an aggregate
-            NumAgg = int(Random()*double(NAgg))+1;
+            NumAgg = int(Random()*double(NAgg));
             deltatemps = 0.0;
             physicalmodel.temps = physicalmodel.temps + 1E-9;
             lpm = physicalmodel.Dpm*1E-9; //On fixe le lpm au Dpm
@@ -206,7 +206,7 @@ void Calcul() //Coeur du programme
         //$ looking for potential contacts
         aggcontact = Aggregates.DistanceToNextContact(NumAgg, Vectdir, distmin);
 
-        contact = (aggcontact != 0);
+        contact = (aggcontact > 0);
         if (contact)
             distmove = distmin;
 
@@ -273,7 +273,7 @@ void Calcul() //Coeur du programme
 
 */
 
-    for (i = 1; i <= NAgg; i++)
+    for (i = 0; i < NAgg; i++)
     {
         printf("%d\t", i);
         const array<double, 4> pos = Aggregates[i].GetPosition();
@@ -298,7 +298,7 @@ void Init()
     NAgg = physicalmodel.N;
     Aggregates.Init(physicalmodel, NAgg);
 
-    for (int i = 1; i <= NAgg; i++)
+    for (int i = 0; i < NAgg; i++)
     {          
 
         array<double, 4> newpos;
@@ -319,7 +319,7 @@ void Init()
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
         int test=0;
-        for (int k = 1; k <= i-1; k++)
+        for (int k = 0; k <= i-1; k++)
         {
             double dist = Aggregates.spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
             if (dist <= Aggregates.spheres[k].Radius()+Dp/2)
@@ -488,7 +488,7 @@ void SauveASCII(int value, int id)
     fprintf(f, "%10.6f  Temps_[µs]\n", physicalmodel.temps*1E6);
     fprintf(f, "Label\t      Rp(nm)\t      X(nm)\t     Y(nm)\t     Z(nm)\n");
 
-    for (i=1;i<=physicalmodel.N;i++)
+    for (i=0;i<physicalmodel.N;i++)
         fprintf(f,"%s\n", Aggregates.spheres[i].str(1e9).c_str());
 
     fclose(f);
@@ -504,7 +504,7 @@ void SauveASCII(int value, int id)
     fprintf(f,"%1.6f  Temps_[µs]\n", physicalmodel.temps*1E6);
     fprintf(f,"Rg_[nm]\tNp_[]\tNc_[]\tDm_[nm]\tlpm_[nm]\tdeltat_[µs]\tRgeo_[nm]\tXG(nm)\tYG(nm)\tZG(nm)\tV_[1E-25m3]\tS_[1E-16m2]\tVOlWO_[1E-25m3]\tcov[]\tSurfWO_[1E-16m2]\n");
 
-    for (i = 1; i <= NAgg; i++)
+    for (i = 0; i < NAgg; i++)
     {
         fprintf(f, "%10.3f\t", Aggregates[i][0]*1E9);
         fprintf(f, "%d\t", int(Aggregates[i][1]));

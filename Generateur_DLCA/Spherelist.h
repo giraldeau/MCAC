@@ -61,8 +61,7 @@ class ListSphere : public storage_list<7,Sphere>
         ListSphere(PhysicalModel& _physicalmodel, const int _size);
 
         /** Constructor with external storage */
-        ListSphere(ListSphere& parent,int indexInStorage[]);
-        ListSphere(ListSphere& parent,int* indexInStorage[],const int start,const int end);
+        ListSphere(ListSphere& parent,vector<int> indexInStorage);
 
         /** Copy constructor */
         ListSphere(const ListSphere& other);

@@ -101,7 +101,7 @@ const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
 void Sphere::UpdateVolAndSurf(void) noexcept
 {
-    if (AggLabel > 0)
+    if (AggLabel > -1)
     {
         *volume = facvol*POW3(*r);
         *surface =  facsurf*POW2(*r);

@@ -32,6 +32,9 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 {
+    if(physicalmodel->toBeDestroyed)
+        delete physicalmodel;
+
     physicalmodel=&_physicalmodel;
     storage_list<7,Sphere>::Init(_N,*this);
     setpointers();
@@ -49,8 +52,8 @@ void ListSphere::DecreaseLabel(void) noexcept
 
 void ListSphere::setpointers()
 {
-    vector<double>::iterator newdeb((*Storage)[1].begin());
-    vector<double>::iterator newfin((*Storage)[1].end());
+    vector<double>::iterator newdeb((*Storage)[0].begin());
+    vector<double>::iterator newfin((*Storage)[0].end());
     if ((newdeb == ptr_deb) && (newfin == ptr_fin))
         return;
     for (Sphere* mysphere : list)
@@ -81,17 +84,8 @@ ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
 }
 
 /** Constructor with external storage */
-ListSphere::ListSphere(ListSphere& parent,int _index[]):
+ListSphere::ListSphere(ListSphere& parent,vector<int> _index):
     storage_list<7,Sphere>(parent, _index),
-    physicalmodel(parent.physicalmodel),
-    ptr_deb(nullptr),
-    ptr_fin(nullptr)
-{
-    setpointers();
-}
-
-ListSphere::ListSphere(ListSphere& parent,int* _index[],const int start,const int end):
-    storage_list<7,Sphere>(parent, _index, start, end),
     physicalmodel(parent.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr)

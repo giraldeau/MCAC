@@ -52,18 +52,18 @@ vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, v
 {
     vector<int> listOfPotentialContacts;
 
-    Sphere SphereMe(*list[AggMe-1]);
-    Sphere SphereOther(*list[AggMe-1]);
+    Sphere SphereMe(*list[AggMe]);
+    Sphere SphereOther(*list[AggMe]);
 
     //$ [For all other agregate]
     for (const int& AggOther : SearchSpace)
     {
         if (AggOther != AggMe)
         {
-            SphereOther.InitVal(*list[AggOther-1]->x,
-                                *list[AggOther-1]->y,
-                                *list[AggOther-1]->z,
-                                *list[AggOther-1]->rmax);
+            SphereOther.InitVal(*list[AggOther]->x,
+                                *list[AggOther]->y,
+                                *list[AggOther]->z,
+                                *list[AggOther]->rmax);
 
             double distForContact;
 
@@ -72,7 +72,7 @@ vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,4> Vectdir, v
             else
                 distForContact = SphereMe.Collision(SphereOther,Vectdir);
 
-            if(0. <= distForContact && distForContact <= *list[AggMe-1]->lpm )
+            if(0. <= distForContact && distForContact <= *list[AggMe]->lpm )
                 listOfPotentialContacts.push_back(AggOther);
         }
     }
@@ -92,9 +92,9 @@ vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4>
     }
     else
     {
-        double lpm ( *list[source-1]->lpm );
-        double mindist ( *list[source-1]->rmax + maxradius );
-        array<double, 4> sourceposition = list[source-1]->GetPosition();
+        double lpm ( *list[source]->lpm );
+        double mindist ( *list[source]->rmax + maxradius );
+        array<double, 4> sourceposition = list[source]->GetPosition();
 
         array<double, 4> Vector;
         Vector[0] = 0;
@@ -117,21 +117,21 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,4> 
     // Assimilate Aggregate as sphere to drasticly speed-up search
     vector<int> PotentialContact(PotentialContacts(source,Vectdir,SearchSpace));
 
-    int aggcontact(0);
-    distmin = *list[source-1]->lpm;
+    int aggcontact(-1);
+    distmin = *list[source]->lpm;
 
     //$ loop on the agregates potentially in contact
     for (const int & agg : PotentialContact) //For every aggregate that could be in contact
     {
 
-        if (list[source-1]->Contact(*list[agg-1]))
+        if (list[source]->Contact(*list[agg]))
         {
             cout << "Already contact !! " << endl;
             cout << " ignoring" << endl;
         }
         else
         {
-            double dist = list[source-1]->Distance(*list[agg-1],Vectdir);
+            double dist = list[source]->Distance(*list[agg],Vectdir);
             if (dist >= 0 && dist <= distmin)
             {
                 distmin = dist;
@@ -148,8 +148,8 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,4> 
 
 void ListAggregat::setpointers()
 {
-    vector<double>::iterator newdeb((*Storage)[1].begin());
-    vector<double>::iterator newfin((*Storage)[1].end());
+    vector<double>::iterator newdeb((*Storage)[0].begin());
+    vector<double>::iterator newfin((*Storage)[0].end());
     if ((newdeb == ptr_deb) && (newfin == ptr_fin))
         return;
     for (Aggregate* Agg : list)
@@ -177,19 +177,19 @@ ListAggregat::~ListAggregat(void) noexcept
 
 int ListAggregat::Merge(const int first, const int second)
 {
-    const int keeped(MIN(first,second)-1);
-    const int removed(MAX(first,second)-1);
+    const int keeped(MIN(first,second));
+    const int removed(MAX(first,second));
 
     list[keeped]->Merge(*list[removed]);
 
     if (list[removed]->InVerlet)
-        verlet.Remove(removed+1,list[removed]->GetVerletIndex());
+        verlet.Remove(removed,list[removed]->GetVerletIndex());
     for (int i=removed+1;i<_size;i++)
     {
         if (list[i]->InVerlet)
         {
-            verlet.Remove(i+1,list[i]->IndexVerlet);
-            verlet.Add(i,list[i]->IndexVerlet);
+            verlet.Remove(i,list[i]->IndexVerlet);
+            verlet.Add(i-1,list[i]->IndexVerlet);
         }
         list[i]->DecreaseLabel();
     }
@@ -198,7 +198,7 @@ int ListAggregat::Merge(const int first, const int second)
 
     setpointers();
 
-    return keeped+1;
+    return keeped;
 }
 
 
@@ -244,6 +244,6 @@ int ListAggregat::RandomPick(double &deltatemps, const double random)
 
     deltatemps = CumulativeTimeSteps[_size-1];
 
-    return indexSortedTimeSteps[n]+1;
+    return indexSortedTimeSteps[n];
 }
 

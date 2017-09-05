@@ -61,7 +61,7 @@ storage_elem<N,mystorage>::storage_elem(void) :
     external_storage(nullptr),
     indexInStorage(0)
 {
-    for (int j=0;j<=6;j++)
+    for (int j=0;j<N;j++)
         (*Storage)[j].assign(1, 0.);
 }
 
@@ -106,7 +106,7 @@ storage_elem<N,mystorage>::~storage_elem(void) noexcept /* explicitly specified 
 {
     if(external_storage==nullptr && Storage!=nullptr)
     {
-        for (int j=0;j<=6;j++)
+        for (int j=0;j<N;j++)
             (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
         delete Storage;
     }
@@ -129,7 +129,7 @@ storage_elem<N,mystorage>& storage_elem<N,mystorage>::operator=(storage_elem<N,m
 {
     if(external_storage==nullptr && Storage!=nullptr)
     {
-        for (int j=0;j<=6;j++)
+        for (int j=0;j<N;j++)
             (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
         delete Storage;
     }

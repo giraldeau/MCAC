@@ -40,8 +40,7 @@ public:
     //storage_list(const int size);
 
     /** Constructor with external storage */
-    storage_list(storage_list& parent,int index[]);
-    storage_list(storage_list& parent,int* index[],const int start,const int end);
+    storage_list(storage_list& parent,vector<int> index);
 
     /** Copy constructor */
     storage_list(const storage_list& other);
@@ -82,18 +81,17 @@ void storage_list<N,elem>::Init(const int _N, mylist& owner)
     external_storage=nullptr;
 
     //preallocation
-    indexInStorage.reserve(_N+1);
+    indexInStorage.reserve(_N);
     list.reserve(_N);
 
     //initialize data
     for (vector<double>& data : (*Storage))
         data.assign(_N, 0.);
 
-    indexInStorage.push_back(_N);
     const int listSize = _N;
     for (_size = 0; _size < listSize; _size++)
     {
-        indexInStorage.push_back(_size+1);
+        indexInStorage.push_back(_size);
         list.push_back(new elem(owner,_size));
     }
 
@@ -108,13 +106,13 @@ int storage_list<N,elem>::size(void) const noexcept
 template <int N,class elem>
  __attribute__((pure)) elem& storage_list<N,elem>::operator[](const int i)
 {
-    return *list[i-1];
+    return *list[i];
 }
 
 template <int N,class elem>
 __attribute__((pure)) const elem& storage_list<N,elem>::operator[](const int i) const
 {
- return *list[i-1];
+ return *list[i];
 }
 
 template <int N,class elem>
@@ -125,9 +123,9 @@ void storage_list<N,elem>::Destroy(void)
         if (Storage!=nullptr)
         {
             int _N = _size;
-            for (_size = _N; _size > 0; _size--)
+            for (_size = _N-1; _size >= 0; _size--)
             {
-                delete list[_size-1];
+                delete list[_size];
             }
             delete Storage;
         }
@@ -151,55 +149,24 @@ storage_list<N,elem>::storage_list(void):
 
 /** Constructor with external storage */
 template <int N,class elem>
-storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, int _index[]):
-    _size(_index[0]),
+storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, vector<int> _index):
+    _size(_index.size()),
     list(),
     indexInStorage(),
     Storage(parent.Storage),
     external_storage(&parent)
 {
-        indexInStorage.assign(_size+1, 0);
+        indexInStorage.assign(_size, 0);
         list.assign(_size, nullptr);
 
-        indexInStorage[0]=_size;
         const int listSize = _size;
         //#pragma omp for simd
         for (int i = 0; i < listSize; i++)
         {
-            indexInStorage[i+1] = _index[i+1];
-            int iparent = external_storage->indexInStorage[indexInStorage[i+1]]-1;
+            indexInStorage[i] = _index[i];
+            int iparent = external_storage->indexInStorage[indexInStorage[i]];
             list[i] = external_storage->list[iparent];
         }
-}
-
-template <int N,class elem>
-storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, int* _index[], const int start, const int end):
-    _size(0),
-    list(),
-    indexInStorage(),
-    Storage(parent.Storage),
-    external_storage(&parent)
-{
-
-    for(int i=start;i<=end;i++)
-        _size += _index[i][0];
-
-    indexInStorage.assign(_size+1, 0);
-    list.assign(_size, nullptr);
-
-    indexInStorage[0]=_size;
-    int m=0;
-    for(int i=start;i<=end;i++)
-    {
-    #pragma omp for simd
-        for(int j=1;j<=_index[i][0];j++)
-        {
-            indexInStorage[m+1] = _index[i][j];
-            int iparent = external_storage->indexInStorage[indexInStorage[m+1]]-1;
-            list[m] = external_storage->list[iparent];
-            m++;
-        }
-    }
 }
 
 /** Copy constructor */
@@ -302,8 +269,7 @@ void storage_list<N,elem>::merge(storage_list<N,elem>& other)
     else
     {
         list.insert(list.end(),other.list.begin(),other.list.end());
-        indexInStorage.insert(indexInStorage.end(),other.indexInStorage.begin()+1,other.indexInStorage.end());
-        indexInStorage[0]+=other.indexInStorage[0];
+        indexInStorage.insert(indexInStorage.end(),other.indexInStorage.begin(),other.indexInStorage.end());
         _size += other._size;
     }
 }
@@ -314,7 +280,7 @@ void storage_list<N,elem>::remove(elem& ToBeRemoved)
     const int id = ToBeRemoved.indexInStorage;
     delete list[id];
     list.erase(list.begin()+id);
-    indexInStorage.erase(indexInStorage.begin()+id+1);
+    indexInStorage.erase(indexInStorage.begin()+id);
     for (int i=0;i<N;i++)
     {
         (*Storage)[i].erase((*Storage)[i].begin()+id);

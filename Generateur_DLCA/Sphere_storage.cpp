@@ -144,12 +144,12 @@ void Sphere::Aff(const double coef) const
 
 void Sphere::setpointers(void)
 {
-    x = &(*this)[1];
-    y = &(*this)[2];
-    z = &(*this)[3];
-    r = &(*this)[4];
-    volume = &(*this)[5];
-    surface =&(*this)[6];
+    x = &(*this)[0];
+    y = &(*this)[1];
+    z = &(*this)[2];
+    r = &(*this)[3];
+    volume = &(*this)[4];
+    surface =&(*this)[5];
 }
 
 
@@ -165,7 +165,7 @@ Sphere::Sphere(void):
     volume(nullptr),
     surface(nullptr),
     physicalmodel(new PhysicalModel),
-    AggLabel(0)
+    AggLabel(-1)
 {
     InitVal();
 }
@@ -179,7 +179,7 @@ Sphere::Sphere(PhysicalModel& _physicalmodel):
     volume(nullptr),
     surface(nullptr),
     physicalmodel(&_physicalmodel),
-    AggLabel(0)
+    AggLabel(-1)
 {
     InitVal();
 }
@@ -203,7 +203,7 @@ Sphere::Sphere(ListSphere& aggregat,const int id):
     volume(nullptr),
     surface(nullptr),
     physicalmodel(aggregat.physicalmodel),
-    AggLabel(0)
+    AggLabel(-1)
 {
     InitVal();
     external_storage->setpointers();
@@ -243,7 +243,7 @@ Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimiza
     other.r=nullptr;
     other.volume=nullptr;
     other.surface=nullptr;
-    other.AggLabel=0;
+    other.AggLabel=-1;
 }
 
 /** Destructor */
@@ -272,7 +272,7 @@ Sphere& Sphere::operator= (Sphere&& other) noexcept
     AggLabel = other.AggLabel;
     setpointers();
     other.setpointers();
-    other.AggLabel=0;
+    other.AggLabel=-1;
     other.physicalmodel=new PhysicalModel;
     return *this;
 }
