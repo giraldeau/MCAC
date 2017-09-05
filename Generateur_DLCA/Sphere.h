@@ -36,7 +36,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class Sphere : public storage_elem<6,ListSphere>
+class Sphere : public storage_elem<9,ListSphere>
 {
     friend class ListSphere;
     friend class Aggregate;
@@ -48,6 +48,9 @@ class Sphere : public storage_elem<6,ListSphere>
         double* y;
         double* z;
         double* r;
+        double* rx;
+        double* ry;
+        double* rz;
         double* volume;
         double* surface;
         PhysicalModel* physicalmodel;
@@ -70,6 +73,8 @@ class Sphere : public storage_elem<6,ListSphere>
         void Translate(const double x,const double y,const double z) noexcept;
         void Translate(const double vector[]) noexcept;
         void Translate(const array<double, 4>  vector) noexcept;
+        void RelativeTranslate(const double x,const double y,const double z) noexcept;
+
 
         void SetLabel(const int) noexcept;
         void DecreaseLabel(void) noexcept;
@@ -88,11 +93,18 @@ class Sphere : public storage_elem<6,ListSphere>
         double Distance(const double point[]) const noexcept;
         double Distance(const array<double, 4> point) const noexcept;
         double Distance(const double x, const double y, const double z) const noexcept;
+        double RelativeDistance(const double x, const double y, const double z) const noexcept;
+        double RelativeDistance(const Sphere&) const noexcept;
+
 
         double Distance2(const Sphere&) const noexcept;
         double Distance2(const double point[]) const noexcept;
         double Distance2(const array<double, 4> point) const noexcept;
         double Distance2(const double x, const double y, const double z) const noexcept;
+        double RelativeDistance2(const Sphere&) const noexcept;
+        double RelativeDistance2(const double x, const double y, const double z) const noexcept;
+
+
 
         bool Contact(const Sphere&) const noexcept;
 

@@ -17,7 +17,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class Aggregate : public storage_elem<15,ListAggregat>
+class Aggregate : public storage_elem<18,ListAggregat>
 {
 
     friend class ListAggregat;
@@ -51,6 +51,7 @@ class Aggregate : public storage_elem<15,ListAggregat>
         double *free_surface;           //Free surface of the aggregate (without covering)
 
         double *x,*y,*z; // position of the gravity center
+        double *rx,*ry,*rz; // position of the gravity center
 
         int Nc;     //Number of contacts
         int Np;     //Number of spheres

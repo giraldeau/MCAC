@@ -18,7 +18,7 @@ class ListSphere;
 class Aggregate;
 class ListAggregat;
 
-class ListAggregat : public storage_list<15,Aggregate>
+class ListAggregat : public storage_list<18,Aggregate>
 {
     friend class Aggregate;
 
