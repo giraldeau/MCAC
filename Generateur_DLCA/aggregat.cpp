@@ -14,7 +14,7 @@
 const double PI = atan(1.0)*4;
 
 Aggregate::Aggregate(void):
-    storage_elem<16,ListAggregat>(),
+    storage_elem<15,ListAggregat>(),
     physicalmodel(new PhysicalModel),
     myspheres(),
     verlet(nullptr),
@@ -47,7 +47,7 @@ Aggregate::Aggregate(void):
 }
 
 Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
-    storage_elem<16,ListAggregat>(),
+    storage_elem<15,ListAggregat>(),
     physicalmodel(&_physicalmodel),
     myspheres(),
     verlet(nullptr),
@@ -81,7 +81,7 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
 
 
 Aggregate::Aggregate(ListAggregat& _storage, const int _N):
-    storage_elem<16,ListAggregat>(_storage, _N),
+    storage_elem<15,ListAggregat>(_storage, _N),
     physicalmodel(_storage.physicalmodel),
     myspheres(),
     verlet(nullptr),

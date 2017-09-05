@@ -17,7 +17,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class Aggregate : public storage_elem<16,ListAggregat>
+class Aggregate : public storage_elem<15,ListAggregat>
 {
 
     friend class ListAggregat;

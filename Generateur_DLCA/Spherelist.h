@@ -33,7 +33,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class ListSphere : public storage_list<7,Sphere>
+class ListSphere : public storage_list<6,Sphere>
 {
     friend class Sphere;
 

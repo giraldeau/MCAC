@@ -11,7 +11,7 @@
 #define POW3(a) ((a)*(a)*(a))
 
 ListAggregat::ListAggregat(void):
-    storage_list<16,Aggregate>(),
+    storage_list<15,Aggregate>(),
     physicalmodel(new PhysicalModel),
     maxradius(0.),
     indexSortedTimeSteps(),
@@ -28,7 +28,7 @@ ListAggregat::ListAggregat(void):
 
     double m = *list[0]->time_step;
     for (const Aggregate* Agg : list)
-        m =max(*Agg->time_step, m);
+        m =MAX(*Agg->time_step, m);
 
     return m;
 }
@@ -42,7 +42,7 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
     spheres.Init(_physicalmodel, _N);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
-    storage_list<16,Aggregate>::Init(_N,*this);
+    storage_list<15,Aggregate>::Init(_N,*this);
     setpointers();
 }
 
@@ -86,8 +86,6 @@ vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,4>
     if (!physicalmodel->use_verlet)
     {
         vector < int > SearchSpace(indexInStorage);
-        for (int& idx : SearchSpace)
-            idx++;
         return SearchSpace;
     }
     else

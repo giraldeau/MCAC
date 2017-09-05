@@ -262,8 +262,8 @@ void storage_list<N,elem>::merge(storage_list<N,elem>& other)
         for (const auto& data : other.list)
         {
             list.push_back(new elem(*data));
-            _size += 1;
             indexInStorage.push_back(_size);
+            _size += 1;
         }
     }
     else
