@@ -143,7 +143,7 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 }
 
 
-bool operator==(const ListSphere& A, const ListSphere& B)
+ __attribute__((pure)) bool operator==(const ListSphere& A, const ListSphere& B)
 {
     if (A.physicalmodel != B.physicalmodel)
         return false;
@@ -160,7 +160,7 @@ bool operator==(const ListSphere& A, const ListSphere& B)
     return true;
 }
 
-bool operator!=(const ListSphere& A, const ListSphere& B)
+ __attribute__((pure)) bool operator!=(const ListSphere& A, const ListSphere& B)
 {
     return !(A==B);
 }

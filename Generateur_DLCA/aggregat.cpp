@@ -287,17 +287,17 @@ Aggregate::~Aggregate(void) noexcept
     }
 }
 
-double Aggregate::GetLpm() const noexcept
+ __attribute__((pure)) double Aggregate::GetLpm() const noexcept
 {
     return *lpm;
 }
 
-double Aggregate::GetVolAgregat() const noexcept
+ __attribute__((pure)) double Aggregate::GetVolAgregat() const noexcept
 {
     return *volAgregat;
 }
 
-double Aggregate::GetVolAgregatWithoutCov() const noexcept
+ __attribute__((pure)) double Aggregate::GetVolAgregatWithoutCov() const noexcept
 {
     return *volAgregat_without_cov;
 }
@@ -430,16 +430,19 @@ void Aggregate::Volume(void)
     *volAgregat = *surfAgregat = 0.0; // Volume and surface of Agg Id
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
-    volumes.assign(Np, 0.);
-    surfaces.assign(Np, 0.);
+    volumes.resize(Np);
+    surfaces.resize(Np);
 
     //$ For the Spheres i in Agg Id
     for (int i = 0; i < Np; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        volumes[i] += *myspheres[i].volume; //Calculation of the volume of i
-        surfaces[i] += *myspheres[i].surface;    //Calculation of the surface of i
+        volumes[i] = *myspheres[i].volume; //Calculation of the volume of i
+        surfaces[i] = *myspheres[i].surface;    //Calculation of the surface of i
+    }
 
+    for (int i = 0; i < Np; i++)
+    {
         for (int j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
         {
 

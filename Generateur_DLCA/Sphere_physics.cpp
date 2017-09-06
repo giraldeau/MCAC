@@ -170,12 +170,6 @@ void Sphere::UpdateVolAndSurf(void) noexcept
 /* #############################################################################################################
  * ######################## Surface and volume of the intersection of two sphere ###############################
  * #############################################################################################################*/
-double Sphere::Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const
-{
-    double dist = Distance(c);
-    return Intersection(c,dist,vol1,vol2,surf1,surf2);
-}
-
 double Sphere::Intersection(const Sphere& c, const double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const
 {
 

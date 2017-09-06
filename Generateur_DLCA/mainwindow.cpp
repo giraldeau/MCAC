@@ -196,7 +196,7 @@ void Calcul() //Coeur du programme
         {
             //$ Random Choice of an aggregate
             NumAgg = int(Random()*double(NAgg));
-            deltatemps = 0.0;
+            deltatemps = 1e-9;
             physicalmodel.temps = physicalmodel.temps + 1E-9;
             lpm = physicalmodel.Dpm*1E-9; //On fixe le lpm au Dpm
         }

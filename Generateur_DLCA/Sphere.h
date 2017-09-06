@@ -92,7 +92,6 @@ class Sphere : public storage_elem<6,ListSphere>
         bool Contact(const Sphere&) const noexcept;
 
         double Collision(const Sphere&, const array<double,3> vector) const;
-        double Intersection(const Sphere& c,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
         double Intersection(const Sphere& c, const double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
 
     /* Storage specific */

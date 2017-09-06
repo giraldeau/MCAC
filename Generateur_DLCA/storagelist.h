@@ -33,7 +33,6 @@ public:
 
     /** Default constructor in local storage */
     storage_list(void);
-    //storage_list(const int size);
 
     /** Constructor with external storage */
     storage_list(storage_list& parent,vector<int> index);
@@ -205,7 +204,7 @@ template <int N,class elem>
 storage_list<N,elem>& storage_list<N,elem>::operator= (const storage_list<N,elem>& other)
 {
     storage_list<N,elem> tmp(other);         // re-use copy-constructor
-    *this = std::move(tmp);                  // re-use move-assignment
+    *this = move(tmp);                  // re-use move-assignment
     return *this;
 }
 
@@ -232,10 +231,8 @@ void swap(storage_list<N,elem>& first, storage_list<N,elem>& second)
 {
     using std::swap;
     swap(first.list, second.list);
-    swap(first.index, second.index);
     swap(first.Storage, second.Storage);
     swap(first.external_storage, second.external_storage);
-    swap(first._size, second._size);
 }
 
 template <int N,class elem>
