@@ -130,12 +130,12 @@ void Sphere::Aff(const double coef) const
 
 void Sphere::setpointers(void)
 {
-    x = &(*this)[0];
-    y = &(*this)[1];
-    z = &(*this)[2];
-    r = &(*this)[3];
-    volume = &(*this)[4];
-    surface =&(*this)[5];
+    x = &(*Storage)[0][indexInStorage];
+    y = &(*Storage)[1][indexInStorage];
+    z = &(*Storage)[2][indexInStorage];
+    r = &(*Storage)[3][indexInStorage];
+    volume = &(*Storage)[4][indexInStorage];
+    surface = &(*Storage)[5][indexInStorage];
 }
 
 

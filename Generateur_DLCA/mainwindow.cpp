@@ -190,7 +190,7 @@ void Calcul() //Coeur du programme
             {
                 Agg->Update();
             }
-            lpm = Aggregates[NumAgg][4];
+            lpm = Aggregates[NumAgg].GetLpm();
         }
         else
         {
@@ -279,7 +279,7 @@ void Calcul() //Coeur du programme
         const array<double, 3> pos = Aggregates[i].GetPosition();
         for (j = 0; j < 3; j++)
             printf("%e\t", pos[j]*1E9);
-        printf("\t%e\t%e\n",Aggregates[i][7]*1E25,Aggregates[i][9]*1E25);
+        printf("\t%e\t%e\n",Aggregates[i].GetVolAgregat()*1E25,Aggregates[i].GetVolAgregatWithoutCov()*1E25);
     }
     printf("\n\n");
 
@@ -469,6 +469,7 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 
 void SauveASCII(int value, int id)
 {
+/*
     int i,j;
     char NomComplet[500];
     FILE *f;
@@ -533,6 +534,7 @@ void SauveASCII(int value, int id)
         fprintf(f, "%e\t%e\n", Aggregates[id][0]/(physicalmodel.Dpm*1E-9), Aggregates[id][1]);
         fclose(f);
     }
+    */
 }
 
 

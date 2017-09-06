@@ -113,7 +113,6 @@ Aggregate::Aggregate(ListAggregat& _storage, const int _N):
     Init();
 }
 
-
 void Aggregate::Init(void)
 {
     if(!(external_storage==nullptr))
@@ -288,7 +287,22 @@ Aggregate::~Aggregate(void) noexcept
     }
 }
 
+double Aggregate::GetLpm() const noexcept
+{
+    return *lpm;
+}
 
+double Aggregate::GetVolAgregat() const noexcept
+{
+    return *volAgregat;
+}
+
+double Aggregate::GetVolAgregatWithoutCov() const noexcept
+{
+    return *volAgregat_without_cov;
+}
+
+/*
 double& Aggregate::operator[](const int var)
 {
     switch (var)
@@ -369,7 +383,7 @@ double& Aggregate::operator[](const int var)
     }
     exit(5);
 }
-
+*/
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void Aggregate::Update()

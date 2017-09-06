@@ -20,8 +20,6 @@ protected:
 
 public:
 
-    double& operator[](const int);
-
     /** Default constructor in local storage */
     storage_elem(void);
 
@@ -44,14 +42,6 @@ public:
     storage_elem& operator= (storage_elem&& other) noexcept;
 
 };
-
-
-
-template <int N,class mystorage>
-__attribute__((pure)) double& storage_elem<N,mystorage>::operator[](const int i)
-{
-   return (*Storage)[i][indexInStorage];
-}
 
 
 /** Default constructor in local storage */

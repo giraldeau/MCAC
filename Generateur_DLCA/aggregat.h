@@ -62,13 +62,19 @@ class Aggregate : public storage_elem<15,ListAggregat>
         void Init(void);
         void Init(PhysicalModel& ,Verlet&,const array<double, 3> position ,const int _label, ListSphere&,double r);
 
+
+        double GetLpm() const noexcept;
+        double GetVolAgregat() const noexcept;
+        double GetVolAgregatWithoutCov() const noexcept;
+
+        const array<double, 3> GetPosition(void) const noexcept;
+        array<int, 3> GetVerletIndex() noexcept;
+
+
         void SetPosition(const array<double, 3> position) noexcept;
         void SetPosition(const double x,const double y,const double z) noexcept;
         void Translate(const array<double, 3> vector) noexcept;
 
-        const array<double, 3> GetPosition(void) const noexcept;
-
-        array<int, 3> GetVerletIndex() noexcept;
 
         void Update();
         void Volume();
@@ -81,8 +87,6 @@ class Aggregate : public storage_elem<15,ListAggregat>
         void DecreaseLabel(void) noexcept;
 
         void UpdateDistances(void) noexcept;
-
-        double& operator[](const int var);
 
         /* Storage specific */
     private:
@@ -119,6 +123,5 @@ class Aggregate : public storage_elem<15,ListAggregat>
 
         /** Move assignment operator */
         Aggregate& operator= (Aggregate&& other) noexcept;
-
 };
 #endif // AGGREGAT_H
