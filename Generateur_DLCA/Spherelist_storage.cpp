@@ -151,12 +151,7 @@ bool operator==(const ListSphere& A, const ListSphere& B)
         return false;
     if (A.ptr_fin != B.ptr_fin)
         return false;
-    if (A._size != B._size)
-        return false;
     if (A.list != B.list)
-        return false;
-
-    if (A.indexInStorage != B.indexInStorage)
         return false;
     if (A.Storage != B.Storage)
         return false;

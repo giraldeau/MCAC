@@ -515,12 +515,6 @@ void Aggregate::RayonGiration(void)
 }
 //###############################################################################################################################
 
-Sphere Aggregate::GetInclusiveSphere(void) const
-{
-    Sphere InclusiveSphere1(*physicalmodel, *x, *y, *z, *rmax);
-    return InclusiveSphere1;
-}
-
 
 array<int, 3> Aggregate::GetVerletIndex() noexcept
 {
@@ -532,24 +526,6 @@ array<int, 3> Aggregate::GetVerletIndex() noexcept
     index[2]=int(floor((*z)*step));
 
     return index;
-}
-
-
-void Aggregate::AfficheVerlet() const
-{
-    _List_iterator<int> i;
-
-    if (physicalmodel->use_verlet && InVerlet)
-    {
-        list<int> cell = (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]];
-        cout<<"Coordinates: "<< IndexVerlet[0] << " " << IndexVerlet[1] << " " << IndexVerlet[2] << endl;
-        cout<<"Taille: "<<cell.size()<< endl;
-        cout << " friends :"<< endl;
-        for(const int member : cell)
-        {
-            cout << " " << member <<endl;
-        }
-    }
 }
 
 

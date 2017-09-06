@@ -67,7 +67,6 @@ class Aggregate : public storage_elem<15,ListAggregat>
         void Translate(const array<double, 3> vector) noexcept;
 
         const array<double, 3> GetPosition(void) const noexcept;
-        Sphere GetInclusiveSphere(void) const;
 
         array<int, 3> GetVerletIndex() noexcept;
 
@@ -82,9 +81,6 @@ class Aggregate : public storage_elem<15,ListAggregat>
         void DecreaseLabel(void) noexcept;
 
         void UpdateDistances(void) noexcept;
-
-
-        void AfficheVerlet() const;
 
         double& operator[](const int var);
 

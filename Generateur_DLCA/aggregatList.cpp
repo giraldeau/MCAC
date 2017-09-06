@@ -85,7 +85,8 @@ vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,3>
 {
     if (!physicalmodel->use_verlet)
     {
-        vector < int > SearchSpace(indexInStorage);
+        vector < int > SearchSpace(size());
+        iota(SearchSpace.begin(), SearchSpace.end(), 0);
         return SearchSpace;
     }
     else
@@ -181,7 +182,7 @@ int ListAggregat::Merge(const int first, const int second)
 
     if (list[removed]->InVerlet)
         verlet.Remove(removed,list[removed]->GetVerletIndex());
-    for (int i=removed+1;i<_size;i++)
+    for (int i=removed+1;i<size();i++)
     {
         if (list[i]->InVerlet)
         {
@@ -215,19 +216,19 @@ vector<int> sort_indexes(const vector<T> &v) {
 
 void ListAggregat::SortTimeSteps(double factor)
 {
-    vector<double> TpT(_size);
+    vector<double> TpT(size());
 
     #pragma omp for simd
-    for (int i=0; i < _size; i++)
+    for (int i=0; i < size(); i++)
         TpT[i] = factor/(*list[i]->time_step);
 
     indexSortedTimeSteps = sort_indexes(TpT);
 
-    CumulativeTimeSteps.resize(_size);
+    CumulativeTimeSteps.resize(size());
 
     //$ Accumulate the timesteps
     CumulativeTimeSteps[0] = TpT[indexSortedTimeSteps[0]];
-    for (int i=1; i < _size; i++)
+    for (int i=1; i < size(); i++)
     {
         CumulativeTimeSteps[i] = CumulativeTimeSteps[i-1]+TpT[indexSortedTimeSteps[i]];
     }
@@ -236,10 +237,10 @@ void ListAggregat::SortTimeSteps(double factor)
 int ListAggregat::RandomPick(double &deltatemps, const double random)
 {
     //$ Pick a random sphere
-    double valAlea=random*CumulativeTimeSteps[_size-1];
+    double valAlea=random*CumulativeTimeSteps[size()-1];
     long int n = lower_bound(CumulativeTimeSteps.begin(), CumulativeTimeSteps.end(), valAlea) - CumulativeTimeSteps.begin();
 
-    deltatemps = CumulativeTimeSteps[_size-1];
+    deltatemps = CumulativeTimeSteps[size()-1];
 
     return indexSortedTimeSteps[n];
 }
