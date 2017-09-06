@@ -78,6 +78,9 @@ class ListSphere : public storage_list<6,Sphere>
         /** Move assignment operator */
         ListSphere& operator= (ListSphere&& other) noexcept;
 
+        friend bool operator==(const ListSphere&, const ListSphere&);
+        friend bool operator!=(const ListSphere&, const ListSphere&);
+
 };
 
 #endif // SPHERELIST_H

@@ -183,40 +183,9 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     myspheres = ListSphere(spheres,{_label});
     Np = myspheres.size();
 
-    *rmax = Dp/2;                 //Rayon de la sphère d'enveloppe de l'agrégat réunifié
-    *dm = Dp;                   //Diamètre de mobilité
-    *volAgregat = PI*POW3(Dp)/6;
-    *surfAgregat = PI*POW2(Dp);
-
-    Nc = 0;                  //Nombre de coordination Nc
-    *cov =0;
-    *rg = sqrt(3.0/5.0)*Dp/2;
-
-    *volAgregat_without_cov = PI*POW3(Dp)/6;      //Volume de l'agrégat réunifié sans recouvrement (Avant c'était 0; : Taux de recouvrement volumique)
-    *free_surface = PI*POW2(Dp);       //Surface de l'agrégat réunifié sans recouvrement (Avant c'était surface/(masse/Rho); : Surface/volume de l'agrégat réunifié)
-
-    if (physicalmodel->ActiveModulephysique==1)
-    {
-        double Diff = physicalmodel->diffusivity(Dp);
-        double masse = physicalmodel->Rho*PI*POW3(Dp)/6;
-        double Vit =  physicalmodel->velocity(masse);
-        double tmp = 8*Diff/PI/Vit;
-        *lpm = tmp;
-        *time_step = tmp/Vit;              //Durée du déplacement
-    }
-    else
-    {
-        *lpm = physicalmodel->Dpm*1E-9;    //Libre parcours moyen
-        *time_step = 1e-6;              //Durée du déplacement
-    }
-
-    if(!(external_storage==nullptr))
-    {
-        if (*rmax > external_storage->maxradius)
-            external_storage->maxradius = *rmax;
-    }
-
     UpdateDistances();
+    *dm = Dp;                   //Diamètre de mobilité
+    Update();
 
 }
 

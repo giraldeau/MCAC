@@ -141,3 +141,31 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
     setpointers();
     return *this;
 }
+
+
+bool operator==(const ListSphere& A, const ListSphere& B)
+{
+    if (A.physicalmodel != B.physicalmodel)
+        return false;
+    if (A.ptr_deb != B.ptr_deb)
+        return false;
+    if (A.ptr_fin != B.ptr_fin)
+        return false;
+    if (A._size != B._size)
+        return false;
+    if (A.list != B.list)
+        return false;
+
+    if (A.indexInStorage != B.indexInStorage)
+        return false;
+    if (A.Storage != B.Storage)
+        return false;
+    if (A.external_storage != B.external_storage)
+        return false;
+    return true;
+}
+
+bool operator!=(const ListSphere& A, const ListSphere& B)
+{
+    return !(A==B);
+}

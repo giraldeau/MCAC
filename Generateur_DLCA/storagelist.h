@@ -173,7 +173,7 @@ storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, vector<int> _in
 template <int N,class elem>
 storage_list<N,elem>::storage_list(const storage_list<N,elem>& other):
     _size(other._size),
-    list(other.list),
+    list(),
     indexInStorage(other.indexInStorage),
     Storage(nullptr),
     external_storage(other.external_storage)
@@ -182,10 +182,20 @@ storage_list<N,elem>::storage_list(const storage_list<N,elem>& other):
     {
         Storage = new array< vector<double>, N>;
         for (int i=0;i<N;i++)
-            Storage[i]=other.Storage[i];
+            (*Storage)[i].assign((*other.Storage)[i].begin(),(*other.Storage)[i].end());
+        list.reserve(_size);
+        const int listSize = _size;
+        for (_size = 0; _size < listSize; _size++)
+        {
+            list.push_back(new elem(*other.list[_size]));
+        }
     }
     else
+    {
         Storage = other.Storage;
+        list=other.list;
+    }
+
 }
 
 /** Move constructor */
