@@ -52,6 +52,11 @@ void Sphere::SetPosition(const double newx, const double newy, const double newz
 /* #############################################################################################################
  * ################################# Distance between a sphere and a point #####################################
  * #############################################################################################################*/
+__attribute((pure)) double Sphere::RelativeDistance(const Sphere& c) const noexcept
+{
+    return RelativeDistance(*c.rx,*c.ry,*c.rz);
+}
+
 __attribute((pure)) double Sphere::Distance(const Sphere& c) const noexcept
 {
     return Distance(*c.x,*c.y,*c.z);
@@ -77,6 +82,20 @@ __attribute__((pure)) double Sphere::Distance2(const double otherx, const double
    double dy(periodicDistance((*y-othery),physicalmodel->L));
    double dz(periodicDistance((*z-otherz),physicalmodel->L));
    return POW2(dx)+POW2(dy)+POW2(dz);
+}
+
+__attribute((pure)) double Sphere::RelativeDistance2(const Sphere& c) const noexcept
+{
+    return Distance2(*c.rx,*c.ry,*c.rz);
+}
+__attribute__((pure)) double Sphere::RelativeDistance2(const double otherx, const double othery, const double otherz) const noexcept
+{
+   return POW2(*rx-otherx)+POW2(*ry-othery)+POW2(*rz-otherz);
+}
+
+__attribute__((pure)) double Sphere::RelativeDistance(const double otherx, const double othery, const double otherz) const noexcept
+{
+   return sqrt(RelativeDistance2(otherx,othery,otherz));
 }
 
  __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz) const noexcept

@@ -14,7 +14,7 @@ using namespace std;
 const double PI = atan(1.0)*4;
 
 Aggregate::Aggregate(void):
-    storage_elem<10,ListAggregat>(),
+    storage_elem<13,ListAggregat>(),
     physicalmodel(new PhysicalModel),
     myspheres(),
     verlet(nullptr),
@@ -32,6 +32,9 @@ Aggregate::Aggregate(void):
     x(nullptr),
     y(nullptr),
     z(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -39,7 +42,7 @@ Aggregate::Aggregate(void):
 }
 
 Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
-    storage_elem<10,ListAggregat>(),
+    storage_elem<13,ListAggregat>(),
     physicalmodel(&_physicalmodel),
     myspheres(),
     verlet(nullptr),
@@ -57,6 +60,9 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     x(nullptr),
     y(nullptr),
     z(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -65,7 +71,7 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
 
 
 Aggregate::Aggregate(ListAggregat& _storage, const int _N):
-    storage_elem<10,ListAggregat>(_storage, _N),
+    storage_elem<13,ListAggregat>(_storage, _N),
     physicalmodel(_storage.physicalmodel),
     myspheres(),
     verlet(nullptr),
@@ -83,6 +89,9 @@ Aggregate::Aggregate(ListAggregat& _storage, const int _N):
     x(nullptr),
     y(nullptr),
     z(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -102,6 +111,11 @@ void Aggregate::Init(void)
     *rmax=0.;                   //Radius of the sphere containing Agg
     *volAgregat=0.;             //Etimation of the Aggregate's volume
     *surfAgregat=0.;            //Estimation of the sufrace of the aggregate
+
+    *rx = 0;
+    *ry = 0;
+    *rz = 0;
+
     IndexVerlet = {{0,0,0}};
 
     SetPosition(0.,0.,0.);
@@ -121,6 +135,9 @@ void Aggregate::setpointers(void)
     x=&(*Storage)[7][indexInStorage];
     y=&(*Storage)[8][indexInStorage];
     z=&(*Storage)[9][indexInStorage];
+    rx=&(*Storage)[10][indexInStorage];
+    ry=&(*Storage)[11][indexInStorage];
+    rz=&(*Storage)[12][indexInStorage];
 }
 
 void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const int _label, ListSphere& spheres,const double Dp)
@@ -357,9 +374,9 @@ void Aggregate::MassCenter(void)
     {
         //$ Calculation of the total volume and surface of the aggregate
 
-        double dx = periodicDistance(*myspheres[i].x-*x,physicalmodel->L);
-        double dy = periodicDistance(*myspheres[i].y-*y,physicalmodel->L);
-        double dz = periodicDistance(*myspheres[i].z-*z,physicalmodel->L);
+        double dx = *myspheres[i].rx-*rx;
+        double dy = *myspheres[i].ry-*ry;
+        double dz = *myspheres[i].rz-*rz;
 
         //$ Calculation of the position of the center of mass
         newpos[0] += dx * volumes[i];
@@ -371,13 +388,26 @@ void Aggregate::MassCenter(void)
     for (int k = 0; k < 3; k++)
         newpos[k] = newpos[k]/(*volAgregat);
 
+    *rx = newpos[1]+*rx;
+    *ry = newpos[2]+*ry;
+    *rz = newpos[3]+*rz;
+
     //cout << Position()<< " "<< newpos <<endl;
-    SetPosition(newpos[0]+*x,newpos[1]+*y,newpos[2]+*z);
+    SetPosition(*myspheres[0].x+*rx,
+                *myspheres[0].y+*ry,
+                *myspheres[0].z+*rz);
 
     const int loopsize(Np);
+    const double _rx(*rx);
+    const double _ry(*ry);
+    const double _rz(*rz);
     for (int i = 0; i < loopsize; i++)
-        distances[i][0]=myspheres[i].Distance(*x,*y,*z);
-
+    {
+        double dx = *myspheres[i].rx - _rx;
+        double dy = *myspheres[i].ry - _ry;
+        double dz = *myspheres[i].rz - _rz;
+        distances[i][0]=sqrt(POW2(dx)+POW2(dy)+POW2(dz));
+    }
 }
 
 void Aggregate::CalcRadius(void)
@@ -436,13 +466,19 @@ Sphere::Sphere(const Aggregate& Agg) : Sphere()
 
 void Aggregate::Merge(Aggregate& other)
 {
+    double dx = periodicDistance(*other.myspheres[0].x-*myspheres[0].x,physicalmodel->L);
+    double dy = periodicDistance(*other.myspheres[0].y-*myspheres[0].y,physicalmodel->L);
+    double dz = periodicDistance(*other.myspheres[0].z-*myspheres[0].z,physicalmodel->L);
+
     //$ Update of the labels of the spheres that were in the deleted aggregate
     for (Sphere* othersphere : other.myspheres)
     {
         othersphere->SetLabel(indexInStorage);
+        othersphere->RelativeTranslate(dx,dy,dz);
     }
     myspheres.merge(other.myspheres);
     Np = myspheres.size();
+
     UpdateDistances();
 }
 
@@ -466,7 +502,7 @@ void Aggregate::UpdateDistances(void) noexcept
         distances[i][i]=0;
         for (int j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
         {
-            distances[i][j]=myspheres[i].Distance(myspheres[j]);
+            distances[i][j] = myspheres[i].RelativeDistance(myspheres[j]);
             distances[j][i] = distances[i][j];
         }
     }

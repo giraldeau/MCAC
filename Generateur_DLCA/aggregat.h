@@ -15,7 +15,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class Aggregate : public storage_elem<10,ListAggregat>
+class Aggregate : public storage_elem<13,ListAggregat>
 {
 
     friend class ListAggregat;
@@ -42,6 +42,7 @@ class Aggregate : public storage_elem<10,ListAggregat>
         double *surfAgregat;            //Estimation of the sufrace of the aggregate
 
         double *x,*y,*z; // position of the gravity center
+        double *rx,*ry,*rz; // position of the gravity center
 
         int Np;     //Number of spheres
 

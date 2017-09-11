@@ -12,7 +12,7 @@
 using namespace std;
 
 ListAggregat::ListAggregat(void):
-    storage_list<10,Aggregate>(),
+    storage_list<13,Aggregate>(),
     physicalmodel(new PhysicalModel),
     maxradius(0.),
     indexSortedTimeSteps(),
@@ -48,7 +48,7 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
     spheres.Init(_physicalmodel, _N);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
-    storage_list<10,Aggregate>::Init(_N,*this);
+    storage_list<13,Aggregate>::Init(_N,*this);
     setpointers();
 }
 
