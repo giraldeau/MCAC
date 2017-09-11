@@ -222,6 +222,7 @@ void Calcul() //Coeur du programme
             printf("%e\t", pos[j]*1E9);
         printf("\t%e\n",Aggregates[i].GetVolAgregat()*1E25);
     }
+    /*
     cout << "Spheres" << endl;
     for (const Sphere* mySphere : Aggregates.spheres)
     {
@@ -231,7 +232,7 @@ void Calcul() //Coeur du programme
         printf("\t%e\n",mySphere->Radius());
     }
     printf("\n\n");
-
+*/
     Fermeture();
     print(CheminSauve);
 
