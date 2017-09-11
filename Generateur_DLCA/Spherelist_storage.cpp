@@ -30,12 +30,18 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <sstream>
 #include <utility>
 
+using namespace std;
+
 void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+        delete Writer;
+    }
 
     physicalmodel=&_physicalmodel;
+    Writer = new ThreadedIO(_physicalmodel, _N);
     storage_list<6,Sphere>::Init(_N,*this);
     setpointers();
 }
@@ -71,14 +77,16 @@ ListSphere::ListSphere(void):
     storage_list<6,Sphere>(),
     physicalmodel(new PhysicalModel),
     ptr_deb(nullptr),
-    ptr_fin(nullptr)
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(*physicalmodel,0))
 {}
 
 ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
     storage_list<6,Sphere>(),
     physicalmodel(&_physicalmodel),
     ptr_deb(nullptr),
-    ptr_fin(nullptr)
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(_physicalmodel,_N))
 {
     Init(_physicalmodel,_N);
 }
@@ -88,7 +96,8 @@ ListSphere::ListSphere(ListSphere& parent,vector<int> _index):
     storage_list<6,Sphere>(parent, _index),
     physicalmodel(parent.physicalmodel),
     ptr_deb(nullptr),
-    ptr_fin(nullptr)
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(*parent.physicalmodel,size()))
 {
     setpointers();
 }
@@ -98,7 +107,8 @@ ListSphere::ListSphere(const ListSphere& other):
     storage_list<6,Sphere>(other),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
-    ptr_fin(nullptr)
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(*other.physicalmodel,size()))
 {
     setpointers();
 }
@@ -108,7 +118,8 @@ ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enab
     storage_list<6,Sphere>(other),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
-    ptr_fin(nullptr)
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(*other.physicalmodel,size()))
 {
     setpointers();
 }
@@ -117,7 +128,10 @@ ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enab
 ListSphere::~ListSphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+        delete Writer;
+    }
 }
 
 /** Copy assignment operator */
@@ -133,11 +147,18 @@ ListSphere& ListSphere::operator= (const ListSphere& other)
 ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+        delete Writer;
+    }
 
     std::swap(static_cast<storage_list<6,Sphere>&>(*this),static_cast<storage_list<6,Sphere>&>(other));
     physicalmodel = other.physicalmodel;
+    Writer=other.Writer;
+
     other.physicalmodel = new PhysicalModel;
+    other.Writer = new ThreadedIO(*other.physicalmodel , other.size());
+
     setpointers();
     return *this;
 }

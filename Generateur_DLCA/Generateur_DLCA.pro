@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-COMPILATOR = "INTEL"
+COMPILATOR = "GNU"
 
 QT=""
 #QT       += core gui
@@ -24,6 +24,7 @@ SOURCES +=\
         verlet.h \
         storage.h \
         storagelist.h \
+        IO.h \
         verlet.cpp \
         physical_model.cpp \
         Sphere_storage.cpp \
@@ -33,7 +34,8 @@ SOURCES +=\
         aggregat.cpp \
         aggregatList.cpp \
         mainwindow.cpp\
-        main.cpp
+        main.cpp \
+        IO.cpp
 
 #DEFINES += WITH_QT
 #SOURCES +=\
@@ -64,6 +66,11 @@ SOURCES +=\
 #RESOURCES += \
 #    mainwindow.qrc
 
+#HDF5
+INCLUDEPATH += /usr/include/hdf5/serial /opt/local/xdmf/include /usr/include/libxml2/
+LIBS += /opt/local/xdmf/lib/libXdmf.a /opt/local/xdmf/lib/libXdmfCore.a -lxml2 -ltiff
+LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5
+
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
 
@@ -76,8 +83,8 @@ RCC_DIR = $$DESTDIR/.qrc
 UI_DIR = $$DESTDIR/.ui
 
 equals(COMPILATOR, "INTEL"){
-    QMAKE_CXXFLAGS += -g -traceback -xHost -qopenmp -static -std=c++11
-    QMAKE_LFLAGS   += -g -traceback -xHost -qopenmp -std=c++11
+    QMAKE_CXXFLAGS += -g -traceback -xHost -qopenmp -static -std=c++14
+    QMAKE_LFLAGS   += -g -traceback -xHost -qopenmp -std=c++14
 
     ### WARNINGS ###
     QMAKE_CXXFLAGS +=  -Wall -w3 -diag-enable=3 -Wremarks -Wtrigraphs -Wcomment -Wdeprecated -Wno-effc++ -Wextra-tokens -Wformat -Wformat-security -Wic-pointer -Winline -Wmain
@@ -96,8 +103,8 @@ equals(COMPILATOR, "INTEL"){
 
 equals(COMPILATOR, "GNU"){
 
-    QMAKE_CXXFLAGS += -g -march=native -fopenmp -static  -std=c++11
-    QMAKE_LFLAGS   += -g  -fopenmp  -std=c++11
+    QMAKE_CXXFLAGS += -g -march=native -fopenmp  -std=c++14
+    QMAKE_LFLAGS   += -g  -fopenmp  -std=c++14
 
     ### WARNINGS ###
     QMAKE_CXXFLAGS += -Wpedantic -Wall -Wextra -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wstrict-overflow=5

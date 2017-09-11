@@ -4,20 +4,22 @@
 #include <iomanip>
 #include <algorithm>
 
-
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define POW2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
+using namespace std;
+
 ListAggregat::ListAggregat(void):
-    storage_list<15,Aggregate>(),
+    storage_list<10,Aggregate>(),
     physicalmodel(new PhysicalModel),
     maxradius(0.),
     indexSortedTimeSteps(),
     CumulativeTimeSteps(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
+    Writer(new ThreadedIO(*physicalmodel, 0)),
     spheres(),
     verlet()
 {
@@ -36,13 +38,17 @@ ListAggregat::ListAggregat(void):
 void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+        delete Writer;
+    }
 
     physicalmodel=&_physicalmodel;
+    Writer = new ThreadedIO(_physicalmodel, _N),
     spheres.Init(_physicalmodel, _N);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
-    storage_list<15,Aggregate>::Init(_N,*this);
+    storage_list<10,Aggregate>::Init(_N,*this);
     setpointers();
 }
 
@@ -162,7 +168,10 @@ void ListAggregat::setpointers()
 ListAggregat::~ListAggregat(void) noexcept
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+        delete Writer;
+    }
 
     //#pragma omp for simd
     for (Aggregate* Agg : list)

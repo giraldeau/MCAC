@@ -7,8 +7,6 @@
 #include <vector>
 #include <array>
 
-using namespace std;
-
 #ifdef WITH_GUI
 
 #include <QMainWindow>

@@ -4,8 +4,6 @@
 #include <array>
 #include <vector>
 
-using namespace std;
-
 template <int N, class elem>
 class storage_list
 {
@@ -13,9 +11,9 @@ class storage_list
     friend class storage_elem;
 
 protected:
-    vector < elem* > list;
+    std::vector < elem* > list;
 
-    array< vector<double>, N>* Storage;
+    std::array< std::vector<double>, N>* Storage;
     const storage_list* external_storage;
 
 public:
@@ -35,7 +33,7 @@ public:
     storage_list(void);
 
     /** Constructor with external storage */
-    storage_list(storage_list& parent,vector<int> index);
+    storage_list(storage_list& parent,std::vector<int> index);
 
     /** Copy constructor */
     storage_list(const storage_list& other);
@@ -52,12 +50,12 @@ public:
     /** Move assignment operator */
     storage_list& operator= (storage_list&& other) noexcept;
 
-    friend void swap<>(storage_list& first, storage_list& second);
+    friend void std::swap<>(storage_list& first, storage_list& second);
 
-    typename vector<elem*>::iterator begin(void);
-    typename vector<elem*>::iterator end(void);
-    typename vector<elem*>::const_iterator begin(void) const;
-    typename vector<elem*>::const_iterator end(void) const;
+    typename std::vector<elem*>::iterator begin(void);
+    typename std::vector<elem*>::iterator end(void);
+    typename std::vector<elem*>::const_iterator begin(void) const;
+    typename std::vector<elem*>::const_iterator end(void) const;
 
 private:
     void Destroy();
@@ -72,14 +70,14 @@ void storage_list<N,elem>::Init(const int _N, mylist& owner)
 {
     Destroy();
 
-    Storage = new array< vector<double>, N>;
+    Storage = new std::array< std::vector<double>, N>;
     external_storage=nullptr;
 
     //preallocation
     list.reserve(_N);
 
     //initialize data
-    for (vector<double>& data : (*Storage))
+    for (std::vector<double>& data : (*Storage))
         data.assign(_N, 0.);
 
     const int listSize = _N;
@@ -93,7 +91,7 @@ void storage_list<N,elem>::Init(const int _N, mylist& owner)
 template <int N,class elem>
 int storage_list<N,elem>::size(void) const noexcept
 {
-    return list.size();
+    return int(list.size());
 }
 
 template <int N,class elem>
@@ -139,7 +137,7 @@ storage_list<N,elem>::storage_list(void):
 
 /** Constructor with external storage */
 template <int N,class elem>
-storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, vector<int> _index):
+storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<int> _index):
     list(),
     Storage(parent.Storage),
     external_storage(&parent)
@@ -163,7 +161,7 @@ storage_list<N,elem>::storage_list(const storage_list<N,elem>& other):
 {
     if(external_storage==nullptr)
     {
-        Storage = new array< vector<double>, N>;
+        Storage = new std::array< std::vector<double>, N>;
         for (int i=0;i<N;i++)
             (*Storage)[i].assign((*other.Storage)[i].begin(),(*other.Storage)[i].end());
         list.reserve(other.size());
@@ -269,25 +267,25 @@ void storage_list<N,elem>::remove(elem& ToBeRemoved)
 
 
 template <int N,class elem>
-typename vector<elem*>::iterator storage_list<N,elem>::begin(void)
+typename std::vector<elem*>::iterator storage_list<N,elem>::begin(void)
 {
     return list.begin();
 }
 
 template <int N,class elem>
-typename vector<elem*>::iterator storage_list<N,elem>::end(void)
+typename std::vector<elem*>::iterator storage_list<N,elem>::end(void)
 {
     return list.end();
 }
 
 template <int N,class elem>
-typename vector<elem*>::const_iterator storage_list<N,elem>::begin(void) const
+typename std::vector<elem*>::const_iterator storage_list<N,elem>::begin(void) const
 {
     return list.begin();
 }
 
 template <int N,class elem>
-typename vector<elem*>::const_iterator storage_list<N,elem>::end(void) const
+typename std::vector<elem*>::const_iterator storage_list<N,elem>::end(void) const
 {
     return list.end();
 }

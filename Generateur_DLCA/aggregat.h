@@ -9,15 +9,13 @@
 #include "storagelist.h"
 #include <list>
 
-using namespace std;
-
 class Sphere;
 class ListSphere;
 class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class Aggregate : public storage_elem<15,ListAggregat>
+class Aggregate : public storage_elem<10,ListAggregat>
 {
 
     friend class ListAggregat;
@@ -29,13 +27,11 @@ class Aggregate : public storage_elem<15,ListAggregat>
         ListSphere myspheres;
 
         Verlet* verlet;
-        array<int, 3> IndexVerlet;
+        std::array<int, 3> IndexVerlet;
 
-        vector<vector <double > > distances;
-        vector<double> volumes;
-        vector<double> surfaces;
-
-        double nctmp,nptmp;
+        std::vector<std::vector <double > > distances;
+        std::vector<double> volumes;
+        std::vector<double> surfaces;
 
         double *rg;  //Gyration Radius
         double *dm;  //Mobility Diameter
@@ -44,15 +40,9 @@ class Aggregate : public storage_elem<15,ListAggregat>
         double *rmax;                   //Radius of the sphere containing Agg
         double *volAgregat;             //Etimation of the Aggregate's volume
         double *surfAgregat;            //Estimation of the sufrace of the aggregate
-        double *Tv;                     //Taux de recouvrement volumique
-        double *volAgregat_without_cov; //Volume of the aggregate without considering the spheres covering each other
-        double *cov;                    //Covering Parameter
-        double *ratio_surf_vol;         //Ratio surface / volume
-        double *free_surface;           //Free surface of the aggregate (without covering)
 
         double *x,*y,*z; // position of the gravity center
 
-        int Nc;     //Number of contacts
         int Np;     //Number of spheres
 
         bool InVerlet;
@@ -60,20 +50,18 @@ class Aggregate : public storage_elem<15,ListAggregat>
     public:
 
         void Init(void);
-        void Init(PhysicalModel& ,Verlet&,const array<double, 3> position ,const int _label, ListSphere&,double r);
-
+        void Init(PhysicalModel& ,Verlet&,const std::array<double, 3> position ,const int _label, ListSphere&,double r);
 
         double GetLpm() const noexcept;
         double GetVolAgregat() const noexcept;
-        double GetVolAgregatWithoutCov() const noexcept;
 
-        const array<double, 3> GetPosition(void) const noexcept;
-        array<int, 3> GetVerletIndex() noexcept;
+        const std::array<double, 3> GetPosition(void) const noexcept;
+        std:: array<int, 3> GetVerletIndex() noexcept;
 
 
-        void SetPosition(const array<double, 3> position) noexcept;
+        void SetPosition(const std::array<double, 3> position) noexcept;
         void SetPosition(const double x,const double y,const double z) noexcept;
-        void Translate(const array<double, 3> vector) noexcept;
+        void Translate(const std::array<double, 3> vector) noexcept;
 
 
         void Update();
@@ -82,7 +70,7 @@ class Aggregate : public storage_elem<15,ListAggregat>
         void CalcRadius();
         void RayonGiration(void);
         bool Contact(Aggregate&) const noexcept;
-        double Distance(Aggregate&, array<double,3> Vectdir) const;
+        double Distance(Aggregate&, std::array<double,3> Vectdir) const;
         void Merge(Aggregate&);
         void DecreaseLabel(void) noexcept;
 
@@ -99,7 +87,7 @@ class Aggregate : public storage_elem<15,ListAggregat>
 
         /** Constructor in local storage with initialization */
         Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Aggregate(PhysicalModel&, const array<double, 3> position, const double r);
+        Aggregate(PhysicalModel&, const std::array<double, 3> position, const double r);
         Aggregate(const Sphere&);
 
 

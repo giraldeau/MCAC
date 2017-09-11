@@ -34,7 +34,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #define POW2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
-
+using namespace std;
 
 
 /* #############################################################################################################

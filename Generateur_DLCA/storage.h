@@ -4,8 +4,6 @@
 #include <array>
 #include <vector>
 
-using namespace std;
-
 template <int N, class mystorage>
 class storage_elem
 {
@@ -14,7 +12,7 @@ class storage_elem
 
 protected:
 
-    array< vector<double>, N>* Storage;
+    std::array< std::vector<double>, N>* Storage;
     mystorage* external_storage;
     int indexInStorage;
 
@@ -47,7 +45,7 @@ public:
 /** Default constructor in local storage */
 template <int N,class mystorage>
 storage_elem<N,mystorage>::storage_elem(void) :
-    Storage(new array< vector<double>, N>),
+    Storage(new std::array< std::vector<double>, N>),
     external_storage(nullptr),
     indexInStorage(0)
 {
@@ -72,7 +70,7 @@ storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other):
     indexInStorage(other.indexInStorage)
 {
     if(external_storage==nullptr)
-        Storage = new array< vector<double>, N>;
+        Storage = new std::array< std::vector<double>, N>;
     else
         Storage = other.Storage;
 }

@@ -5,6 +5,8 @@
 #include "Spherelist.h"
 #include "storagelist.h"
 #include "physical_model.h"
+#include "IO.h"
+
 
 /*
 
@@ -25,8 +27,6 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 */
 
-using namespace std;
-
 class Sphere;
 class ListSphere;
 class Aggregate;
@@ -41,8 +41,12 @@ class ListSphere : public storage_list<6,Sphere>
 
     private:
         PhysicalModel* physicalmodel;
-        vector<double>::iterator ptr_deb;
-        vector<double>::iterator ptr_fin;
+
+        std::vector<double>::iterator ptr_deb;
+        std::vector<double>::iterator ptr_fin;
+
+        ThreadedIO* Writer;
+
     public:
 
         void Init(PhysicalModel& _physicalmodel, const int _size);
@@ -50,6 +54,11 @@ class ListSphere : public storage_list<6,Sphere>
 
         void CroissanceSurface(const double dt);
 
+        void save(void) const;
+        void save(const bool finish) const;
+        std::vector<double> FormatPositionData() const;
+        std::vector<double> FormatRadiusData() const;
+        std::vector<int>    FormatLabelData() const;
 
     /* Storage specific */
     private:
@@ -61,7 +70,7 @@ class ListSphere : public storage_list<6,Sphere>
         ListSphere(PhysicalModel& _physicalmodel, const int _size);
 
         /** Constructor with external storage */
-        ListSphere(ListSphere& parent,vector<int> ListIndex);
+        ListSphere(ListSphere& parent,std::vector<int> ListIndex);
 
         /** Copy constructor */
         ListSphere(const ListSphere& other);
@@ -82,5 +91,7 @@ class ListSphere : public storage_list<6,Sphere>
         friend bool operator!=(const ListSphere&, const ListSphere&);
 
 };
+
+std::string filename(const int, const int);
 
 #endif // SPHERELIST_H

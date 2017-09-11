@@ -1,10 +1,6 @@
 #ifndef PHYSICAL_MODEL_H
 #define PHYSICAL_MODEL_H
 
-#include <iostream>
-
-using namespace std;
-
 class PhysicalModel
 {
 public:
@@ -18,7 +14,7 @@ public:
     double lambda, Dpeqmass, rpeqmass, gamma_; // libre parcours moyen d'une sphère
     double P, T, Mu, K, Rho; // pressure, temperature, diffusivity, ?, density
     double Dpm, sigmaDpm;
-    double temps; // Time
+    double time; // Time
     double X, FV, L; // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
     double precision;
     double FactorModelBeta;
@@ -32,6 +28,7 @@ public:
     bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
     bool toBeDestroyed;
+
 private:
 
     // Internal use
@@ -55,6 +52,9 @@ public:
     double diffusivity(const double dm) const;
     double velocity(const double masse) const;
     void print(void) const;
+
+    auto xmfWrite(void) const;
+
 };
 
 

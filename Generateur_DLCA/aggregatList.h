@@ -9,42 +9,60 @@
 #include "storage.h"
 #include "storagelist.h"
 #include "verlet.h"
+#include "IO.h"
 
-
-using namespace std;
 
 class Sphere;
 class ListSphere;
 class Aggregate;
 class ListAggregat;
 
-class ListAggregat : public storage_list<15,Aggregate>
+class ListAggregat : public storage_list<10,Aggregate>
 {
     friend class Aggregate;
 
     private:
         PhysicalModel* physicalmodel;
-        double maxradius;
-        vector<int> indexSortedTimeSteps;
-        vector<double> CumulativeTimeSteps;
 
-        vector<double>::iterator ptr_deb;
-        vector<double>::iterator ptr_fin;
+        double maxradius;
+        std::vector<int> indexSortedTimeSteps;
+        std::vector<double> CumulativeTimeSteps;
+
+        std::vector<double>::iterator ptr_deb;
+        std::vector<double>::iterator ptr_fin;
+
+        ThreadedIO* Writer;
 
     public:
         ListSphere spheres;
         Verlet verlet;
         void Init(PhysicalModel&, const int _size);
 
-        vector<int> PotentialContacts(int id,array<double,3> Vectdir, vector<int> SearchSpace) const;
-        vector<int> GetSearchSpace(int source, array<double,3> Vectdir) const;
-        int DistanceToNextContact(const int source, const array<double,3> Vectdir, double &distmin) const;
+        std::vector<int> PotentialContacts(int id,std::array<double,3> Vectdir, std::vector<int> SearchSpace) const;
+        std::vector<int> GetSearchSpace(int source, std::array<double,3> Vectdir) const;
+        int DistanceToNextContact(const int source, const std::array<double,3> Vectdir, double &distmin) const;
 
         double GetMaxTimeStep() const;
 
         int Merge(const int first, const int second);
         void SortTimeSteps(double factor);
         int RandomPick(double &deltatemps, const double random);
+
+
+
+        void save(void) const;
+        void save(const bool) const;
+
+        std::vector<double> FormatPositionData() const;
+        std::vector<double> FormatRgData() const;
+        std::vector<int>    FormatNpData() const;
+        std::vector<double> FormatDmData() const;
+        std::vector<double> FormatlpmData() const;
+        std::vector<double> FormatdeltatData() const;
+        std::vector<double> FormatRmaxData() const;
+        std::vector<double> FormatVoumeData() const;
+        std::vector<double> FormatSurfaceData() const;
+        std::vector<int>    FormatLabelData() const;
 
 
         /* Storage specific */

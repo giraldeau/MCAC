@@ -34,7 +34,6 @@ PhysicalModel physicalmodel;
 const double PI = atan(1.0)*4; // 3.14159
 array<double,3> Vectdir; // Direction of the translation of an aggregate
 int NumAgg; // Number of the aggregate in translation
-time_t secondes; // CPU Time variable
 int NSauve; // last file number
 
 
@@ -72,20 +71,186 @@ double Random()
 
 void Calcul() //Coeur du programme
 {
-    double deltatemps, distmin, lpm;
-    double thetarandom, phirandom;
-    int aggcontact, newnumagg, finfichiersuivitempo, finmem = 0;
-    //int tmp,superpo;
-    int i, j, co;
-    bool contact;
+
+
+    double lpm;
+    int aggcontact, newnumagg;
+    bool contact(true);
     time_t t, t0;
+
+    Init();
+
+    int end = MAX(5,physicalmodel.N/200);
+    int it_without_contact=0;
+    int lim_it_without_contact = 200;
+
+    end = 1;
+
+    printf("\n");
+    printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);
+
+
+    time(&t0);
+
+    //$ Loop on the N monomeres
+    while (NAgg > end && it_without_contact<lim_it_without_contact) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
+    {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
+#ifdef WITH_GUI
+        qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
+#endif
+
+        // -- Generating a random direction --
+
+        double thetarandom = Random()*PI*2;
+        double phirandom = acos(1-2*Random());
+        Vectdir[0] = sin(phirandom)*cos(thetarandom);
+        Vectdir[1] = sin(phirandom)*sin(thetarandom);
+        Vectdir[2] = cos(phirandom);
+
+        // -- --
+        double deltatemps(0);
+
+        if (physicalmodel.ActiveModulephysique)
+        {
+            //$ Choice of an aggregate according to his MFP
+            double max = Aggregates.GetMaxTimeStep();
+            if (contact)
+                Aggregates.SortTimeSteps(max);
+            NumAgg = Aggregates.RandomPick(deltatemps,Random());
+            deltatemps = max/deltatemps;
+        }
+        else
+        {
+            //$ Random Choice of an aggregate
+            NumAgg = int(Random()*double(NAgg));
+            deltatemps = 1e-9;
+        }
+
+        //$ looking for potential contacts
+        double distmove;
+        aggcontact = Aggregates.DistanceToNextContact(NumAgg, Vectdir, distmove);
+        contact = (aggcontact >= 0);
+
+        //$ Translation of the aggregate
+        for (int i = 0; i < 3; i++)
+            Vectdir[i] = Vectdir[i]*distmove;
+        Aggregates[NumAgg].Translate(Vectdir);
+
+
+        lpm = Aggregates[NumAgg].GetLpm();
+        if (contact)
+        {
+            //$ Aggregates in contact are reunited;
+            newnumagg = Aggregates.Merge(NumAgg,aggcontact);
+            NAgg--;
+        }
+
+        //$ Time incrementation
+        physicalmodel.time = physicalmodel.time + deltatemps*distmove/lpm;
+
+        //$ Update of the Aggregates/Spheres
+        if (physicalmodel.ActiveModulephysique)
+        {
+/*
+            if (physicalmodel.ActiveVariationTempo)
+            {
+                //$ Get Temperature in file
+                finfichiersuivitempo = rechercheValTab();
+                if (finmem != finfichiersuivitempo)
+                {
+                    sprintf(commentaires, "Attention le suivi temporel est plus long que celui du fichier lu.\n");
+                    print(commentaires);
+                }
+                finmem = finfichiersuivitempo;
+            }
+*/
+            //$ Growth of all spheres
+            Aggregates.spheres.CroissanceSurface(deltatemps);
+
+            //$ Aggregates update
+            for (Aggregate* Agg : Aggregates)
+            {
+                Agg->Update();
+            }
+        }
+        else if(contact)
+        {
+            //$ Only current aggregate is updated
+            Aggregates[newnumagg].Update();
+
+        }
+
+        //$ Show progress
+        if(contact)
+        {
+            time(&t);
+            int secondes = int(round(t-t0));
+             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.time*1E6, secondes,it_without_contact);
+            it_without_contact = 0;
+#ifdef WITH_GUI
+             if (!(GUI == nullptr)            )
+                GUI->progress(physicalmodel.N-NAgg+1);
+#endif
+             Aggregates.spheres.save();
+             Aggregates.save();
+
+
+        }
+        else
+        {
+            newnumagg = NumAgg;
+            it_without_contact++;
+        }
+
+
+        //Aggregates.spheres.save();
+
+
+    }
+
+    Aggregates.spheres.save(true);
+    Aggregates.save(true);
+
+    printf("Nombre total d'aggregats : %d\nNombre d'iterations sans contacts' : %d\n",NAgg,it_without_contact);
+
+    cout << "Aggregats" << endl;
+    for (int i = 0; i < NAgg; i++)
+    {
+        printf("%d\t", i);
+        const array<double, 3> pos = Aggregates[i].GetPosition();
+        for (int j = 0; j < 3; j++)
+            printf("%e\t", pos[j]*1E9);
+        printf("\t%e\n",Aggregates[i].GetVolAgregat()*1E25);
+    }
+    cout << "Spheres" << endl;
+    for (const Sphere* mySphere : Aggregates.spheres)
+    {
+        const array<double, 3> pos = mySphere->Position();
+        for (int j = 0; j < 3; j++)
+            printf("%e\t", pos[j]*1E9);
+        printf("\t%e\n",mySphere->Radius());
+    }
+    printf("\n\n");
+
+    Fermeture();
+    print(CheminSauve);
+
+    sprintf(commentaires,"\nFin du calcul  ...\n");
+    print(commentaires);
+}
+
+
+void Init()
+{
+
+
 
 
     physicalmodel.L = physicalmodel.X*physicalmodel.Dpm*1E-9;
     physicalmodel.Init(physicalmodel.P,physicalmodel.T,physicalmodel.dfe,
                        physicalmodel.kfe,physicalmodel.Dpm,physicalmodel.sigmaDpm,
                        physicalmodel.xsurfgrowth,physicalmodel.coeffB,physicalmodel.Rho);
-
+    physicalmodel.time=0;
 
     if (physicalmodel.ActiveModulephysique)
     {
@@ -121,178 +286,7 @@ void Calcul() //Coeur du programme
     InitRandom();
 
 
-    Init();
 
-    co=0;
-    //superpo=0;
-    NSauve=0;
-    physicalmodel.temps=0;
-    deltatemps=0;
-    time(&t0);
-    contact=true;
-    int end = MAX(5,physicalmodel.N/200);
-    int it_without_contact=0;
-    int lim_it_without_contact = 200;
-
-    end = 40;
-
-    printf("\n");
-    printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);
-
-    //$ Loop on the N monomeres
-    while (NAgg > end && it_without_contact<lim_it_without_contact) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
-    {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
-#ifdef WITH_GUI
-        qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
-#endif
-        time(&t);
-        secondes = t-t0;
-
-        // -- Generating a random direction --
-
-        thetarandom = Random()*PI*2;
-        phirandom = acos(1-2*Random());
-        Vectdir[0] = sin(phirandom)*cos(thetarandom);
-        Vectdir[1] = sin(phirandom)*sin(thetarandom);
-        Vectdir[2] = cos(phirandom);
-
-        // -- --
-
-        if (physicalmodel.ActiveModulephysique)
-        {
-            //$ Choice of an aggregate according to his MFP
-            //NumAgg = Probabilite(contact, deltatemps);// Choice of an agrgegate, the probability of said agrgegate to be chosen proportionnal to his lpm
-            double max = Aggregates.GetMaxTimeStep();
-            if (contact)
-                Aggregates.SortTimeSteps(max);
-            NumAgg = Aggregates.RandomPick(deltatemps,Random());
-            deltatemps = max/deltatemps;
-
-            physicalmodel.temps = physicalmodel.temps + deltatemps; // Time incrementation with a value given by Probabilite
-
-            if (physicalmodel.ActiveVariationTempo)
-            {
-                //$ ?
-                finfichiersuivitempo = rechercheValTab();
-                if (finmem != finfichiersuivitempo)
-                {
-                    sprintf(commentaires, "Attention le suivi temporel est plus long que celui du fichier lu.\n");
-                    print(commentaires);
-                }
-                finmem = finfichiersuivitempo;
-            }
-
-            //$ Surface Growth of all spheres
-            Aggregates.spheres.CroissanceSurface(deltatemps);
-
-            //$ Aggregates parameter update
-            for (Aggregate* Agg : Aggregates)
-            {
-                Agg->Update();
-            }
-            lpm = Aggregates[NumAgg].GetLpm();
-        }
-        else
-        {
-            //$ Random Choice of an aggregate
-            NumAgg = int(Random()*double(NAgg));
-            deltatemps = 1e-9;
-            physicalmodel.temps = physicalmodel.temps + 1E-9;
-            lpm = physicalmodel.Dpm*1E-9; //On fixe le lpm au Dpm
-        }
-
-        double distmove = lpm;
-
-        //$ looking for potential contacts
-        aggcontact = Aggregates.DistanceToNextContact(NumAgg, Vectdir, distmin);
-
-        contact = (aggcontact >= 0);
-        if (contact)
-            distmove = distmin;
-
-        //$ Translation of the aggregate
-        for (i = 0; i < 3; i++)
-        {
-            Vectdir[i] = Vectdir[i]*distmove;
-        }
-
-        Aggregates[NumAgg].Translate(Vectdir);
-
-        if (contact)
-        {
-            //$ Aggregates in contact are reunited;
-            newnumagg = Aggregates.Merge(NumAgg,aggcontact);
-            NAgg--;
-
-            Aggregates[newnumagg].Update();
-
-            physicalmodel.temps = physicalmodel.temps-deltatemps*(1-distmin/lpm);
-            /*
-            //+++++ Test de superposition des monomères dans un agrégat lors d'un contact +++++
-            tmp = CalculSuperposition(newnumagg);
-            if (tmp == 1)     {superpo++;}
-            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-            */
-             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.temps*1E6, int(secondes),it_without_contact);
-            it_without_contact = 0;
-#ifdef WITH_GUI
-             if (!(GUI == nullptr)            )
-                GUI->progress(physicalmodel.N-NAgg+1);
-#endif
-        }
-        else
-        {
-            newnumagg = NumAgg;
-            it_without_contact++;
-        }
-
-
-
-        if (physicalmodel.DeltaSauve>0)
-        {
-            co++;
-            if (co > physicalmodel.DeltaSauve)
-            {
-                co = 0;
-                if (!contact)
-                    SauveASCII(NSauve++, newnumagg);
-            }
-        }
-
-        if (contact && physicalmodel.DeltaSauve >= 0)
-            SauveASCII(NSauve++, newnumagg);
-    }
-
-    printf("Nombre total d'aggregats : %d\nNombre d'iterations sans contacts' : %d\n",NAgg,it_without_contact);
-/*
-    cout << "L=" << L*1E9
-         <<"     lambda=" << lambda*1E9
-         <<"     Dpeqmass=" << Dpeqmass
-         <<"     rpeqmass=" << rpeqmass*1E9
-         <<"     gamma=" << gamma <<endl;
-
-*/
-
-    for (i = 0; i < NAgg; i++)
-    {
-        printf("%d\t", i);
-        const array<double, 3> pos = Aggregates[i].GetPosition();
-        for (j = 0; j < 3; j++)
-            printf("%e\t", pos[j]*1E9);
-        printf("\t%e\t%e\n",Aggregates[i].GetVolAgregat()*1E25,Aggregates[i].GetVolAgregatWithoutCov()*1E25);
-    }
-    printf("\n\n");
-
-    Fermeture();
-    print(CheminSauve);
-
-    sprintf(commentaires,"\nFin du calcul  ...\n");
-    print(commentaires);
-}
-
-
-void Init()
-{
 
     int testmem = 0;
     NAgg = physicalmodel.N;
@@ -340,7 +334,11 @@ void Init()
             exit(0);
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     }
+    Aggregates.spheres.save();
+    Aggregates.save();
+
 }
 
 void Fermeture()
@@ -449,7 +447,7 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 {
     int test = 0;
 
-    while (tab[iValTab][0] < physicalmodel.temps && iValTab < (nb_line-1))
+    while (tab[iValTab][0] < physicalmodel.time && iValTab < (nb_line-1))
     {
         iValTab++;
 //        cout << "temps residence = " << temps << "s"

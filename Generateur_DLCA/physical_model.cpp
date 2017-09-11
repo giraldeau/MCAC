@@ -13,6 +13,9 @@
 #define POW2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
+
+using namespace std;
+
 const double PI = atan(1.0)*4;
 
 PhysicalModel::PhysicalModel(void) :
@@ -32,7 +35,7 @@ PhysicalModel::PhysicalModel(void) :
     Rho(0),
     Dpm(0),
     sigmaDpm(0),
-    temps(0),
+    time(0),
     X(0),
     FV(0),
     L(DBL_MAX),
@@ -47,7 +50,7 @@ PhysicalModel::PhysicalModel(void) :
     ActiveVariationTempo(false),
     use_verlet(false),
     toBeDestroyed(true)
-    {}
+{}
 
 
 
@@ -118,6 +121,7 @@ void PhysicalModel::print(void) const
 
 
     cout << "Physical parameters:" << endl
+         << " Box size    : " << L << endl
          << " Pressure    : " << P << endl
          << " Temperature : " << T << endl
          << " diffusivity : " << Mu << endl

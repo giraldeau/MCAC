@@ -30,6 +30,8 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <sstream>
 #include <utility>
 
+using namespace std;
+
 /* Getters */
 
  __attribute__((pure)) double Sphere::Volume(void) const noexcept

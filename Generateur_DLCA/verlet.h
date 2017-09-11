@@ -5,20 +5,18 @@
 #include <array>
 #include <vector>
 
-using namespace std;
-
-class Verlet : public vector< vector< vector< list< int > > > >
+class Verlet : public std::vector< std::vector< std::vector< std::list< int > > > >
 {
 private:
     int GridDiv{0};
     double L{0};
 
 public:
-    void Remove(const int id,const array<int, 3> Index);
-    void Add(const int id,const array<int, 3> Index);
+    void Remove(const int id,const std::array<int, 3> Index);
+    void Add(const int id,const std::array<int, 3> Index);
 
     void Init(const int GridDiv, const double L);
-    vector<int> GetSearchSpace(const array<double, 3> sourceposition , const double mindist, const array<double, 3> Vector) const;
+    std::vector<int> GetSearchSpace(const std::array<double, 3> sourceposition , const double mindist, const std::array<double, 3> Vector) const;
 };
 
 #endif // VERLET_H

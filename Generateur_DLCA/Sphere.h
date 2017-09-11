@@ -28,8 +28,6 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 */
 
-using namespace std;
-
 class Sphere;
 class ListSphere;
 class Aggregate;
@@ -59,14 +57,14 @@ class Sphere : public storage_elem<6,ListSphere>
     public:
         void InitVal(void);
         void InitVal(const double x, const double y, const double z, const double r);
-        void InitVal(const array<double, 3> position,const double r);
+        void InitVal(const std::array<double, 3> position,const double r);
 
 
         void SetPosition(const double x, const double y, const double z) noexcept;
-        void SetPosition(const array<double, 3> position) noexcept;
+        void SetPosition(const std::array<double, 3> position) noexcept;
 
         void Translate(const double x,const double y,const double z) noexcept;
-        void Translate(const array<double, 3>  vector) noexcept;
+        void Translate(const std::array<double, 3>  vector) noexcept;
 
         void SetLabel(const int) noexcept;
         void DecreaseLabel(void) noexcept;
@@ -76,22 +74,22 @@ class Sphere : public storage_elem<6,ListSphere>
         double Volume(void) const noexcept;
         double Surface(void) const noexcept;
         double Radius(void) const noexcept;
-        const array<double, 3> Position(void) const noexcept;
+        const std::array<double, 3> Position(void) const noexcept;
 
-        string str(const double coef) const ;
+        std::string str(const double coef) const ;
         void Aff(const double coef) const ;
 
         double Distance(const Sphere&) const noexcept;
-        double Distance(const array<double, 3> point) const noexcept;
+        double Distance(const std::array<double, 3> point) const noexcept;
         double Distance(const double x, const double y, const double z) const noexcept;
 
         double Distance2(const Sphere&) const noexcept;
-        double Distance2(const array<double, 3> point) const noexcept;
+        double Distance2(const std::array<double, 3> point) const noexcept;
         double Distance2(const double x, const double y, const double z) const noexcept;
 
         bool Contact(const Sphere&) const noexcept;
 
-        double Collision(const Sphere&, const array<double,3> vector) const;
+        double Collision(const Sphere&, const std::array<double,3> vector) const;
         double Intersection(const Sphere& c, const double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
 
     /* Storage specific */
@@ -106,7 +104,7 @@ class Sphere : public storage_elem<6,ListSphere>
 
         /** Constructor in local storage with initialization */
         Sphere(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Sphere(PhysicalModel&, const array<double, 3> position, const double r);
+        Sphere(PhysicalModel&, const std::array<double, 3> position, const double r);
 
         /** Constructor with external storage */
         Sphere(ListSphere& Storage, const int id);
