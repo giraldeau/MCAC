@@ -111,7 +111,8 @@ void Sphere::UpdateVolAndSurf(void) noexcept
      //$ Compute minimum distance for contact
      double dist_contact = POW2(*r + *c.r);
 
-     return (distance <= dist_contact);
+     // 1e-28 is for rounding error (1e-14 ^ 2)
+     return (distance - dist_contact <= 1e-28);
  }
 
   __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,3> vd) const

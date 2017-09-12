@@ -181,7 +181,7 @@ double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
         //$ For every sphere in the aggregate :
         for (const Sphere* mysphere: myspheres)
         {
-            double dist=mysphere->Collision(*othersphere, Vectdir);;
+            double dist=mysphere->Collision(*othersphere, Vectdir);
             if (0. <= dist && dist <= mindist)
             {
                 mindist = dist;
@@ -387,7 +387,7 @@ void Aggregate::CalcRadius(void)
                 // It is used to assimilate the aggregate to a sphere when checking for intersections
 
     for (int i = 0; i < Np; i++)
-        *rmax=MAX(*rmax,*myspheres[i].r+distances[i][0]);
+        *rmax=MAX(*rmax,*myspheres[i].r+distances[i][Np]);
 }
 
 void Aggregate::RayonGiration(void)
@@ -401,7 +401,7 @@ void Aggregate::RayonGiration(void)
     for (int i = 0; i < Np; i++)
     {
         //$ Calculation of Rg
-        Arg = Arg + volumes[i]*POW2(distances[i][0]); // distance to the gravity center
+        Arg = Arg + volumes[i]*POW2(distances[i][Np]); // distance to the gravity center
         Brg = Brg + volumes[i]*POW2(*myspheres[i].r);
     }
 
@@ -458,7 +458,7 @@ void Aggregate::UpdateDistances(void) noexcept
 
     //$ For the Spheres i in Agg Id
     for (int i = 0; i < Np; i++)
-        distances[i].resize(Np)
+        distances[i].resize(Np+1)
                 ;
     //$ For the Spheres i in Agg Id
     for (int i = 0; i < Np; i++)
