@@ -198,7 +198,7 @@ double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
         //$ For every sphere in the aggregate :
         for (const Sphere* mysphere: myspheres)
         {
-            double dist=mysphere->Collision(*othersphere, Vectdir);;
+            double dist=mysphere->Collision(*othersphere, Vectdir);
             if (0. <= dist && dist <= mindist)
             {
                 mindist = dist;
@@ -250,12 +250,20 @@ void Aggregate::SetPosition(const array<double, 3> position) noexcept
 
 void Aggregate::Translate(const array<double, 3> vector) noexcept
 {
+    array<double,3> oldpos = GetPosition();
+    SetPosition(*x +vector[0], *y + vector[1], *z +vector[2]);
+    array<double,3> newpos = GetPosition();
+
+    newpos[0] -= oldpos[0];
+    newpos[1] -= oldpos[1];
+    newpos[2] -= oldpos[2];
+
     for (Sphere* mysphere: myspheres)
     {
         mysphere->Translate(vector);
     }
 
-    SetPosition(*x +vector[0], *y + vector[1], *z +vector[2]);
+
 }
 
 Aggregate::~Aggregate(void) noexcept
@@ -374,6 +382,7 @@ void Aggregate::MassCenter(void)
     {
         //$ Calculation of the total volume and surface of the aggregate
 
+
         double dx = *myspheres[i].rx-*rx;
         double dy = *myspheres[i].ry-*ry;
         double dz = *myspheres[i].rz-*rz;
@@ -388,11 +397,10 @@ void Aggregate::MassCenter(void)
     for (int k = 0; k < 3; k++)
         newpos[k] = newpos[k]/(*volAgregat);
 
-    *rx = newpos[1]+*rx;
-    *ry = newpos[2]+*ry;
-    *rz = newpos[3]+*rz;
+    *rx = newpos[0]+*rx;
+    *ry = newpos[1]+*ry;
+    *rz = newpos[2]+*rz;
 
-    //cout << Position()<< " "<< newpos <<endl;
     SetPosition(*myspheres[0].x+*rx,
                 *myspheres[0].y+*ry,
                 *myspheres[0].z+*rz);
@@ -406,7 +414,7 @@ void Aggregate::MassCenter(void)
         double dx = *myspheres[i].rx - _rx;
         double dy = *myspheres[i].ry - _ry;
         double dz = *myspheres[i].rz - _rz;
-        distances[i][0]=sqrt(POW2(dx)+POW2(dy)+POW2(dz));
+        distances[i][Np]=sqrt(POW2(dx)+POW2(dy)+POW2(dz));
     }
 }
 
@@ -417,7 +425,7 @@ void Aggregate::CalcRadius(void)
                 // It is used to assimilate the aggregate to a sphere when checking for intersections
 
     for (int i = 0; i < Np; i++)
-        *rmax=MAX(*rmax,*myspheres[i].r+distances[i][0]);
+        *rmax=MAX(*rmax,*myspheres[i].r+distances[i][Np]);
 }
 
 void Aggregate::RayonGiration(void)
@@ -431,7 +439,7 @@ void Aggregate::RayonGiration(void)
     for (int i = 0; i < Np; i++)
     {
         //$ Calculation of Rg
-        Arg = Arg + volumes[i]*POW2(distances[i][0]); // distance to the gravity center
+        Arg = Arg + volumes[i]*POW2(distances[i][Np]); // distance to the gravity center
         Brg = Brg + volumes[i]*POW2(*myspheres[i].r);
     }
 
@@ -473,11 +481,18 @@ void Aggregate::Merge(Aggregate& other)
     //$ Update of the labels of the spheres that were in the deleted aggregate
     for (Sphere* othersphere : other.myspheres)
     {
-        othersphere->SetLabel(indexInStorage);
         othersphere->RelativeTranslate(dx,dy,dz);
     }
     myspheres.merge(other.myspheres);
     Np = myspheres.size();
+
+    for (Sphere* mysphere : myspheres)
+    {
+        mysphere->SetLabel(indexInStorage);
+        mysphere->SetPosition(*myspheres[0].x+*mysphere->rx,
+                              *myspheres[0].y+*mysphere->ry,
+                              *myspheres[0].z+*mysphere->rz);
+    }
 
     UpdateDistances();
 }
@@ -494,7 +509,7 @@ void Aggregate::UpdateDistances(void) noexcept
 
     //$ For the Spheres i in Agg Id
     for (int i = 0; i < Np; i++)
-        distances[i].resize(Np)
+        distances[i].resize(Np+1)
                 ;
     //$ For the Spheres i in Agg Id
     for (int i = 0; i < Np; i++)
@@ -505,5 +520,29 @@ void Aggregate::UpdateDistances(void) noexcept
             distances[i][j] = myspheres[i].RelativeDistance(myspheres[j]);
             distances[j][i] = distances[i][j];
         }
+    }
+}
+
+void Aggregate::check(void)
+{
+    int k =0;
+    for (const Sphere* mySphere : myspheres)
+    {
+
+        const array<double, 3> pos = mySphere->Position();
+        cout << k << "\t";
+        printf("%d\t", k);
+        for (int j = 0; j < 3; j++)
+            cout << pos[j] << "\t";
+        cout << mySphere->Radius() << endl;
+        k++;
+    }
+    for (int i=0; i<Np;i++)
+    {
+        for (int j=i+1; j<Np;j++)
+            cout << i << "\t"
+                 << j << "\t"
+                 << myspheres[i].Distance(myspheres[j]) << "\t"
+                 << myspheres[i].Contact(myspheres[j]) << endl;
     }
 }

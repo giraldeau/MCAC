@@ -77,6 +77,8 @@ class Aggregate : public storage_elem<13,ListAggregat>
 
         void UpdateDistances(void) noexcept;
 
+        void check(void);
+
         /* Storage specific */
     private:
         void setpointers(void);

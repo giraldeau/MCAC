@@ -134,8 +134,8 @@ void Calcul() //Coeur du programme
         //$ Translation of the aggregate
         for (int i = 0; i < 3; i++)
             Vectdir[i] = Vectdir[i]*distmove;
-        Aggregates[NumAgg].Translate(Vectdir);
 
+        Aggregates[NumAgg].Translate(Vectdir);
 
         lpm = Aggregates[NumAgg].GetLpm();
         if (contact)
@@ -222,17 +222,11 @@ void Calcul() //Coeur du programme
             printf("%e\t", pos[j]*1E9);
         printf("\t%e\n",Aggregates[i].GetVolAgregat()*1E25);
     }
-    /*
+
     cout << "Spheres" << endl;
-    for (const Sphere* mySphere : Aggregates.spheres)
-    {
-        const array<double, 3> pos = mySphere->Position();
-        for (int j = 0; j < 3; j++)
-            printf("%e\t", pos[j]*1E9);
-        printf("\t%e\n",mySphere->Radius());
-    }
+    //Aggregates[0].check();
     printf("\n\n");
-*/
+
     Fermeture();
     print(CheminSauve);
 

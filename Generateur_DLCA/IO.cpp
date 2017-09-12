@@ -78,7 +78,14 @@ std::vector<double> ListSphere::FormatPositionData() const
 
 std::vector<double> ListSphere::FormatRadiusData() const
 {
-    return (*Storage)[3];
+    const int N = size();
+
+    std::vector<double> RadiusData(N);
+    for (int i=0; i<N;i++)
+    {
+        RadiusData[i] = list[i]->Radius();
+    }
+    return RadiusData;
 }
 
 

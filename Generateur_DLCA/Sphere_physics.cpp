@@ -44,9 +44,14 @@ using namespace std;
  * #############################################################################################################*/
 void Sphere::SetPosition(const double newx, const double newy, const double newz) noexcept
 {
+    /*
     *x = periodicPosition(newx,physicalmodel->L);
     *y = periodicPosition(newy,physicalmodel->L);
     *z = periodicPosition(newz,physicalmodel->L);
+    */
+    *x = newx;
+    *y = newy;
+    *z = newz;
 }
 
 /* #############################################################################################################
@@ -130,7 +135,8 @@ void Sphere::UpdateVolAndSurf(void) noexcept
      //$ Compute minimum distance for contact
      double dist_contact = POW2(*r + *c.r);
 
-     return (distance <= dist_contact);
+     // 1e-28 is for rounding error
+     return (distance - dist_contact <= 1e-28);
  }
 
   __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,3> vd) const
