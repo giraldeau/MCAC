@@ -42,7 +42,7 @@ void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 
     physicalmodel=&_physicalmodel;
     Writer = new ThreadedIO(_physicalmodel, _N);
-    storage_list<6,Sphere>::Init(_N,*this);
+    storage_list<9,Sphere>::Init(_N,*this);
     setpointers();
 }
 
@@ -74,7 +74,7 @@ void ListSphere::setpointers()
 
 /** Default constructor in local storage */
 ListSphere::ListSphere(void):
-    storage_list<6,Sphere>(),
+    storage_list<9,Sphere>(),
     physicalmodel(new PhysicalModel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
@@ -82,7 +82,7 @@ ListSphere::ListSphere(void):
 {}
 
 ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
-    storage_list<6,Sphere>(),
+    storage_list<9,Sphere>(),
     physicalmodel(&_physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
@@ -93,7 +93,7 @@ ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
 
 /** Constructor with external storage */
 ListSphere::ListSphere(ListSphere& parent,vector<int> _index):
-    storage_list<6,Sphere>(parent, _index),
+    storage_list<9,Sphere>(parent, _index),
     physicalmodel(parent.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
@@ -104,7 +104,7 @@ ListSphere::ListSphere(ListSphere& parent,vector<int> _index):
 
 /** Copy constructor */
 ListSphere::ListSphere(const ListSphere& other):
-    storage_list<6,Sphere>(other),
+    storage_list<9,Sphere>(other),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
@@ -115,7 +115,7 @@ ListSphere::ListSphere(const ListSphere& other):
 
 /** Move constructor */
 ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
-    storage_list<6,Sphere>(other),
+    storage_list<9,Sphere>(other),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
@@ -152,7 +152,7 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
         delete Writer;
     }
 
-    std::swap(static_cast<storage_list<6,Sphere>&>(*this),static_cast<storage_list<6,Sphere>&>(other));
+    std::swap(static_cast<storage_list<9,Sphere>&>(*this),static_cast<storage_list<9,Sphere>&>(other));
     physicalmodel = other.physicalmodel;
     Writer=other.Writer;
 

@@ -15,7 +15,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 
-class Aggregate : public storage_elem<10,ListAggregat>
+class Aggregate : public storage_elem<13,ListAggregat>
 {
 
     friend class ListAggregat;
@@ -42,6 +42,7 @@ class Aggregate : public storage_elem<10,ListAggregat>
         double *surfAgregat;            //Estimation of the sufrace of the aggregate
 
         double *x,*y,*z; // position of the gravity center
+        double *rx,*ry,*rz; // position of the gravity center
 
         int Np;     //Number of spheres
 
@@ -54,9 +55,11 @@ class Aggregate : public storage_elem<10,ListAggregat>
 
         double GetLpm() const noexcept;
         double GetVolAgregat() const noexcept;
+        int GetLabel() const noexcept;
+
 
         const std::array<double, 3> GetPosition(void) const noexcept;
-        std:: array<int, 3> GetVerletIndex() noexcept;
+        std::array<int, 3> GetVerletIndex() noexcept;
 
 
         void SetPosition(const std::array<double, 3> position) noexcept;
@@ -75,6 +78,8 @@ class Aggregate : public storage_elem<10,ListAggregat>
         void DecreaseLabel(void) noexcept;
 
         void UpdateDistances(void) noexcept;
+
+        void check(void);
 
         /* Storage specific */
     private:

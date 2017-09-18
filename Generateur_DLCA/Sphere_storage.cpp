@@ -80,6 +80,13 @@ void Sphere::Translate(const array<double, 3> trans) noexcept
     SetPosition(*x + trans[0], *y + trans[1], *z + trans[2]);
 }
 
+void Sphere::RelativeTranslate(const double xnew,const double ynew,const double znew) noexcept
+{
+    *rx += xnew;
+    *ry += ynew;
+    *rz += znew;
+}
+
 /* Alias for different type of arguments*/
 
 void Sphere::SetPosition(const array<double, 3> position) noexcept
@@ -99,6 +106,9 @@ void Sphere::InitVal(const double newx,const double newy,const double newz,const
     setpointers();
     SetPosition(newx, newy, newz);
     *r = newr;
+    *rx=0.;
+    *ry=0.;
+    *rz=0.;
     UpdateVolAndSurf();
 }
 
@@ -122,7 +132,7 @@ string Sphere::str(const double coef) const
 }
 
 void Sphere::Aff(const double coef) const
-{  
+{
     cout << str(coef) << endl;
 }
 
@@ -138,6 +148,9 @@ void Sphere::setpointers(void)
     r = &(*Storage)[3][indexInStorage];
     volume = &(*Storage)[4][indexInStorage];
     surface = &(*Storage)[5][indexInStorage];
+    rx = &(*Storage)[6][indexInStorage];
+    ry = &(*Storage)[7][indexInStorage];
+    rz = &(*Storage)[8][indexInStorage];
 }
 
 
@@ -145,11 +158,14 @@ void Sphere::setpointers(void)
 
 /** Default constructor in local storage */
 Sphere::Sphere(void):
-    storage_elem<6,ListSphere>(),
+    storage_elem<9,ListSphere>(),
     x(nullptr),
     y(nullptr),
     z(nullptr),
     r(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     volume(nullptr),
     surface(nullptr),
     physicalmodel(new PhysicalModel),
@@ -159,11 +175,14 @@ Sphere::Sphere(void):
 }
 
 Sphere::Sphere(PhysicalModel& _physicalmodel):
-    storage_elem<6,ListSphere>(),
+    storage_elem<9,ListSphere>(),
     x(nullptr),
     y(nullptr),
     z(nullptr),
     r(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     volume(nullptr),
     surface(nullptr),
     physicalmodel(&_physicalmodel),
@@ -182,11 +201,14 @@ Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 3> newp,const 
 
 /** Constructor with external storage */
 Sphere::Sphere(ListSphere& aggregat,const int id):
-    storage_elem<6,ListSphere>(aggregat,id),
+    storage_elem<9,ListSphere>(aggregat,id),
     x(nullptr),
     y(nullptr),
     z(nullptr),
     r(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     volume(nullptr),
     surface(nullptr),
     physicalmodel(aggregat.physicalmodel),
@@ -198,11 +220,14 @@ Sphere::Sphere(ListSphere& aggregat,const int id):
 
 /** Copy constructor */
 Sphere::Sphere(const Sphere& other) :
-    storage_elem<6,ListSphere>(other),
+    storage_elem<9,ListSphere>(other),
     x(nullptr),
     y(nullptr),
     z(nullptr),
     r(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     volume(nullptr),
     surface(nullptr),
     physicalmodel(other.physicalmodel),
@@ -213,11 +238,14 @@ Sphere::Sphere(const Sphere& other) :
 
 /** Move constructor */
 Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimizations in containers */
-    storage_elem<6,ListSphere>(other),
+    storage_elem<9,ListSphere>(other),
     x(nullptr),
     y(nullptr),
     z(nullptr),
     r(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
     volume(nullptr),
     surface(nullptr),
     physicalmodel(other.physicalmodel),
@@ -228,6 +256,9 @@ Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimiza
     other.y=nullptr;
     other.z=nullptr;
     other.r=nullptr;
+    other.rx=nullptr,
+    other.ry=nullptr,
+    other.rz=nullptr,
     other.volume=nullptr;
     other.surface=nullptr;
     other.AggLabel=-1;
@@ -254,7 +285,7 @@ Sphere& Sphere::operator= (Sphere&& other) noexcept
     if(physicalmodel->toBeDestroyed)
         delete physicalmodel;
 
-    *this = static_cast<Sphere&>(storage_elem<6,ListSphere>::operator=(other));
+    *this = static_cast<Sphere&>(storage_elem<9,ListSphere>::operator=(other));
     physicalmodel = other.physicalmodel;
     AggLabel = other.AggLabel;
     setpointers();

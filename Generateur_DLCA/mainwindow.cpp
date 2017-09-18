@@ -84,7 +84,7 @@ void Calcul() //Coeur du programme
     int it_without_contact=0;
     int lim_it_without_contact = 200;
 
-    end = 1;
+    end = 50;
 
     printf("\n");
     printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);
@@ -98,6 +98,14 @@ void Calcul() //Coeur du programme
 #ifdef WITH_GUI
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
 #endif
+
+
+        if(contact)
+        {
+            Aggregates.spheres.save();
+            Aggregates.save();
+        }
+
 
         // -- Generating a random direction --
 
@@ -134,8 +142,8 @@ void Calcul() //Coeur du programme
         //$ Translation of the aggregate
         for (int i = 0; i < 3; i++)
             Vectdir[i] = Vectdir[i]*distmove;
-        Aggregates[NumAgg].Translate(Vectdir);
 
+        Aggregates[NumAgg].Translate(Vectdir);
 
         lpm = Aggregates[NumAgg].GetLpm();
         if (contact)
@@ -172,11 +180,21 @@ void Calcul() //Coeur du programme
             {
                 Agg->Update();
             }
-        }
-        else if(contact)
-        {
-            //$ Only current aggregate is updated
-            Aggregates[newnumagg].Update();
+
+/*
+            for (int i = 0; i<NAgg; i++)
+            {
+                for (int j = i+1; j<NAgg; j++)
+                {
+                    if(Aggregates[i].Contact(Aggregates[j]))
+                    {
+                        cout << "New contact !"<<endl;
+                        Aggregates.Merge(i,j);
+                        NAgg--;
+                    }
+                }
+            }
+*/
 
         }
 
@@ -191,21 +209,12 @@ void Calcul() //Coeur du programme
              if (!(GUI == nullptr)            )
                 GUI->progress(physicalmodel.N-NAgg+1);
 #endif
-             Aggregates.spheres.save();
-             Aggregates.save();
-
-
         }
         else
         {
             newnumagg = NumAgg;
             it_without_contact++;
         }
-
-
-        //Aggregates.spheres.save();
-
-
     }
 
     Aggregates.spheres.save(true);
@@ -222,17 +231,11 @@ void Calcul() //Coeur du programme
             printf("%e\t", pos[j]*1E9);
         printf("\t%e\n",Aggregates[i].GetVolAgregat()*1E25);
     }
-    /*
+
     cout << "Spheres" << endl;
-    for (const Sphere* mySphere : Aggregates.spheres)
-    {
-        const array<double, 3> pos = mySphere->Position();
-        for (int j = 0; j < 3; j++)
-            printf("%e\t", pos[j]*1E9);
-        printf("\t%e\n",mySphere->Radius());
-    }
+    //Aggregates[0].check();
     printf("\n\n");
-*/
+
     Fermeture();
     print(CheminSauve);
 
@@ -337,8 +340,6 @@ void Init()
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     }
-    Aggregates.spheres.save();
-    Aggregates.save();
 
 }
 
