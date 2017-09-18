@@ -55,9 +55,11 @@ class Aggregate : public storage_elem<13,ListAggregat>
 
         double GetLpm() const noexcept;
         double GetVolAgregat() const noexcept;
+        int GetLabel() const noexcept;
+
 
         const std::array<double, 3> GetPosition(void) const noexcept;
-        std:: array<int, 3> GetVerletIndex() noexcept;
+        std::array<int, 3> GetVerletIndex() noexcept;
 
 
         void SetPosition(const std::array<double, 3> position) noexcept;

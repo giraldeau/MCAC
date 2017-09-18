@@ -132,7 +132,7 @@ string Sphere::str(const double coef) const
 }
 
 void Sphere::Aff(const double coef) const
-{  
+{
     cout << str(coef) << endl;
 }
 

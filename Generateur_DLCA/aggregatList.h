@@ -38,7 +38,7 @@ class ListAggregat : public storage_list<13,Aggregate>
         Verlet verlet;
         void Init(PhysicalModel&, const int _size);
 
-        std::vector<int> PotentialContacts(int id,std::array<double,3> Vectdir, std::vector<int> SearchSpace) const;
+        std::vector<int> PotentialCollision(int id,std::array<double,3> Vectdir, std::vector<int> SearchSpace) const;
         std::vector<int> GetSearchSpace(int source, std::array<double,3> Vectdir) const;
         int DistanceToNextContact(const int source, const std::array<double,3> Vectdir, double &distmin) const;
 

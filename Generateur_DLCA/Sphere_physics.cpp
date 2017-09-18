@@ -142,54 +142,96 @@ void Sphere::UpdateVolAndSurf(void) noexcept
   __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,3> vd) const
   {
       /*
-       * Denoting
-       * V the unitary displacement vector
-       * D the vector from the moving sphere to the other at start
-       * C the vector from the moving sphere to the other at collision
-       * x the distance we are looking for
+       * We use a change of axis system
+       * the center is placed on the mobil sphere
+       * the x axis is chosen to be the movement vector
        *
-       * We have a triangle so :
-       *  --> --> -->
-       * x V + C - D = 0
+       * Thus we have two rotation to perform : one around z and one around y
        *
-       * i.e
-       * -->   -->  -->
-       *  D - x V  = C
+       * Then a collision is easy to detect :
+       * The distance to the x axis must be less than the sum of the radius
        *
-       * taking the norm
-       *              --> -->
-       * d² + x² - 2 x V . D = c²
+       * Moreover we are only interested in collision that can happend in the future,
+       * wich is also easy to detect (x coordinate must be positive)
        *
-       * i.e x is solution of
-       *         --> -->
-       * x² - 2 x V . D  + d² - c² = 0
-       *
+       * Finally we consider 27 possible version of the other sphere in order to take into account
+       * any periodicity effect.
       */
 
-      //$ Compute signed distance for contact between two spheres
-      double distance = Distance2(c);
-
-      //$ Compute minimum distance for contact
+      double L = physicalmodel->L;
       double dist_contact = POW2(*r + *c.r);
 
-      //$ Computing distance before contact
-      double dx = periodicDistance((*c.x-*x),physicalmodel->L);
-      double dy = periodicDistance((*c.y-*y),physicalmodel->L);
-      double dz = periodicDistance((*c.z-*z),physicalmodel->L);
-      double VD = -2*(dx*vd[0] + dy*vd[1] + dz*vd[2]);
-      double DC = distance - dist_contact;
-      double DELTA = VD*VD - 4*DC;
+      array < array < double, 3>, 3> rotz;
+      double anglez = -atan2(vd[1],vd[0]);
+      rotz[0] = {cos(anglez), -sin(anglez), 0};
+      rotz[1] = {sin(anglez),  cos(anglez), 0};
+      rotz[2] = {      0,        0, 1};
 
-      if (DELTA >= 0)
+      array < double, 3> tmp;
+      for(int i = 0; i < 3; ++i)
       {
-          DELTA = sqrt(DELTA);
-          if (DELTA <= -VD)
-              return 0.5*(-VD-DELTA);
-          else
-              return 0.5*(-VD+DELTA);
+          tmp[i] = 0;
+          for(int j = 0; j < 3; ++j)
+          {
+              tmp[i] += rotz[i][j] * vd[j];
+          }
       }
+
+      array < array < double, 3>, 3> roty;
+      double angley = atan2(tmp[2],tmp[0]);
+      roty[0] = { cos(angley), 0, sin(angley)};
+      roty[1] = {       0, 1, 0      };
+      roty[2] = {-sin(angley), 0, cos(angley)};
+
+      array < array < double, 3>, 3> matrot;
+      for(int i = 0; i < 3; ++i)
+          for(int j = 0; j < 3; ++j)
+          {
+              matrot[i][j]=0;
+              for(int k = 0; k < 3; ++k)
+              {
+                  matrot[i][j] += roty[i][k] * rotz[k][j];
+              }
+          }
+
+
+      double minval=10*L;
+      bool collision = false;
+
+      for (int i=-1;i<=1;i++) {
+          for (int j=-1;j<=1;j++) {
+              for (int k=-1;k<=1;k++) {
+
+                  for(int l = 0; l < 3; ++l)
+                  {
+                      tmp[l] = matrot[l][0] * (*c.x - *x + i*L)
+                             + matrot[l][1] * (*c.y - *y + j*L)
+                             + matrot[l][2] * (*c.z - *z + k*L);
+                  }
+                  double dist1 = POW2(tmp[1]) + POW2(tmp[2]);
+
+                  // collision is possible
+                  if (dist1 > dist_contact)
+                    continue;
+
+                  // in the future
+                  if (tmp[0] <0.)
+                    continue;
+
+                  collision =true;
+
+                  double sol = dist_contact - dist1;
+                  sol = tmp[0] - sqrt(sol);
+
+                  minval = MIN(minval,sol);
+              }
+          }
+      }
+      if (collision)
+          return minval;
       else
-          return -1.;
+        return -1.;
+
 }
 
 /* #############################################################################################################

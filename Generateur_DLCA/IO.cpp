@@ -373,10 +373,15 @@ void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGri
             writer->join();
             status[!current_thread] = 0;
         }
+        //std::cout << "Writing " << fileName << std::endl;
 
-
+	// Multithread
         writer = new std::thread(WriteTask, fileName, &xmfFile[current_thread]);
         status[current_thread] = 2;
+
+	// Sequential
+        //WriteTask(fileName, &xmfFile[current_thread]);
+        //status[current_thread] = 0;
 
         current_thread = !current_thread;
 
@@ -384,8 +389,12 @@ void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGri
 
         if (all)
         {
+            if (status[!current_thread] == 2)
+            {
+                writer->join();
+                status[!current_thread] = 0;
+            }
             step=0;
-            writer->join();
         }
     }
 

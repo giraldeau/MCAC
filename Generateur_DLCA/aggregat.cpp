@@ -174,6 +174,13 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 //############################################# Calcul de la distance inter-agrégats ############################################
 bool Aggregate::Contact(Aggregate& other) const noexcept
 {
+/*
+    Sphere SphereMe(*this);
+    Sphere SphereOther(other);
+
+    if (! SphereMe.Contact(SphereOther))
+        return false;
+*/
     //$ Loop on all the spheres of the other aggregate
     for (const Sphere* othersphere : other.myspheres)
     {
@@ -224,6 +231,8 @@ const array<double, 3> Aggregate::GetPosition(void) const noexcept
 
 void Aggregate::SetPosition(const double newx,const double newy,const double newz) noexcept
 {
+    IndexVerlet = GetVerletIndex();
+
     *x = periodicPosition(newx,physicalmodel->L);
     *y = periodicPosition(newy,physicalmodel->L);
     *z = periodicPosition(newz,physicalmodel->L);
@@ -250,20 +259,30 @@ void Aggregate::SetPosition(const array<double, 3> position) noexcept
 
 void Aggregate::Translate(const array<double, 3> vector) noexcept
 {
+    // keep track of the previous position
     array<double,3> oldpos = GetPosition();
-    SetPosition(*x +vector[0], *y + vector[1], *z +vector[2]);
-    array<double,3> newpos = GetPosition();
 
+    // move the aggregate
+    SetPosition(*x +vector[0], *y + vector[1], *z +vector[2]);
+
+    // Real movement of the aggregate (periodic)
+    array<double,3> newpos = GetPosition();
     newpos[0] -= oldpos[0];
     newpos[1] -= oldpos[1];
     newpos[2] -= oldpos[2];
 
-    for (Sphere* mysphere: myspheres)
+    // move the first sphere taking care of the periodicity
+    *myspheres[0].x = periodicPosition(*myspheres[0].x + newpos[0],physicalmodel->L);
+    *myspheres[0].y = periodicPosition(*myspheres[0].y + newpos[1],physicalmodel->L);
+    *myspheres[0].z = periodicPosition(*myspheres[0].z + newpos[2],physicalmodel->L);
+
+    // move all the other sphere relatively to the first
+    for (Sphere* mysphere : myspheres)
     {
-        mysphere->Translate(vector);
+        mysphere->SetPosition(*myspheres[0].x+*mysphere->rx,
+                              *myspheres[0].y+*mysphere->ry,
+                              *myspheres[0].z+*mysphere->rz);
     }
-
-
 }
 
 Aggregate::~Aggregate(void) noexcept
@@ -287,6 +306,10 @@ Aggregate::~Aggregate(void) noexcept
     return *volAgregat;
 }
 
+ __attribute__((pure)) int Aggregate::GetLabel() const noexcept
+{
+    return indexInStorage;
+}
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void Aggregate::Update()
@@ -381,8 +404,6 @@ void Aggregate::MassCenter(void)
     for (int i = 0; i < Np; i++)
     {
         //$ Calculation of the total volume and surface of the aggregate
-
-
         double dx = *myspheres[i].rx-*rx;
         double dy = *myspheres[i].ry-*ry;
         double dz = *myspheres[i].rz-*rz;
@@ -474,50 +495,68 @@ Sphere::Sphere(const Aggregate& Agg) : Sphere()
 
 void Aggregate::Merge(Aggregate& other)
 {
+
+    //$ Update of the labels of the spheres that were in the deleted aggregate
+    //$ And their new relative position
     double dx = periodicDistance(*other.myspheres[0].x-*myspheres[0].x,physicalmodel->L);
     double dy = periodicDistance(*other.myspheres[0].y-*myspheres[0].y,physicalmodel->L);
     double dz = periodicDistance(*other.myspheres[0].z-*myspheres[0].z,physicalmodel->L);
 
-    //$ Update of the labels of the spheres that were in the deleted aggregate
+    // For all the spheres that were in the deleted aggregate
     for (Sphere* othersphere : other.myspheres)
     {
+        // change the Label to the new owner
+        othersphere->SetLabel(indexInStorage);
+
+        // change the relative position to the new aggregate
         othersphere->RelativeTranslate(dx,dy,dz);
+
+        // Move them accordingly (periodicity)
+        othersphere->SetPosition(*myspheres[0].x+*othersphere->rx,
+                                 *myspheres[0].y+*othersphere->ry,
+                                 *myspheres[0].z+*othersphere->rz);
     }
+
+    // Merge the spheresLists
     myspheres.merge(other.myspheres);
     Np = myspheres.size();
 
-    for (Sphere* mysphere : myspheres)
-    {
-        mysphere->SetLabel(indexInStorage);
-        mysphere->SetPosition(*myspheres[0].x+*mysphere->rx,
-                              *myspheres[0].y+*mysphere->ry,
-                              *myspheres[0].z+*mysphere->rz);
-    }
-
     UpdateDistances();
+    Update();
 }
 
 void Aggregate::DecreaseLabel(void) noexcept
 {
+    if (InVerlet)
+        verlet->Remove(indexInStorage,GetVerletIndex());
+
     indexInStorage--;
     myspheres.DecreaseLabel();
+
+    if (InVerlet)
+        verlet->Add(indexInStorage,GetVerletIndex());
 }
 
 void Aggregate::UpdateDistances(void) noexcept
 {
     distances.resize(Np);
-
-    //$ For the Spheres i in Agg Id
-    for (int i = 0; i < Np; i++)
-        distances[i].resize(Np+1)
-                ;
-    //$ For the Spheres i in Agg Id
     for (int i = 0; i < Np; i++)
     {
+        // The last index is the distance to the mass center
+        distances[i].resize(Np+1);
+    }
+
+    for (int i = 0; i < Np; i++)
+    {
+        // a sphere is that close to itself
         distances[i][i]=0;
-        for (int j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
+
+        for (int j = i+1; j < Np; j++)
         {
+            // Compute the distance between sphere i and j without taking periodicity into account
             distances[i][j] = myspheres[i].RelativeDistance(myspheres[j]);
+
+            // distances are symetric !
             distances[j][i] = distances[i][j];
         }
     }
@@ -531,7 +570,6 @@ void Aggregate::check(void)
 
         const array<double, 3> pos = mySphere->Position();
         cout << k << "\t";
-        printf("%d\t", k);
         for (int j = 0; j < 3; j++)
             cout << pos[j] << "\t";
         cout << mySphere->Radius() << endl;

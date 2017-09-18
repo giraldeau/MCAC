@@ -54,9 +54,9 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,3> Vectdir, vector<int> SearchSpace) const
+vector<int> ListAggregat::PotentialCollision(int AggMe,array<double,3> Vectdir, vector<int> SearchSpace) const
 {
-    vector<int> listOfPotentialContacts;
+    vector<int> listOfPotentialCollision;
 
     Sphere SphereMe(*list[AggMe]);
     Sphere SphereOther(*list[AggMe]);
@@ -71,32 +71,39 @@ vector<int> ListAggregat::PotentialContacts(int AggMe,array<double,3> Vectdir, v
                                 *list[AggOther]->z,
                                 *list[AggOther]->rmax);
 
-            double distForContact;
+            double distForCollision;
 
             if (SphereMe.Contact(SphereOther))
-                distForContact = 0;
+                distForCollision = 0;
             else
-                distForContact = SphereMe.Collision(SphereOther,Vectdir);
+                distForCollision = SphereMe.Collision(SphereOther,Vectdir);
 
-            if(0. <= distForContact && distForContact <= *list[AggMe]->lpm )
-                listOfPotentialContacts.push_back(AggOther);
+            if(0. <= distForCollision && distForCollision <= *list[AggMe]->lpm )
+                listOfPotentialCollision.push_back(AggOther);
         }
     }
-    return listOfPotentialContacts;
+    return listOfPotentialCollision;
 }
-//###############################################################################################################################
-
 
 vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,3> Vectdir) const
 {
+
+    vector < int > SearchSpace;
     if (!physicalmodel->use_verlet)
     {
-        vector < int > SearchSpace(size());
+        // The full aggregat list index
+        SearchSpace.resize(size());
         iota(SearchSpace.begin(), SearchSpace.end(), 0);
+
+        // Except me
+        SearchSpace.erase(SearchSpace.begin()+source);
+
         return SearchSpace;
     }
     else
     {
+        // Extract from verlet
+
         double lpm ( *list[source]->lpm );
         double mindist ( *list[source]->rmax + maxradius );
         array<double, 3> sourceposition = list[source]->GetPosition();
@@ -106,7 +113,19 @@ vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,3>
         Vector[1] = lpm * Vectdir[1];
         Vector[2] = lpm * Vectdir[2];
 
-        return verlet.GetSearchSpace(sourceposition , mindist, Vector);
+        SearchSpace = verlet.GetSearchSpace(sourceposition , mindist, Vector);
+
+        // Remove me
+        for(size_t i =0;i<SearchSpace.size();i++)
+            if (SearchSpace[i]==source)
+            {
+                SearchSpace.erase(SearchSpace.begin()+i);
+                return SearchSpace;
+            }
+        cout << "I'm not on the verlet list ???"<<endl;
+        cout << "This is an error"<<endl;
+        exit(68);
+        return SearchSpace;
     }
 }
 
@@ -119,19 +138,20 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,3> 
     vector<int> SearchSpace(GetSearchSpace(source,Vectdir));
 
     // Assimilate Aggregate as sphere to drasticly speed-up search
-    vector<int> PotentialContact(PotentialContacts(source,Vectdir,SearchSpace));
+    vector<int> Potential(PotentialCollision(source,Vectdir,SearchSpace));
+    //vector<int> PotentialContact(SearchSpace);
 
     int aggcontact(-1);
     distmin = *list[source]->lpm;
 
     //$ loop on the agregates potentially in contact
-    for (const int & agg : PotentialContact) //For every aggregate that could be in contact
+    for (const int & agg : Potential) //For every aggregate that could be in contact
     {
-
+        // If two aggragates are already in contact due to surface growing
         if (list[source]->Contact(*list[agg]))
         {
-            cout << "Already contact !! " << endl;
-            cout << " ignoring" << endl;
+            distmin = 0;
+            return agg;
         }
         else
         {
@@ -146,9 +166,6 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,3> 
 
     return aggcontact;
 }
-//###############################################################################################################################
-
-
 
 void ListAggregat::setpointers()
 {
@@ -190,14 +207,13 @@ int ListAggregat::Merge(const int first, const int second)
     list[keeped]->Merge(*list[removed]);
 
     if (list[removed]->InVerlet)
+    {
         verlet.Remove(removed,list[removed]->GetVerletIndex());
+        list[removed]->InVerlet = false;
+    }
+
     for (int i=removed+1;i<size();i++)
     {
-        if (list[i]->InVerlet)
-        {
-            verlet.Remove(i,list[i]->IndexVerlet);
-            verlet.Add(i-1,list[i]->IndexVerlet);
-        }
         list[i]->DecreaseLabel();
     }
 

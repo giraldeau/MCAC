@@ -2,6 +2,7 @@
 #include <math.h>
 #include <cmath>
 #include <iomanip>
+#include <iostream>
 
 using namespace std;
 
@@ -44,12 +45,12 @@ void Verlet::Init(const int _GridDiv, const double _L)
 vector<int> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double witdh, const array<double, 3> Vector) const
 {
 
-    double xp(sourceposition[0]+witdh+MAX(Vector[0],0));
-    double xm(sourceposition[0]-witdh+MIN(Vector[0],0));
-    double yp(sourceposition[1]+witdh+MAX(Vector[1],0));
-    double ym(sourceposition[1]-witdh+MIN(Vector[1],0));
-    double zp(sourceposition[2]+witdh+MAX(Vector[2],0));
-    double zm(sourceposition[2]-witdh+MIN(Vector[2],0));
+    double xp(sourceposition[0]+witdh + MAX(Vector[0],0));
+    double xm(sourceposition[0]-witdh + MIN(Vector[0],0));
+    double yp(sourceposition[1]+witdh + MAX(Vector[1],0));
+    double ym(sourceposition[1]-witdh + MIN(Vector[1],0));
+    double zp(sourceposition[2]+witdh + MAX(Vector[2],0));
+    double zm(sourceposition[2]-witdh + MIN(Vector[2],0));
 
     int bornei1 (int(floor(xm*GridDiv/L)));
     int bornei2 (int(floor(xp*GridDiv/L)+1));
@@ -99,8 +100,36 @@ vector<int> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const
     }
     vector<int> SearchSpace{ make_move_iterator(tmpSearchSpace.begin()),
                              make_move_iterator(tmpSearchSpace.end()) };
-
     return SearchSpace;
 }
 
+
+void Verlet::print(const std::array<int, 3> Index) const
+{
+    cout << "list of agg registered in cell " << Index[0] << " "
+                                              << Index[1] << " "
+                                              << Index[2] << " " << endl;
+
+    for(const int agg : (*this)[Index[0]][Index[1]][Index[2]])
+        cout << agg<<endl;
+}
+
+void Verlet::search(const int id) const
+{
+    cout << "Searching " << id << " in verlet"<<endl;
+    for (int i=0;i<GridDiv;i++)
+    {
+        for (int j=0;j<GridDiv;j++)
+        {
+            for (int k=0;k<GridDiv;k++)
+            {
+                for(const int agg : (*this)[i][j][k])
+                    if (agg==id)
+                        cout << i << " "
+                             << j << " "
+                             << k << endl;
+            }
+        }
+    }
+}
 
