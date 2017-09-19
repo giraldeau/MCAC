@@ -137,7 +137,7 @@ equals(COMPILATOR, "GNU"){
     #QMAKE_LFLAGS_DEBUG   += -fsanitize=leak
 
     # OPTIMISATION
-    QMAKE_CXXFLAGS_RELEASE += -Ofast -DNDEBUG -fPIC -fomit-frame-pointer
+    QMAKE_CXXFLAGS_RELEASE += -Ofast -DNDEBUG -fPIC
     QMAKE_CXXFLAGS_RELEASE += -flto -fwhole-program
     QMAKE_LFLAGS_RELEASE   += -flto
 }

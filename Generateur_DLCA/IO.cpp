@@ -416,14 +416,16 @@ void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGri
         }
         //std::cout << "Writing " << fileName << std::endl;
 
-	// Multithread
-        writer = new std::thread(WriteTask, fileName, &xmfFile[current_thread]);
-        status[current_thread] = 2;
-
-	// Sequential
-        //WriteTask(fileName, &xmfFile[current_thread]);
-        //status[current_thread] = 0;
-
+        if (true)
+        { // Multithread
+            writer = new std::thread(WriteTask, fileName, &xmfFile[current_thread]);
+            status[current_thread] = 2;
+        }
+        else
+        { // Sequential
+            WriteTask(fileName, &xmfFile[current_thread]);
+            status[current_thread] = 0;
+        }
         current_thread = !current_thread;
 
         NumFile++;
@@ -446,9 +448,10 @@ void WriteTask(const std::string fileName, shared_ptr<XdmfDomain>* data)
     shared_ptr<XdmfHDF5Writer> HDF5File = XdmfHDF5Writer::New(fileName+".h5");
     shared_ptr<XdmfWriter> XMFFile = XdmfWriter::New(fileName+".xmf", HDF5File);
 
+    HDF5File->setUseDeflate(false); // do not use compression (too slow)
+    HDF5File->setDeflateFactor(0);  // 0 to 6, 6 being the most compressed
+
     // Write data
-    (*data)->accept(HDF5File);
-    HDF5File->setMode(XdmfHeavyDataWriter::Overwrite);
     (*data)->accept(XMFFile);
 }
 
