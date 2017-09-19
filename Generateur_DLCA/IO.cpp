@@ -12,6 +12,9 @@
 #include "XdmfHDF5Writer.hpp"
 #include "XdmfGridCollection.hpp"
 
+#include <boost/timer/timer.hpp>
+
+
 /*
 #include "XdmfSystemUtils.hpp"
 #include "XdmfAttribute.hpp"
@@ -191,7 +194,7 @@ shared_ptr<XdmfTopology> theTopology(void)
     return particules;
 }
 
-shared_ptr<XdmfTime> time(const double& value)
+shared_ptr<XdmfTime> settime(const double& value)
 {
     shared_ptr<XdmfTime> thetime = XdmfTime::New(value);
     return thetime;
@@ -264,7 +267,7 @@ void ListSphere::save(const bool finish) const
     SpheresData->setTopology(theTopology());
 
     // Set time
-    SpheresData->setTime(time(physicalmodel->time));
+    SpheresData->setTime(settime(physicalmodel->time));
 
     // Set Positions
     SpheresData->setGeometry(thePositions(FormatPositionData()));
@@ -375,14 +378,16 @@ void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGri
         }
         //std::cout << "Writing " << fileName << std::endl;
 
-	// Multithread
-        writer = new std::thread(WriteTask, fileName, &xmfFile[current_thread]);
-        status[current_thread] = 2;
-
-	// Sequential
-        //WriteTask(fileName, &xmfFile[current_thread]);
-        //status[current_thread] = 0;
-
+        if (true)
+        { // Multithread
+            writer = new std::thread(WriteTask, fileName, &xmfFile[current_thread]);
+            status[current_thread] = 2;
+        }
+        else
+        { // Sequential
+            WriteTask(fileName, &xmfFile[current_thread]);
+            status[current_thread] = 0;
+        }
         current_thread = !current_thread;
 
         NumFile++;
@@ -405,9 +410,10 @@ void WriteTask(const std::string fileName, shared_ptr<XdmfDomain>* data)
     shared_ptr<XdmfHDF5Writer> HDF5File = XdmfHDF5Writer::New(fileName+".h5");
     shared_ptr<XdmfWriter> XMFFile = XdmfWriter::New(fileName+".xmf", HDF5File);
 
+    HDF5File->setUseDeflate(false); // do not use compression (too slow)
+    HDF5File->setDeflateFactor(0);  // 0 to 6, 6 being the most compressed
+
     // Write data
-    (*data)->accept(HDF5File);
-    HDF5File->setMode(XdmfHeavyDataWriter::Overwrite);
     (*data)->accept(XMFFile);
 }
 

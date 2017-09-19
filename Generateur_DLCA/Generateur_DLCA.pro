@@ -69,7 +69,7 @@ SOURCES +=\
 #HDF5
 INCLUDEPATH += /usr/include/hdf5/serial /opt/local/xdmf/include /usr/include/libxml2/
 LIBS += /opt/local/xdmf/lib/libXdmf.a /opt/local/xdmf/lib/libXdmfCore.a -lxml2 -ltiff
-LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5
+LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5 -lboost_timer -lboost_system
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 

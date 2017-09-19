@@ -73,7 +73,7 @@ shared_ptr<XdmfInformation> xmfFormatInteger(const std::string& name,const int& 
 shared_ptr<XdmfInformation> xmfFormatBool(const std::string& name, const bool& active);
 
 shared_ptr<XdmfTopology> theTopology(void);
-shared_ptr<XdmfTime> time(const double& value);
+shared_ptr<XdmfTime> settime(const double& value);
 shared_ptr<XdmfGeometry> thePositions(const std::vector<double>& formatedPositions);
 
 #endif // IO_H
