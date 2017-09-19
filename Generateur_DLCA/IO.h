@@ -7,9 +7,13 @@
 #include <thread>
 #include <array>
 
+//#define WITH_HDF5
+
+#ifdef WITH_HDF5
 #include "XdmfDomain.hpp"
 #include "XdmfGridCollectionType.hpp"
 #include "XdmfUnstructuredGrid.hpp"
+namespace DLCA{
 
 
 class ThreadedIO
@@ -75,6 +79,16 @@ shared_ptr<XdmfInformation> xmfFormatBool(const std::string& name, const bool& a
 shared_ptr<XdmfTopology> theTopology(void);
 shared_ptr<XdmfTime> time(const double& value);
 shared_ptr<XdmfGeometry> thePositions(const std::vector<double>& formatedPositions);
+}
+#else //WITHOUT_HDF5
+namespace DLCA{
+
+class ThreadedIO{
+public:
+    ThreadedIO(PhysicalModel& _physicalmodel, const int size){}
+};
+}
+#endif
 
 #endif // IO_H
 

@@ -31,6 +31,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <utility>
 
 using namespace std;
+namespace DLCA{
 
 void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
 {
@@ -72,6 +73,7 @@ void ListSphere::setpointers()
 
 
 
+
 /** Default constructor in local storage */
 ListSphere::ListSphere(void):
     storage_list<9,Sphere>(),
@@ -108,7 +110,7 @@ ListSphere::ListSphere(const ListSphere& other):
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*other.physicalmodel,size()))
+    Writer (new ThreadedIO(*physicalmodel,size()))
 {
     setpointers();
 }
@@ -184,4 +186,5 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
  __attribute__((pure)) bool operator!=(const ListSphere& A, const ListSphere& B)
 {
     return !(A==B);
+}
 }

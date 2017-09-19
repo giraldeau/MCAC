@@ -3,22 +3,27 @@
 
 #include "Sphere.h"
 #include "Spherelist.h"
-#include "aggregat.h"
 #include "aggregatList.h"
 #include "storage.h"
 #include "storagelist.h"
+
 #include <list>
+
+namespace DLCA{
 
 class Sphere;
 class ListSphere;
 class Aggregate;
 class ListAggregat;
 class Verlet;
+class AnalizeAggregate;
 
 class Aggregate : public storage_elem<13,ListAggregat>
 {
 
     friend class ListAggregat;
+    friend class AnalizeAggregate;
+    friend class Statistics;
     friend class Sphere;
 
     private:
@@ -117,4 +122,6 @@ class Aggregate : public storage_elem<13,ListAggregat>
         /** Move assignment operator */
         Aggregate& operator= (Aggregate&& other) noexcept;
 };
+}
+
 #endif // AGGREGAT_H

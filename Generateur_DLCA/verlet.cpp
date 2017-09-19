@@ -11,6 +11,8 @@ using namespace std;
 #define POW2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
+namespace DLCA{
+
 
 void Verlet::Remove(const int id,const array<int, 3> Index)
 {
@@ -133,3 +135,4 @@ void Verlet::search(const int id) const
     }
 }
 
+}

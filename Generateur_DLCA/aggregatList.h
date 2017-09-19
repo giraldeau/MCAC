@@ -11,15 +11,19 @@
 #include "verlet.h"
 #include "IO.h"
 
+namespace DLCA{
 
 class Sphere;
 class ListSphere;
 class Aggregate;
 class ListAggregat;
+class Statistics;
+
 
 class ListAggregat : public storage_list<13,Aggregate>
 {
     friend class Aggregate;
+    friend class Statistics;
 
     private:
         PhysicalModel* physicalmodel;
@@ -60,7 +64,7 @@ class ListAggregat : public storage_list<13,Aggregate>
         std::vector<double> FormatlpmData() const;
         std::vector<double> FormatdeltatData() const;
         std::vector<double> FormatRmaxData() const;
-        std::vector<double> FormatVoumeData() const;
+        std::vector<double> FormatVolumeData() const;
         std::vector<double> FormatSurfaceData() const;
         std::vector<int>    FormatLabelData() const;
 
@@ -90,6 +94,6 @@ class ListAggregat : public storage_list<13,Aggregate>
         ListAggregat& operator= (ListAggregat&& other) noexcept;
 };
 
-
+}
 
 #endif // AGGREGATLIST_H

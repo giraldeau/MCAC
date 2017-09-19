@@ -1,6 +1,9 @@
 #ifndef PHYSICAL_MODEL_H
 #define PHYSICAL_MODEL_H
 
+
+namespace DLCA{
+
 class PhysicalModel
 {
 public:
@@ -96,6 +99,7 @@ __attribute((const)) inline double periodicPosition(const double x, const double
     return pos;
 }
 
+}
 
 #endif // PHYSICAL_MODEL_H
 

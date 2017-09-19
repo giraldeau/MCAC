@@ -16,6 +16,8 @@
 
 using namespace std;
 
+namespace DLCA{
+
 const double PI = atan(1.0)*4;
 
 PhysicalModel::PhysicalModel(void) :
@@ -141,7 +143,8 @@ void PhysicalModel::print(void) const
          << endl
          << "Options for Pysical model: " << endl
          << " precision   : " << precision << endl
-         << " root method : " << RootMethod << endl;
+         << " root method : " << RootMethod << endl
+         << endl;
 }
 
 
@@ -412,3 +415,4 @@ __attribute((const)) double inverfc(const double p)
 __attribute((const)) double myerf(const double x) { return 1-myerfc(x); }
 __attribute((const)) double inverf(const double p) {return inverfc(1.-p);}
 
+}

@@ -25,25 +25,19 @@ using namespace std;
 #include <QFileDialog>
 #include <qdir.h>
 #include <QString>
+#endif
 
+
+namespace DLCA{
+
+#ifdef WITH_GUI
 MainWindow* GUI;
 #endif
 
-PhysicalModel physicalmodel;
-
 const double PI = atan(1.0)*4; // 3.14159
-array<double,3> Vectdir; // Direction of the translation of an aggregate
-int NumAgg; // Number of the aggregate in translation
-int NSauve; // last file number
 
-
-// Nagg
-int NAgg; // Nombre d'aggrégats (1 à l'initialisation)
-ListAggregat Aggregates; // Position of the center of gravity
-
+/*
 // suivit tempo
-string FichierParam = "___";
-string pathParam = "___";
 string FichierSuiviTempo = "___";
 double** tab; // generic array
 int iValTab=0;
@@ -52,7 +46,7 @@ int nb_line;
 
 char CheminSauve[500];
 char commentaires[500];
-
+*/
 
 void InitRandom()
 {
@@ -69,31 +63,35 @@ double Random()
     return v;
 }
 
-void Calcul() //Coeur du programme
+void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 {
+    ListAggregat Aggregates;
+    Statistics Stats(physicalmodel);
 
+    int NAgg = Init(physicalmodel, Stats, Aggregates);
 
-    double lpm;
-    int aggcontact, newnumagg;
-    bool contact(true);
-    time_t t, t0;
+    int end = 1; //MAX(5,physicalmodel.N/200);
+    int it_without_contact=0;    int lim_it_without_contact = 20000;
+    int secondes(0);             double cpulimit = 60;
 
-    Init();
+    cout << endl
+         << "Ending calcul when at least one of theses condition is true :" << endl
+         << " - There is less than " << end << " aggregats left" << endl
+         << " - It has been " << lim_it_without_contact << " iterations without collision" <<endl
+         << " - The simulations is running for more than " << cpulimit << " seconds" << endl
+         << endl;
 
-    int end = MAX(5,physicalmodel.N/200);
-    int it_without_contact=0;
-    int lim_it_without_contact = 200;
-
-    end = 50;
-
-    printf("\n");
-    printf("Ending calcul when there is less than %d aggregats or %d iterations without contact\n", end,lim_it_without_contact);
-
-
+    time_t t0;
     time(&t0);
 
+    // Contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
+    bool contact(true);
+
     //$ Loop on the N monomeres
-    while (NAgg > end && it_without_contact<lim_it_without_contact) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
+    while (NAgg > end &&
+           it_without_contact<lim_it_without_contact &&
+           secondes<cpulimit
+           ) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
     {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
 #ifdef WITH_GUI
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
@@ -104,20 +102,21 @@ void Calcul() //Coeur du programme
         {
             Aggregates.spheres.save();
             Aggregates.save();
+            Stats.Analyze(Aggregates);
         }
 
 
         // -- Generating a random direction --
-
+        array<double,3> Vectdir;
         double thetarandom = Random()*PI*2;
         double phirandom = acos(1-2*Random());
         Vectdir[0] = sin(phirandom)*cos(thetarandom);
         Vectdir[1] = sin(phirandom)*sin(thetarandom);
         Vectdir[2] = cos(phirandom);
 
-        // -- --
+        // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
-
+        int NumAgg(0);
         if (physicalmodel.ActiveModulephysique)
         {
             //$ Choice of an aggregate according to his MFP
@@ -136,7 +135,7 @@ void Calcul() //Coeur du programme
 
         //$ looking for potential contacts
         double distmove;
-        aggcontact = Aggregates.DistanceToNextContact(NumAgg, Vectdir, distmove);
+        int aggcontact = Aggregates.DistanceToNextContact(NumAgg, Vectdir, distmove);
         contact = (aggcontact >= 0);
 
         //$ Translation of the aggregate
@@ -145,11 +144,11 @@ void Calcul() //Coeur du programme
 
         Aggregates[NumAgg].Translate(Vectdir);
 
-        lpm = Aggregates[NumAgg].GetLpm();
+        double lpm = Aggregates[NumAgg].GetLpm();
         if (contact)
         {
             //$ Aggregates in contact are reunited;
-            newnumagg = Aggregates.Merge(NumAgg,aggcontact);
+            NumAgg = Aggregates.Merge(NumAgg,aggcontact);
             NAgg--;
         }
 
@@ -201,8 +200,9 @@ void Calcul() //Coeur du programme
         //$ Show progress
         if(contact)
         {
+            time_t t;
             time(&t);
-            int secondes = int(round(t-t0));
+            secondes = int(round(t-t0));
              printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.time*1E6, secondes,it_without_contact);
             it_without_contact = 0;
 #ifdef WITH_GUI
@@ -212,13 +212,13 @@ void Calcul() //Coeur du programme
         }
         else
         {
-            newnumagg = NumAgg;
             it_without_contact++;
         }
     }
 
     Aggregates.spheres.save(true);
     Aggregates.save(true);
+    Stats.Analyze(Aggregates);
 
     printf("Nombre total d'aggregats : %d\nNombre d'iterations sans contacts' : %d\n",NAgg,it_without_contact);
 
@@ -232,23 +232,21 @@ void Calcul() //Coeur du programme
         printf("\t%e\n",Aggregates[i].GetVolAgregat()*1E25);
     }
 
-    cout << "Spheres" << endl;
-    //Aggregates[0].check();
-    printf("\n\n");
+    printf("\n");
+    Stats.print();
+    printf("\n");
 
-    Fermeture();
-    print(CheminSauve);
+    //Fermeture();
+    //print(CheminSauve);
 
-    sprintf(commentaires,"\nFin du calcul  ...\n");
-    print(commentaires);
+    print("\nFin du calcul  ...");
 }
 
 
-void Init()
+int Init(PhysicalModel& physicalmodel, Statistics& Stats, ListAggregat& Aggregates)
 {
 
-
-
+    //Initialize physical model
 
     physicalmodel.L = physicalmodel.X*physicalmodel.Dpm*1E-9;
     physicalmodel.Init(physicalmodel.P,physicalmodel.T,physicalmodel.dfe,
@@ -258,49 +256,40 @@ void Init()
 
     if (physicalmodel.ActiveModulephysique)
     {
-        sprintf(commentaires, "Le module physique est activé.\n");
-        print(commentaires);
+        print("Le module physique est activé.");
     }
     else
     {
-        sprintf(commentaires, "Le module physique n'est pas activé.\n");
-        print(commentaires);
+        print("Le module physique n'est pas activé.");
     }
 
     if (physicalmodel.ActiveVariationTempo)
     {
-        LectureSuiviTempo();
-        sprintf(commentaires, "Le fichier de données de suivi temporel est lu.\n");
-        print(commentaires);
+        //LectureSuiviTempo();
+        //print("Le fichier de données de suivi temporel est lu.");
+        print("Le fichier de données de suivi temporel n'est imas implémenté.");
+        exit(50);
     }
     else
     {
-        sprintf(commentaires, "Le fichier de données sélectionné est le fichier 'params.txt'.\n");
-        print(commentaires);
+        print("Le fichier de données sélectionné est le fichier 'params.txt'.");
     }
 
-    sprintf(commentaires, "\nDimension fractale : %1.2f\nPréfacteur fractal : %1.2f\nB = %1.2f\nx = %1.2f\n",
-                          physicalmodel.dfe, physicalmodel.kfe, physicalmodel.coeffB, physicalmodel.xsurfgrowth);
-    print(commentaires);
-
-    double Asurfgrowth = physicalmodel.coeffB*1E-3;
-    sprintf(commentaires, "Coefficient de croissance de surface : %e\n", Asurfgrowth);
-    print(commentaires);
-
+    //Initialize randomness
     InitRandom();
 
-
-
+    //Initialize the aggregates
 
     int testmem = 0;
-    NAgg = physicalmodel.N;
+    int NAgg = physicalmodel.N;
     Aggregates.Init(physicalmodel, NAgg);
+
 
     for (int i = 0; i < NAgg; i++)
     {          
 
-        array<double, 3> newpos;
         //random position
+        array<double, 3> newpos;
         for (int j = 0; j< 3 ; j++)
             newpos[j] = Random()*physicalmodel.L;
 
@@ -314,6 +303,7 @@ void Init()
 
         Dp = Dp/1E9;
         if (Dp <= 0)  Dp = physicalmodel.Dpm*1E-9;
+
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
         int test=0;
@@ -341,7 +331,14 @@ void Init()
 
     }
 
+
+    Stats.Init();
+
+    return NAgg;
 }
+
+
+/*
 
 void Fermeture()
 {
@@ -421,16 +418,16 @@ int LectureSuiviTempo()
                 }
             }
         }
-        /*
-        for (i = 0; i < nb_line; i++)
-        {
-            for (j = 0; j < 2; j++)
-            {
-                cout << tab[i][j] << "  ";
-            }
-            cout << endl;
-        }
-        */
+
+        //for (i = 0; i < nb_line; i++)
+        //{
+        //    for (j = 0; j < 2; j++)
+        //    {
+        //        cout << tab[i][j] << "  ";
+        //    }
+        //    cout << endl;
+        //}
+
         fclose(f);
         printf("\nLecture terminee\n");
     }
@@ -469,7 +466,7 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 
 void SauveASCII(int value, int id)
 {
-/*
+
     int i,j;
     char NomComplet[500];
     FILE *f;
@@ -534,9 +531,9 @@ void SauveASCII(int value, int id)
         fprintf(f, "%e\t%e\n", Aggregates[id][0]/(physicalmodel.Dpm*1E-9), Aggregates[id][1]);
         fclose(f);
     }
-    */
-}
 
+}
+    */
 
 bool locale_with_dots()
 {
@@ -579,12 +576,14 @@ double latof(const char* _char)
 }
 
 
-void LectureParams()
+PhysicalModel LectureParams(const string& FichierParam)
 {
+    PhysicalModel physicalmodel;
+
     FILE* f;
     char sauve[500];
 
-    //char t[500] ;
+    char commentaires[500];
     f = fopen(FichierParam.c_str(), "rt");
 
     if (f == nullptr)
@@ -770,6 +769,8 @@ void LectureParams()
     else
         physicalmodel.X = pow(physicalmodel.N*PI/6.0/physicalmodel.FV*exp(9.0/2.0*log(physicalmodel.sigmaDpm)*log(physicalmodel.sigmaDpm)),1.0/3.0); //Loi log-normale
 
+    string pathParam = extractPath(FichierParam);
+
     strcat(CheminSauve,pathParam.c_str());
     strcat(CheminSauve,"/");
     strcat(CheminSauve,sauve);
@@ -786,16 +787,20 @@ void LectureParams()
             exit(1);
         }
     }
+    return physicalmodel;
 }
 
 
+string extractPath(const string& file)
+{
+    char charfile[PATH_MAX] = file.c_str();
+    char tmp[PATH_MAX + 1]; /* not sure about the "+ 1" */
+    char* err = realpath(dirname(charfile), tmp);
+    return pathParam = tmp; //Cette variable ne retient que le chemin du fichier param
+}
 
 int No_GUI(int argc, char *argv[]){
-    FichierParam = argv[1];
-
-    char tmp[PATH_MAX + 1]; /* not sure about the "+ 1" */
-    char* err = realpath(dirname(argv[1]), tmp);
-    pathParam = tmp; //Cette variable ne retient que le chemin du fichier param
+    string FichierParam = argv[1];
 
     if (err==nullptr)
     {
@@ -803,23 +808,23 @@ int No_GUI(int argc, char *argv[]){
         exit(1);
     }
 
-    LectureParams();
+    PhysicalModel physicalmodel = LectureParams(FichierParam);
 
-    Calcul();
+    Calcul(physicalmodel);
 
     return 0;
 }
 
 
-void print(char* str)
+void print(string str)
 {
 #ifdef WITH_GUI
     if (GUI == nullptr)
-        printf("%s",str);
+        printf("%s",str.c_str());
     else
-        GUI->print(str);
+        GUI->print(str.c_str());
 #else
-    printf("%s",str);
+    printf("%s",str.c_str());
 #endif
 }
 
@@ -868,15 +873,12 @@ __attribute__((noreturn)) void MainWindow::BoutonQuitter()
 void MainWindow::BoutonRechercheParam()
 {
     ui->progressBar->setVisible(false);
-    FichierParam = QFileDialog::getOpenFileName(this,"Sélectionner le fichier de données DLCA",
+    string FichierParam = QFileDialog::getOpenFileName(this,"Sélectionner le fichier de données DLCA",
                                                         "C:/Users/dlca/Desktop/DLCA_sous_Qt/",
                                                         "Fichier de paramètres (*.txt)");
-    QFileInfo tmp2 = FichierParam;
-    pathParam = tmp2.absolutePath(); //Cette variable ne retient que le chemin du fichier param
-
     //Affiche le chemin dans la zone de texte
     ui->AfficheurRep->append(FichierParam);
-    LectureParams();
+    LectureParams(FichierParam);
     ui->AfficheurRep->append(commentaires);
     ui->ActModulePhysique->setEnabled(true);
 
@@ -948,5 +950,5 @@ void MainWindow::progress(int value){
 }
 
 #endif
-
+}
 

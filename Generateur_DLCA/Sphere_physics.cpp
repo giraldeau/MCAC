@@ -35,6 +35,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #define POW3(a) ((a)*(a)*(a))
 
 using namespace std;
+namespace DLCA{
 
 
 /* #############################################################################################################
@@ -289,4 +290,5 @@ void Sphere::CroissanceSurface(const double dt)
     *r = newR;
     *volume = facvol*newR3;
     *surface = facsurf*newR2;
+}
 }

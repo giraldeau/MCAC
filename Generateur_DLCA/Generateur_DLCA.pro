@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-COMPILATOR = "INTEL"
+COMPILATOR = "GNU"
 
 QT=""
 #QT       += core gui
@@ -25,6 +25,7 @@ SOURCES +=\
         storage.h \
         storagelist.h \
         IO.h \
+        statistics.h \
         verlet.cpp \
         physical_model.cpp \
         Sphere_storage.cpp \
@@ -35,7 +36,9 @@ SOURCES +=\
         aggregatList.cpp \
         mainwindow.cpp\
         main.cpp \
-        IO.cpp
+        boost_python.cpp \
+        IO.cpp \
+        statistics.cpp
 
 #DEFINES += WITH_QT
 #SOURCES +=\
@@ -67,9 +70,9 @@ SOURCES +=\
 #    mainwindow.qrc
 
 #HDF5
-INCLUDEPATH += /usr/include/hdf5/serial /opt/local/xdmf/include /usr/include/libxml2/
+INCLUDEPATH += /usr/include/hdf5/serial /opt/local/xdmf/include /usr/include/libxml2/ /usr/include/python2.7/
 LIBS += /opt/local/xdmf/lib/libXdmf.a /opt/local/xdmf/lib/libXdmfCore.a -lxml2 -ltiff
-LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5
+LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5 -lboost_python-py27
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
@@ -83,7 +86,7 @@ RCC_DIR = $$DESTDIR/.qrc
 UI_DIR = $$DESTDIR/.ui
 
 equals(COMPILATOR, "INTEL"){
-    QMAKE_CXXFLAGS += -g -traceback -xHost -qopenmp -static -std=c++14
+    QMAKE_CXXFLAGS += -g -traceback -xHost -qopenmp -static -std=c++14  -fPIC
     QMAKE_LFLAGS   += -g -traceback -xHost -qopenmp -std=c++14
 
     ### WARNINGS ###
@@ -95,7 +98,7 @@ equals(COMPILATOR, "INTEL"){
     #QMAKE_CXXFLAGS_DEBUG += -check-pointers=rw -check-pointers-dangling=all -check-pointers-narrowing -check-pointers-undimensioned
     #LIBS += -lchkp -lchkpwrap
 
-    QMAKE_CXXFLAGS_RELEASE += -fast -ansi-alias -DNDEBUG -fp-model fast=2 -fPIC
+    QMAKE_CXXFLAGS_RELEASE += -fast -ansi-alias -DNDEBUG -fp-model fast=2
     QMAKE_CXXFLAGS_RELEASE += -ip -ipo # -prof-gen:srcpos
     QMAKE_CXXFLAGS_RELEASE += -qopt-report=5
     QMAKE_LFLAGS_RELEASE   += -qopt-report=5

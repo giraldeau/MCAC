@@ -5,6 +5,8 @@
 #include <array>
 #include <vector>
 
+namespace DLCA{
+
 class Verlet : public std::vector< std::vector< std::vector< std::list< int > > > >
 {
 private:
@@ -20,5 +22,5 @@ public:
     void Init(const int GridDiv, const double L);
     std::vector<int> GetSearchSpace(const std::array<double, 3> sourceposition , const double mindist, const std::array<double, 3> Vector) const;
 };
-
+}
 #endif // VERLET_H

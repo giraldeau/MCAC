@@ -7,25 +7,15 @@
 #include <iomanip>
 #include <sstream>
 
+
+#ifdef WITH_HDF5
+
 #include "XdmfInformation.hpp"
 #include "XdmfWriter.hpp"
 #include "XdmfHDF5Writer.hpp"
 #include "XdmfGridCollection.hpp"
 
-/*
-#include "XdmfSystemUtils.hpp"
-#include "XdmfAttribute.hpp"
-#include "XdmfCurvilinearGrid.hpp"
-#include "XdmfRectilinearGrid.hpp"
-#include "XdmfRegularGrid.hpp"
-#include "XdmfMap.hpp"
-#include "XdmfAttributeType.hpp"
-#include "XdmfAttributeCenter.hpp"
-#include "XdmfSet.hpp"
-#include "XdmfArray.hpp"
-#include "XdmfGeometry.hpp"
-#include "XdmfTopology.hpp"
-*/
+namespace DLCA{
 
 
 // Usefull tool
@@ -120,7 +110,14 @@ std::vector<double> ListAggregat::FormatPositionData() const
 }
 std::vector<double> ListAggregat::FormatRgData() const
 {
-    return (*Storage)[0];
+    const int N = size();
+
+    std::vector<double> RgData(N);
+    for (int i=0; i<N;i++)
+    {
+        RgData[i] = *list[i]->rg;
+    }
+    return RgData;
 }
 
 std::vector<int>    ListAggregat::FormatNpData() const
@@ -136,27 +133,69 @@ std::vector<int>    ListAggregat::FormatNpData() const
 }
 std::vector<double> ListAggregat::FormatDmData() const
 {
-    return (*Storage)[1];
+    const int N = size();
+
+    std::vector<double> DmData(N);
+    for (int i=0; i<N;i++)
+    {
+        DmData[i] = *list[i]->dm;
+    }
+    return DmData;
 }
 std::vector<double> ListAggregat::FormatlpmData() const
 {
-    return (*Storage)[2];
+    const int N = size();
+
+    std::vector<double> lpmData(N);
+    for (int i=0; i<N;i++)
+    {
+        lpmData[i] = *list[i]->lpm;
+    }
+    return lpmData;
 }
 std::vector<double> ListAggregat::FormatdeltatData() const
 {
-    return (*Storage)[3];
+    const int N = size();
+
+    std::vector<double> deltatData(N);
+    for (int i=0; i<N;i++)
+    {
+        deltatData[i] = *list[i]->time_step;
+    }
+    return deltatData;
 }
 std::vector<double> ListAggregat::FormatRmaxData() const
 {
-    return (*Storage)[4];
+    const int N = size();
+
+    std::vector<double> RmaxData(N);
+    for (int i=0; i<N;i++)
+    {
+        RmaxData[i] = *list[i]->rmax;
+    }
+    return RmaxData;
 }
-std::vector<double> ListAggregat::FormatVoumeData() const
+std::vector<double> ListAggregat::FormatVolumeData() const
 {
-    return (*Storage)[5];
+    const int N = size();
+
+    std::vector<double> VolumeData(N);
+    for (int i=0; i<N;i++)
+    {
+        VolumeData[i] = *list[i]->volAgregat;
+    }
+    return VolumeData;
 }
 std::vector<double> ListAggregat::FormatSurfaceData() const
 {
-    return (*Storage)[6];
+    const int N = size();
+
+    std::vector<double> SurfaceData(N);
+    for (int i=0; i<N;i++)
+    {
+        SurfaceData[i] = *list[i]->surfAgregat;
+    }
+    return SurfaceData;
 }
 std::vector<int>    ListAggregat::FormatLabelData() const
 {
@@ -307,7 +346,7 @@ void ListAggregat::save(const bool finish) const
     AggregatsData->insert(Scalar("lpm",FormatlpmData()));
     AggregatsData->insert(Scalar("Deltat",FormatdeltatData()));
     AggregatsData->insert(Scalar("Rmax",FormatRmaxData()));
-    AggregatsData->insert(Scalar("Volume",FormatVoumeData()));
+    AggregatsData->insert(Scalar("Volume",FormatVolumeData()));
     AggregatsData->insert(Scalar("Surface",FormatSurfaceData()));
     AggregatsData->insert(Scalar("Label",FormatLabelData()));
 
@@ -439,3 +478,29 @@ ThreadedIO::~ThreadedIO(void)
         writer->join();
     }
 }
+
+}
+
+#else
+
+namespace DLCA{
+
+void ListSphere::save(void) const
+{
+    save(false);
+}
+
+
+void ListSphere::save(const bool finish) const {}
+
+void ListAggregat::save(void) const
+{
+    save(false);
+}
+
+
+void ListAggregat::save(const bool finish) const {}
+
+}
+
+#endif

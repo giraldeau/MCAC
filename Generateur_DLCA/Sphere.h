@@ -28,6 +28,9 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 */
 
+
+namespace DLCA{
+
 class Sphere;
 class ListSphere;
 class Aggregate;
@@ -137,4 +140,5 @@ class Sphere : public storage_elem<9,ListSphere>
 
 };
 
+}
 #endif // SPHERE_H

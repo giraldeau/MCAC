@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include "physical_model.h"
-#include "aggregatList.h"
+#include "statistics.h"
 
 #include <vector>
 #include <array>
@@ -10,7 +10,7 @@
 #ifdef WITH_GUI
 
 #include <QMainWindow>
-
+namespace DLCA{
 
 namespace Ui {
     class MainWindow;
@@ -37,17 +37,22 @@ private slots:
     void ExecuterDLCA();
     void BoutonRechercheSuiviTempo();
 };
+}
 #else
 #ifdef WITH_QT
 #include <QMainWindow>
+
+namespace DLCA{
 
 class STUB : public QMainWindow
 {
     Q_OBJECT;
 };
+}
 #endif
 #endif
 
+namespace DLCA{
 
 int No_GUI(int argc, char *argv[]);
 void SauveASCII(int value, int id);
@@ -56,14 +61,16 @@ double Random();
 void CalculDistance(int id, double &distmin, int &aggcontact);
 int LectureSuiviTempo();
 int rechercheValTab();
-void Init();
+int Init(PhysicalModel&,Statistics&, ListAggregat&);
 void Fermeture();
 bool locale_with_dots();
 double latof(const char* _char);
-void LectureParams();
-void Calcul();
-void print(char* str);
+PhysicalModel LectureParams(const std::string& FichierParam);
+void Calcul(PhysicalModel&);
+void print(std::string str);
 int dirExists(const char *path);
+std::string extractPath(const std::string& file);
 
+}
 
 #endif // MAINWINDOW_H

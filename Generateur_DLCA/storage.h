@@ -65,14 +65,12 @@ storage_elem<N,mystorage>::storage_elem(mystorage& ext_storage, const int id):
 /** Copy constructor */
 template <int N,class mystorage>
 storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other):
-    Storage(nullptr),
-    external_storage(other.external_storage),
-    indexInStorage(other.indexInStorage)
+    Storage(new std::array< std::vector<double>, N>),
+    external_storage(nullptr),
+    indexInStorage(0)
 {
-    if(external_storage==nullptr)
-        Storage = new std::array< std::vector<double>, N>;
-    else
-        Storage = other.Storage;
+    for (int j=0;j<N;j++)
+        (*Storage)[j].assign(1, (*other.Storage)[j][other.indexInStorage]);
 }
 
 /** Move constructor */

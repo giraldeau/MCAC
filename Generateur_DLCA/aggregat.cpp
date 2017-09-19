@@ -11,6 +11,8 @@
 
 using namespace std;
 
+namespace DLCA{
+
 const double PI = atan(1.0)*4;
 
 Aggregate::Aggregate(void):
@@ -231,8 +233,6 @@ const array<double, 3> Aggregate::GetPosition(void) const noexcept
 
 void Aggregate::SetPosition(const double newx,const double newy,const double newz) noexcept
 {
-    IndexVerlet = GetVerletIndex();
-
     *x = periodicPosition(newx,physicalmodel->L);
     *y = periodicPosition(newy,physicalmodel->L);
     *z = periodicPosition(newz,physicalmodel->L);
@@ -583,4 +583,68 @@ void Aggregate::check(void)
                  << myspheres[i].Distance(myspheres[j]) << "\t"
                  << myspheres[i].Contact(myspheres[j]) << endl;
     }
+}
+
+Aggregate::Aggregate(const Aggregate& other):
+    storage_elem<13,ListAggregat>(other),
+    physicalmodel(other.physicalmodel),
+    myspheres(other.myspheres),
+    verlet(nullptr),
+    IndexVerlet({{0,0,0}}),
+    distances(other.distances),
+    volumes(other.volumes),
+    surfaces(other.surfaces),
+    rg(nullptr),
+    dm(nullptr),
+    lpm(nullptr),
+    time_step(nullptr),
+    rmax(nullptr),
+    volAgregat(nullptr),
+    surfAgregat(nullptr),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
+    Np(other.Np),
+    InVerlet(false)
+{
+    setpointers();
+}
+
+Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable optimizations in containers */
+    storage_elem<13,ListAggregat>(other),
+    physicalmodel(other.physicalmodel),
+    myspheres(other.myspheres),
+    verlet(nullptr),
+    IndexVerlet({{0,0,0}}),
+    distances(),
+    volumes(),
+    surfaces(),
+    rg(nullptr),
+    dm(nullptr),
+    lpm(nullptr),
+    time_step(nullptr),
+    rmax(nullptr),
+    volAgregat(nullptr),
+    surfAgregat(nullptr),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
+    Np(other.Np),
+    InVerlet(false)
+{
+    swap(distances,other.distances);
+    swap(volumes,other.volumes);
+    swap(surfaces,other.surfaces);
+
+    setpointers();
+}
+
+
+
 }

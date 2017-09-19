@@ -32,6 +32,8 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 using namespace std;
 
+namespace DLCA{
+
 /* Getters */
 
  __attribute__((pure)) double Sphere::Volume(void) const noexcept
@@ -233,7 +235,7 @@ Sphere::Sphere(const Sphere& other) :
     physicalmodel(other.physicalmodel),
     AggLabel(other.AggLabel)
 {
-    InitVal(*other.x,*other.y,*other.z,*other.r);
+    setpointers();
 }
 
 /** Move constructor */
@@ -293,4 +295,5 @@ Sphere& Sphere::operator= (Sphere&& other) noexcept
     other.AggLabel=-1;
     other.physicalmodel=new PhysicalModel;
     return *this;
+}
 }

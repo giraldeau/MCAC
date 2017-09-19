@@ -11,6 +11,9 @@
 
 using namespace std;
 
+namespace DLCA{
+
+
 ListAggregat::ListAggregat(void):
     storage_list<13,Aggregate>(),
     physicalmodel(new PhysicalModel),
@@ -270,3 +273,4 @@ int ListAggregat::RandomPick(double &deltatemps, const double random)
     return indexSortedTimeSteps[n];
 }
 
+}
