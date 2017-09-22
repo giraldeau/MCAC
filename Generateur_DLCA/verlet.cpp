@@ -1,4 +1,5 @@
 #include "verlet.hpp"
+#include "physical_model.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -7,30 +8,29 @@ using namespace std;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW2(a) ((a)*(a))
-#define POW3(a) ((a)*(a)*(a))
 
 namespace DLCA{
 
 
 void Verlet::Remove(const size_t id,const array<size_t, 3> Index)
 {
-    (*this)[Index[0]][Index[1]][Index[2]].remove(id);
+    Cell[Index[0]][Index[1]][Index[2]].remove(id);
 }
 void Verlet::Add(const size_t id,const array<size_t, 3> Index)
 {
-    (*this)[Index[0]][Index[1]][Index[2]].push_front(id);
+    Cell[Index[0]][Index[1]][Index[2]].push_front(id);
 }
 
 void Verlet::Init(const size_t _GridDiv, const double _L)
 {
-    (*this).clear();
+
+    Cell.clear();
 
     GridDiv = _GridDiv;
     L=_L;
 
-    (*this).resize(GridDiv);
-    for(vector< vector< list< size_t > > >& Vx : (*this))
+    Cell.resize(GridDiv);
+    for(vector< vector< list< size_t > > >& Vx : Cell)
     {
         Vx.resize(GridDiv);
 
@@ -38,10 +38,9 @@ void Verlet::Init(const size_t _GridDiv, const double _L)
         {
             Vy.resize(GridDiv);
         }
-
     }
-}
 
+}
 
 vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double width, const array<double, 3> Vector) const
 {
@@ -86,40 +85,18 @@ vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , co
         {
             for (int k=bornek1;k<=bornek2;k++)
             {
-                int ii(i),jj(j),kk(k);
-
                 // periodic
-                while (ii<0)
-                {
-                    ii += int(GridDiv);
-                }
-                while (jj<0)
-                {
-                    jj += int(GridDiv);
-                }
-                while (kk<0)
-                {
-                    kk += int(GridDiv);
-                }
-                while (ii>=int(GridDiv))
-                {
-                    ii -= int(GridDiv);
-                }
-                while (jj>=int(GridDiv))
-                {
-                    jj -= int(GridDiv);
-                }
-                while (kk>=int(GridDiv))
-                {
-                    kk -= int(GridDiv);
-                }
-
+                auto ii = size_t(periodicPosition(i,int(GridDiv)));
+                auto jj = size_t(periodicPosition(j,int(GridDiv)));
+                auto kk = size_t(periodicPosition(k,int(GridDiv)));
                 tmpSearchSpace.insert(tmpSearchSpace.end(),
-                                      (*this)[size_t(ii)][size_t(jj)][size_t(kk)].begin(),
-                                      (*this)[size_t(ii)][size_t(jj)][size_t(kk)].end());
+                                      Cell[ii][jj][kk].begin(),
+                                      Cell[ii][jj][kk].end());
+
             }
         }
     }
+
     vector<size_t> SearchSpace{ make_move_iterator(tmpSearchSpace.begin()),
                              make_move_iterator(tmpSearchSpace.end()) };
     return SearchSpace;
@@ -132,7 +109,7 @@ void Verlet::print(const std::array<size_t, 3> Index) const
                                               << Index[1] << " "
                                               << Index[2] << " " << endl;
 
-    for(const size_t agg : (*this)[Index[0]][Index[1]][Index[2]])
+    for(const size_t agg : Cell[Index[0]][Index[1]][Index[2]])
     {
         cout << agg<<endl;
     }
@@ -147,7 +124,7 @@ void Verlet::search(const size_t id) const
         {
             for (size_t k=0;k<GridDiv;k++)
             {
-                for(const size_t agg : (*this)[i][j][k])
+                for(const size_t agg : Cell[i][j][k])
                 {
                     if (agg==id)
                     {
@@ -168,4 +145,3 @@ Verlet::Verlet():
 {}
 
 }  // namespace DLCA
-

@@ -65,18 +65,18 @@ double inverfc(double p);
 double inverf(double p);
 
 
-
-__attribute((const)) inline double periodicDistance(double x, double dim) noexcept
+template<typename T>
+__attribute((const)) inline double periodicDistance(T x, T dim) noexcept
 {
     //return periodicPosition(x+0.5*dim,dim)-0.5*dim;
-    double dist(x);
-    double hdim(0.5*dim);
+    T dist(x);
+    T hdim(0.5*dim);
 
     while (dist < -hdim)
     {
         dist += dim;
     }
-    while (dist >  hdim)
+    while (dist >=  hdim)
     {
         dist -= dim;
     }
@@ -84,19 +84,19 @@ __attribute((const)) inline double periodicDistance(double x, double dim) noexce
     return dist;
 }
 
-
-__attribute((const)) inline double periodicPosition(double x, double dim) noexcept
+template<typename T>
+__attribute((const)) inline T periodicPosition(T x, T dim) noexcept
 {
     //return fmod(dim-fmod(dim-x,dim),dim);
     //return fmod(x+dim,dim);
 
-    double pos(x);
+    T pos(x);
 
     while (pos < 0)
     {
         pos += dim;
     }
-    while (pos > dim)
+    while (pos >= dim)
     {
         pos -= dim;
     }

@@ -170,7 +170,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 
     if (physicalmodel->use_verlet)
     {
-        (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].push_front(_label);
+        verlet->Add(_label,IndexVerlet);
         InVerlet=true;
     }
     SetPosition(position);
@@ -285,9 +285,9 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
 
         if (newindexVerlet != IndexVerlet)
         {
-            (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].remove(indexInStorage);
+            verlet->Remove(indexInStorage,IndexVerlet);
             IndexVerlet = newindexVerlet;
-            (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].push_front(indexInStorage);
+            verlet->Add(indexInStorage,IndexVerlet);
         }
     }
 
@@ -330,7 +330,7 @@ Aggregate::~Aggregate() noexcept
 {
     if (InVerlet && physicalmodel->use_verlet)
     {
-        (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].remove(indexInStorage);
+            verlet->Remove(indexInStorage,IndexVerlet);
     }
 
     if(physicalmodel->toBeDestroyed)

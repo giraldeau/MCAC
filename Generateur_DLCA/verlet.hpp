@@ -7,8 +7,10 @@
 
 namespace DLCA{
 
-class Verlet : public std::vector< std::vector< std::vector< std::list< size_t > > > >
+class Verlet
 {
+public:
+    std::vector< std::vector< std::vector< std::list< size_t > > > > Cell;
 private:
     size_t GridDiv{0};
     double L{0};

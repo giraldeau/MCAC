@@ -62,7 +62,7 @@ class Aggregate : public storage_elem<15,ListAggregat>
     public:
 
         void Init();
-        void Init(PhysicalModel& ,Verlet&, std::array<double, 3> position ,size_t _label, ListSphere&, double D);
+        void Init(PhysicalModel&,Verlet&, std::array<double, 3> position ,size_t _label, ListSphere&, double D);
 
         double GetLpm() const noexcept;
         double GetVolAgregat() const noexcept;

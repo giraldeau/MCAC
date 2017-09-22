@@ -99,42 +99,42 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
 {
 
     vector < size_t > SearchSpace;
-    if (!physicalmodel->use_verlet)
-    {
-        // The full aggregat list index
-        SearchSpace.resize(size());
-        iota(SearchSpace.begin(), SearchSpace.end(), 0);
+    if (physicalmodel->use_verlet)
+    {   
+        // Extract from verlet
 
-        // Except me
-        SearchSpace.erase(SearchSpace.begin()+source);
+        double lpm ( *list[source]->lpm );
+        double mindist ( *list[source]->rmax + maxradius );
+        array<double, 3> sourceposition = list[source]->GetPosition();
 
+        array<double, 3> Vector({lpm * Vectdir[0],
+                                 lpm * Vectdir[1],
+                                 lpm * Vectdir[2]});
+
+        SearchSpace = verlet.GetSearchSpace(sourceposition , mindist, Vector);
+
+        // Remove me
+        for(size_t i =0;i<SearchSpace.size();i++)
+        {
+            if (SearchSpace[i]==source)
+            {
+                SearchSpace.erase(SearchSpace.begin()+i);
+                return SearchSpace;
+            }
+        }
+        cout << "I'm not on the verlet list ???"<<endl;
+        cout << "This is an error"<<endl;
+        exit(68);
         return SearchSpace;
     }
 
-    // Extract from verlet
+    // The full aggregat list index
+    SearchSpace.resize(size());
+    iota(SearchSpace.begin(), SearchSpace.end(), 0);
 
-    double lpm ( *list[source]->lpm );
-    double mindist ( *list[source]->rmax + maxradius );
-    array<double, 3> sourceposition = list[source]->GetPosition();
+    // Except me
+    SearchSpace.erase(SearchSpace.begin()+source);
 
-    array<double, 3> Vector({lpm * Vectdir[0],
-                             lpm * Vectdir[1],
-                             lpm * Vectdir[2]});
-
-    SearchSpace = verlet.GetSearchSpace(sourceposition , mindist, Vector);
-
-    // Remove me
-    for(size_t i =0;i<SearchSpace.size();i++)
-    {
-        if (SearchSpace[i]==source)
-        {
-            SearchSpace.erase(SearchSpace.begin()+i);
-            return SearchSpace;
-        }
-    }
-    cout << "I'm not on the verlet list ???"<<endl;
-    cout << "This is an error"<<endl;
-    exit(68);
     return SearchSpace;
 }
 
