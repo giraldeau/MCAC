@@ -18,31 +18,31 @@ protected:
 
 public:
 
-    elem& operator[](const int);
-    const elem& operator[](const int) const;
+    elem& operator[](size_t i);
+    const elem& operator[](size_t i) const;
 
 
     template<class mylist>
-    void Init(const int _size, mylist&);
+    void Init(size_t _size, mylist& owner);
 
-    void merge(storage_list&);
-    void remove(elem&);
-    int size() const noexcept;
+    void merge(storage_list& other);
+    void remove(elem& ToBeRemoved);
+    size_t size() const noexcept;
 
     /** Default constructor in local storage */
-    storage_list(void);
+    storage_list();
 
     /** Constructor with external storage */
-    storage_list(storage_list& parent,std::vector<int> index);
+    explicit storage_list(storage_list& parent,std::vector<size_t> _index);
 
     /** Copy constructor */
     storage_list(const storage_list& other);
 
     /** Move constructor */
-    storage_list (storage_list&&) noexcept; /* noexcept needed to enable optimizations in containers */
+    storage_list (storage_list&& other) noexcept; /* noexcept needed to enable optimizations in containers */
 
     /** Destructor */
-    ~storage_list(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+    ~storage_list() noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
     /** Copy assignment operator */
     storage_list& operator= (const storage_list& other);
@@ -52,10 +52,10 @@ public:
 
     friend void std::swap<>(storage_list& first, storage_list& second);
 
-    typename std::vector<elem*>::iterator begin(void);
-    typename std::vector<elem*>::iterator end(void);
-    typename std::vector<elem*>::const_iterator begin(void) const;
-    typename std::vector<elem*>::const_iterator end(void) const;
+    typename std::vector<elem*>::iterator begin();
+    typename std::vector<elem*>::iterator end();
+    typename std::vector<elem*>::const_iterator begin() const;
+    typename std::vector<elem*>::const_iterator end() const;
 
 private:
     void Destroy();
@@ -66,7 +66,7 @@ private:
 
 template <int N,class elem>
 template<class mylist>
-void storage_list<N,elem>::Init(const int _N, mylist& owner)
+void storage_list<N,elem>::Init(const size_t _size, mylist& owner)
 {
     Destroy();
 
@@ -74,48 +74,53 @@ void storage_list<N,elem>::Init(const int _N, mylist& owner)
     external_storage=nullptr;
 
     //preallocation
-    list.reserve(_N);
+    list.reserve(_size);
 
     //initialize data
     for (std::vector<double>& data : (*Storage))
-        data.assign(_N, 0.);
-
-    const int listSize = _N;
-    for (int _size = 0; _size < listSize; _size++)
     {
-        list.push_back(new elem(owner,_size));
+        data.assign(_size, 0.);
+    }
+
+    const size_t listSize = _size;
+    for (size_t i = 0; i < listSize; i++)
+    {
+        list.push_back(new elem(owner,i));
     }
 
 }
 
 template <int N,class elem>
-int storage_list<N,elem>::size(void) const noexcept
+__attribute__((pure)) size_t storage_list<N,elem>::size() const noexcept
 {
-    return int(list.size());
+    return list.size();
 }
 
 template <int N,class elem>
- __attribute__((pure)) elem& storage_list<N,elem>::operator[](const int i)
+ __attribute__((pure)) elem& storage_list<N,elem>::operator[](const size_t i)
 {
     return *list[i];
 }
 
 template <int N,class elem>
-__attribute__((pure)) const elem& storage_list<N,elem>::operator[](const int i) const
+__attribute__((pure)) const elem& storage_list<N,elem>::operator[](const size_t i) const
 {
  return *list[i];
 }
 
 template <int N,class elem>
-void storage_list<N,elem>::Destroy(void)
+void storage_list<N,elem>::Destroy()
 {
     if (external_storage==nullptr)
     {
         if (Storage!=nullptr)
         {
-            for (int _N = size()-1; _N >= 0; _N--)
+            if (size()>0)
             {
-                delete list[_N];
+                for (size_t _N = size(); _N --> 0;)
+                {
+                    delete list[_N];
+                }
             }
             delete Storage;
         }
@@ -129,7 +134,7 @@ void storage_list<N,elem>::Destroy(void)
 
 /** Default constructor in local storage */
 template <int N,class elem>
-storage_list<N,elem>::storage_list(void):
+storage_list<N,elem>::storage_list():
     list(),
     Storage(nullptr),
     external_storage(nullptr)
@@ -137,16 +142,16 @@ storage_list<N,elem>::storage_list(void):
 
 /** Constructor with external storage */
 template <int N,class elem>
-storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<int> _index):
+storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<size_t> _index):
     list(),
     Storage(parent.Storage),
     external_storage(&parent)
 {
         list.assign(_index.size(), nullptr);
 
-        const int listSize = size();
+        const size_t listSize = size();
         //#pragma omp for simd
-        for (int i = 0; i < listSize; i++)
+        for (size_t i = 0; i < listSize; i++)
         {
             list[i] = external_storage->list[_index[i]];
         }
@@ -159,11 +164,13 @@ storage_list<N,elem>::storage_list(const storage_list<N,elem>& other):
     Storage(new std::array< std::vector<double>, N>),
     external_storage(nullptr)
 {
-    for (int i=0;i<N;i++)
+    for (size_t i=0;i<N;i++)
+    {
         (*Storage)[i].assign((*other.Storage)[i].begin(),(*other.Storage)[i].end());
+    }
     list.reserve(other.size());
-    const int listSize = other.size();
-    for (int _size = 0; _size < listSize; _size++)
+    const size_t listSize = other.size();
+    for (size_t _size = 0; _size < listSize; _size++)
     {
         list.push_back(new elem(*other.list[_size]));
     }
@@ -182,7 +189,7 @@ storage_list<N,elem>::storage_list (storage_list&& other) noexcept :/* noexcept 
 
 /** Destructor */
 template <int N,class elem>
-storage_list<N,elem>::~storage_list(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+storage_list<N,elem>::~storage_list() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
     Destroy();
 }
@@ -228,7 +235,7 @@ void storage_list<N,elem>::merge(storage_list<N,elem>& other)
 {
     if(external_storage==nullptr)
     {
-        for (int i=0;i<N;i++)
+        for (size_t i=0;i<N;i++)
         {
             (*Storage)[i].insert((*Storage)[i].end(),(*other.Storage)[i].begin(),(*other.Storage)[i].end());
         }
@@ -246,10 +253,10 @@ void storage_list<N,elem>::merge(storage_list<N,elem>& other)
 template <int N,class elem>
 void storage_list<N,elem>::remove(elem& ToBeRemoved)
 {
-    const int id = ToBeRemoved.indexInStorage;
+    const size_t id = ToBeRemoved.indexInStorage;
     delete list[id];
     list.erase(list.begin()+id);
-    for (int i=0;i<N;i++)
+    for (size_t i=0;i<N;i++)
     {
         (*Storage)[i].erase((*Storage)[i].begin()+id);
     }
@@ -257,25 +264,25 @@ void storage_list<N,elem>::remove(elem& ToBeRemoved)
 
 
 template <int N,class elem>
-typename std::vector<elem*>::iterator storage_list<N,elem>::begin(void)
+typename std::vector<elem*>::iterator storage_list<N,elem>::begin()
 {
     return list.begin();
 }
 
 template <int N,class elem>
-typename std::vector<elem*>::iterator storage_list<N,elem>::end(void)
+typename std::vector<elem*>::iterator storage_list<N,elem>::end()
 {
     return list.end();
 }
 
 template <int N,class elem>
-typename std::vector<elem*>::const_iterator storage_list<N,elem>::begin(void) const
+typename std::vector<elem*>::const_iterator storage_list<N,elem>::begin() const
 {
     return list.begin();
 }
 
 template <int N,class elem>
-typename std::vector<elem*>::const_iterator storage_list<N,elem>::end(void) const
+typename std::vector<elem*>::const_iterator storage_list<N,elem>::end() const
 {
     return list.end();
 }

@@ -1,11 +1,11 @@
 #ifndef IO_H
 #define IO_H
 
-#include "physical_model.h"
+#include "physical_model.hpp"
 
+#include <array>
 #include <string>
 #include <thread>
-#include <array>
 
 //#define WITH_HDF5
 
@@ -29,28 +29,29 @@ private:
     std::array<shared_ptr<XdmfDomain>,2> xmfFile;
     std::array<shared_ptr<XdmfGridCollection>,2> TimeCollection;
 
-    int current_thread;
+    PhysicalModel* physicalmodel;
 
-    // data size
-    const int N;
+    size_t current_thread;
+
+    // Total number of time steps written (or ready to be saved)
+    size_t step;
 
     // Number of time steps per file
-    const int NTimePerFile;
+    const size_t NTimePerFile;
+
+    // data size
+    const size_t N;
 
     // next file number
     int NumFile;
 
-    // Total number of time steps written (or ready to be saved)
-    int step;
-
-    PhysicalModel* physicalmodel;
-
+//    int padding;
 
 public:
     void CreateFile();
-    void Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGrid>& data, const bool all);
+    void Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGrid>& data, bool all);
 
-    ThreadedIO(PhysicalModel& _physicalmodel, const int size);
+    ThreadedIO(PhysicalModel& _physicalmodel, size_t size);
     ~ThreadedIO() noexcept;
 
     /** Copy constructor */
@@ -66,28 +67,30 @@ public:
     ThreadedIO& operator= (ThreadedIO&& other) noexcept;
 
 private:
-    friend void WriteTask(const std::string fileName, shared_ptr<XdmfDomain>* data);
+    friend void WriteTask(std::string fileName, shared_ptr<XdmfDomain>* data);
 
 };
 
-void WriteTask(const std::string fileName, shared_ptr<XdmfDomain>* data);
-std::string to_string(const double& value);
-shared_ptr<XdmfInformation> xmfFormatDouble(const std::string& name,const double& number);
-shared_ptr<XdmfInformation> xmfFormatInteger(const std::string& name,const int& number);
-shared_ptr<XdmfInformation> xmfFormatBool(const std::string& name, const bool& active);
+void WriteTask(std::string fileName, shared_ptr<XdmfDomain>* data);
+std::string to_string(double& value);
+shared_ptr<XdmfInformation> xmfFormatDouble(std::string& name,double& number);
+shared_ptr<XdmfInformation> xmfFormatInteger(std::string& name,int& number);
+shared_ptr<XdmfInformation> xmfFormatBool(std::string& name, bool& active);
 
-shared_ptr<XdmfTopology> theTopology(void);
-shared_ptr<XdmfTime> time(const double& value);
-shared_ptr<XdmfGeometry> thePositions(const std::vector<double>& formatedPositions);
-}
+shared_ptr<XdmfTopology> theTopology();
+shared_ptr<XdmfTime> FormatTime(const double& value);
+shared_ptr<XdmfGeometry> thePositions(std::vector<double>& formatedPositions);
+}  // namespace DLCA
+
 #else //WITHOUT_HDF5
 namespace DLCA{
 
 class ThreadedIO{
 public:
-    ThreadedIO(PhysicalModel& _physicalmodel, const int size){}
+    ThreadedIO(PhysicalModel& _physicalmodel, size_t size){}
 };
-}
+}  // namespace DLCA
+
 #endif
 
 #endif // IO_H

@@ -1,19 +1,18 @@
-#include "mainwindow.h"
-#include <libgen.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <math.h>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-#include <time.h>
-#include <string.h>
-#include <stdio.h>
-#include <string>
-#include <list>
+#include "mainwindow.hpp"
+#include <climits> /* PATH_MAX */
 #include <cmath>
-#include <limits.h> /* PATH_MAX */
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <libgen.h>
+#include <list>
+#include <sstream>
+#include <string>
+#include <sys/stat.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -66,13 +65,13 @@ double Random()
 void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 {
     ListAggregat Aggregates;
-    Statistics Stats(physicalmodel);
+    StatisticStorage Stats(physicalmodel);
 
-    int NAgg = Init(physicalmodel, Stats, Aggregates);
+    size_t NAgg = Init(physicalmodel, Stats, Aggregates);
 
-    int end = 1; //MAX(5,physicalmodel.N/200);
+    size_t end = 5; //MAX(5,physicalmodel.N/200);
     int it_without_contact=0;    int lim_it_without_contact = 20000;
-    int secondes(0);             double cpulimit = 60;
+    int secondes(0);             double cpulimit = 100;
 
     cout << endl
          << "Ending calcul when at least one of theses condition is true :" << endl
@@ -107,29 +106,30 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 
 
         // -- Generating a random direction --
-        array<double,3> Vectdir;
         double thetarandom = Random()*PI*2;
         double phirandom = acos(1-2*Random());
-        Vectdir[0] = sin(phirandom)*cos(thetarandom);
-        Vectdir[1] = sin(phirandom)*sin(thetarandom);
-        Vectdir[2] = cos(phirandom);
+        array<double,3> Vectdir({sin(phirandom)*cos(thetarandom),
+                                 sin(phirandom)*sin(thetarandom),
+                                 cos(phirandom)});
 
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
-        int NumAgg(0);
+        size_t NumAgg(0);
         if (physicalmodel.ActiveModulephysique)
         {
             //$ Choice of an aggregate according to his MFP
             double max = Aggregates.GetMaxTimeStep();
             if (contact)
+            {
                 Aggregates.SortTimeSteps(max);
+            }
             NumAgg = Aggregates.RandomPick(deltatemps,Random());
             deltatemps = max/deltatemps;
         }
         else
         {
             //$ Random Choice of an aggregate
-            NumAgg = int(Random()*double(NAgg));
+            NumAgg = size_t(Random()*double(NAgg));
             deltatemps = 1e-9;
         }
 
@@ -139,8 +139,10 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         contact = (aggcontact >= 0);
 
         //$ Translation of the aggregate
-        for (int i = 0; i < 3; i++)
+        for (size_t i = 0; i < 3; i++)
+        {
             Vectdir[i] = Vectdir[i]*distmove;
+        }
 
         Aggregates[NumAgg].Translate(Vectdir);
 
@@ -148,7 +150,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         if (contact)
         {
             //$ Aggregates in contact are reunited;
-            NumAgg = Aggregates.Merge(NumAgg,aggcontact);
+            NumAgg = Aggregates.Merge(NumAgg,size_t(aggcontact));
             NAgg--;
         }
 
@@ -203,11 +205,17 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             time_t t;
             time(&t);
             secondes = int(round(t-t0));
-             printf("NAgg=%d  temps=%5.1f E-6 s     CPU=%d sec    after %d it\n", NAgg, physicalmodel.time*1E6, secondes,it_without_contact);
+            cout << "NAgg=" << NAgg << "    "
+                 << "temps=" << physicalmodel.time*1E6 << " E-6 s    "
+                 << "CPU=" << secondes << "    "
+                 << "Agg=" << NumAgg << "  "
+                 << "after " << it_without_contact << " it " << endl;
             it_without_contact = 0;
 #ifdef WITH_GUI
              if (!(GUI == nullptr)            )
+             {
                 GUI->progress(physicalmodel.N-NAgg+1);
+             }
 #endif
         }
         else
@@ -220,40 +228,38 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     Aggregates.save(true);
     Stats.Analyze(Aggregates);
 
-    printf("Nombre total d'aggregats : %d\nNombre d'iterations sans contacts' : %d\n",NAgg,it_without_contact);
+    cout << "Nombre total d'aggregats : " << NAgg << endl
+         << "Nombre d'iterations sans contacts : " << it_without_contact << endl;
 
     cout << "Aggregats" << endl;
-    for (int i = 0; i < NAgg; i++)
+    for (size_t i = 0; i < NAgg; i++)
     {
-        printf("%d\t", i);
+        cout << i << "\t";
         const array<double, 3> pos = Aggregates[i].GetPosition();
-        for (int j = 0; j < 3; j++)
-            printf("%e\t", pos[j]*1E9);
-        printf("\t%e\n",Aggregates[i].GetVolAgregat()*1E25);
+        for (size_t j = 0; j < 3; j++)
+        {
+            cout << pos[j]*1E9 << "\t";
+        }
+        cout << Aggregates[i].GetVolAgregat()*1E25 << endl;
     }
 
-    printf("\n");
+    cout << endl;
     Stats.print();
-    printf("\n");
+    cout << endl;
 
     //Fermeture();
-    //print(CheminSauve);
 
-    print("\nFin du calcul  ...");
+    print("\nFin du calcul  ...\n");
 }
 
 
-int Init(PhysicalModel& physicalmodel, Statistics& Stats, ListAggregat& Aggregates)
+size_t Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& Aggregates)
 {
 
     //Initialize physical model
 
-    physicalmodel.L = physicalmodel.X*physicalmodel.Dpm*1E-9;
-    physicalmodel.Init(physicalmodel.P,physicalmodel.T,physicalmodel.dfe,
-                       physicalmodel.kfe,physicalmodel.Dpm,physicalmodel.sigmaDpm,
-                       physicalmodel.xsurfgrowth,physicalmodel.coeffB,physicalmodel.Rho);
-    physicalmodel.time=0;
 
+    physicalmodel.Init();
     if (physicalmodel.ActiveModulephysique)
     {
         print("Le module physique est activé.");
@@ -280,51 +286,64 @@ int Init(PhysicalModel& physicalmodel, Statistics& Stats, ListAggregat& Aggregat
 
     //Initialize the aggregates
 
-    int testmem = 0;
-    int NAgg = physicalmodel.N;
+    size_t testmem = 0;
+    size_t NAgg = physicalmodel.N;
     Aggregates.Init(physicalmodel, NAgg);
 
 
-    for (int i = 0; i < NAgg; i++)
+    for (size_t i = 0; i < NAgg; i++)
     {          
 
         //random position
-        array<double, 3> newpos;
-        for (int j = 0; j< 3 ; j++)
-            newpos[j] = Random()*physicalmodel.L;
+        array<double, 3> newpos({Random()*physicalmodel.L,
+                                 Random()*physicalmodel.L,
+                                 Random()*physicalmodel.L});
 
         //random size
         double x = Random();
         double Dp =0;
         if (physicalmodel.Mode == 1)
+        {
             Dp = physicalmodel.Dpm+sqrt(2.0)*physicalmodel.sigmaDpm*inverf(2*x-1); //Loi normale
+        }
         else
+        {
             Dp = exp(log(physicalmodel.Dpm)+sqrt(2.0)*log(physicalmodel.sigmaDpm)*inverf(2*x-1)); //Loi log-normale
+        }
 
         Dp = Dp/1E9;
-        if (Dp <= 0)  Dp = physicalmodel.Dpm*1E-9;
-
+        if (Dp <= 0)
+        {
+            Dp = physicalmodel.Dpm*1E-9;
+        }
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
-        int test=0;
-        for (int k = 0; k <= i-1; k++)
+        size_t test=0;
+        if (i>0)
         {
-            double dist = Aggregates.spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
-            if (dist <= Aggregates.spheres[k].Radius()+Dp/2)
-                test++;
+            for (size_t k = 0; k <= i-1; k++)
+            {
+                double dist = Aggregates.spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
+                if (dist <= Aggregates.spheres[k].Radius()+Dp/2)
+                {
+                    test++;
+                }
+            }
         }
         testmem = testmem + test; //Comptabilise le nombre d'échecs à positionner une sphère sans superposition
 
         if (test > 0)
+        {
             i--;
+        }
         else
         {
             Aggregates[i].Init(physicalmodel,Aggregates.verlet,newpos,i,Aggregates.spheres,Dp);
         }
         if (testmem > NAgg)
         {
-            printf("Impossible de générer tous les monomères sans superposition.\n");
-            printf("La fraction volumique doit être diminuée.\n");
+            cout << "Impossible de générer tous les monomères sans superposition." << endl;
+            cout << "La fraction volumique doit être diminuée." << endl;
             exit(0);
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -541,26 +560,29 @@ bool locale_with_dots()
     static bool with_dots;
 
     if (tested)
-        return with_dots;
-    else
     {
-        double testfloat = 1.5;
-        string teststr1 = "1.5";
-        string teststr2 = "1,5";
-        double test1=atof(teststr1.c_str());
-        double test2=atof(teststr2.c_str());
-
-        if (fabs(test1-testfloat)<1e-3)
-            with_dots = true;
-        else if (fabs(test2-testfloat)<1e-3)
-                with_dots = false;
-        else
-        {
-            printf("What locale are you using ?\n");
-            exit(1);
-        }
         return with_dots;
     }
+    double testfloat = 1.5;
+    string teststr1 = "1.5";
+    string teststr2 = "1,5";
+    double test1=atof(teststr1.c_str());
+    double test2=atof(teststr2.c_str());
+
+    if (fabs(test1-testfloat)<1e-3)
+    {
+        with_dots = true;
+    }
+    else if (fabs(test2-testfloat)<1e-3)
+    {
+        with_dots = false;
+    }
+    else
+    {
+        cout << "What locale are you using ?" << endl;
+        exit(1);
+    }
+    return with_dots;
 }
 
 double latof(const char* _char)
@@ -568,9 +590,11 @@ double latof(const char* _char)
     string mystring = _char;
     if (!locale_with_dots())
     {
-        size_t f = mystring.find(".");
+        size_t f = mystring.find('.');
         if (f>0)
+        {
             mystring.replace(f, 1, ",");
+        }
     }
     return atof(mystring.c_str());
 }
@@ -583,7 +607,6 @@ PhysicalModel LectureParams(const string& FichierParam)
     FILE* f;
     char sauve[500];
 
-    char commentaires[500];
     f = fopen(FichierParam.c_str(), "rt");
 
     if (f == nullptr)
@@ -601,6 +624,7 @@ PhysicalModel LectureParams(const string& FichierParam)
     }
     else
     {
+        char commentaires[500];
         char com[500]; // Char array used in the ASCII Save
 
         if( fgets(com, 500, f) == nullptr)
@@ -611,7 +635,7 @@ PhysicalModel LectureParams(const string& FichierParam)
         else
         {
             sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.N=atoi(commentaires);
+            physicalmodel.N=size_t(atoi(commentaires));
         }
         if( fgets(com, 500, f) == nullptr)
         {
@@ -765,48 +789,54 @@ PhysicalModel LectureParams(const string& FichierParam)
         fclose(f);
     }
     if (physicalmodel.Mode == 1)
-        physicalmodel.X = pow(physicalmodel.N*PI/6.0/physicalmodel.FV*(1.0+3.0*physicalmodel.sigmaDpm*physicalmodel.sigmaDpm/physicalmodel.Dpm/physicalmodel.Dpm),1.0/3.0); //Loi normale
+    {
+        physicalmodel.X = pow(double(physicalmodel.N)*PI/6.0/physicalmodel.FV*(1.0+3.0*physicalmodel.sigmaDpm*physicalmodel.sigmaDpm/physicalmodel.Dpm/physicalmodel.Dpm),1.0/3.0); //Loi normale
+    }
     else
-        physicalmodel.X = pow(physicalmodel.N*PI/6.0/physicalmodel.FV*exp(9.0/2.0*log(physicalmodel.sigmaDpm)*log(physicalmodel.sigmaDpm)),1.0/3.0); //Loi log-normale
+    {
+        physicalmodel.X = pow(double(physicalmodel.N)*PI/6.0/physicalmodel.FV*exp(9.0/2.0*log(physicalmodel.sigmaDpm)*log(physicalmodel.sigmaDpm)),1.0/3.0); //Loi log-normale
+    }
 
     string pathParam = extractPath(FichierParam);
 
-    strcat(CheminSauve,pathParam.c_str());
+    char CheminSauve[500];
+
+    strcpy(CheminSauve,pathParam.c_str());
     strcat(CheminSauve,"/");
     strcat(CheminSauve,sauve);
 
-    sprintf(commentaires, "N=%d \nT=%1.3f \nDpm=%1.3f \nsigmaDpm=%1.3f \nFV=%1.3e\nX=%1.3f \nP=%1.3f\nMode=%d\nRho=%1.3f \nDeltaSauve=%d\nCheminSauve=%s\n", physicalmodel.N, physicalmodel.T, physicalmodel.Dpm, physicalmodel.sigmaDpm, physicalmodel.FV, physicalmodel.X, physicalmodel.P, physicalmodel.Mode, physicalmodel.Rho, physicalmodel.DeltaSauve, CheminSauve);
-
-    cout <<  commentaires << endl;
     if( !dirExists(CheminSauve))
     {
         const int dir_err = mkdir(CheminSauve, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err)
         {
-            printf("Error creating directory\n");
+            cout << "Error creating directory" << endl;
             exit(1);
         }
     }
+
     return physicalmodel;
 }
 
 
 string extractPath(const string& file)
 {
-    char charfile[PATH_MAX] = file.c_str();
+    string file1=file;
+    char* charfile = &file1[0];
     char tmp[PATH_MAX + 1]; /* not sure about the "+ 1" */
     char* err = realpath(dirname(charfile), tmp);
-    return pathParam = tmp; //Cette variable ne retient que le chemin du fichier param
+
+    if (err==nullptr)
+    {
+        cout << "File does not exist\n" << endl;
+        exit(1);
+    }
+
+    return tmp; //Cette variable ne retient que le chemin du fichier param
 }
 
 int No_GUI(int argc, char *argv[]){
     string FichierParam = argv[1];
-
-    if (err==nullptr)
-    {
-        cout << "Param file does not exist\n" << endl;
-        exit(1);
-    }
 
     PhysicalModel physicalmodel = LectureParams(FichierParam);
 
@@ -816,28 +846,31 @@ int No_GUI(int argc, char *argv[]){
 }
 
 
-void print(string str)
+void print(const string str)
 {
 #ifdef WITH_GUI
     if (GUI == nullptr)
-        printf("%s",str.c_str());
+        cout << str << endl;
     else
         GUI->print(str.c_str());
 #else
-    printf("%s",str.c_str());
+    cout << str << endl;
 #endif
 }
 
-int dirExists(const char *path)
+bool dirExists(const char *path)
 {
-    struct stat info;
+    struct stat info{};
 
     if(stat( path, &info ) != 0)
-        return 0;
-    else if(info.st_mode & S_IFDIR)
-        return 1;
-    else
-        return 0;
+    {
+        return false;
+    }
+    if(info.st_mode & S_IFDIR)
+    {
+        return true;
+    }
+    return false;
 }
 
 
@@ -879,7 +912,6 @@ void MainWindow::BoutonRechercheParam()
     //Affiche le chemin dans la zone de texte
     ui->AfficheurRep->append(FichierParam);
     LectureParams(FichierParam);
-    ui->AfficheurRep->append(commentaires);
     ui->ActModulePhysique->setEnabled(true);
 
     ui->ActModulePhysique->setChecked(physicalmodel.ActiveModulephysique);
@@ -950,5 +982,6 @@ void MainWindow::progress(int value){
 }
 
 #endif
-}
+}  // namespace DLCA
+
 

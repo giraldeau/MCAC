@@ -1,9 +1,9 @@
-#include "statistics.h"
-#include <math.h>
+#include "statistics.hpp"
+#include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <fstream>
 
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -17,20 +17,42 @@ namespace DLCA{
 
 const double PI = atan(1.0)*4;
 
-AnalizeAggregate::AnalizeAggregate(const Aggregate& source):
-    Aggregate::Aggregate(source)
-{
-    cov = 0.0;// Coeficient of mean covering
-    Nc = 0; // Number of contacts
-    Tv = 0.0;
-    Ts = 0.0;
-    Dp = 0.0;
-    Dp3 = 0.0;
 
+void Aggregate::Statistics()
+{
+    *Dp=0.;
     //$ For the Spheres i in Agg Id
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
     {
-        for (int j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
+        *Dp += myspheres[i].Radius();
+    }
+    *Dp = 2*(*Dp) / double(Np);
+    *DgOverDp=2*(*rg)/(*Dp);
+}
+
+
+
+AnalizedAggregate::AnalizedAggregate(const Aggregate& source):
+    Aggregate::Aggregate(source),
+    Nc(0),
+    Dp3(0.),
+    DmOverDp(0.),
+    DgeoOverDp(0.),
+    SurfaceOverVolume(0.),
+    cov(0.),
+    Npe(0.),
+    Tv(0.),
+    Ts(0.)
+{
+    Analyze();
+}
+
+void AnalizedAggregate::Analyze()
+{
+    //$ For the Spheres i in Agg Id
+    for (size_t i = 0; i < Np; i++)
+    {
+        for (size_t j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
         {
             double dist = distances[i][j];
             double rpmoy = (myspheres[i].Radius() + myspheres[j].Radius())*0.5; //Mean Radius between i and j monomeres
@@ -46,76 +68,117 @@ AnalizeAggregate::AnalizeAggregate(const Aggregate& source):
         }
         Tv = Tv + volumes[i]/(myspheres[i].Volume());
         Ts = Ts + surfaces[i]/(myspheres[i].Surface());
-        Dp += 2*myspheres[i].Radius();
         Dp3 += POW3(2*myspheres[i].Radius());
     }
 
     if (Nc > 0)
     {
-        cov = cov/Nc;
+        cov = cov/double(Nc);
     }
 
-    Tv = 1 - Tv / Np;
-    Ts = 1 - Ts / Np;
-    Dp = Dp / Np;
-    Dp3 = pow(Dp3 / Np , 1./3.);
+    Tv = 1 - Tv / double(Np);
+    Ts = 1 - Ts / double(Np);
+    Dp3 = pow(Dp3 / double(Np) , 1./3.);
 
-    DgOverDp=2*(*rg)/Dp;
-    DmOverDp=2*(*dm)/Dp;
-    DgeoOverDp=*rmax/Dp;
+    DmOverDp=*dm/(*Dp);
+    DgeoOverDp=2*(*rmax)/(*Dp);
+
     SurfaceOverVolume = *surfAgregat / *volAgregat;
     Npe = *volAgregat/(PI * POW3(Dp3)/6.0);
 }
 
 
-bool Statistics::keep(const Aggregate& Agg) const
+__attribute__((pure)) bool Aggregate::operator <(const Aggregate& a) const
 {
-    return !target[Agg.Np-1];
+   double d = *DgOverDp - *a.DgOverDp;
+   if (abs(d)<0.1)
+   {
+       d=0;
+   }
+   return d<0;
 }
 
 
-Statistics::Statistics(PhysicalModel& _physicalmodel):
+bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
+{
+
+    if (Agg.Np <10)
+    {
+        return false;
+    }
+
+    if (! targetNp[Agg.Np] ||
+        ! binary_search (SavedAggregates.begin(), SavedAggregates.end(), Agg)
+       )
+    {
+        AnalizedAggregate Analyzed(Agg);
+
+        size_t n(0);
+
+        // Search for the first bigger DgOverDp
+        n = lower_bound(SavedAggregates.begin(), SavedAggregates.end(),Agg)
+                    - SavedAggregates.begin();
+
+        // If this is the last I don't know which is bigger
+        if (n == SavedAggregates.size()-1 && !SavedAggregates.empty() && SavedAggregates[n]<Agg)
+        {
+                SavedAggregates.push_back(Analyzed);
+        }
+        else
+        {
+            SavedAggregates.insert(SavedAggregates.begin()+n,Analyzed);
+        }
+        targetNp[Agg.Np]=true;
+        return true;
+    }
+    return false;
+}
+
+
+StatisticStorage::StatisticStorage(PhysicalModel& _physicalmodel):
+    targetNp(),
+    SavedAggregates(),
     physicalmodel(&_physicalmodel)
 {
 }
 
-void Statistics::Init(void)
+void StatisticStorage::Init()
 {
-    target.assign(physicalmodel->N,false);
+    targetNp.assign(physicalmodel->N,false);
 }
 
-
-
-void Statistics::Analyze(const ListAggregat& current)
+void StatisticStorage::Analyze(const ListAggregat& current)
 {
+//    return;
     for (const Aggregate* Agg : current)
     {
-        if(keep(*Agg))
-        {
-            AnalizeAggregate Analized(*Agg);
-            append(Analized);
-        }
+        InsertIfNew(*Agg);
     }
 }
 
 
-void Statistics::append(const AnalizeAggregate& Agg)
-{
-    SavedAggregates.push_back(Agg);
-    target[Agg.Np-1] = true;
-}
 
-
-void Statistics::print(void) const
+void StatisticStorage::print() const
 {
     ofstream myfile;
     myfile.open ("testStats.dat", ios::out | ios::trunc);
     myfile << "Current number of saved aggregates : " << SavedAggregates.size() << endl;
-    for (size_t i=0 ; i<SavedAggregates.size();i++)
+    for (AnalizedAggregate Agg : SavedAggregates)
     {
-        myfile << SavedAggregates[i].DgOverDp << "\t" << SavedAggregates[i].Np << endl;
+        myfile << *Agg.DgOverDp << "\t" << Agg.Np << endl;
     }
     myfile.close();
 
 }
+
+/** Destructor */
+StatisticStorage::~StatisticStorage() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+{
+    if(physicalmodel->toBeDestroyed)
+    {
+        delete physicalmodel;
+    }
 }
+
+}  // namespace DLCA
+

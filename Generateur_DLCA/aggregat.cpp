@@ -1,5 +1,4 @@
-#include "aggregat.h"
-#include <math.h>
+#include "aggregat.hpp"
 #include <cmath>
 #include <iomanip>
 
@@ -15,8 +14,8 @@ namespace DLCA{
 
 const double PI = atan(1.0)*4;
 
-Aggregate::Aggregate(void):
-    storage_elem<13,ListAggregat>(),
+Aggregate::Aggregate():
+    storage_elem<15,ListAggregat>(),
     physicalmodel(new PhysicalModel),
     myspheres(),
     verlet(nullptr),
@@ -37,6 +36,8 @@ Aggregate::Aggregate(void):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    Dp(nullptr),
+    DgOverDp(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -44,7 +45,7 @@ Aggregate::Aggregate(void):
 }
 
 Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
-    storage_elem<13,ListAggregat>(),
+    storage_elem<15,ListAggregat>(),
     physicalmodel(&_physicalmodel),
     myspheres(),
     verlet(nullptr),
@@ -65,6 +66,8 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    Dp(nullptr),
+    DgOverDp(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -72,8 +75,8 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
 }
 
 
-Aggregate::Aggregate(ListAggregat& _storage, const int _N):
-    storage_elem<13,ListAggregat>(_storage, _N),
+Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
+    storage_elem<15,ListAggregat>(_storage, label),
     physicalmodel(_storage.physicalmodel),
     myspheres(),
     verlet(nullptr),
@@ -94,16 +97,20 @@ Aggregate::Aggregate(ListAggregat& _storage, const int _N):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    Dp(nullptr),
+    DgOverDp(nullptr),
     Np(0),
     InVerlet(false)
 {
     Init();
 }
 
-void Aggregate::Init(void)
+void Aggregate::Init()
 {
     if(!(external_storage==nullptr))
+    {
         external_storage->setpointers();
+    }
     setpointers();
 
     *rg=0.;  //Gyration Radius
@@ -125,7 +132,7 @@ void Aggregate::Init(void)
 }
 
 
-void Aggregate::setpointers(void)
+void Aggregate::setpointers()
 {
     rg=&(*Storage)[0][indexInStorage];  //Gyration Radius
     dm=&(*Storage)[1][indexInStorage];  //Mobility Diameter
@@ -140,19 +147,25 @@ void Aggregate::setpointers(void)
     rx=&(*Storage)[10][indexInStorage];
     ry=&(*Storage)[11][indexInStorage];
     rz=&(*Storage)[12][indexInStorage];
+    Dp=&(*Storage)[13][indexInStorage];
+    DgOverDp=&(*Storage)[14][indexInStorage];
 }
 
-void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const int _label, ListSphere& spheres,const double Dp)
+void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const size_t _label, ListSphere& spheres,const double D)
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+    }
     physicalmodel = &_physicalmodel;
 
     verlet = &_verlet;
     indexInStorage = _label;
 
     if(!(external_storage==nullptr))
+    {
         external_storage->setpointers();
+    }
     setpointers();
 
     if (physicalmodel->use_verlet)
@@ -161,13 +174,13 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
         InVerlet=true;
     }
     SetPosition(position);
-    spheres[_label].SetLabel(_label);
-    spheres[_label].InitVal(position, Dp/2);
+    spheres[_label].SetLabel(int(_label));
+    spheres[_label].InitVal(position, D/2);
     myspheres = ListSphere(spheres,{_label});
     Np = myspheres.size();
 
     UpdateDistances();
-    *dm = Dp;                   //Diamètre de mobilité
+    *dm = D;                   //Diamètre de mobilité
     Update();
 
 }
@@ -190,22 +203,52 @@ bool Aggregate::Contact(Aggregate& other) const noexcept
         for (const Sphere* mysphere: myspheres)
         {
             if (mysphere->Contact(*othersphere))
+            {
                 return true;
+            }
         }
     }
     return false;
 }
+
+/*
+double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
+{
+    double mindist(*lpm);
+    bool contact(false);
+
+    //$ For every sphere in the aggregate :
+    for (const Sphere* mysphere: myspheres)
+    {
+        vector<double> dists = mysphere->Collisions(other.myspheres, Vectdir);
+        for(const double& dist : dists)
+        {
+            if (0. <= dist && dist <= mindist)
+            {
+                mindist = dist;
+                contact = true;
+            }
+        }
+    }
+    if (contact)
+    {
+        return mindist;
+    }
+
+    return -1.;
+}
+*/
 
 double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
 {
     double mindist(*lpm);
     bool contact(false);
 
-    //$ Loop on all the spheres of the other aggregate
-    for (const Sphere* othersphere : other.myspheres)
+    //$ For every sphere in the aggregate :
+    for (const Sphere* mysphere: myspheres)
     {
-        //$ For every sphere in the aggregate :
-        for (const Sphere* mysphere: myspheres)
+        //$ Loop on all the spheres of the other aggregate
+        for (const Sphere* othersphere : other.myspheres)
         {
             double dist=mysphere->Collision(*othersphere, Vectdir);
             if (0. <= dist && dist <= mindist)
@@ -220,14 +263,12 @@ double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
     else
         return -1.;
 }
+
 //###############################################################################################################################
 
-const array<double, 3> Aggregate::GetPosition(void) const noexcept
+const array<double, 3> Aggregate::GetPosition() const noexcept
 {
-    array<double, 3> mypos;
-    mypos[0]=*x;
-    mypos[1]=*y;
-    mypos[2]=*z;
+    array<double, 3> mypos({*x,*y,*z});
     return mypos;
 }
 
@@ -240,7 +281,7 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
     if (InVerlet && physicalmodel->use_verlet)
     {
         //$ Update Verlet
-        array<int, 3> newindexVerlet = GetVerletIndex();
+        array<size_t, 3> newindexVerlet = GetVerletIndex();
 
         if (newindexVerlet != IndexVerlet)
         {
@@ -285,15 +326,18 @@ void Aggregate::Translate(const array<double, 3> vector) noexcept
     }
 }
 
-Aggregate::~Aggregate(void) noexcept
+Aggregate::~Aggregate() noexcept
 {
-    if(physicalmodel->toBeDestroyed)
-        delete physicalmodel;
-
     if (InVerlet && physicalmodel->use_verlet)
     {
         (*verlet)[IndexVerlet[0]][IndexVerlet[1]][IndexVerlet[2]].remove(indexInStorage);
     }
+
+    if(physicalmodel->toBeDestroyed)
+    {
+        delete physicalmodel;
+    }
+
 }
 
  __attribute__((pure)) double Aggregate::GetLpm() const noexcept
@@ -306,7 +350,7 @@ Aggregate::~Aggregate(void) noexcept
     return *volAgregat;
 }
 
- __attribute__((pure)) int Aggregate::GetLabel() const noexcept
+ __attribute__((pure)) size_t Aggregate::GetLabel() const noexcept
 {
     return indexInStorage;
 }
@@ -321,13 +365,12 @@ void Aggregate::Update()
 
     CalcRadius();
 
-    //$ Determination of the Radius of gyration of Agg using RayonGiration()
     RayonGiration();
 
     //$ Determination of Dm using ConvertRg2Dm
     *dm = physicalmodel->ConvertRg2DmFromStart(Np,*rg,*dm);
 
-    if (physicalmodel->ActiveModulephysique == 1)
+    if (physicalmodel->ActiveModulephysique)
     {
         double masse = physicalmodel->Rho*(*volAgregat);//Determination of the real mass of Agg
         double vit =  physicalmodel->velocity(masse);
@@ -341,17 +384,21 @@ void Aggregate::Update()
         *time_step = 1E-6;
     }
 
+    Statistics();
+
     if(!(external_storage==nullptr))
     {
         if (*rmax > external_storage->maxradius)
+        {
             external_storage->maxradius = *rmax;
+        }
     }
 }
 
 
 
 //############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
-void Aggregate::Volume(void)
+void Aggregate::Volume()
 {
     *volAgregat = *surfAgregat = 0.0; // Volume and surface of Agg Id
 
@@ -360,16 +407,16 @@ void Aggregate::Volume(void)
     surfaces.resize(Np);
 
     //$ For the Spheres i in Agg Id
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
         volumes[i] = *myspheres[i].volume; //Calculation of the volume of i
         surfaces[i] = *myspheres[i].surface;    //Calculation of the surface of i
     }
 
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
     {
-        for (int j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
+        for (size_t j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
         {
 
             double voli, volj, surfi, surfj;
@@ -396,12 +443,12 @@ void Aggregate::Volume(void)
     }
 }
 
-void Aggregate::MassCenter(void)
+void Aggregate::MassCenter()
 {
     array<double, 3> newpos({{0.,0.,0.}});
 
     //$ For the Spheres i in Agg Id
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
     {
         //$ Calculation of the total volume and surface of the aggregate
         double dx = *myspheres[i].rx-*rx;
@@ -415,8 +462,10 @@ void Aggregate::MassCenter(void)
     }
     //$ Filling of PosiGravite
 
-    for (int k = 0; k < 3; k++)
+    for (size_t k = 0; k < 3; k++)
+    {
         newpos[k] = newpos[k]/(*volAgregat);
+    }
 
     *rx = newpos[0]+*rx;
     *ry = newpos[1]+*ry;
@@ -426,11 +475,11 @@ void Aggregate::MassCenter(void)
                 *myspheres[0].y+*ry,
                 *myspheres[0].z+*rz);
 
-    const int loopsize(Np);
+    const size_t loopsize(Np);
     const double _rx(*rx);
     const double _ry(*ry);
     const double _rz(*rz);
-    for (int i = 0; i < loopsize; i++)
+    for (size_t i = 0; i < loopsize; i++)
     {
         double dx = *myspheres[i].rx - _rx;
         double dy = *myspheres[i].ry - _ry;
@@ -439,17 +488,19 @@ void Aggregate::MassCenter(void)
     }
 }
 
-void Aggregate::CalcRadius(void)
+void Aggregate::CalcRadius()
 {
 
     *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
                 // It is used to assimilate the aggregate to a sphere when checking for intersections
 
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
+    {
         *rmax=MAX(*rmax,*myspheres[i].r+distances[i][Np]);
+    }
 }
 
-void Aggregate::RayonGiration(void)
+void Aggregate::RayonGiration()
 {
     // This function determines the Gyration Radius of the Aggregate Id.
 
@@ -457,7 +508,7 @@ void Aggregate::RayonGiration(void)
     double Arg(0.);
     double Brg(0.);
 
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
     {
         //$ Calculation of Rg
         Arg = Arg + volumes[i]*POW2(distances[i][Np]); // distance to the gravity center
@@ -470,14 +521,14 @@ void Aggregate::RayonGiration(void)
 //###############################################################################################################################
 
 
-array<int, 3> Aggregate::GetVerletIndex() noexcept
+array<size_t, 3> Aggregate::GetVerletIndex() noexcept
 {
-    array<int, 3>  index({{0,0,0}});
-    double step = physicalmodel->GridDiv/physicalmodel->L;
+    array<size_t, 3>  index({{0,0,0}});
+    double step = double(physicalmodel->GridDiv)/physicalmodel->L;
 
-    index[0]=int(floor((*x)*step));
-    index[1]=int(floor((*y)*step));
-    index[2]=int(floor((*z)*step));
+    index[0]=size_t(floor((*x)*step));
+    index[1]=size_t(floor((*y)*step));
+    index[2]=size_t(floor((*z)*step));
 
     return index;
 }
@@ -486,7 +537,9 @@ array<int, 3> Aggregate::GetVerletIndex() noexcept
 Sphere::Sphere(const Aggregate& Agg) : Sphere()
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+    }
     physicalmodel = Agg.physicalmodel;
     InitVal(*Agg.x,*Agg.y,*Agg.z,*Agg.rmax);
 }
@@ -506,7 +559,7 @@ void Aggregate::Merge(Aggregate& other)
     for (Sphere* othersphere : other.myspheres)
     {
         // change the Label to the new owner
-        othersphere->SetLabel(indexInStorage);
+        othersphere->SetLabel(long(indexInStorage));
 
         // change the relative position to the new aggregate
         othersphere->RelativeTranslate(dx,dy,dz);
@@ -525,33 +578,37 @@ void Aggregate::Merge(Aggregate& other)
     Update();
 }
 
-void Aggregate::DecreaseLabel(void) noexcept
+void Aggregate::DecreaseLabel() noexcept
 {
     if (InVerlet)
+    {
         verlet->Remove(indexInStorage,GetVerletIndex());
+    }
 
     indexInStorage--;
     myspheres.DecreaseLabel();
 
     if (InVerlet)
+    {
         verlet->Add(indexInStorage,GetVerletIndex());
+    }
 }
 
-void Aggregate::UpdateDistances(void) noexcept
+void Aggregate::UpdateDistances() noexcept
 {
     distances.resize(Np);
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
     {
         // The last index is the distance to the mass center
         distances[i].resize(Np+1);
     }
 
-    for (int i = 0; i < Np; i++)
+    for (size_t i = 0; i < Np; i++)
     {
         // a sphere is that close to itself
         distances[i][i]=0;
 
-        for (int j = i+1; j < Np; j++)
+        for (size_t j = i+1; j < Np; j++)
         {
             // Compute the distance between sphere i and j without taking periodicity into account
             distances[i][j] = myspheres[i].RelativeDistance(myspheres[j]);
@@ -562,7 +619,7 @@ void Aggregate::UpdateDistances(void) noexcept
     }
 }
 
-void Aggregate::check(void)
+void Aggregate::check()
 {
     int k =0;
     for (const Sphere* mySphere : myspheres)
@@ -570,23 +627,27 @@ void Aggregate::check(void)
 
         const array<double, 3> pos = mySphere->Position();
         cout << k << "\t";
-        for (int j = 0; j < 3; j++)
+        for (size_t j = 0; j < 3; j++)
+        {
             cout << pos[j] << "\t";
+        }
         cout << mySphere->Radius() << endl;
         k++;
     }
-    for (int i=0; i<Np;i++)
+    for (size_t i=0; i<Np;i++)
     {
-        for (int j=i+1; j<Np;j++)
+        for (size_t j=i+1; j<Np;j++)
+        {
             cout << i << "\t"
                  << j << "\t"
                  << myspheres[i].Distance(myspheres[j]) << "\t"
                  << myspheres[i].Contact(myspheres[j]) << endl;
+        }
     }
 }
 
 Aggregate::Aggregate(const Aggregate& other):
-    storage_elem<13,ListAggregat>(other),
+    storage_elem<15,ListAggregat>(other),
     physicalmodel(other.physicalmodel),
     myspheres(other.myspheres),
     verlet(nullptr),
@@ -607,6 +668,8 @@ Aggregate::Aggregate(const Aggregate& other):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    Dp(nullptr),
+    DgOverDp(nullptr),
     Np(other.Np),
     InVerlet(false)
 {
@@ -614,9 +677,9 @@ Aggregate::Aggregate(const Aggregate& other):
 }
 
 Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable optimizations in containers */
-    storage_elem<13,ListAggregat>(other),
+    storage_elem<15,ListAggregat>(move(other)),
     physicalmodel(other.physicalmodel),
-    myspheres(other.myspheres),
+    myspheres(move(other.myspheres)),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
     distances(),
@@ -635,6 +698,8 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    Dp(nullptr),
+    DgOverDp(nullptr),
     Np(other.Np),
     InVerlet(false)
 {
@@ -646,5 +711,39 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
 }
 
 
-
+/** Copy assignment operator */
+/*
+Aggregate& Aggregate::operator= (const Aggregate& other)
+{
+    Aggregate tmp(other);      // re-use copy-constructor
+    *this = std::move(tmp); // re-use move-assignment
+    return *this;
 }
+*/
+/** Move assignment operator */
+Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
+{
+
+    if(physicalmodel->toBeDestroyed)
+    {
+        delete physicalmodel;
+    }
+
+    physicalmodel = other.physicalmodel;
+    other.physicalmodel=new PhysicalModel;
+
+    swap(myspheres,other.myspheres);
+    swap(distances,other.distances);
+    swap(volumes,other.volumes);
+    swap(surfaces,other.surfaces);
+    swap(IndexVerlet,other.IndexVerlet);
+    swap(Np,other.Np);
+
+    storage_elem<15,ListAggregat>::operator=(move(other));
+
+    setpointers();
+    return *this;
+}
+
+
+}  // namespace DLCA

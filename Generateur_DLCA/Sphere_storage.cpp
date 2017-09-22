@@ -20,13 +20,12 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 
 
-#include "Sphere.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include "Sphere.hpp"
 #include <cmath>
-#include <iostream>
+#include <cstdio>
+#include <cstdlib>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <utility>
 
@@ -36,45 +35,42 @@ namespace DLCA{
 
 /* Getters */
 
- __attribute__((pure)) double Sphere::Volume(void) const noexcept
+ __attribute__((pure)) double Sphere::Volume() const noexcept
 {
     return *volume;
 }
 
- __attribute__((pure)) double Sphere::Surface(void) const noexcept
+ __attribute__((pure)) double Sphere::Surface() const noexcept
 {
     return *surface;
 }
 
- __attribute__((pure)) double Sphere::Radius(void) const noexcept
+ __attribute__((pure)) double Sphere::Radius() const noexcept
 {
     return *r;
 }
 
-const array<double, 3> Sphere::Position(void) const noexcept
+const array<double, 3> Sphere::Position() const noexcept
 {
-    array<double, 3> mypos;
-    mypos[0]=*x;
-    mypos[1]=*y;
-    mypos[2]=*z;
+    array<double, 3> mypos({*x,*y,*z});
     return mypos;
 }
 
 /* Setters */
 
-void Sphere::SetLabel(const int value) noexcept
+void Sphere::SetLabel(const long value) noexcept
 {
     AggLabel = value;
 }
 
-void Sphere::DecreaseLabel(void) noexcept
+void Sphere::DecreaseLabel() noexcept
 {
     AggLabel--;
 }
 
-void Sphere::Translate(const double xnew,const double ynew,const double znew) noexcept
+void Sphere::Translate(const double transx,const double transy,const double transz) noexcept
 {
-    SetPosition(*x + xnew, *y + ynew, *z + znew);
+    SetPosition(*x + transx, *y + transy, *z + transz);
 }
 
 void Sphere::Translate(const array<double, 3> trans) noexcept
@@ -82,23 +78,23 @@ void Sphere::Translate(const array<double, 3> trans) noexcept
     SetPosition(*x + trans[0], *y + trans[1], *z + trans[2]);
 }
 
-void Sphere::RelativeTranslate(const double xnew,const double ynew,const double znew) noexcept
+void Sphere::RelativeTranslate(const double transx,const double transy,const double transz) noexcept
 {
-    *rx += xnew;
-    *ry += ynew;
-    *rz += znew;
+    *rx += transx;
+    *ry += transy;
+    *rz += transz;
 }
 
 /* Alias for different type of arguments*/
 
-void Sphere::SetPosition(const array<double, 3> position) noexcept
+void Sphere::SetPosition(const array<double, 3> newposition) noexcept
 {
-    SetPosition(position[0],position[1],position[2]);
+    SetPosition(newposition[0],newposition[1],newposition[2]);
 }
 
 /* Basic initializer */
 
-void Sphere::InitVal(void)
+void Sphere::InitVal()
 {
     InitVal(0, 0, 0, 0.);
 }
@@ -114,9 +110,9 @@ void Sphere::InitVal(const double newx,const double newy,const double newz,const
     UpdateVolAndSurf();
 }
 
-void Sphere::InitVal(const array<double, 3> newp,const double newr)
+void Sphere::InitVal(const array<double, 3> newposition,const double newr)
 {
-    InitVal(newp[0],newp[1],newp[2],newr);
+    InitVal(newposition[0],newposition[1],newposition[2],newr);
 }
 
 /* format */
@@ -142,7 +138,7 @@ void Sphere::Aff(const double coef) const
 
 /* Storage specific */
 
-void Sphere::setpointers(void)
+void Sphere::setpointers()
 {
     x = &(*Storage)[0][indexInStorage];
     y = &(*Storage)[1][indexInStorage];
@@ -159,7 +155,7 @@ void Sphere::setpointers(void)
 
 
 /** Default constructor in local storage */
-Sphere::Sphere(void):
+Sphere::Sphere():
     storage_elem<9,ListSphere>(),
     x(nullptr),
     y(nullptr),
@@ -199,10 +195,10 @@ Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double new
 {
     InitVal(newx, newy, newz, newr);
 }
-Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 3> newp,const double newr) : Sphere(_physicalmodel,newp[0],newp[1],newp[2],newr){}
+Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 3> newposition,const double newr) : Sphere(_physicalmodel,newposition[0],newposition[1],newposition[2],newr){}
 
 /** Constructor with external storage */
-Sphere::Sphere(ListSphere& aggregat,const int id):
+Sphere::Sphere(ListSphere& aggregat,const size_t id):
     storage_elem<9,ListSphere>(aggregat,id),
     x(nullptr),
     y(nullptr),
@@ -267,10 +263,12 @@ Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimiza
 }
 
 /** Destructor */
-Sphere::~Sphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+Sphere::~Sphere() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+    }
 }
 
 /** Copy assignment operator */
@@ -285,15 +283,21 @@ Sphere& Sphere::operator= (const Sphere& other)
 Sphere& Sphere::operator= (Sphere&& other) noexcept
 {
     if(physicalmodel->toBeDestroyed)
+    {
         delete physicalmodel;
+    }
 
-    *this = static_cast<Sphere&>(storage_elem<9,ListSphere>::operator=(other));
+
     physicalmodel = other.physicalmodel;
     AggLabel = other.AggLabel;
-    setpointers();
-    other.setpointers();
     other.AggLabel=-1;
     other.physicalmodel=new PhysicalModel;
+
+    storage_elem<9,ListSphere>::operator=(move(other));
+
+    setpointers();
+
     return *this;
 }
-}
+}  // namespace DLCA
+

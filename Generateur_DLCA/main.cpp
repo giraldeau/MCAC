@@ -1,8 +1,8 @@
 #ifdef WITH_GUI
 #include <QApplication>
 #endif
-#include "mainwindow.h"
-#include <stdio.h>
+#include "mainwindow.hpp"
+#include <cstdio>
 #include <iostream>
 
 using namespace std;
@@ -13,19 +13,15 @@ int main(int argc, char *argv[])
     {
         return DLCA::No_GUI(argc, argv);
     }
-    else
-    {
 #ifdef WITH_GUI
-        QApplication a(argc, argv);
-        MainWindow w;
-        w.show();
+    QApplication a(argc, argv);
+    MainWindow w;
+    w.show();
 
-        return a.exec();
+    return a.exec();
 #else
-        cout << "Missing argument : param file" << endl;
+    cout << "Missing argument : param file" << endl;
+    return 1;
 #endif
 
-    }
-
-    return 1;
 }

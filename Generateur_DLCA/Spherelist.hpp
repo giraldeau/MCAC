@@ -1,11 +1,12 @@
 #ifndef SPHERELIST_H
 #define SPHERELIST_H
 
-#include "Sphere.h"
-#include "Spherelist.h"
-#include "storagelist.h"
-#include "physical_model.h"
-#include "IO.h"
+#include "IO.hpp"
+#include "Sphere.hpp"
+#include "physical_model.hpp"
+#include "storagelist.hpp"
+
+
 
 
 /*
@@ -50,28 +51,29 @@ class ListSphere : public storage_list<9,Sphere>
 
     public:
 
-        void Init(PhysicalModel& _physicalmodel, const int _size);
-        void DecreaseLabel(void) noexcept;
+        void Init(PhysicalModel& _physicalmodel, size_t _size);
+        void DecreaseLabel() noexcept;
 
-        void CroissanceSurface(const double dt);
+        void CroissanceSurface(double dt);
 
-        void save(void) const;
-        void save(const bool finish) const;
+        void save() const;
+        void save(bool finish) const;
         std::vector<double> FormatPositionData() const;
         std::vector<double> FormatRadiusData() const;
-        std::vector<int>    FormatLabelData() const;
+        std::vector<long>    FormatLabelData() const;
 
     /* Storage specific */
     private:
-        void setpointers(void);
+        void setpointers();
 
     public:
         /** Default constructor in local storage */
-        ListSphere(void);
-        ListSphere(PhysicalModel& _physicalmodel, const int _size);
+        ListSphere();
+        explicit ListSphere(PhysicalModel& _physicalmodel, size_t _size);
 
         /** Constructor with external storage */
-        ListSphere(ListSphere& parent,std::vector<int> ListIndex);
+        explicit ListSphere(ListSphere& parent,std::vector<size_t>& _index);
+        explicit ListSphere(ListSphere& parent,std::vector<size_t> _index);
 
         /** Copy constructor */
         ListSphere(const ListSphere& other);
@@ -80,7 +82,7 @@ class ListSphere : public storage_list<9,Sphere>
         ListSphere (ListSphere&&) noexcept; /* noexcept needed to enable optimizations in containers */
 
         /** Destructor */
-        ~ListSphere(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+        ~ListSphere() noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
         /** Copy assignment operator */
         ListSphere& operator= (const ListSphere& other);
@@ -93,6 +95,7 @@ class ListSphere : public storage_list<9,Sphere>
 
 };
 
-std::string filename(const int, const int);
-}
+std::string filename(int, int);
+}  // namespace DLCA
+
 #endif // SPHERELIST_H

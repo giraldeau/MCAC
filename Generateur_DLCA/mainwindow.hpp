@@ -1,11 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "physical_model.h"
-#include "statistics.h"
+#include "physical_model.hpp"
+#include "statistics.hpp"
 
-#include <vector>
 #include <array>
+#include <vector>
+
 
 #ifdef WITH_GUI
 
@@ -61,16 +62,17 @@ double Random();
 void CalculDistance(int id, double &distmin, int &aggcontact);
 int LectureSuiviTempo();
 int rechercheValTab();
-int Init(PhysicalModel&,Statistics&, ListAggregat&);
+size_t Init(PhysicalModel&,StatisticStorage&, ListAggregat&);
 void Fermeture();
 bool locale_with_dots();
 double latof(const char* _char);
 PhysicalModel LectureParams(const std::string& FichierParam);
 void Calcul(PhysicalModel&);
 void print(std::string str);
-int dirExists(const char *path);
+bool dirExists(const char *path);
 std::string extractPath(const std::string& file);
 
-}
+}  // namespace DLCA
+
 
 #endif // MAINWINDOW_H

@@ -1,13 +1,11 @@
 #ifndef AGGREGAT_H
 #define AGGREGAT_H
 
-#include "Sphere.h"
-#include "Spherelist.h"
-#include "aggregatList.h"
-#include "storage.h"
-#include "storagelist.h"
-
-#include <list>
+#include "Sphere.hpp"
+#include "Spherelist.hpp"
+#include "aggregatList.hpp"
+#include "storage.hpp"
+#include "storagelist.hpp"
 
 namespace DLCA{
 
@@ -16,14 +14,14 @@ class ListSphere;
 class Aggregate;
 class ListAggregat;
 class Verlet;
-class AnalizeAggregate;
+class AnalizedAggregate;
 
-class Aggregate : public storage_elem<13,ListAggregat>
+class Aggregate : public storage_elem<15,ListAggregat>
 {
 
     friend class ListAggregat;
-    friend class AnalizeAggregate;
-    friend class Statistics;
+    friend class AnalizedAggregate;
+    friend class StatisticStorage;
     friend class Sphere;
 
     private:
@@ -32,7 +30,7 @@ class Aggregate : public storage_elem<13,ListAggregat>
         ListSphere myspheres;
 
         Verlet* verlet;
-        std::array<int, 3> IndexVerlet;
+        std::array<size_t, 3> IndexVerlet;
 
         std::vector<std::vector <double > > distances;
         std::vector<double> volumes;
@@ -49,63 +47,71 @@ class Aggregate : public storage_elem<13,ListAggregat>
         double *x,*y,*z; // position of the gravity center
         double *rx,*ry,*rz; // position of the gravity center
 
-        int Np;     //Number of spheres
+        // for statistics filtering
+        double *Dp,*DgOverDp;
+
+        size_t Np;     //Number of spheres
 
         bool InVerlet;
 
+        /*
+        bool padding2,padding3,padding4;
+        int padding1;
+        */
+
     public:
 
-        void Init(void);
-        void Init(PhysicalModel& ,Verlet&,const std::array<double, 3> position ,const int _label, ListSphere&,double r);
+        void Init();
+        void Init(PhysicalModel& ,Verlet&, std::array<double, 3> position ,size_t _label, ListSphere&, double D);
 
         double GetLpm() const noexcept;
         double GetVolAgregat() const noexcept;
-        int GetLabel() const noexcept;
+        size_t GetLabel() const noexcept;
 
 
-        const std::array<double, 3> GetPosition(void) const noexcept;
-        std::array<int, 3> GetVerletIndex() noexcept;
+        const std::array<double, 3> GetPosition() const noexcept;
+        std::array<size_t, 3> GetVerletIndex() noexcept;
 
 
-        void SetPosition(const std::array<double, 3> position) noexcept;
-        void SetPosition(const double x,const double y,const double z) noexcept;
-        void Translate(const std::array<double, 3> vector) noexcept;
+        void SetPosition(std::array<double, 3> position) noexcept;
+        void SetPosition(double newx, double newy, double newz) noexcept;
+        void Translate(std::array<double, 3> vector) noexcept;
 
 
         void Update();
         void Volume();
         void MassCenter();
         void CalcRadius();
-        void RayonGiration(void);
+        void RayonGiration();
         bool Contact(Aggregate&) const noexcept;
         double Distance(Aggregate&, std::array<double,3> Vectdir) const;
         void Merge(Aggregate&);
-        void DecreaseLabel(void) noexcept;
+        void DecreaseLabel() noexcept;
 
-        void UpdateDistances(void) noexcept;
+        void UpdateDistances() noexcept;
 
-        void check(void);
+        void check();
+
+        // for statistics filtering
+        void Statistics();
+        bool operator <(const Aggregate&) const;
 
         /* Storage specific */
     private:
-        void setpointers(void);
+        void setpointers();
 
     public:
         /** Default constructor in local storage */
-        Aggregate(void);
-        Aggregate(PhysicalModel&);
+        Aggregate();
+        explicit Aggregate(PhysicalModel&);
 
         /** Constructor in local storage with initialization */
-        Aggregate(PhysicalModel&, const double x, const double y, const double z, const double r);
-        Aggregate(PhysicalModel&, const std::array<double, 3> position, const double r);
-        Aggregate(const Sphere&);
-
+        explicit Aggregate(PhysicalModel&, double x, double y, double z, double r);
+        explicit Aggregate(PhysicalModel&, std::array<double, 3> position, double r);
+        explicit Aggregate(Sphere&);
 
         /** Constructor with external storage */
-        Aggregate(ListSphere& Storage, const int id);
-        Aggregate(Sphere);
-        Aggregate(Aggregate Agg1, Aggregate Agg2);
-        Aggregate(ListAggregat&, const int label);
+        explicit Aggregate(ListAggregat&, size_t label);
 
         /** Copy constructor */
         Aggregate(const Aggregate&);
@@ -114,7 +120,7 @@ class Aggregate : public storage_elem<13,ListAggregat>
         Aggregate (Aggregate&&) noexcept; /* noexcept needed to enable optimizations in containers */
 
         /** Destructor */
-        ~Aggregate(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+        ~Aggregate() noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
         /** Copy assignment operator */
         Aggregate& operator= (const Aggregate& other);
@@ -122,6 +128,7 @@ class Aggregate : public storage_elem<13,ListAggregat>
         /** Move assignment operator */
         Aggregate& operator= (Aggregate&& other) noexcept;
 };
-}
+}  // namespace DLCA
+
 
 #endif // AGGREGAT_H

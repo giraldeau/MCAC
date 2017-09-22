@@ -20,13 +20,12 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 
 
-#include "Sphere.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include "Sphere.hpp"
 #include <cmath>
-#include <iostream>
+#include <cstdio>
+#include <cstdlib>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -116,7 +115,7 @@ __attribute__((pure)) double Sphere::RelativeDistance(const double otherx, const
 const double PI = atan(1.0)*4;
 const double facvol = 4*PI/3;
 const double facsurf = 4*PI;
-void Sphere::UpdateVolAndSurf(void) noexcept
+void Sphere::UpdateVolAndSurf() noexcept
 {
     if (AggLabel > -1)
     {
@@ -140,7 +139,130 @@ void Sphere::UpdateVolAndSurf(void) noexcept
      return (distance - dist_contact <= 1e-28);
  }
 
-  __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,3> vd) const
+  __attribute__((pure)) vector<double> Sphere::Collisions(const ListSphere& list,const array<double,3> vectordir) const
+{
+      /*
+       * We use a change of axis system
+       * the center is placed on the mobil sphere
+       * the x axis is chosen to be the movement vector
+       *
+       * Thus we have two rotation to perform : one around z and one around y
+       *
+       * Then a collision is easy to detect :
+       * The distance to the x axis must be less than the sum of the radius
+       *
+       * Moreover we are only interested in collision that can happend in the future,
+       * wich is also easy to detect (x coordinate must be positive)
+       *
+       * Finally we consider 27 possible version of the other sphere in order to take into account
+       * any periodicity effect.
+      */
+      if (true)
+      {
+          vector<double> distToCollision;
+          distToCollision.resize(list.size());
+          for (size_t i=0; i<list.size();i++)
+          {
+              distToCollision[i] = Collision(list[i],vectordir);
+          }
+          return distToCollision;
+      }
+
+
+      double L = physicalmodel->L;
+
+      double anglez = -atan2(vectordir[1],vectordir[0]);
+      array < array < double, 3>, 3> rotz{};
+      rotz[0] = {cos(anglez), -sin(anglez), 0};
+      rotz[1] = {sin(anglez),  cos(anglez), 0};
+      rotz[2] = {      0,        0, 1};
+
+      array < double, 3> tmp{};
+      for(size_t i = 0; i < 3; ++i)
+      {
+          tmp[i] = 0;
+          for(size_t j = 0; j < 3; ++j)
+          {
+              tmp[i] += rotz[i][j] * vectordir[j];
+          }
+      }
+
+      double angley = atan2(tmp[2],tmp[0]);
+      array < array < double, 3>, 3> roty{};
+      roty[0] = { cos(angley), 0, sin(angley)};
+      roty[1] = {       0, 1, 0      };
+      roty[2] = {-sin(angley), 0, cos(angley)};
+
+      array < array < double, 3>, 3> matrot{};
+      for(size_t i = 0; i < 3; ++i)
+      {
+          for(size_t j = 0; j < 3; ++j)
+          {
+              matrot[i][j]=0;
+              for(size_t k = 0; k < 3; ++k)
+              {
+                  matrot[i][j] += roty[i][k] * rotz[k][j];
+              }
+          }
+      }
+
+      vector<double> distToCollision;
+      distToCollision.reserve(list.size());
+      for (const Sphere* c : list)
+      {
+
+          double dist_contact = POW2(*r + *c->r);
+          double minval=10*L;
+          bool collision = false;
+
+          for (int i=-1;i<=1;i++)
+          {
+              for (int j=-1;j<=1;j++)
+              {
+                  for (int k=-1;k<=1;k++)
+                  {
+                      for(size_t l = 0; l < 3; ++l)
+                      {
+                          tmp[l] = matrot[l][0] * (*c->x - *x + i*L)
+                                 + matrot[l][1] * (*c->y - *y + j*L)
+                                 + matrot[l][2] * (*c->z - *z + k*L);
+                      }
+                      double dist1 = POW2(tmp[1]) + POW2(tmp[2]);
+
+                      // collision is possible
+                      if (dist1 > dist_contact)
+                      {
+                        continue;
+                      }
+
+                      // in the future
+                      if (tmp[0] <0.)
+                      {
+                        continue;
+                      }
+
+                      collision =true;
+
+                      double sol = dist_contact - dist1;
+                      sol = tmp[0] - sqrt(sol);
+
+                      minval = MIN(minval,sol);
+                  }
+              }
+          }
+          if (collision)
+          {
+              distToCollision.push_back(minval);
+          }
+          else
+          {
+            distToCollision.push_back(-1.);
+          }
+      }
+      return distToCollision;
+}
+
+  __attribute__((pure)) double Sphere::Collision(const Sphere& c,const array<double,3> vectordir) const
   {
       /*
        * We use a change of axis system
@@ -160,50 +282,53 @@ void Sphere::UpdateVolAndSurf(void) noexcept
       */
 
       double L = physicalmodel->L;
-      double dist_contact = POW2(*r + *c.r);
 
-      array < array < double, 3>, 3> rotz;
-      double anglez = -atan2(vd[1],vd[0]);
+      double anglez = -atan2(vectordir[1],vectordir[0]);
+      array < array < double, 3>, 3> rotz{};
       rotz[0] = {cos(anglez), -sin(anglez), 0};
       rotz[1] = {sin(anglez),  cos(anglez), 0};
       rotz[2] = {      0,        0, 1};
 
-      array < double, 3> tmp;
-      for(int i = 0; i < 3; ++i)
+      array < double, 3> tmp{};
+      for(size_t i = 0; i < 3; ++i)
       {
           tmp[i] = 0;
-          for(int j = 0; j < 3; ++j)
+          for(size_t j = 0; j < 3; ++j)
           {
-              tmp[i] += rotz[i][j] * vd[j];
+              tmp[i] += rotz[i][j] * vectordir[j];
           }
       }
 
-      array < array < double, 3>, 3> roty;
       double angley = atan2(tmp[2],tmp[0]);
+      array < array < double, 3>, 3> roty{};
       roty[0] = { cos(angley), 0, sin(angley)};
       roty[1] = {       0, 1, 0      };
       roty[2] = {-sin(angley), 0, cos(angley)};
 
-      array < array < double, 3>, 3> matrot;
-      for(int i = 0; i < 3; ++i)
-          for(int j = 0; j < 3; ++j)
+      array < array < double, 3>, 3> matrot{};
+      for(size_t i = 0; i < 3; ++i)
+      {
+          for(size_t j = 0; j < 3; ++j)
           {
               matrot[i][j]=0;
-              for(int k = 0; k < 3; ++k)
+              for(size_t k = 0; k < 3; ++k)
               {
                   matrot[i][j] += roty[i][k] * rotz[k][j];
               }
           }
+      }
 
-
+      double dist_contact = POW2(*r + *c.r);
       double minval=10*L;
       bool collision = false;
 
-      for (int i=-1;i<=1;i++) {
-          for (int j=-1;j<=1;j++) {
-              for (int k=-1;k<=1;k++) {
-
-                  for(int l = 0; l < 3; ++l)
+      for (int i=-1;i<=1;i++)
+      {
+          for (int j=-1;j<=1;j++)
+          {
+              for (int k=-1;k<=1;k++)
+              {
+                  for(size_t l = 0; l < 3; ++l)
                   {
                       tmp[l] = matrot[l][0] * (*c.x - *x + i*L)
                              + matrot[l][1] * (*c.y - *y + j*L)
@@ -213,11 +338,15 @@ void Sphere::UpdateVolAndSurf(void) noexcept
 
                   // collision is possible
                   if (dist1 > dist_contact)
+                  {
                     continue;
+                  }
 
                   // in the future
                   if (tmp[0] <0.)
+                  {
                     continue;
+                  }
 
                   collision =true;
 
@@ -229,9 +358,10 @@ void Sphere::UpdateVolAndSurf(void) noexcept
           }
       }
       if (collision)
-          return minval;
-      else
-        return -1.;
+      {
+        return minval;
+      }
+      return -1.;
 
 }
 
@@ -291,4 +421,5 @@ void Sphere::CroissanceSurface(const double dt)
     *volume = facvol*newR3;
     *surface = facsurf*newR2;
 }
-}
+}  // namespace DLCA
+
