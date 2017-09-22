@@ -1,4 +1,5 @@
 #include "aggregat.hpp"
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 
@@ -211,7 +212,7 @@ bool Aggregate::Contact(Aggregate& other) const noexcept
     return false;
 }
 
-/*
+
 double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
 {
     double mindist(*lpm);
@@ -221,11 +222,12 @@ double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
     for (const Sphere* mysphere: myspheres)
     {
         vector<double> dists = mysphere->Collisions(other.myspheres, Vectdir);
-        for(const double& dist : dists)
+        if (!dists.empty())
         {
-            if (0. <= dist && dist <= mindist)
+            double lmindist = *min_element(dists.begin(),dists.end());
+            if (lmindist <= mindist)
             {
-                mindist = dist;
+                mindist = lmindist;
                 contact = true;
             }
         }
@@ -236,32 +238,6 @@ double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
     }
 
     return -1.;
-}
-*/
-
-double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
-{
-    double mindist(*lpm);
-    bool contact(false);
-
-    //$ For every sphere in the aggregate :
-    for (const Sphere* mysphere: myspheres)
-    {
-        //$ Loop on all the spheres of the other aggregate
-        for (const Sphere* othersphere : other.myspheres)
-        {
-            double dist=mysphere->Collision(*othersphere, Vectdir);
-            if (0. <= dist && dist <= mindist)
-            {
-                mindist = dist;
-                contact = true;
-            }
-        }
-    }
-    if (contact)
-        return mindist;
-    else
-        return -1.;
 }
 
 //###############################################################################################################################
@@ -582,7 +558,7 @@ void Aggregate::DecreaseLabel() noexcept
 {
     if (InVerlet)
     {
-        verlet->Remove(indexInStorage,GetVerletIndex());
+        verlet->Remove(indexInStorage,IndexVerlet);
     }
 
     indexInStorage--;
@@ -590,7 +566,7 @@ void Aggregate::DecreaseLabel() noexcept
 
     if (InVerlet)
     {
-        verlet->Add(indexInStorage,GetVerletIndex());
+        verlet->Add(indexInStorage,IndexVerlet);
     }
 }
 

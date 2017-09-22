@@ -102,7 +102,8 @@ class Sphere : public storage_elem<9,ListSphere>
 
         bool Contact(const Sphere&) const noexcept;
 
-        double Collision(const Sphere&, std::array<double,3> vectordir) const;
+        std::pair<bool,double> CollisionR(const Sphere& c, std::array < std::array < double, 3>, 3> RotMat) const;
+        std::pair<bool,double> Collision(const Sphere&, std::array<double,3> vectordir) const;
         std::vector<double> Collisions(const ListSphere& list, std::array<double,3> vectordir) const;
 
         double Intersection(const Sphere& c, double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
@@ -140,6 +141,9 @@ class Sphere : public storage_elem<9,ListSphere>
         Sphere& operator= (Sphere&& other) noexcept;
 
 };
+
+std::array < std::array < double, 3>, 3> GetRotMat(const std::array<double,3> vectordir);
+
 
 }  // namespace DLCA
 

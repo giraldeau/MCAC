@@ -69,9 +69,9 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 
     size_t NAgg = Init(physicalmodel, Stats, Aggregates);
 
-    size_t end = 5; //MAX(5,physicalmodel.N/200);
+    size_t end = 36; //MAX(5,physicalmodel.N/200);
     int it_without_contact=0;    int lim_it_without_contact = 20000;
-    int secondes(0);             double cpulimit = 100;
+    int secondes(0);             double cpulimit = 120;
 
     cout << endl
          << "Ending calcul when at least one of theses condition is true :" << endl

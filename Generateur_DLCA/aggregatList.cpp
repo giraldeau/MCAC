@@ -58,9 +58,9 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const size_t _size)
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-vector<size_t> ListAggregat::PotentialCollision(size_t MovingAgg,array<double,3> Vectdir, vector<size_t> SearchSpace) const
+vector< pair<size_t,double> > ListAggregat::SortSearchSpace(size_t MovingAgg,array<double,3> Vectdir, vector<size_t> SearchSpace) const
 {
-    vector<size_t> listOfPotentialCollision;
+    vector< pair<size_t,double> > SortedSearchSpace;
 
     Sphere SphereMe(*list[MovingAgg]);
     Sphere SphereOther(*list[MovingAgg]);
@@ -75,24 +75,29 @@ vector<size_t> ListAggregat::PotentialCollision(size_t MovingAgg,array<double,3>
                                 *list[AggOther]->z,
                                 *list[AggOther]->rmax);
 
-            double distForCollision;
+            auto pos = SortedSearchSpace.begin();
+            double dist = 0.;
+            bool collision = SphereMe.Contact(SphereOther);
 
-            if (SphereMe.Contact(SphereOther))
+            if (!collision)
             {
-                distForCollision = 0;
+                pair<bool,double> Collision = SphereMe.Collision(SphereOther,Vectdir);
+                if (Collision.first && Collision.second <= *list[MovingAgg]->lpm )
+                {
+                    collision=Collision.first;
+                    dist = Collision.second;
+                    pos = lower_bound (SortedSearchSpace.begin(), SortedSearchSpace.end(), dist,
+                                       [](pair<size_t,double> i1, double d){return i1.second < d;});
+                }
             }
-            else
+            if (collision)
             {
-                distForCollision = SphereMe.Collision(SphereOther,Vectdir);
-            }
-
-            if(0. <= distForCollision && distForCollision <= *list[MovingAgg]->lpm )
-            {
-                listOfPotentialCollision.push_back(AggOther);
+                pair<size_t,double> suspect = {AggOther,dist};
+                SortedSearchSpace.insert(pos,suspect);
             }
         }
     }
-    return listOfPotentialCollision;
+    return SortedSearchSpace;
 }
 
 vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<double,3> Vectdir) const
@@ -147,15 +152,28 @@ int ListAggregat::DistanceToNextContact(const size_t source, const array<double,
     vector<size_t> SearchSpace(GetSearchSpace(source,Vectdir));
 
     // Assimilate Aggregate as sphere to drasticly speed-up search
-    vector<size_t> Potential(PotentialCollision(source,Vectdir,SearchSpace));
-    //vector<size_t> PotentialContact(SearchSpace);
+    vector< pair<size_t,double> > Potential(SortSearchSpace(source,Vectdir,SearchSpace));
 
     int aggcontact(-1);
     distmin = *list[source]->lpm;
+    double mindistagg(0.);
 
     //$ loop on the agregates potentially in contact
-    for (const size_t & agg : Potential) //For every aggregate that could be in contact
+    for (const pair<size_t,double> & suspect : Potential) //For every aggregate that could be in contact
     {
+        size_t agg=suspect.first;
+        double distagg=suspect.second;
+
+        // We already found the closest one
+        if (aggcontact>=0)
+        {
+            double secu = 2*(*list[aggcontact]->rmax + *list[source]->rmax);
+            if (distagg - mindistagg > secu)
+            {
+                return aggcontact;
+            }
+        }
+        /*
         // If two aggragates are already in contact due to surface growing
         if (list[source]->Contact(*list[agg]))
         {
@@ -164,11 +182,13 @@ int ListAggregat::DistanceToNextContact(const size_t source, const array<double,
             cout << "This is probably due to surface growing" << endl;
             return int(agg);
         }
+        */
         double dist = list[source]->Distance(*list[agg],Vectdir);
         if (dist >= 0 && dist <= distmin)
         {
             distmin = dist;
             aggcontact = int(agg); //Prise en compte de l'image par translation d'un agrégat cible
+            mindistagg = distagg;
         }
     }
 
@@ -218,7 +238,7 @@ size_t ListAggregat::Merge(const size_t first, const size_t second)
 
     if (list[removed]->InVerlet)
     {
-        verlet.Remove(removed,list[removed]->GetVerletIndex());
+        verlet.Remove(removed,list[removed]->IndexVerlet);
         list[removed]->InVerlet = false;
     }
 
