@@ -622,6 +622,7 @@ void Aggregate::check()
     }
 }
 
+/** Copy constructor */
 Aggregate::Aggregate(const Aggregate& other):
     storage_elem<15,ListAggregat>(other),
     physicalmodel(other.physicalmodel),

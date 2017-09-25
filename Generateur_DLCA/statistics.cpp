@@ -107,53 +107,127 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
         return false;
     }
 
-    if (! targetNp[Agg.Np] ||
-        ! binary_search (SavedAggregates.begin(), SavedAggregates.end(), Agg)
-       )
+    auto ret = FractalLaw[Agg.Np].emplace(*Agg.DgOverDp);
+
+    return ret.second;
+
+    /*
+    if (SavedAggregates[Agg.Np].empty())
+    {
+        AnalizedAggregate Analyzed(Agg);
+        SavedAggregates[Agg.Np].push_back(Analyzed);
+        return true;
+    }
+
+    if ( ! binary_search (SavedAggregates[Agg.Np].begin(), SavedAggregates[Agg.Np].end(), Agg)  )
     {
         AnalizedAggregate Analyzed(Agg);
 
         size_t n(0);
 
         // Search for the first bigger DgOverDp
-        n = lower_bound(SavedAggregates.begin(), SavedAggregates.end(),Agg)
-                    - SavedAggregates.begin();
+        n = lower_bound(SavedAggregates[Agg.Np].begin(), SavedAggregates[Agg.Np].end(),Agg)
+                    - SavedAggregates[Agg.Np].begin();
 
         // If this is the last I don't know which is bigger
-        if (n == SavedAggregates.size()-1 && !SavedAggregates.empty() && SavedAggregates[n]<Agg)
+        if (n == SavedAggregates[Agg.Np].size()-1 && !SavedAggregates[Agg.Np].empty() && SavedAggregates[Agg.Np][n]<Agg)
         {
-                SavedAggregates.push_back(Analyzed);
+                SavedAggregates[Agg.Np].push_back(Analyzed);
         }
         else
         {
-            SavedAggregates.insert(SavedAggregates.begin()+n,Analyzed);
+            SavedAggregates[Agg.Np].insert(SavedAggregates[Agg.Np].begin()+n,Analyzed);
         }
-        targetNp[Agg.Np]=true;
         return true;
     }
     return false;
+    */
+}
+
+tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<double>& y)
+{
+    double   sumx = 0.0;                        /* sum of x                      */
+    double   sumx2 = 0.0;                       /* sum of x**2                   */
+    double   sumxy = 0.0;                       /* sum of x * y                  */
+    double   sumy = 0.0;                        /* sum of y                      */
+    double   sumy2 = 0.0;                       /* sum of y**2                   */
+
+    size_t n = x.size();
+
+
+   for (size_t i=0;i<n;i++)
+   {
+      double X(log(x[i]));
+      double Y(log(y[i]));
+      sumx  += X;
+      sumx2 += POW2(X);
+      sumxy += X * Y;
+      sumy  += Y;
+      sumy2 += POW2(Y);
+   }
+
+
+
+   double denom = (n * sumx2 - POW2(sumx));
+   if (n==0 || abs(denom) < 1e-9) {
+       // singular matrix. can't solve the problem.
+       tuple<bool,double,double,double> res{false,0.,0.,0.};
+       return res;
+   }
+
+   double a = (n * sumxy  -  sumx * sumy) / denom;
+   double b = (sumy * sumx2  -  sumx * sumxy) / denom;
+
+   /* compute correlation coeff     */
+   double r = (sumxy - sumx * sumy / n) /
+            POW2((sumx2 - POW2(sumx)/n) *
+            (sumy2 - POW2(sumy)/n));
+
+   tuple<bool,double,double,double> res{true,a,b,r};
+   return res;
 }
 
 
 StatisticStorage::StatisticStorage(PhysicalModel& _physicalmodel):
-    targetNp(),
     SavedAggregates(),
+    FractalLaw(),
     physicalmodel(&_physicalmodel)
 {
 }
 
 void StatisticStorage::Init()
 {
-    targetNp.assign(physicalmodel->N,false);
+    FractalLaw.resize(physicalmodel->N);
 }
 
 void StatisticStorage::Analyze(const ListAggregat& current)
 {
 //    return;
+
+    vector<double> Nps;
+    vector<double> DgOverDps;
+    Nps.reserve(current.size());
+    DgOverDps.reserve(current.size());
+
     for (const Aggregate* Agg : current)
     {
         InsertIfNew(*Agg);
+        Nps.push_back(double(Agg->Np));
+        DgOverDps.push_back(*Agg->DgOverDp);
     }
+
+
+    tuple<bool,double,double,double> InstantaneousFractalLaw = linreg(DgOverDps,Nps);
+    if(get<0>(InstantaneousFractalLaw))
+    {
+        cout << exp(get<2>(InstantaneousFractalLaw))
+             << " * x^ "
+             << get<1>(InstantaneousFractalLaw)
+             << "  --- r= "
+             << get<3>(InstantaneousFractalLaw) << endl;
+    }
+
+
 }
 
 
@@ -162,12 +236,52 @@ void StatisticStorage::print() const
 {
     ofstream myfile;
     myfile.open ("testStats.dat", ios::out | ios::trunc);
-    myfile << "Current number of saved aggregates : " << SavedAggregates.size() << endl;
-    for (AnalizedAggregate Agg : SavedAggregates)
+
+    size_t total(0);
+    /*
+    for (const set <AnalizedAggregate>& ListAgg : SavedAggregates)
     {
-        myfile << *Agg.DgOverDp << "\t" << Agg.Np << endl;
+        total += ListAgg.size();
+        for (const AnalizedAggregate& Agg : ListAgg)
+        {
+            myfile << *Agg.DgOverDp << "\t" << Agg.Np << endl;
+        }
+    }
+    */
+    for (size_t Np=0;Np<FractalLaw.size();Np++)
+    {
+        total += FractalLaw[Np].size();
+        for (const double& DgOverDp : FractalLaw[Np])
+        {
+            myfile << DgOverDp << "\t" << Np << endl;
+        }
     }
     myfile.close();
+    cout << "Total number of saved aggregates : " << total << endl;
+
+
+    vector<double> Nps;
+    vector<double> DgOverDps;
+    Nps.reserve(total);
+    DgOverDps.reserve(total);
+    for (size_t Np=0;Np<FractalLaw.size();Np++)
+    {
+        for (const double& DgOverDp : FractalLaw[Np])
+        {
+            Nps.push_back(double(Np));
+            DgOverDps.push_back(DgOverDp);
+        }
+    }
+
+    tuple<bool,double,double,double> CompleteFractalLaw = linreg(DgOverDps,Nps);
+    if(get<0>(CompleteFractalLaw))
+    {
+        cout << exp(get<2>(CompleteFractalLaw))
+             << " * x^ "
+             << get<1>(CompleteFractalLaw)
+             << "  --- r= "
+             << get<3>(CompleteFractalLaw) << endl;
+    }
 
 }
 

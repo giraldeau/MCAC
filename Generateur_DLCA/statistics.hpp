@@ -5,6 +5,8 @@
 #include "aggregatList.hpp"
 
 #include <vector>
+#include <set>
+
 
 namespace DLCA{
 
@@ -38,11 +40,10 @@ public:
 class StatisticStorage
 {
 private:
-
-    std::vector<bool> targetNp;
-
-    std::vector<AnalizedAggregate> SavedAggregates;
+    std::vector< std::set<AnalizedAggregate> > SavedAggregates;
     PhysicalModel* physicalmodel;
+    std::vector< std::set<double> > FractalLaw;
+
 
 public:
 
