@@ -116,18 +116,22 @@ ListSphere::ListSphere(ListSphere& parent,vector<size_t> _index):
 }
 /** Copy constructor */
 ListSphere::ListSphere(const ListSphere& other):
-    storage_list<9,Sphere>(other),
+    storage_list<9,Sphere>(other,*this),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     Writer (new ThreadedIO(*physicalmodel,size()))
 {
+    for (Sphere* s: list)
+    {
+        s->physicalmodel = physicalmodel;
+    }
     setpointers();
 }
 
 /** Move constructor */
 ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
-    storage_list<9,Sphere>(other),
+    storage_list<9,Sphere>(move(other)),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),

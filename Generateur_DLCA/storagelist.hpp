@@ -35,7 +35,11 @@ public:
     /** Constructor with external storage */
     explicit storage_list(storage_list& parent,std::vector<size_t> _index);
 
-    /** Copy constructor */
+    /** Copy constructor with external storage */
+    template<class mylist>
+    storage_list(const storage_list& other, mylist& owner);
+
+    /** Copy constructor in local storage */
     storage_list(const storage_list& other);
 
     /** Move constructor */
@@ -159,20 +163,24 @@ storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<siz
 
 /** Copy constructor */
 template <int N,class elem>
-storage_list<N,elem>::storage_list(const storage_list<N,elem>& other):
+template<class mylist>
+storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner):
     list(),
     Storage(new std::array< std::vector<double>, N>),
     external_storage(nullptr)
 {
     for (size_t i=0;i<N;i++)
     {
-        (*Storage)[i].assign((*other.Storage)[i].begin(),(*other.Storage)[i].end());
+        (*Storage)[i].reserve(other.size());
     }
-    list.reserve(other.size());
     const size_t listSize = other.size();
     for (size_t _size = 0; _size < listSize; _size++)
     {
-        list.push_back(new elem(*other.list[_size]));
+        for (size_t i=0;i<N;i++)
+        {
+            (*Storage)[i][_size] = (*other.Storage)[i][other.list[_size]->indexInStorage];
+        }
+        list.push_back(new elem(owner,_size));
     }
 }
 
@@ -255,10 +263,10 @@ void storage_list<N,elem>::remove(elem& ToBeRemoved)
 {
     const size_t id = ToBeRemoved.indexInStorage;
     delete list[id];
-    list.erase(list.begin()+id);
+    list.erase(list.begin()+long(id));
     for (size_t i=0;i<N;i++)
     {
-        (*Storage)[i].erase((*Storage)[i].begin()+id);
+        (*Storage)[i].erase((*Storage)[i].begin()+long(id));
     }
 }
 

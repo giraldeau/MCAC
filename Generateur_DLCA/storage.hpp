@@ -97,7 +97,7 @@ storage_elem<N,mystorage>::~storage_elem() noexcept /* explicitly specified dest
     {
         for (size_t j=0;j<N;j++)
         {
-            (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
+            (*Storage)[j].erase((*Storage)[j].begin() + long(indexInStorage));
         }
         delete Storage;
     }
@@ -122,7 +122,7 @@ storage_elem<N,mystorage>& storage_elem<N,mystorage>::operator=(storage_elem<N,m
     {
         for (size_t j=0;j<N;j++)
         {
-            (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
+            (*Storage)[j].erase((*Storage)[j].begin() + long(indexInStorage));
         }
         delete Storage;
     }

@@ -50,9 +50,9 @@ namespace DLCA{
     return *r;
 }
 
-const array<double, 3> Sphere::Position() const noexcept
+ __attribute__((pure)) const array<double, 3> Sphere::Position() const noexcept
 {
-    array<double, 3> mypos({*x,*y,*z});
+    array<double, 3> mypos{{*x,*y,*z}};
     return mypos;
 }
 

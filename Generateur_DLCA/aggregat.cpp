@@ -17,6 +17,7 @@ const double PI = atan(1.0)*4;
 
 Aggregate::Aggregate():
     storage_elem<15,ListAggregat>(),
+    StatisicsData(),
     physicalmodel(new PhysicalModel),
     myspheres(),
     verlet(nullptr),
@@ -37,8 +38,6 @@ Aggregate::Aggregate():
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    Dp(nullptr),
-    DgOverDp(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -47,6 +46,7 @@ Aggregate::Aggregate():
 
 Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     storage_elem<15,ListAggregat>(),
+    StatisicsData(),
     physicalmodel(&_physicalmodel),
     myspheres(),
     verlet(nullptr),
@@ -67,8 +67,6 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    Dp(nullptr),
-    DgOverDp(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -78,6 +76,7 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
 
 Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
     storage_elem<15,ListAggregat>(_storage, label),
+    StatisicsData(),
     physicalmodel(_storage.physicalmodel),
     myspheres(),
     verlet(nullptr),
@@ -98,8 +97,6 @@ Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    Dp(nullptr),
-    DgOverDp(nullptr),
     Np(0),
     InVerlet(false)
 {
@@ -135,21 +132,21 @@ void Aggregate::Init()
 
 void Aggregate::setpointers()
 {
-    rg=&(*Storage)[0][indexInStorage];  //Gyration Radius
-    dm=&(*Storage)[1][indexInStorage];  //Mobility Diameter
-    lpm=&(*Storage)[2][indexInStorage]; //Mean Free Path
-    time_step=&(*Storage)[3][indexInStorage];
-    rmax=&(*Storage)[4][indexInStorage];                   //Radius of the sphere containing Agg
-    volAgregat=&(*Storage)[5][indexInStorage];             //Etimation of the Aggregate's volume
-    surfAgregat=&(*Storage)[6][indexInStorage];            //Estimation of the sufrace of the aggregate
-    x=&(*Storage)[7][indexInStorage];
-    y=&(*Storage)[8][indexInStorage];
-    z=&(*Storage)[9][indexInStorage];
-    rx=&(*Storage)[10][indexInStorage];
-    ry=&(*Storage)[11][indexInStorage];
-    rz=&(*Storage)[12][indexInStorage];
-    Dp=&(*Storage)[13][indexInStorage];
-    DgOverDp=&(*Storage)[14][indexInStorage];
+    size_t myindex = GetLabel();
+
+    rg=&(*Storage)[0][myindex];  //Gyration Radius
+    dm=&(*Storage)[1][myindex];  //Mobility Diameter
+    lpm=&(*Storage)[2][myindex]; //Mean Free Path
+    time_step=&(*Storage)[3][myindex];
+    rmax=&(*Storage)[4][myindex];                   //Radius of the sphere containing Agg
+    volAgregat=&(*Storage)[5][myindex];             //Etimation of the Aggregate's volume
+    surfAgregat=&(*Storage)[6][myindex];            //Estimation of the sufrace of the aggregate
+    x=&(*Storage)[7][myindex];
+    y=&(*Storage)[8][myindex];
+    z=&(*Storage)[9][myindex];
+    rx=&(*Storage)[10][myindex];
+    ry=&(*Storage)[11][myindex];
+    rz=&(*Storage)[12][myindex];
 }
 
 void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const size_t _label, ListSphere& spheres,const double D)
@@ -183,6 +180,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     UpdateDistances();
     *dm = D;                   //Diamètre de mobilité
     Update();
+    fullStatistics();
 
 }
 
@@ -242,9 +240,9 @@ double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
 
 //###############################################################################################################################
 
-const array<double, 3> Aggregate::GetPosition() const noexcept
+ __attribute__((pure)) const array<double, 3> Aggregate::GetPosition() const noexcept
 {
-    array<double, 3> mypos({*x,*y,*z});
+     array<double, 3> mypos{{*x,*y,*z}};
     return mypos;
 }
 
@@ -261,9 +259,9 @@ void Aggregate::SetPosition(const double newx,const double newy,const double new
 
         if (newindexVerlet != IndexVerlet)
         {
-            verlet->Remove(indexInStorage,IndexVerlet);
+            verlet->Remove(GetLabel(),IndexVerlet);
             IndexVerlet = newindexVerlet;
-            verlet->Add(indexInStorage,IndexVerlet);
+            verlet->Add(GetLabel(),IndexVerlet);
         }
     }
 
@@ -306,7 +304,7 @@ Aggregate::~Aggregate() noexcept
 {
     if (InVerlet && physicalmodel->use_verlet)
     {
-            verlet->Remove(indexInStorage,IndexVerlet);
+            verlet->Remove(GetLabel(),IndexVerlet);
     }
 
     if(physicalmodel->toBeDestroyed)
@@ -360,7 +358,7 @@ void Aggregate::Update()
         *time_step = 1E-6;
     }
 
-    Statistics();
+    partialStatistics();
 
     if(!(external_storage==nullptr))
     {
@@ -535,7 +533,7 @@ void Aggregate::Merge(Aggregate& other)
     for (Sphere* othersphere : other.myspheres)
     {
         // change the Label to the new owner
-        othersphere->SetLabel(long(indexInStorage));
+        othersphere->SetLabel(long(GetLabel()));
 
         // change the relative position to the new aggregate
         othersphere->RelativeTranslate(dx,dy,dz);
@@ -552,13 +550,15 @@ void Aggregate::Merge(Aggregate& other)
 
     UpdateDistances();
     Update();
+    fullStatistics();
+
 }
 
 void Aggregate::DecreaseLabel() noexcept
 {
     if (InVerlet)
     {
-        verlet->Remove(indexInStorage,IndexVerlet);
+        verlet->Remove(GetLabel(),IndexVerlet);
     }
 
     indexInStorage--;
@@ -566,7 +566,7 @@ void Aggregate::DecreaseLabel() noexcept
 
     if (InVerlet)
     {
-        verlet->Add(indexInStorage,IndexVerlet);
+        verlet->Add(GetLabel(),IndexVerlet);
     }
 }
 
@@ -625,6 +625,7 @@ void Aggregate::check()
 /** Copy constructor */
 Aggregate::Aggregate(const Aggregate& other):
     storage_elem<15,ListAggregat>(other),
+    StatisicsData(other),
     physicalmodel(other.physicalmodel),
     myspheres(other.myspheres),
     verlet(nullptr),
@@ -645,16 +646,16 @@ Aggregate::Aggregate(const Aggregate& other):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    Dp(nullptr),
-    DgOverDp(nullptr),
     Np(other.Np),
     InVerlet(false)
 {
     setpointers();
 }
 
+/** Move constructor */
 Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable optimizations in containers */
     storage_elem<15,ListAggregat>(move(other)),
+    StatisicsData(move(other)),
     physicalmodel(other.physicalmodel),
     myspheres(move(other.myspheres)),
     verlet(nullptr),
@@ -675,8 +676,6 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    Dp(nullptr),
-    DgOverDp(nullptr),
     Np(other.Np),
     InVerlet(false)
 {
@@ -716,7 +715,9 @@ Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
     swap(IndexVerlet,other.IndexVerlet);
     swap(Np,other.Np);
 
-    storage_elem<15,ListAggregat>::operator=(move(other));
+
+    StatisicsData::operator=(move(static_cast<StatisicsData&>(other)));
+    storage_elem<15,ListAggregat>::operator=(move(static_cast<storage_elem<15,ListAggregat>&>(other)));
 
     setpointers();
     return *this;

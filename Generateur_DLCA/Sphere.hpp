@@ -142,7 +142,7 @@ class Sphere : public storage_elem<9,ListSphere>
 
 };
 
-std::array < std::array < double, 3>, 3> GetRotMat(const std::array<double,3> vectordir);
+std::array < std::array < double, 3>, 3> GetRotMat(std::array<double,3> vectordir);
 
 
 }  // namespace DLCA

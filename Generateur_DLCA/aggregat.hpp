@@ -4,8 +4,10 @@
 #include "Sphere.hpp"
 #include "Spherelist.hpp"
 #include "aggregatList.hpp"
+#include "statistics.hpp"
 #include "storage.hpp"
 #include "storagelist.hpp"
+
 
 namespace DLCA{
 
@@ -16,7 +18,9 @@ class ListAggregat;
 class Verlet;
 class AnalizedAggregate;
 
-class Aggregate : public storage_elem<15,ListAggregat>
+class Aggregate :
+        public storage_elem<15,ListAggregat>,
+        public StatisicsData
 {
 
     friend class ListAggregat;
@@ -46,9 +50,6 @@ class Aggregate : public storage_elem<15,ListAggregat>
 
         double *x,*y,*z; // position of the gravity center
         double *rx,*ry,*rz; // position of the gravity center
-
-        // for statistics filtering
-        double *Dp,*DgOverDp;
 
         size_t Np;     //Number of spheres
 
@@ -92,9 +93,8 @@ class Aggregate : public storage_elem<15,ListAggregat>
 
         void check();
 
-        // for statistics filtering
-        void Statistics();
-        bool operator <(const Aggregate&) const;
+        void partialStatistics();
+        void fullStatistics();
 
         /* Storage specific */
     private:

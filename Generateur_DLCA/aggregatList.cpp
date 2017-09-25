@@ -112,9 +112,9 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
         double mindist ( *list[source]->rmax + maxradius );
         array<double, 3> sourceposition = list[source]->GetPosition();
 
-        array<double, 3> Vector({lpm * Vectdir[0],
+        array<double, 3> Vector{{lpm * Vectdir[0],
                                  lpm * Vectdir[1],
-                                 lpm * Vectdir[2]});
+                                 lpm * Vectdir[2]}};
 
         SearchSpace = verlet.GetSearchSpace(sourceposition , mindist, Vector);
 
@@ -123,7 +123,7 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
         {
             if (SearchSpace[i]==source)
             {
-                SearchSpace.erase(SearchSpace.begin()+i);
+                SearchSpace.erase(SearchSpace.begin()+long(i));
                 return SearchSpace;
             }
         }
@@ -138,7 +138,7 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
     iota(SearchSpace.begin(), SearchSpace.end(), 0);
 
     // Except me
-    SearchSpace.erase(SearchSpace.begin()+source);
+    SearchSpace.erase(SearchSpace.begin()+long(source));
 
     return SearchSpace;
 }
@@ -167,7 +167,7 @@ int ListAggregat::DistanceToNextContact(const size_t source, const array<double,
         // We already found the closest one
         if (aggcontact>=0)
         {
-            double secu = 2*(*list[aggcontact]->rmax + *list[source]->rmax);
+            double secu = 2*(*list[size_t(aggcontact)]->rmax + *list[source]->rmax);
             if (distagg - mindistagg > secu)
             {
                 return aggcontact;
@@ -295,11 +295,11 @@ size_t ListAggregat::RandomPick(double &deltatemps, const double random)
 {
     //$ Pick a random sphere
     double valAlea=random*CumulativeTimeSteps[size()-1];
-    size_t n = lower_bound(CumulativeTimeSteps.begin(), CumulativeTimeSteps.end(), valAlea) - CumulativeTimeSteps.begin();
+    long n = lower_bound(CumulativeTimeSteps.begin(), CumulativeTimeSteps.end(), valAlea) - CumulativeTimeSteps.begin();
 
     deltatemps = CumulativeTimeSteps[size()-1];
 
-    return indexSortedTimeSteps[n];
+    return indexSortedTimeSteps[size_t(n)];
 }
 
 }// namespace DLCA

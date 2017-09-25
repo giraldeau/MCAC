@@ -55,7 +55,7 @@ public:
     double velocity(double masse) const;
     void print() const;
 
-    int xmfWrite() const;
+    auto xmfWrite() const;
 
 };
 

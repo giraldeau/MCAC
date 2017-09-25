@@ -258,7 +258,7 @@ shared_ptr<XdmfAttribute> Scalar(const std::string& name, const std::vector<T>& 
     return xdmfField;
 }
 
-shared_ptr<XdmfInformation> PhysicalModel::xmfWrite() const
+auto PhysicalModel::xmfWrite() const
 {
 
     shared_ptr<XdmfInformation> info = XdmfInformation::New("Physics", "Physical properties of the simulation");

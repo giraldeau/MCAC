@@ -108,9 +108,9 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         // -- Generating a random direction --
         double thetarandom = Random()*PI*2;
         double phirandom = acos(1-2*Random());
-        array<double,3> Vectdir({sin(phirandom)*cos(thetarandom),
+        array<double,3> Vectdir{{sin(phirandom)*cos(thetarandom),
                                  sin(phirandom)*sin(thetarandom),
-                                 cos(phirandom)});
+                                 cos(phirandom)}};
 
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
@@ -295,9 +295,9 @@ size_t Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat&
     {          
 
         //random position
-        array<double, 3> newpos({Random()*physicalmodel.L,
+        array<double, 3> newpos{{Random()*physicalmodel.L,
                                  Random()*physicalmodel.L,
-                                 Random()*physicalmodel.L});
+                                 Random()*physicalmodel.L}};
 
         //random size
         double x = Random();

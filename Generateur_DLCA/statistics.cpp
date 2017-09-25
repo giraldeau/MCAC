@@ -1,4 +1,6 @@
 #include "statistics.hpp"
+#include "aggregat.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -18,37 +20,23 @@ namespace DLCA{
 const double PI = atan(1.0)*4;
 
 
-void Aggregate::Statistics()
+void Aggregate::partialStatistics()
 {
-    *Dp=0.;
+    // This routine will be called for each update of the aggregate (and before full statistics)
+
+}
+
+
+void Aggregate::fullStatistics()
+{
+    // This routine will be called after each aggregation
+
+    Dp=0.;
     //$ For the Spheres i in Agg Id
     for (size_t i = 0; i < Np; i++)
     {
-        *Dp += myspheres[i].Radius();
     }
-    *Dp = 2*(*Dp) / double(Np);
-    *DgOverDp=2*(*rg)/(*Dp);
-}
 
-
-
-AnalizedAggregate::AnalizedAggregate(const Aggregate& source):
-    Aggregate::Aggregate(source),
-    Nc(0),
-    Dp3(0.),
-    DmOverDp(0.),
-    DgeoOverDp(0.),
-    SurfaceOverVolume(0.),
-    cov(0.),
-    Npe(0.),
-    Tv(0.),
-    Ts(0.)
-{
-    Analyze();
-}
-
-void AnalizedAggregate::Analyze()
-{
     //$ For the Spheres i in Agg Id
     for (size_t i = 0; i < Np; i++)
     {
@@ -68,6 +56,7 @@ void AnalizedAggregate::Analyze()
         }
         Tv = Tv + volumes[i]/(myspheres[i].Volume());
         Ts = Ts + surfaces[i]/(myspheres[i].Surface());
+        Dp += myspheres[i].Radius();
         Dp3 += POW3(2*myspheres[i].Radius());
     }
 
@@ -78,24 +67,32 @@ void AnalizedAggregate::Analyze()
 
     Tv = 1 - Tv / double(Np);
     Ts = 1 - Ts / double(Np);
+    Dp = 2 * Dp / double(Np);
     Dp3 = pow(Dp3 / double(Np) , 1./3.);
 
-    DmOverDp=*dm/(*Dp);
-    DgeoOverDp=2*(*rmax)/(*Dp);
+    DgOverDp=2*(*rg)/Dp;
+    DmOverDp=*dm/Dp;
+    DgeoOverDp=2*(*rmax)/Dp;
 
     SurfaceOverVolume = *surfAgregat / *volAgregat;
     Npe = *volAgregat/(PI * POW3(Dp3)/6.0);
 }
 
 
-__attribute__((pure)) bool Aggregate::operator <(const Aggregate& a) const
+ __attribute__((pure)) bool StatcmpAgg::operator() (const Aggregate& lhs, const Aggregate& rhs) const
 {
-   double d = *DgOverDp - *a.DgOverDp;
-   if (abs(d)<0.1)
-   {
-       d=0;
-   }
-   return d<0;
+    Statcmpdouble cmp;
+    return cmp(lhs.DgOverDp, rhs.DgOverDp);
+}
+
+ __attribute__((pure)) bool Statcmpdouble::operator() (const double& lhs, const double& rhs) const
+{
+    double d = lhs/rhs-1;
+    if (abs(d)<0.1)
+    {
+        d=0;
+    }
+    return d<0;
 }
 
 
@@ -104,44 +101,20 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
 
     if (Agg.Np <10)
     {
-        return false;
+//        return false;
     }
 
-    auto ret = FractalLaw[Agg.Np].emplace(*Agg.DgOverDp);
+    auto ret = FractalLaw[Agg.Np].emplace(Agg.DgOverDp);
+    if(ret.second)
+    {
+        auto ret2 = SavedAggregates[Agg.Np].emplace(Agg);
+        if(!ret2.second)
+        {
+            cout<< "I added a DgOverDp but did not save the aggregate !" << endl;
+        }
+    }
 
     return ret.second;
-
-    /*
-    if (SavedAggregates[Agg.Np].empty())
-    {
-        AnalizedAggregate Analyzed(Agg);
-        SavedAggregates[Agg.Np].push_back(Analyzed);
-        return true;
-    }
-
-    if ( ! binary_search (SavedAggregates[Agg.Np].begin(), SavedAggregates[Agg.Np].end(), Agg)  )
-    {
-        AnalizedAggregate Analyzed(Agg);
-
-        size_t n(0);
-
-        // Search for the first bigger DgOverDp
-        n = lower_bound(SavedAggregates[Agg.Np].begin(), SavedAggregates[Agg.Np].end(),Agg)
-                    - SavedAggregates[Agg.Np].begin();
-
-        // If this is the last I don't know which is bigger
-        if (n == SavedAggregates[Agg.Np].size()-1 && !SavedAggregates[Agg.Np].empty() && SavedAggregates[Agg.Np][n]<Agg)
-        {
-                SavedAggregates[Agg.Np].push_back(Analyzed);
-        }
-        else
-        {
-            SavedAggregates[Agg.Np].insert(SavedAggregates[Agg.Np].begin()+n,Analyzed);
-        }
-        return true;
-    }
-    return false;
-    */
 }
 
 tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<double>& y)
@@ -153,7 +126,7 @@ tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<do
     double   sumy2 = 0.0;                       /* sum of y**2                   */
 
     size_t n = x.size();
-
+    auto N = double(n);
 
    for (size_t i=0;i<n;i++)
    {
@@ -168,20 +141,20 @@ tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<do
 
 
 
-   double denom = (n * sumx2 - POW2(sumx));
+   double denom = (N * sumx2 - POW2(sumx));
    if (n==0 || abs(denom) < 1e-9) {
        // singular matrix. can't solve the problem.
        tuple<bool,double,double,double> res{false,0.,0.,0.};
        return res;
    }
 
-   double a = (n * sumxy  -  sumx * sumy) / denom;
+   double a = (N * sumxy  -  sumx * sumy) / denom;
    double b = (sumy * sumx2  -  sumx * sumxy) / denom;
 
    /* compute correlation coeff     */
-   double r = (sumxy - sumx * sumy / n) /
-            POW2((sumx2 - POW2(sumx)/n) *
-            (sumy2 - POW2(sumy)/n));
+   double r = (sumxy - sumx * sumy / N) /
+            POW2((sumx2 - POW2(sumx)/N) *
+            (sumy2 - POW2(sumy)/N));
 
    tuple<bool,double,double,double> res{true,a,b,r};
    return res;
@@ -189,20 +162,22 @@ tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<do
 
 
 StatisticStorage::StatisticStorage(PhysicalModel& _physicalmodel):
+    physicalmodel(&_physicalmodel),
     SavedAggregates(),
-    FractalLaw(),
-    physicalmodel(&_physicalmodel)
+    FractalLaw()
 {
 }
 
 void StatisticStorage::Init()
 {
     FractalLaw.resize(physicalmodel->N);
+    SavedAggregates.resize(physicalmodel->N);
+
 }
 
 void StatisticStorage::Analyze(const ListAggregat& current)
 {
-//    return;
+    //return;
 
     vector<double> Nps;
     vector<double> DgOverDps;
@@ -213,7 +188,7 @@ void StatisticStorage::Analyze(const ListAggregat& current)
     {
         InsertIfNew(*Agg);
         Nps.push_back(double(Agg->Np));
-        DgOverDps.push_back(*Agg->DgOverDp);
+        DgOverDps.push_back(Agg->DgOverDp);
     }
 
 
@@ -266,10 +241,28 @@ void StatisticStorage::print() const
     DgOverDps.reserve(total);
     for (size_t Np=0;Np<FractalLaw.size();Np++)
     {
-        for (const double& DgOverDp : FractalLaw[Np])
+        /*for (const double& DgOverDp : FractalLaw[Np])
         {
             Nps.push_back(double(Np));
             DgOverDps.push_back(DgOverDp);
+        }*/
+        auto val = FractalLaw[Np].begin();
+        auto Agg = SavedAggregates[Np].begin();
+        for (size_t i=0 ; i<FractalLaw[Np].size(); i++)
+        {
+            if (Agg->Np != Np || Agg->DgOverDp != *val)
+            {
+                cout << "The Aggregate changed !" << endl;
+                cout << "Aggregate : " << Agg->Np << " " << Agg->DgOverDp << endl;
+                cout << "Saved     : " << Np << " " << *val << endl;
+
+
+            }
+
+            Nps.push_back(double(Np));
+            DgOverDps.push_back(*val);
+            advance(val,1);
+            advance(Agg,1);
         }
     }
 
@@ -293,6 +286,11 @@ StatisticStorage::~StatisticStorage() noexcept /* explicitly specified destructo
         delete physicalmodel;
     }
 }
+
+
+void StatisicsData::partialStatistics(){}
+void StatisicsData::fullStatistics(){}
+
 
 }  // namespace DLCA
 

@@ -140,6 +140,7 @@ void Verlet::search(const size_t id) const
 
 /* Default constructor */
 Verlet::Verlet():
+    Cell(),
     GridDiv(0),
     L(0)
 {}

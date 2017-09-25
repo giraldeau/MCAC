@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "physical_model.hpp"
+#include "aggregatList.hpp"
 #include "statistics.hpp"
 
 #include <array>

@@ -200,15 +200,15 @@ __attribute__((pure)) pair<bool,double> Sphere::Collision(const Sphere& c,const 
                      + RotMat[l][1] * (*c.y - *y)
                      + RotMat[l][2] * (*c.z - *z);
           }
-          array < double, 3> perx{L*RotMat[0][0],
+          array < double, 3> perx{{L*RotMat[0][0],
                                   L*RotMat[1][0],
-                                  L*RotMat[2][0],};
-          array < double, 3> pery{L*RotMat[0][1],
+                                  L*RotMat[2][0],}};
+          array < double, 3> pery{{L*RotMat[0][1],
                                   L*RotMat[1][1],
-                                  L*RotMat[2][1],};
-          array < double, 3> perz{L*RotMat[0][2],
+                                  L*RotMat[2][1],}};
+          array < double, 3> perz{{L*RotMat[0][2],
                                   L*RotMat[1][2],
-                                  L*RotMat[2][2],};
+                                  L*RotMat[2][2],}};
 
           for (int i=-1;i<=1;i++)
           {
@@ -319,9 +319,9 @@ array < array < double, 3>, 3> GetRotMat(const array<double,3> vectordir)
 {
     double anglez = -atan2(vectordir[1],vectordir[0]);
     array < array < double, 3>, 3> rotz{};
-    rotz[0] = {cos(anglez), -sin(anglez), 0};
-    rotz[1] = {sin(anglez),  cos(anglez), 0};
-    rotz[2] = {      0,        0, 1};
+    rotz[0] = {{cos(anglez), -sin(anglez), 0}};
+    rotz[1] = {{sin(anglez),  cos(anglez), 0}};
+    rotz[2] = {{          0,            0, 1}};
 
     array < double, 3> tmp{};
     for(size_t i = 0; i < 3; ++i)
@@ -335,9 +335,9 @@ array < array < double, 3>, 3> GetRotMat(const array<double,3> vectordir)
 
     double angley = atan2(tmp[2],tmp[0]);
     array < array < double, 3>, 3> roty{};
-    roty[0] = { cos(angley), 0, sin(angley)};
-    roty[1] = {       0, 1, 0      };
-    roty[2] = {-sin(angley), 0, cos(angley)};
+    roty[0] = {{ cos(angley), 0, sin(angley)}};
+    roty[1] = {{           0, 1, 0          }};
+    roty[2] = {{-sin(angley), 0, cos(angley)}};
 
     array < array < double, 3>, 3> matrot{};
     for(size_t i = 0; i < 3; ++i)

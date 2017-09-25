@@ -1,24 +1,38 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-#include "aggregat.hpp"
-#include "aggregatList.hpp"
-
-#include <vector>
+#include "physical_model.hpp"
 #include <set>
+#include <vector>
 
 
 namespace DLCA{
 
-class AnalizedAggregate;
 class StatisticStorage;
+class ListAggregat;
+class Aggregate;
 
-class AnalizedAggregate: public Aggregate
+// This routine will be called in order to filter what we keep in the stats
+struct StatcmpAgg{
+  bool operator() (const Aggregate& lhs, const Aggregate& rhs) const;
+};
+
+struct Statcmpdouble{
+  bool operator() (const double& lhs, const double& rhs) const;
+};
+
+class StatisicsData
 {
+    friend class Aggregate;
     friend class StatisticStorage;
+    friend struct StatcmpAgg;
 
 private:
-    size_t Nc;
+
+    // Here you can declare all the variables you need for statistical analysis
+
+    double Dp;
+    double DgOverDp;
 
     double Dp3;
 
@@ -31,18 +45,25 @@ private:
     double Tv;
     double Ts;
 
-public:
-    explicit AnalizedAggregate(const Aggregate& source);
-    void Analyze();
+    std::size_t Nc;
 
+public:
+
+    // This routine will be called for each update of the aggregate
+    void partialStatistics();
+
+    // This routine will be called after each aggregation
+    void fullStatistics();
 };
+
+
 
 class StatisticStorage
 {
 private:
-    std::vector< std::set<AnalizedAggregate> > SavedAggregates;
     PhysicalModel* physicalmodel;
-    std::vector< std::set<double> > FractalLaw;
+    std::vector< std::set<Aggregate,StatcmpAgg> > SavedAggregates;
+    std::vector< std::set<double,Statcmpdouble> > FractalLaw;
 
 
 public:
@@ -50,7 +71,6 @@ public:
     void Init();
 
     void Analyze(const ListAggregat& current);
-    void append(const AnalizedAggregate& Agg);
     void print() const;
     bool InsertIfNew(const Aggregate& Agg);
 
@@ -73,6 +93,10 @@ public:
     /** Move assignment operator */
     StatisticStorage& operator= (StatisticStorage&& other) noexcept;
 };
+
+std::tuple<bool,double,double,double> linreg(const std::vector<double>& x, const std::vector<double>& y);
+
+
 }  // namespace DLCA
 
 #endif // STATISTICS_H
