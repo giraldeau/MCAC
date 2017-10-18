@@ -23,7 +23,7 @@ const double PI = atan(1.0)*4;
 void Aggregate::partialStatistics()
 {
     // This routine will be called for each update of the aggregate (and before full statistics)
-
+    fullStatistics();
 }
 
 
@@ -88,7 +88,7 @@ void Aggregate::fullStatistics()
  __attribute__((pure)) bool Statcmpdouble::operator() (const double& lhs, const double& rhs) const
 {
     double d = lhs/rhs-1;
-    if (abs(d)<0.1)
+    if (abs(d)<0.01)
     {
         d=0;
     }
@@ -101,17 +101,18 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
 
     if (Agg.Np <10)
     {
-//        return false;
+        //return false;
     }
 
     auto ret = FractalLaw[Agg.Np].emplace(Agg.DgOverDp);
     if(ret.second)
     {
-        auto ret2 = SavedAggregates[Agg.Np].emplace(Agg);
-        if(!ret2.second)
-        {
-            cout<< "I added a DgOverDp but did not save the aggregate !" << endl;
-        }
+        Aggregate* newagg = SavedAggregates->add(Agg);
+        times.push_back(newagg->physicalmodel->time);
+//        cout << "before" << endl;
+//        Agg.print();
+//        cout << endl << "after" << endl;
+//        newagg->print();
     }
 
     return ret.second;
@@ -163,21 +164,29 @@ tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<do
 
 StatisticStorage::StatisticStorage(PhysicalModel& _physicalmodel):
     physicalmodel(&_physicalmodel),
-    SavedAggregates(),
-    FractalLaw()
+    SavedAggregates(new ListAggregat(*physicalmodel,0)),
+    FractalLaw(),
+    WriterAgg(),
+    WriterSph()
 {
 }
 
 void StatisticStorage::Init()
 {
     FractalLaw.resize(physicalmodel->N);
-    SavedAggregates.resize(physicalmodel->N);
+    WriterAgg = new ThreadedIO(*physicalmodel, physicalmodel->N);
+    WriterSph = new ThreadedIO(*physicalmodel, physicalmodel->N);
 
 }
 
 void StatisticStorage::Analyze(const ListAggregat& current)
 {
-    //return;
+    // Store aggregates for statistical analysis
+    for (const Aggregate* Agg : current)
+    {
+        InsertIfNew(*Agg);
+    }
+    return;
 
     vector<double> Nps;
     vector<double> DgOverDps;
@@ -186,7 +195,6 @@ void StatisticStorage::Analyze(const ListAggregat& current)
 
     for (const Aggregate* Agg : current)
     {
-        InsertIfNew(*Agg);
         Nps.push_back(double(Agg->Np));
         DgOverDps.push_back(Agg->DgOverDp);
     }
@@ -202,7 +210,7 @@ void StatisticStorage::Analyze(const ListAggregat& current)
              << get<3>(InstantaneousFractalLaw) << endl;
     }
 
-
+    print();
 }
 
 
@@ -213,16 +221,7 @@ void StatisticStorage::print() const
     myfile.open ("testStats.dat", ios::out | ios::trunc);
 
     size_t total(0);
-    /*
-    for (const set <AnalizedAggregate>& ListAgg : SavedAggregates)
-    {
-        total += ListAgg.size();
-        for (const AnalizedAggregate& Agg : ListAgg)
-        {
-            myfile << *Agg.DgOverDp << "\t" << Agg.Np << endl;
-        }
-    }
-    */
+
     for (size_t Np=0;Np<FractalLaw.size();Np++)
     {
         total += FractalLaw[Np].size();
@@ -241,28 +240,10 @@ void StatisticStorage::print() const
     DgOverDps.reserve(total);
     for (size_t Np=0;Np<FractalLaw.size();Np++)
     {
-        /*for (const double& DgOverDp : FractalLaw[Np])
+        for (const double& DgOverDp : FractalLaw[Np])
         {
             Nps.push_back(double(Np));
             DgOverDps.push_back(DgOverDp);
-        }*/
-        auto val = FractalLaw[Np].begin();
-        auto Agg = SavedAggregates[Np].begin();
-        for (size_t i=0 ; i<FractalLaw[Np].size(); i++)
-        {
-            if (Agg->Np != Np || Agg->DgOverDp != *val)
-            {
-                cout << "The Aggregate changed !" << endl;
-                cout << "Aggregate : " << Agg->Np << " " << Agg->DgOverDp << endl;
-                cout << "Saved     : " << Np << " " << *val << endl;
-
-
-            }
-
-            Nps.push_back(double(Np));
-            DgOverDps.push_back(*val);
-            advance(val,1);
-            advance(Agg,1);
         }
     }
 
@@ -285,6 +266,9 @@ StatisticStorage::~StatisticStorage() noexcept /* explicitly specified destructo
     {
         delete physicalmodel;
     }
+    delete WriterAgg;
+    delete WriterSph;
+
 }
 
 

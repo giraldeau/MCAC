@@ -17,6 +17,7 @@ class Aggregate;
 class ListAggregat;
 class Verlet;
 class AnalizedAggregate;
+class StatisicsData;
 
 class Aggregate :
         public storage_elem<15,ListAggregat>,
@@ -27,6 +28,13 @@ class Aggregate :
     friend class AnalizedAggregate;
     friend class StatisticStorage;
     friend class Sphere;
+    friend class storage_list<15,Aggregate>;
+
+
+    using storage_elem<15,ListAggregat>::external_storage;
+    using storage_elem<15,ListAggregat>::Storage;
+    using storage_elem<15,ListAggregat>::indexInStorage;
+
 
     private:
         PhysicalModel* physicalmodel;
@@ -52,6 +60,8 @@ class Aggregate :
         double *rx,*ry,*rz; // position of the gravity center
 
         size_t Np;     //Number of spheres
+        size_t Label;
+
 
         bool InVerlet;
 
@@ -92,6 +102,7 @@ class Aggregate :
         void UpdateDistances() noexcept;
 
         void check();
+        void print() const ;
 
         void partialStatistics();
         void fullStatistics();
@@ -115,6 +126,7 @@ class Aggregate :
 
         /** Copy constructor */
         Aggregate(const Aggregate&);
+        Aggregate(const Aggregate&, ListAggregat&);
 
         /** Move constructor */
         Aggregate (Aggregate&&) noexcept; /* noexcept needed to enable optimizations in containers */

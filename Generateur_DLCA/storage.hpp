@@ -18,6 +18,8 @@ protected:
 
 public:
 
+    void DecreaseIndex();
+
     /** Default constructor in local storage */
     storage_elem();
 
@@ -26,6 +28,9 @@ public:
 
     /** Copy constructor */
     storage_elem(const storage_elem& other);
+
+    template <class elem>
+    storage_elem(const storage_elem& other,elem& sphere, mystorage& _Storage);
 
     /** Move constructor */
     storage_elem (storage_elem&& other) noexcept; /* noexcept needed to enable optimizations in containers */
@@ -40,6 +45,13 @@ public:
     storage_elem& operator= (storage_elem&& other) noexcept;
 
 };
+
+
+template <int N,class mystorage>
+void storage_elem<N,mystorage>::DecreaseIndex()
+{
+    indexInStorage--;
+}
 
 
 /** Default constructor in local storage */
@@ -76,6 +88,21 @@ storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other):
         (*Storage)[j].assign(1, (*other.Storage)[j][other.indexInStorage]);
     }
 }
+/** Copy constructor */
+template <int N,class mystorage>
+template <class elem>
+storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other, elem& sphere, mystorage& _Storage):
+    Storage(_Storage.Storage),
+    external_storage(&_Storage),
+    indexInStorage(external_storage->size())
+{
+    for (size_t j=0;j<N;j++)
+    {
+        (*Storage)[j].push_back((*other.Storage)[j][other.indexInStorage]);
+    }
+    external_storage->list.push_back(&sphere);
+}
+
 
 /** Move constructor */
 template <int N,class mystorage>

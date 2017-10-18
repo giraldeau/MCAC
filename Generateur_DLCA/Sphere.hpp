@@ -84,6 +84,7 @@ class Sphere : public storage_elem<9,ListSphere>
 
         std::string str(double coef) const ;
         void Aff(double coef) const ;
+        void print() const;
 
         double Distance(const Sphere&) const noexcept;
         double Distance(std::array<double, 3> point) const noexcept;
@@ -127,6 +128,8 @@ class Sphere : public storage_elem<9,ListSphere>
 
         /** Copy constructor */
         Sphere(const Sphere&);
+        Sphere(const Sphere&, ListSphere& aggregat, size_t id);
+
 
         /** Move constructor */
         Sphere (Sphere&&) noexcept; /* noexcept needed to enable optimizations in containers */

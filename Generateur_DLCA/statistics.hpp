@@ -1,6 +1,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
+#include "IO.hpp"
 #include "physical_model.hpp"
 #include <set>
 #include <vector>
@@ -62,8 +63,12 @@ class StatisticStorage
 {
 private:
     PhysicalModel* physicalmodel;
-    std::vector< std::set<Aggregate,StatcmpAgg> > SavedAggregates;
+    ListAggregat* SavedAggregates;
     std::vector< std::set<double,Statcmpdouble> > FractalLaw;
+    std::vector< double > times;
+
+    ThreadedIO* WriterAgg;
+    ThreadedIO* WriterSph;
 
 
 public:
@@ -73,6 +78,11 @@ public:
     void Analyze(const ListAggregat& current);
     void print() const;
     bool InsertIfNew(const Aggregate& Agg);
+
+    void save();
+    void save(bool finish);
+
+    std::vector<double> FormatTimeData() const;
 
 public:
     /** Default constructor */

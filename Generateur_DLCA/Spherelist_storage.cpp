@@ -81,7 +81,8 @@ ListSphere::ListSphere():
     physicalmodel(new PhysicalModel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*physicalmodel,0))
+    Writer (new ThreadedIO(*physicalmodel,0)),
+    lastSaved(0)
 {}
 
 ListSphere::ListSphere(PhysicalModel& _physicalmodel, const size_t _size) :
@@ -89,7 +90,8 @@ ListSphere::ListSphere(PhysicalModel& _physicalmodel, const size_t _size) :
     physicalmodel(&_physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(_physicalmodel,_size))
+    Writer (new ThreadedIO(_physicalmodel,_size)),
+    lastSaved(0)
 {
     Init(_physicalmodel,_size);
 }
@@ -100,7 +102,8 @@ ListSphere::ListSphere(ListSphere& parent,vector<size_t>& _index):
     physicalmodel(parent.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*parent.physicalmodel,size()))
+    Writer (new ThreadedIO(*parent.physicalmodel,size())),
+    lastSaved(0)
 {
     setpointers();
 }
@@ -110,7 +113,8 @@ ListSphere::ListSphere(ListSphere& parent,vector<size_t> _index):
     physicalmodel(parent.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*parent.physicalmodel,size()))
+    Writer (new ThreadedIO(*parent.physicalmodel,size())),
+    lastSaved(0)
 {
     setpointers();
 }
@@ -120,7 +124,22 @@ ListSphere::ListSphere(const ListSphere& other):
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*physicalmodel,size()))
+    Writer (new ThreadedIO(*physicalmodel,size())),
+    lastSaved(other.lastSaved)
+{
+    for (Sphere* s: list)
+    {
+        s->physicalmodel = physicalmodel;
+    }
+    setpointers();
+}
+ListSphere::ListSphere(const ListSphere& other, ListSphere& _Storage):
+    storage_list<9,Sphere>(other,*this, _Storage),
+    physicalmodel(other.physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(*physicalmodel,size())),
+    lastSaved(other.lastSaved)
 {
     for (Sphere* s: list)
     {
@@ -135,8 +154,10 @@ ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enab
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*other.physicalmodel,size()))
+    Writer (new ThreadedIO(*other.physicalmodel,size())),
+    lastSaved(other.lastSaved)
 {
+    delete other.Writer;
     setpointers();
 }
 
@@ -146,8 +167,8 @@ ListSphere::~ListSphere() noexcept /* explicitly specified destructors should be
     if(physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
-        delete Writer;
     }
+    delete Writer;
 }
 
 /** Copy assignment operator */
@@ -165,12 +186,13 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
     if(physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
-        delete Writer;
     }
-
+    delete Writer;
 
     physicalmodel = other.physicalmodel;
     Writer=other.Writer;
+
+    lastSaved=other.lastSaved;
 
     other.physicalmodel = new PhysicalModel;
     other.Writer = new ThreadedIO(*other.physicalmodel , other.size());
@@ -179,6 +201,23 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 
     setpointers();
     return *this;
+}
+
+void ListSphere::print() const
+{
+    cout << "Printing list of "<< size() << " Sphere" << endl;
+    if (external_storage!=nullptr)
+    {
+        cout << "  With external Storage" << endl;
+    }
+    else
+    {
+        cout << "  Without external Storage" << endl;
+    }
+    for (const Sphere* s : list)
+    {
+        s->print();
+    }
 }
 
 

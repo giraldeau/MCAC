@@ -26,8 +26,12 @@ public:
     void Init(size_t _size, mylist& owner);
 
     void merge(storage_list& other);
-    void remove(elem& ToBeRemoved);
+    void remove(const size_t& id);
     size_t size() const noexcept;
+
+    template <class mylist>
+    elem* add(const elem& other, mylist& owner);
+
 
     /** Default constructor in local storage */
     storage_list();
@@ -38,6 +42,10 @@ public:
     /** Copy constructor with external storage */
     template<class mylist>
     storage_list(const storage_list& other, mylist& owner);
+
+    template<class mylist>
+    storage_list(const storage_list& other, mylist& owner, mylist& _Storage);
+
 
     /** Copy constructor in local storage */
     storage_list(const storage_list& other);
@@ -183,6 +191,26 @@ storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& ow
         list.push_back(new elem(owner,_size));
     }
 }
+/** Copy constructor */
+template <int N,class elem>
+template<class mylist>
+storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner, mylist& _Storage):
+    list(),
+    Storage(_Storage.Storage),
+    external_storage(&_Storage)
+{
+    const size_t start = (*Storage)[0].size();
+    for (size_t i=0;i<N;i++)
+    {
+        (*Storage)[i].reserve(other.size()+start);
+    }
+    list.reserve(other.size()+start);
+    const size_t listSize = other.size();
+    for (size_t _size = 0; _size < listSize; _size++)
+    {
+        list.push_back(new elem(*other.list[_size],_Storage,_size+start));
+    }
+}
 
 /** Move constructor */
 template <int N,class elem>
@@ -259,14 +287,17 @@ void storage_list<N,elem>::merge(storage_list<N,elem>& other)
 }
 
 template <int N,class elem>
-void storage_list<N,elem>::remove(elem& ToBeRemoved)
+void storage_list<N,elem>::remove(const size_t& id)
 {
-    const size_t id = ToBeRemoved.indexInStorage;
     delete list[id];
     list.erase(list.begin()+long(id));
     for (size_t i=0;i<N;i++)
     {
         (*Storage)[i].erase((*Storage)[i].begin()+long(id));
+    }
+    for (size_t i = id; i<list.size();i++)
+    {
+        list[i]->DecreaseLabel();
     }
 }
 
@@ -295,4 +326,11 @@ typename std::vector<elem*>::const_iterator storage_list<N,elem>::end() const
     return list.end();
 }
 
+
+template <int N,class elem>
+template <class mylist>
+elem* storage_list<N,elem>::add(const elem& other, mylist& owner)
+{
+    return new elem(other,owner);
+}
 #endif // STORAGELIST_H

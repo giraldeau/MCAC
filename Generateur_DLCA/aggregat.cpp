@@ -39,6 +39,7 @@ Aggregate::Aggregate():
     ry(nullptr),
     rz(nullptr),
     Np(0),
+    Label(0),
     InVerlet(false)
 {
     Init();
@@ -68,6 +69,7 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     ry(nullptr),
     rz(nullptr),
     Np(0),
+    Label(0),
     InVerlet(false)
 {
     Init();
@@ -98,6 +100,7 @@ Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
     ry(nullptr),
     rz(nullptr),
     Np(0),
+    Label(label),
     InVerlet(false)
 {
     Init();
@@ -132,7 +135,7 @@ void Aggregate::Init()
 
 void Aggregate::setpointers()
 {
-    size_t myindex = GetLabel();
+    size_t myindex = indexInStorage;
 
     rg=&(*Storage)[0][myindex];  //Gyration Radius
     dm=&(*Storage)[1][myindex];  //Mobility Diameter
@@ -158,6 +161,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     physicalmodel = &_physicalmodel;
 
     verlet = &_verlet;
+    Label = _label;
     indexInStorage = _label;
 
     if(!(external_storage==nullptr))
@@ -326,7 +330,7 @@ Aggregate::~Aggregate() noexcept
 
  __attribute__((pure)) size_t Aggregate::GetLabel() const noexcept
 {
-    return indexInStorage;
+    return Label;
 }
 
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
@@ -419,40 +423,24 @@ void Aggregate::Volume()
 
 void Aggregate::MassCenter()
 {
-    array<double, 3> newpos({{0.,0.,0.}});
+    const size_t loopsize(Np);
+    double _rx(0.);
+    double _ry(0.);
+    double _rz(0.);
 
     //$ For the Spheres i in Agg Id
-    for (size_t i = 0; i < Np; i++)
+    for (size_t i = 0; i < loopsize; i++)
     {
-        //$ Calculation of the total volume and surface of the aggregate
-        double dx = *myspheres[i].rx-*rx;
-        double dy = *myspheres[i].ry-*ry;
-        double dz = *myspheres[i].rz-*rz;
-
         //$ Calculation of the position of the center of mass
-        newpos[0] += dx * volumes[i];
-        newpos[1] += dy * volumes[i];
-        newpos[2] += dz * volumes[i];
-    }
-    //$ Filling of PosiGravite
-
-    for (size_t k = 0; k < 3; k++)
-    {
-        newpos[k] = newpos[k]/(*volAgregat);
+        _rx += *myspheres[i].rx * volumes[i];
+        _ry += *myspheres[i].ry * volumes[i];
+        _rz += *myspheres[i].rz * volumes[i];
     }
 
-    *rx = newpos[0]+*rx;
-    *ry = newpos[1]+*ry;
-    *rz = newpos[2]+*rz;
+    _rx /= *volAgregat;
+    _ry /= *volAgregat;
+    _rz /= *volAgregat;
 
-    SetPosition(*myspheres[0].x+*rx,
-                *myspheres[0].y+*ry,
-                *myspheres[0].z+*rz);
-
-    const size_t loopsize(Np);
-    const double _rx(*rx);
-    const double _ry(*ry);
-    const double _rz(*rz);
     for (size_t i = 0; i < loopsize; i++)
     {
         double dx = *myspheres[i].rx - _rx;
@@ -460,15 +448,25 @@ void Aggregate::MassCenter()
         double dz = *myspheres[i].rz - _rz;
         distances[i][Np]=sqrt(POW2(dx)+POW2(dy)+POW2(dz));
     }
+
+    SetPosition(*myspheres[0].x+_rx,
+                *myspheres[0].y+_ry,
+                *myspheres[0].z+_rz);
+
+    *rx = _rx;
+    *ry = _ry;
+    *rz = _rz;
+
 }
 
 void Aggregate::CalcRadius()
 {
 
     *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
-                // It is used to assimilate the aggregate to a sphere when checking for intersections
+                 // It is used to assimilate the aggregate to a sphere when checking for intersections
 
-    for (size_t i = 0; i < Np; i++)
+    const size_t loopsize(Np);
+    for (size_t i = 0; i < loopsize; i++)
     {
         *rmax=MAX(*rmax,*myspheres[i].r+distances[i][Np]);
     }
@@ -482,7 +480,8 @@ void Aggregate::RayonGiration()
     double Arg(0.);
     double Brg(0.);
 
-    for (size_t i = 0; i < Np; i++)
+    const size_t loopsize(Np);
+    for (size_t i = 0; i < loopsize; i++)
     {
         //$ Calculation of Rg
         Arg = Arg + volumes[i]*POW2(distances[i][Np]); // distance to the gravity center
@@ -561,7 +560,12 @@ void Aggregate::DecreaseLabel() noexcept
         verlet->Remove(GetLabel(),IndexVerlet);
     }
 
-    indexInStorage--;
+
+    // Keep index and label in sync
+    DecreaseIndex();
+    Label--;
+
+    // Keep aggLabel of myspheres in sync
     myspheres.DecreaseLabel();
 
     if (InVerlet)
@@ -573,51 +577,25 @@ void Aggregate::DecreaseLabel() noexcept
 void Aggregate::UpdateDistances() noexcept
 {
     distances.resize(Np);
-    for (size_t i = 0; i < Np; i++)
+    const size_t loopsize(Np);
+    for (size_t i = 0; i < loopsize; i++)
     {
         // The last index is the distance to the mass center
         distances[i].resize(Np+1);
     }
 
-    for (size_t i = 0; i < Np; i++)
+    for (size_t i = 0; i < loopsize; i++)
     {
         // a sphere is that close to itself
         distances[i][i]=0;
 
-        for (size_t j = i+1; j < Np; j++)
+        for (size_t j = i+1; j < loopsize; j++)
         {
             // Compute the distance between sphere i and j without taking periodicity into account
             distances[i][j] = myspheres[i].RelativeDistance(myspheres[j]);
 
             // distances are symetric !
             distances[j][i] = distances[i][j];
-        }
-    }
-}
-
-void Aggregate::check()
-{
-    int k =0;
-    for (const Sphere* mySphere : myspheres)
-    {
-
-        const array<double, 3> pos = mySphere->Position();
-        cout << k << "\t";
-        for (size_t j = 0; j < 3; j++)
-        {
-            cout << pos[j] << "\t";
-        }
-        cout << mySphere->Radius() << endl;
-        k++;
-    }
-    for (size_t i=0; i<Np;i++)
-    {
-        for (size_t j=i+1; j<Np;j++)
-        {
-            cout << i << "\t"
-                 << j << "\t"
-                 << myspheres[i].Distance(myspheres[j]) << "\t"
-                 << myspheres[i].Contact(myspheres[j]) << endl;
         }
     }
 }
@@ -647,9 +625,46 @@ Aggregate::Aggregate(const Aggregate& other):
     ry(nullptr),
     rz(nullptr),
     Np(other.Np),
+    Label(other.Label),
     InVerlet(false)
 {
     setpointers();
+}
+
+/** Copy constructor */
+Aggregate::Aggregate(const Aggregate& other, ListAggregat& _Storage):
+    storage_elem<15,ListAggregat>(other,*this, _Storage),
+    StatisicsData(other),
+    physicalmodel(other.physicalmodel),
+    myspheres(other.myspheres,_Storage.spheres),
+    verlet(nullptr),
+    IndexVerlet({{0,0,0}}),
+    distances(other.distances),
+    volumes(other.volumes),
+    surfaces(other.surfaces),
+    rg(nullptr),
+    dm(nullptr),
+    lpm(nullptr),
+    time_step(nullptr),
+    rmax(nullptr),
+    volAgregat(nullptr),
+    surfAgregat(nullptr),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
+    Np(other.Np),
+    Label(other.Label),
+    InVerlet(false)
+{
+    setpointers();
+
+    for (Sphere* s : myspheres)
+    {
+        s->SetLabel(long(indexInStorage));
+    }
 }
 
 /** Move constructor */
@@ -677,6 +692,7 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
     ry(nullptr),
     rz(nullptr),
     Np(other.Np),
+    Label(other.Label),
     InVerlet(false)
 {
     swap(distances,other.distances);
@@ -713,6 +729,8 @@ Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
     swap(volumes,other.volumes);
     swap(surfaces,other.surfaces);
     swap(IndexVerlet,other.IndexVerlet);
+    swap(Label,other.Label);
+
     swap(Np,other.Np);
 
 
@@ -723,5 +741,50 @@ Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
     return *this;
 }
 
+
+
+void Aggregate::print() const
+{
+    cout << "Printing details of Aggregat " << indexInStorage << " " << Label << endl;
+    if (external_storage!=nullptr)
+    {
+        cout << "  With external Storage" << endl;
+    }
+    else
+    {
+        cout << "  Without external Storage" << endl;
+    }
+    if (InVerlet)
+    {
+        cout << "  In Verlet list : " << IndexVerlet[0] << " "
+                                      << IndexVerlet[1] << " "
+                                      << IndexVerlet[2] << endl;
+    }
+    else
+    {
+        cout << "  Not in Verlet list" << endl;
+    }
+
+    cout << "  Caracteristics" << endl;
+
+    cout << "    Gyration radius   : " << *rg << endl;
+    cout << "    Geometric radius  : " << *rmax << endl;
+    cout << "    Mobility Diameter : " << *dm << endl;
+    cout << "    Mean Free Path    : " << *lpm << endl;
+    cout << "    Delta t           : " << *time_step << endl;
+    cout << "    Volume            : " << *volAgregat << endl;
+    cout << "    Surface           : " << *surfAgregat << endl;
+    cout << "    Position          : " << *x << " "<< *y << " "<< *z << endl;
+    myspheres.print();
+
+    /*
+
+    std::vector<std::vector <double > > distances;
+    std::vector<double> volumes;
+    std::vector<double> surfaces;
+    double *rx,*ry,*rz; // position of the gravity center
+
+    */
+}
 
 }  // namespace DLCA

@@ -5,7 +5,6 @@
 #include "IO.hpp"
 #include "Spherelist.hpp"
 #include "aggregat.hpp"
-#include "aggregatList.hpp"
 #include "physical_model.hpp"
 #include "storage.hpp"
 #include "storagelist.hpp"
@@ -36,6 +35,8 @@ class ListAggregat : public storage_list<15,Aggregate>
         std::vector<double>::iterator ptr_fin;
 
         ThreadedIO* Writer;
+        size_t lastSaved;
+
 
     public:
         ListSphere spheres;
@@ -54,8 +55,10 @@ class ListAggregat : public storage_list<15,Aggregate>
 
 
 
-        void save() const;
-        void save(bool) const;
+        void save();
+        void save(bool);
+
+        auto GetData() const;
 
         std::vector<double> FormatPositionData() const;
         std::vector<double> FormatRgData() const;
@@ -67,6 +70,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         std::vector<double> FormatVolumeData() const;
         std::vector<double> FormatSurfaceData() const;
         std::vector<int>    FormatLabelData() const;
+        std::vector<int>    FormatIndexData() const;
 
 
         /* Storage specific */
@@ -74,9 +78,12 @@ class ListAggregat : public storage_list<15,Aggregate>
         void setpointers();
 
     public:
+
+        Aggregate* add(const Aggregate& newAgg);
+
         /** Default constructor in local storage */
         ListAggregat();
-        explicit ListAggregat(PhysicalModel& _physicalmodel, int _size);
+        explicit ListAggregat(PhysicalModel& _physicalmodel, size_t _size);
 
         /** Copy constructor */
         ListAggregat(const ListAggregat& other);

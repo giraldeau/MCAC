@@ -38,6 +38,7 @@ class Verlet;
 class ListSphere : public storage_list<9,Sphere>
 {
     friend class Sphere;
+    friend class StatisticStorage;
 
     /* Generic */
 
@@ -48,6 +49,8 @@ class ListSphere : public storage_list<9,Sphere>
         std::vector<double>::iterator ptr_fin;
 
         ThreadedIO* Writer;
+        size_t lastSaved;
+
 
     public:
 
@@ -56,8 +59,13 @@ class ListSphere : public storage_list<9,Sphere>
 
         void CroissanceSurface(double dt);
 
-        void save() const;
-        void save(bool finish) const;
+        void print() const;
+
+        void save();
+        void save(bool finish);
+
+        auto GetData() const;
+
         std::vector<double> FormatPositionData() const;
         std::vector<double> FormatRadiusData() const;
         std::vector<long>    FormatLabelData() const;
@@ -77,6 +85,8 @@ class ListSphere : public storage_list<9,Sphere>
 
         /** Copy constructor */
         ListSphere(const ListSphere& other);
+        ListSphere(const ListSphere& other, ListSphere& _Storage);
+
 
         /** Move constructor */
         ListSphere (ListSphere&&) noexcept; /* noexcept needed to enable optimizations in containers */

@@ -38,7 +38,7 @@ private:
     // Number of time steps per file
     const size_t NTimePerFile;
 
-    // data size
+    // estimate data size
     const size_t N;
 
     // next file number

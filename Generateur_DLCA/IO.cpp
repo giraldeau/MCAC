@@ -56,7 +56,7 @@ std::vector<double> ListSphere::FormatPositionData() const
     const size_t N = size();
 
     std::vector<double> PositionData(3*N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         std::array<double,3> pos = list[i]->Position();
         PositionData[3*i]=pos[0];
@@ -71,7 +71,7 @@ std::vector<double> ListSphere::FormatRadiusData() const
     const size_t N = size();
 
     std::vector<double> RadiusData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         RadiusData[i] = list[i]->Radius();
     }
@@ -84,7 +84,7 @@ std::vector<long> ListSphere::FormatLabelData() const
     const size_t N = size();
 
     std::vector<long> LabelData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         LabelData[i] = list[i]->AggLabel;
     }
@@ -98,7 +98,7 @@ std::vector<double> ListAggregat::FormatPositionData() const
     const size_t N = size();
 
     std::vector<double> PositionData(3*N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         std::array<double,3> pos = list[i]->GetPosition();
         PositionData[3*i]=pos[0];
@@ -113,7 +113,7 @@ std::vector<double> ListAggregat::FormatRgData() const
     const size_t N = size();
 
     std::vector<double> RgData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         RgData[i] = *list[i]->rg;
     }
@@ -125,7 +125,7 @@ std::vector<int>    ListAggregat::FormatNpData() const
     const size_t N = size();
 
     std::vector<int> NpData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         NpData[i] = int(list[i]->Np);
     }
@@ -136,7 +136,7 @@ std::vector<double> ListAggregat::FormatDmData() const
     const size_t N = size();
 
     std::vector<double> DmData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         DmData[i] = *list[i]->dm;
     }
@@ -147,7 +147,7 @@ std::vector<double> ListAggregat::FormatlpmData() const
     const size_t N = size();
 
     std::vector<double> lpmData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         lpmData[i] = *list[i]->lpm;
     }
@@ -158,7 +158,7 @@ std::vector<double> ListAggregat::FormatdeltatData() const
     const size_t N = size();
 
     std::vector<double> deltatData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         deltatData[i] = *list[i]->time_step;
     }
@@ -169,7 +169,7 @@ std::vector<double> ListAggregat::FormatRmaxData() const
     const size_t N = size();
 
     std::vector<double> RmaxData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         RmaxData[i] = *list[i]->rmax;
     }
@@ -180,7 +180,7 @@ std::vector<double> ListAggregat::FormatVolumeData() const
     const size_t N = size();
 
     std::vector<double> VolumeData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         VolumeData[i] = *list[i]->volAgregat;
     }
@@ -191,7 +191,7 @@ std::vector<double> ListAggregat::FormatSurfaceData() const
     const size_t N = size();
 
     std::vector<double> SurfaceData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
         SurfaceData[i] = *list[i]->surfAgregat;
     }
@@ -202,13 +202,38 @@ std::vector<int>    ListAggregat::FormatLabelData() const
     const size_t N = size();
 
     std::vector<int> LabelData(N);
-    for (size_t i=0; i<N;i++)
+    for (size_t i=lastSaved; i<N;i++)
     {
-        LabelData[i] = int(list[i]->indexInStorage);
+        LabelData[i] = int(list[i]->Label);
     }
     return LabelData;
 
 }
+std::vector<int>    ListAggregat::FormatIndexData() const
+{
+    const size_t N = size();
+
+    std::vector<int> IndexData(N);
+    for (size_t i=lastSaved; i<N;i++)
+    {
+        IndexData[i] = int(list[i]->indexInStorage);
+    }
+    return IndexData;
+
+}
+
+std::vector<double> StatisticStorage::FormatTimeData() const
+{
+    const size_t N = times.size();
+
+    std::vector<double> TimeData(N);
+    for (size_t i=SavedAggregates->lastSaved; i<N;i++)
+    {
+        TimeData[i] = times[i];
+    }
+    return TimeData;
+}
+
 
 // Format filename
 std::string filename(const int step, const size_t N)
@@ -291,13 +316,7 @@ auto PhysicalModel::xmfWrite() const
     return info;
 }
 
-void ListSphere::save() const
-{
-    save(false);
-}
-
-
-void ListSphere::save(const bool finish) const
+auto ListSphere::GetData() const
 {
     // Set geometry
     shared_ptr<XdmfUnstructuredGrid> SpheresData = XdmfUnstructuredGrid::New();
@@ -314,19 +333,30 @@ void ListSphere::save(const bool finish) const
     SpheresData->insert(Scalar("Radius",FormatRadiusData()));
     SpheresData->insert(Scalar("Label",FormatLabelData()));
 
-    // Write data
-    Writer->Write("Spheres",SpheresData, finish);
+    return SpheresData;
 }
 
-void ListAggregat::save() const
+
+void ListSphere::save()
 {
     save(false);
 }
 
 
-void ListAggregat::save(const bool finish) const
+void ListSphere::save(const bool finish)
 {
+    //get everything
+    lastSaved = 0;
 
+    auto data = GetData();
+
+    // Write data
+    Writer->Write("Spheres",data, finish);
+}
+
+
+auto ListAggregat::GetData() const
+{
     // Set geometry
     shared_ptr<XdmfUnstructuredGrid> AggregatsData = XdmfUnstructuredGrid::New();
     AggregatsData->setName("Aggregats");
@@ -352,8 +382,48 @@ void ListAggregat::save(const bool finish) const
     AggregatsData->insert(Scalar("Surface",FormatSurfaceData()));
     AggregatsData->insert(Scalar("Label",FormatLabelData()));
 
+    return AggregatsData;
+}
+
+
+void ListAggregat::save()
+{
+    save(false);
+}
+
+
+void ListAggregat::save(const bool finish)
+{
+    //get everything
+    lastSaved = 0;
+
+    auto data = GetData();
+
     // Write data
-    Writer->Write("Aggregats",AggregatsData, finish);
+    Writer->Write("Aggregats",data, finish);
+}
+
+
+void StatisticStorage::save()
+{
+    save(false);
+}
+
+void StatisticStorage::save(bool finish)
+{
+    auto AggregatsData = SavedAggregates->GetData();
+    AggregatsData->setName("StatsAggregats");
+    AggregatsData->insert(Scalar("Time",FormatTimeData()));
+    AggregatsData->insert(Scalar("Index",SavedAggregates->FormatIndexData()));
+    WriterAgg->Write("StatsAggregats",AggregatsData, finish);
+
+    SavedAggregates->lastSaved=SavedAggregates->size();
+
+    auto SpheresData = SavedAggregates->spheres.GetData();
+    SpheresData->setName("StatsSpheres");
+    WriterSph->Write("StatsSpheres",SpheresData, finish);
+
+    SavedAggregates->spheres.lastSaved=SavedAggregates->spheres.size();
 }
 
 
@@ -451,6 +521,8 @@ void WriteTask(const std::string fileName, shared_ptr<XdmfDomain>* data)
     HDF5File->setUseDeflate(false); // do not use compression (too slow)
     HDF5File->setDeflateFactor(0);  // 0 to 6, 6 being the most compressed
 
+    XMFFile->setLightDataLimit(0); // everything go to the hdf5
+
     // Write data
     (*data)->accept(XMFFile);
 }
@@ -491,21 +563,37 @@ ThreadedIO::~ThreadedIO() noexcept
 
 namespace DLCA{
 
-__attribute((const)) void ListSphere::save() const
+auto ListSphere::GetData() const
+{
+    return false;
+}
+auto ListAggregat::GetData() const
+{
+    return false;
+}
+
+__attribute((const)) void ListSphere::save()
 {
     save(false);
 }
 
 
-__attribute((const)) void ListSphere::save(const bool finish) const {}
+__attribute((const)) void ListSphere::save(const bool finish) {}
 
-__attribute((const)) void ListAggregat::save() const
+__attribute((const)) void ListAggregat::save()
 {
     save(false);
 }
 
 
-__attribute((const)) void ListAggregat::save(const bool finish) const {}
+__attribute((const)) void ListAggregat::save(const bool finish) {}
+
+void StatisticStorage::save()
+{
+    save(false);
+}
+
+void StatisticStorage::save(bool finish) {}
 
 }  // namespace DLCA
 

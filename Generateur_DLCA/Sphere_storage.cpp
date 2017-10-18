@@ -233,6 +233,22 @@ Sphere::Sphere(const Sphere& other) :
 {
     setpointers();
 }
+Sphere::Sphere(const Sphere& other, ListSphere& aggregat, size_t id):
+    storage_elem<9,ListSphere>(other,*this, aggregat),
+    x(nullptr),
+    y(nullptr),
+    z(nullptr),
+    r(nullptr),
+    rx(nullptr),
+    ry(nullptr),
+    rz(nullptr),
+    volume(nullptr),
+    surface(nullptr),
+    physicalmodel(other.physicalmodel),
+    AggLabel(id)
+{
+    setpointers();
+}
 
 /** Move constructor */
 Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimizations in containers */
@@ -299,5 +315,38 @@ Sphere& Sphere::operator= (Sphere&& other) noexcept
 
     return *this;
 }
+
+void Sphere::print() const
+{
+    cout << "Printing Sphere " << (indexInStorage) << endl;
+    if (external_storage!=nullptr)
+    {
+        cout << "  With external Storage" << endl;
+    }
+    else
+    {
+        cout << "  Without external Storage" << endl;
+    }
+    if (AggLabel<0)
+    {
+        cout << "  This is a virtual Sphere" << endl;
+    }
+    else
+    {
+        cout << "  This Sphere is own by the aggregate " << AggLabel << endl;
+    }
+    cout << "    Position : " << *x << " "<< *y << " "<< *z << endl;
+    cout << "    Radius   : " << *r << endl;
+    cout << "    Volume   : " << *volume << endl;
+    cout << "    Surface  : " << *surface << endl;
+    /*
+    double* rx;
+    double* ry;
+    double* rz;
+    */
+
+
+}
+
 }  // namespace DLCA
 
