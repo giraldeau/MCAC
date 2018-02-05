@@ -13,7 +13,7 @@ QT=""
 
 
 #DEFINES += WITH_QT
-#DEFINES += WITH_HDF5
+DEFINES += WITH_HDF5
 
 TARGET = DLCA
 TEMPLATE = app
@@ -74,9 +74,11 @@ SOURCES +=\
 #    mainwindow.qrc
 
 ### HDF5 ###
-INCLUDEPATH += /usr/include/hdf5/serial /opt/local/xdmf/include /usr/include/libxml2/ /usr/include/python2.7/
-LIBS += /opt/local/xdmf/lib/libXdmf.a /opt/local/xdmf/lib/libXdmfCore.a -lxml2 -ltiff
-LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5 -lboost_python-py27 -lpython2.7
+INCLUDEPATH += /usr/include/hdf5/serial /opt/xdmf/DLCA/include /usr/include/libxml2/
+# /usr/include/python2.7/
+LIBS += /opt/xdmf/DLCA/lib64/libXdmf.a /opt/xdmf/DLCA/lib/libXdmfCore.a -lxml2 -ltiff
+LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5
+#-lboost_python-py27 -lpython2.7
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
@@ -177,4 +179,4 @@ equals(COMPILATOR, "CLANG"){
 }
 
 #PROFILING
-LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
+#LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc

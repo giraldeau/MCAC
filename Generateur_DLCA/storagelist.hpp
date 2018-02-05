@@ -62,7 +62,7 @@ public:
     /** Move assignment operator */
     storage_list& operator= (storage_list&& other) noexcept;
 
-    friend void std::swap<>(storage_list& first, storage_list& second);
+//    friend void std::swap<>(storage_list& first, storage_list& second);
 
     typename std::vector<elem*>::iterator begin();
     typename std::vector<elem*>::iterator end();

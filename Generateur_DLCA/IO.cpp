@@ -4,6 +4,7 @@
 #include "physical_model.hpp"
 
 
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -486,7 +487,7 @@ void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGri
         }
         //std::cout << "Writing " << fileName << std::endl;
 
-        if (true)
+        if (false)
         { // Multithread
             writer = new std::thread(WriteTask, fileName, &xmfFile[current_thread]);
             status[current_thread] = 2;

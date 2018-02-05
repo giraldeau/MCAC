@@ -1,5 +1,6 @@
 #include "aggregatList.hpp"
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <iomanip>
 

@@ -99,8 +99,8 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 
         if(contact)
         {
-            //Aggregates.spheres.save();
-            //Aggregates.save();
+            Aggregates.spheres.save();
+            Aggregates.save();
             Stats.Analyze(Aggregates);
             Stats.save();
         }
@@ -225,8 +225,8 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         }
     }
 
-    //Aggregates.spheres.save(true);
-    //Aggregates.save(true);
+    Aggregates.spheres.save(true);
+    Aggregates.save(true);
     Stats.Analyze(Aggregates);
     Stats.save(true);
 
