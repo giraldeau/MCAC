@@ -67,31 +67,14 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     ListAggregat Aggregates;
     StatisticStorage Stats(physicalmodel);
 
-    size_t NAgg = Init(physicalmodel, Stats, Aggregates);
-
-    size_t end = 36; //MAX(5,physicalmodel.N/200);
-    int it_without_contact=0;    int lim_it_without_contact = 20000;
-    int secondes(0);             double cpulimit = 120;
-
-    cout << endl
-         << "Ending calcul when at least one of theses condition is true :" << endl
-         << " - There is less than " << end << " aggregats left" << endl
-         << " - It has been " << lim_it_without_contact << " iterations without collision" <<endl
-         << " - The simulations is running for more than " << cpulimit << " seconds" << endl
-         << endl;
-
-    time_t t0;
-    time(&t0);
+    Init(physicalmodel, Stats, Aggregates);
 
     // Contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool contact(true);
 
     //$ Loop on the N monomeres
-    while (NAgg > end &&
-           it_without_contact<lim_it_without_contact &&
-           secondes<cpulimit
-           ) //Pour N=1000 le calcul s'arrête quand il reste 5 agrégats
-    {                       //Pour N=2000 le calcul s'arrête quand il reste 10 agrégats
+    while (! physicalmodel.Finished(Aggregates.size()))
+    {
 #ifdef WITH_GUI
         qApp->processEvents(); //Permet de rafraichir la fenêtre Qt
 #endif
@@ -130,7 +113,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         else
         {
             //$ Random Choice of an aggregate
-            NumAgg = size_t(Random()*double(NAgg));
+            NumAgg = size_t(Random()*double(Aggregates.size()));
             deltatemps = 1e-9;
         }
 
@@ -152,11 +135,13 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         {
             //$ Aggregates in contact are reunited;
             NumAgg = Aggregates.Merge(NumAgg,size_t(aggcontact));
-            NAgg--;
         }
 
+        // adjust time step
+        deltatemps = deltatemps*distmove/lpm;
+
         //$ Time incrementation
-        physicalmodel.time = physicalmodel.time + deltatemps*distmove/lpm;
+        physicalmodel.Time = physicalmodel.Time + deltatemps;
 
         //$ Update of the Aggregates/Spheres
         if (physicalmodel.ActiveModulephysique)
@@ -174,25 +159,27 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
                 finmem = finfichiersuivitempo;
             }
 */
-            //$ Growth of all spheres
-            Aggregates.spheres.CroissanceSurface(deltatemps);
-
-            //$ Aggregates update
-            for (Aggregate* Agg : Aggregates)
+            if (physicalmodel.Asurfgrowth > 0.)
             {
-                Agg->Update();
+	        //$ Growth of all spheres
+                Aggregates.spheres.CroissanceSurface(deltatemps);
+ 
+                //$ Aggregates update
+                for (Aggregate* Agg : Aggregates)
+                {
+                    Agg->Update();
+                }
             }
 
 /*
-            for (int i = 0; i<NAgg; i++)
+            for (int i = 0; i<Aggregates.size(); i++)
             {
-                for (int j = i+1; j<NAgg; j++)
+                for (int j = i+1; j<Aggregates.size(); j++)
                 {
                     if(Aggregates[i].Contact(Aggregates[j]))
                     {
                         cout << "New contact !"<<endl;
                         Aggregates.Merge(i,j);
-                        NAgg--;
                     }
                 }
             }
@@ -205,23 +192,23 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         {
             time_t t;
             time(&t);
-            secondes = int(round(t-t0));
-            cout << "NAgg=" << NAgg << "    "
-                 << "temps=" << physicalmodel.time*1E6 << " E-6 s    "
+            int secondes = int(round(t-physicalmodel.CPUStart));
+            cout << "NAgg=" << Aggregates.size() << "    "
+                 << "temps=" << physicalmodel.Time*1E6 << " E-6 s    "
                  << "CPU=" << secondes << "    "
                  << "Agg=" << NumAgg << "  "
-                 << "after " << it_without_contact << " it " << endl;
-            it_without_contact = 0;
+                 << "after " << physicalmodel.Wait << " it " << endl;
+            physicalmodel.Wait = 0;
 #ifdef WITH_GUI
              if (!(GUI == nullptr)            )
              {
-                GUI->progress(physicalmodel.N-NAgg+1);
+                GUI->progress(physicalmodel.N-Aggregates.size()+1);
              }
 #endif
         }
         else
         {
-            it_without_contact++;
+            physicalmodel.Wait++;
         }
     }
 
@@ -230,11 +217,11 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     Stats.Analyze(Aggregates);
     Stats.save(true);
 
-    cout << "Nombre total d'aggregats : " << NAgg << endl
-         << "Nombre d'iterations sans contacts : " << it_without_contact << endl;
+    cout << "Nombre total d'aggregats : " << Aggregates.size() << endl
+         << "Nombre d'iterations sans contacts : " << physicalmodel.Wait << endl;
 
     cout << "Aggregats" << endl;
-    for (size_t i = 0; i < NAgg; i++)
+    for (size_t i = 0; i < Aggregates.size(); i++)
     {
         cout << i << "\t";
         const array<double, 3> pos = Aggregates[i].GetPosition();
@@ -255,7 +242,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 }
 
 
-size_t Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& Aggregates)
+void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& Aggregates)
 {
 
     //Initialize physical model
@@ -275,7 +262,7 @@ size_t Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat&
     {
         //LectureSuiviTempo();
         //print("Le fichier de données de suivi temporel est lu.");
-        print("Le fichier de données de suivi temporel n'est imas implémenté.");
+        print("Le fichier de données de suivi temporel n'est pas implémenté.");
         exit(50);
     }
     else
@@ -289,11 +276,10 @@ size_t Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat&
     //Initialize the aggregates
 
     size_t testmem = 0;
-    size_t NAgg = physicalmodel.N;
-    Aggregates.Init(physicalmodel, NAgg);
+    Aggregates.Init(physicalmodel, physicalmodel.N);
 
 
-    for (size_t i = 0; i < NAgg; i++)
+    for (size_t i = 0; i < Aggregates.size(); i++)
     {          
 
         //random position
@@ -342,7 +328,7 @@ size_t Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat&
         {
             Aggregates[i].Init(physicalmodel,Aggregates.verlet,newpos,i,Aggregates.spheres,Dp);
         }
-        if (testmem > NAgg)
+        if (testmem > Aggregates.size())
         {
             cout << "Impossible de générer tous les monomères sans superposition." << endl;
             cout << "La fraction volumique doit être diminuée." << endl;
@@ -354,8 +340,6 @@ size_t Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat&
 
 
     Stats.Init();
-
-    return NAgg;
 }
 
 
@@ -467,7 +451,7 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 {
     int test = 0;
 
-    while (tab[iValTab][0] < physicalmodel.time && iValTab < (nb_line-1))
+    while (tab[iValTab][0] < physicalmodel.Time && iValTab < (nb_line-1))
     {
         iValTab++;
 //        cout << "temps residence = " << temps << "s"
@@ -787,6 +771,36 @@ PhysicalModel LectureParams(const string& FichierParam)
         {
             sscanf(com,"%s  %s",commentaires,com);
             physicalmodel.ActiveVariationTempo=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the AggMin parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.AggMin=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the WaitLimit parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.WaitLimit=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the CPULimit parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.CPULimit=atoi(commentaires);
         }
         fclose(f);
     }

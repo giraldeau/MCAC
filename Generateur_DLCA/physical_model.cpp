@@ -37,17 +37,22 @@ PhysicalModel::PhysicalModel() :
     Rho(0),
     Dpm(0),
     sigmaDpm(0),
-    time(0),
+    Time(0),
     X(0),
     FV(0),
     L(DBL_MAX),
     precision(0),
     FactorModelBeta(0),
+    CPUStart(0),
+    CPULimit(0),
     GridDiv(0),
     N(0),
+    AggMin(0),
     DeltaSauve(0),
     root_method(0),
     Mode(0),
+    Wait(0),
+    WaitLimit(0),
     ActiveModulephysique(false),
     ActiveVariationTempo(false),
     use_verlet(false),
@@ -61,7 +66,7 @@ void PhysicalModel::Init()
 {
 
     L = X*Dpm*1E-9;
-    time=0;
+    Time=0;
 
     K = 1.38066E-23;
     lambda = 66.5E-9*(101300/P)*(T/293.15)*(1+110/293.15)/(1+110/T);
@@ -76,13 +81,42 @@ void PhysicalModel::Init()
     use_verlet = true; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
     GridDiv = 10;      // Number of Divisions of the box
 
-
+    AggMin = MAX(AggMin, 1);
+    time(&CPUStart);
     SetPrecision(1e-5);
     UseSecante();
 
     print();
 
     toBeDestroyed = false;
+}
+
+bool PhysicalModel::Finished(const size_t Nagg) const
+{
+    if (Nagg < AggMin)
+    {
+        cout << "We reach the AggMin condition" << endl
+             << "Finishing" << endl << endl;
+        return true;
+    }
+    if (Wait >= WaitLimit)
+    {
+        cout << "We reach the WaitLimit condition" << endl
+             << "Finishing" << endl << endl;
+        return true;
+    }
+
+    time_t currentCPU;
+    time(&currentCPU);
+    if (currentCPU - CPUStart >= CPULimit)
+    {
+        cout << "We reach the CPULimit condition" << endl
+             << "Finishing" << endl << endl;
+        cout << currentCPU << " >= " << CPULimit << endl;
+        return true;
+    }
+
+    return false;
 }
 
 void PhysicalModel::SetPrecision(const double _precision)
@@ -118,6 +152,7 @@ void PhysicalModel::print() const
         break;
     default:
         cout << "Root method unknown, using secante" << endl;
+       /* FALLTHRU */
     case 2 :
         RootMethod = "Secante";
     }
@@ -149,6 +184,11 @@ void PhysicalModel::print() const
          << " precision   : " << precision << endl
          << " root method : " << RootMethod << endl
          << " Mode : " << Mode << endl
+         << endl
+         << "Ending calcul when at least one of theses condition is true :" << endl
+         << " - There is less than " << AggMin << " aggregats left" << endl
+         << " - It has been " << WaitLimit << " iterations without collision" <<endl
+         << " - The simulations is running for more than " << CPULimit << " seconds" << endl
          << endl;
 }
 

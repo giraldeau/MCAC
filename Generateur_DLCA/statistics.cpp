@@ -108,7 +108,7 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
     if(ret.second)
     {
         Aggregate* newagg = SavedAggregates->add(Agg);
-        times.push_back(newagg->physicalmodel->time);
+        times.push_back(newagg->physicalmodel->Time);
 //        cout << "before" << endl;
 //        Agg.print();
 //        cout << endl << "after" << endl;
@@ -166,6 +166,7 @@ StatisticStorage::StatisticStorage(PhysicalModel& _physicalmodel):
     physicalmodel(&_physicalmodel),
     SavedAggregates(new ListAggregat(*physicalmodel,0)),
     FractalLaw(),
+    times(),
     WriterAgg(),
     WriterSph()
 {
@@ -217,6 +218,7 @@ void StatisticStorage::Analyze(const ListAggregat& current)
 
 void StatisticStorage::print() const
 {
+    /*
     ofstream myfile;
     myfile.open ("testStats.dat", ios::out | ios::trunc);
 
@@ -232,7 +234,7 @@ void StatisticStorage::print() const
     }
     myfile.close();
     cout << "Total number of saved aggregates : " << total << endl;
-
+    */
 
     vector<double> Nps;
     vector<double> DgOverDps;
@@ -250,7 +252,8 @@ void StatisticStorage::print() const
     tuple<bool,double,double,double> CompleteFractalLaw = linreg(DgOverDps,Nps);
     if(get<0>(CompleteFractalLaw))
     {
-        cout << exp(get<2>(CompleteFractalLaw))
+        cout << "Estimation of the fractal law : " << endl << "  "
+             << exp(get<2>(CompleteFractalLaw))
              << " * x^ "
              << get<1>(CompleteFractalLaw)
              << "  --- r= "

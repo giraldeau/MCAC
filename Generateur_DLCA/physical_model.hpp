@@ -2,6 +2,7 @@
 #define PHYSICAL_MODEL_H
 
 #include <cstddef>
+#include <ctime>
 
 namespace DLCA{
 
@@ -16,16 +17,20 @@ public:
     double lambda, Dpeqmass, rpeqmass, gamma_; // libre parcours moyen d'une sphère
     double P, T, Mu, K, Rho; // pressure, temperature, diffusivity, ?, density
     double Dpm, sigmaDpm;
-    double time; // Time
+    double Time; // Time
     double X, FV, L; // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
     double precision;
     double FactorModelBeta;
 
+    time_t CPUStart, CPULimit;
+
     size_t GridDiv; // Number of Divisions of the box
     size_t N;// Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
+    size_t AggMin;
     int DeltaSauve;
     int root_method;
     int Mode;
+    int Wait, WaitLimit;
     bool ActiveModulephysique, ActiveVariationTempo;
     bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
@@ -54,6 +59,7 @@ public:
     double diffusivity(double dm) const;
     double velocity(double masse) const;
     void print() const;
+    bool Finished(const size_t Nagg) const;
 
     auto xmfWrite() const;
 

@@ -325,7 +325,7 @@ auto ListSphere::GetData() const
     SpheresData->setTopology(theTopology());
 
     // Set time
-    SpheresData->setTime(FormatTime(physicalmodel->time));
+    SpheresData->setTime(FormatTime(physicalmodel->Time));
 
     // Set Positions
     SpheresData->setGeometry(thePositions(FormatPositionData()));
@@ -366,7 +366,7 @@ auto ListAggregat::GetData() const
     AggregatsData->setTopology(particules);
 
     // Set time
-    shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->time);
+    shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->Time);
     AggregatsData->setTime(time);
 
     // Set Positions

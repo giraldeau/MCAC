@@ -63,7 +63,7 @@ double Random();
 void CalculDistance(int id, double &distmin, int &aggcontact);
 int LectureSuiviTempo();
 int rechercheValTab();
-size_t Init(PhysicalModel&,StatisticStorage&, ListAggregat&);
+void Init(PhysicalModel&,StatisticStorage&, ListAggregat&);
 void Fermeture();
 bool locale_with_dots();
 double latof(const char* _char);
