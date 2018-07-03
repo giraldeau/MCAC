@@ -56,7 +56,8 @@ PhysicalModel::PhysicalModel() :
     ActiveModulephysique(false),
     ActiveVariationTempo(false),
     use_verlet(false),
-    toBeDestroyed(true)
+    toBeDestroyed(true),
+    CheminSauve()
 {}
 
 

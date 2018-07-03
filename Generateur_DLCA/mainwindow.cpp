@@ -815,21 +815,21 @@ PhysicalModel LectureParams(const string& FichierParam)
     }
 
     fs::path pathParam = extractPath(FichierParam);
-    fs::path CheminSauve = pathParam / sauve;
+    physicalmodel.CheminSauve = pathParam / sauve;
 
-    if( ! fs::exists(CheminSauve))
+    if( ! fs::exists(physicalmodel.CheminSauve))
     {
-        if( ! fs::create_directory(CheminSauve))
+        if( ! fs::create_directory(physicalmodel.CheminSauve))
         {
-            cout << "Error creating directory " << CheminSauve << endl;
+            cout << "Error creating directory " << physicalmodel.CheminSauve << endl;
             exit(1);
         }
     }
     else
     {
-        if( ! fs::is_directory(CheminSauve))
+        if( ! fs::is_directory(physicalmodel.CheminSauve))
         {
-            cout << "Error not a directory " << CheminSauve << endl;
+            cout << "Error not a directory " << physicalmodel.CheminSauve << endl;
             exit(1);
         }
     }

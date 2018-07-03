@@ -18,6 +18,8 @@
 #include "XdmfInformation.hpp"
 #include "XdmfWriter.hpp"
 
+namespace fs = std::experimental::filesystem;
+
 namespace DLCA{
 
 
@@ -354,7 +356,7 @@ void ListSphere::save(const bool finish)
     auto data = GetData();
 
     // Write data
-    Writer->Write("Spheres",data, finish);
+    Writer->Write(physicalmodel->CheminSauve / "Spheres",data, finish);
 }
 
 
@@ -403,7 +405,7 @@ void ListAggregat::save(const bool finish)
     auto data = GetData();
 
     // Write data
-    Writer->Write("Aggregats",data, finish);
+    Writer->Write(physicalmodel->CheminSauve / "Aggregats",data, finish);
 }
 
 
@@ -418,13 +420,13 @@ void StatisticStorage::save(bool finish)
     AggregatsData->setName("StatsAggregats");
     AggregatsData->insert(Scalar("Time",FormatTimeData()));
     AggregatsData->insert(Scalar("Index",SavedAggregates->FormatIndexData()));
-    WriterAgg->Write("StatsAggregats",AggregatsData, finish);
+    WriterAgg->Write(physicalmodel->CheminSauve / "StatsAggregats",AggregatsData, finish);
 
     SavedAggregates->lastSaved=SavedAggregates->size();
 
     auto SpheresData = SavedAggregates->spheres.GetData();
     SpheresData->setName("StatsSpheres");
-    WriterSph->Write("StatsSpheres",SpheresData, finish);
+    WriterSph->Write(physicalmodel->CheminSauve / "StatsSpheres",SpheresData, finish);
 
     SavedAggregates->spheres.lastSaved=SavedAggregates->spheres.size();
 }
@@ -436,6 +438,7 @@ void ThreadedIO::CreateFile()
         if (status[current_thread]==2)
         {
             writer->join();
+            delete writer;
             status[current_thread] = 0;
         }
         if (status[current_thread]==1)
@@ -461,7 +464,7 @@ void ThreadedIO::CreateFile()
 
 }
 
-void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGrid>& data, bool all)
+void ThreadedIO::Write(const fs::path& prefix, shared_ptr<XdmfUnstructuredGrid>& data, bool all)
 {
     if (step%NTimePerFile == 0)
     {
@@ -480,17 +483,18 @@ void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGri
     {
         xmfFile[current_thread]->insert(TimeCollection[current_thread]);
 
-        std::string fileName = prefix + filename(NumFile, N);
+        std::string fileName = std::string(prefix) + filename(NumFile, N);
 
         if (status[!current_thread] == 2)
         {
             writer->join();
+            delete writer;
             status[!current_thread] = 0;
         }
         //std::cout << "Writing " << fileName << std::endl;
 
         if (false)
-        { // Multithread
+        { // Multithread NOT POSSIBLE WITH ALL VERSION OF LIBHDF5
             writer = new std::thread(WriteTask, fileName, &xmfFile[current_thread]);
             status[current_thread] = 2;
         }
@@ -508,6 +512,7 @@ void ThreadedIO::Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGri
             if (status[!current_thread] == 2)
             {
                 writer->join();
+                delete writer;
                 status[!current_thread] = 0;
             }
             step=0;

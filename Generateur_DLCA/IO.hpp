@@ -15,6 +15,8 @@
 #include "XdmfDomain.hpp"
 #include "XdmfGridCollectionType.hpp"
 #include "XdmfUnstructuredGrid.hpp"
+#include <experimental/filesystem>
+
 namespace DLCA{
 
 class ThreadedIO
@@ -50,7 +52,7 @@ private:
 
 public:
     void CreateFile();
-    void Write(const std::string& prefix, shared_ptr<XdmfUnstructuredGrid>& data, bool all);
+    void Write(const std::experimental::filesystem::path& prefix, shared_ptr<XdmfUnstructuredGrid>& data, bool all);
 
     ThreadedIO(PhysicalModel& _physicalmodel, size_t size);
     ~ThreadedIO() noexcept;

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <ctime>
+#include <experimental/filesystem>
 
 namespace DLCA{
 
@@ -35,7 +36,7 @@ public:
     bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
     bool toBeDestroyed;
-
+    std::experimental::filesystem::path CheminSauve;
 private:
 
     // Internal use
