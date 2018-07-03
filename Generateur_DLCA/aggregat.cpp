@@ -143,7 +143,7 @@ void Aggregate::setpointers()
     time_step=&(*Storage)[3][myindex];
     rmax=&(*Storage)[4][myindex];                   //Radius of the sphere containing Agg
     volAgregat=&(*Storage)[5][myindex];             //Etimation of the Aggregate's volume
-    surfAgregat=&(*Storage)[6][myindex];            //Estimation of the sufrace of the aggregate
+    surfAgregat=&(*Storage)[6][myindex];            //Estimation of the surface of the aggregate
     x=&(*Storage)[7][myindex];
     y=&(*Storage)[8][myindex];
     z=&(*Storage)[9][myindex];

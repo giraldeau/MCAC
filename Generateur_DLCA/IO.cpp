@@ -9,6 +9,8 @@
 #include <iostream>
 #include <sstream>
 
+#define UNUSED(expr) do { (void)(expr); } while (0)
+
 #ifdef WITH_HDF5
 
 #include "XdmfGridCollection.hpp"
@@ -564,11 +566,11 @@ ThreadedIO::~ThreadedIO() noexcept
 
 namespace DLCA{
 
-auto ListSphere::GetData() const
+__attribute((const)) auto ListSphere::GetData() const
 {
     return false;
 }
-auto ListAggregat::GetData() const
+__attribute((const)) auto ListAggregat::GetData() const
 {
     return false;
 }
@@ -579,7 +581,10 @@ __attribute((const)) void ListSphere::save()
 }
 
 
-__attribute((const)) void ListSphere::save(const bool finish) {}
+__attribute((const)) void ListSphere::save(const bool finish)
+{
+    UNUSED(finish);
+}
 
 __attribute((const)) void ListAggregat::save()
 {
@@ -587,14 +592,20 @@ __attribute((const)) void ListAggregat::save()
 }
 
 
-__attribute((const)) void ListAggregat::save(const bool finish) {}
+__attribute((const)) void ListAggregat::save(const bool finish)
+{
+    UNUSED(finish);
+}
 
 void StatisticStorage::save()
 {
     save(false);
 }
 
-void StatisticStorage::save(bool finish) {}
+__attribute((const)) void StatisticStorage::save(bool finish)
+{
+    UNUSED(finish);
+}
 
 }  // namespace DLCA
 

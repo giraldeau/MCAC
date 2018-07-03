@@ -50,7 +50,7 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const size_t _size)
     }
 
     physicalmodel=&_physicalmodel;
-    Writer = new ThreadedIO(_physicalmodel, _size),
+    Writer = new ThreadedIO(_physicalmodel, _size);
     spheres.Init(_physicalmodel, _size);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
@@ -319,6 +319,14 @@ Aggregate* ListAggregat::add(const Aggregate& oldAgg)
     Aggregate* newAgg = storage_list<15,Aggregate>::add(oldAgg,*this);
 
     setpointers();
+    for (Aggregate* Agg : list)
+    {
+        Agg->setpointers();
+        for (Sphere* Sph : Agg->myspheres)
+        {
+            Sph->setpointers();
+        }
+    }
 
     return newAgg;
 }

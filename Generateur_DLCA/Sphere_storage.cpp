@@ -245,7 +245,7 @@ Sphere::Sphere(const Sphere& other, ListSphere& aggregat, size_t id):
     volume(nullptr),
     surface(nullptr),
     physicalmodel(other.physicalmodel),
-    AggLabel(id)
+    AggLabel(long(id))
 {
     setpointers();
 }
@@ -270,9 +270,9 @@ Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimiza
     other.y=nullptr;
     other.z=nullptr;
     other.r=nullptr;
-    other.rx=nullptr,
-    other.ry=nullptr,
-    other.rz=nullptr,
+    other.rx=nullptr;
+    other.ry=nullptr;
+    other.rz=nullptr;
     other.volume=nullptr;
     other.surface=nullptr;
     other.AggLabel=-1;

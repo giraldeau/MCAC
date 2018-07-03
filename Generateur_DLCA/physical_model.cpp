@@ -95,25 +95,24 @@ bool PhysicalModel::Finished(const size_t Nagg) const
 {
     if (Nagg < AggMin)
     {
-        cout << "We reach the AggMin condition" << endl
-             << "Finishing" << endl << endl;
+        cout << "We reach the AggMin condition" << endl << endl;
         return true;
     }
-    if (Wait >= WaitLimit)
+    if (WaitLimit > 0 && Wait >= WaitLimit)
     {
-        cout << "We reach the WaitLimit condition" << endl
-             << "Finishing" << endl << endl;
+        cout << "We reach the WaitLimit condition" << endl << endl;
         return true;
     }
 
-    time_t currentCPU;
-    time(&currentCPU);
-    if (currentCPU - CPUStart >= CPULimit)
+    if (CPULimit > 0)
     {
-        cout << "We reach the CPULimit condition" << endl
-             << "Finishing" << endl << endl;
-        cout << currentCPU << " >= " << CPULimit << endl;
-        return true;
+        time_t currentCPU;
+        time(&currentCPU);
+        if (currentCPU - CPUStart >= CPULimit)
+        {
+            cout << "We reach the CPULimit condition" << endl << endl;
+            return true;
+        }
     }
 
     return false;
@@ -185,11 +184,17 @@ void PhysicalModel::print() const
          << " root method : " << RootMethod << endl
          << " Mode : " << Mode << endl
          << endl
-         << "Ending calcul when at least one of theses condition is true :" << endl
-         << " - There is less than " << AggMin << " aggregats left" << endl
-         << " - It has been " << WaitLimit << " iterations without collision" <<endl
-         << " - The simulations is running for more than " << CPULimit << " seconds" << endl
-         << endl;
+         << "Ending calcul when:" << endl
+         << " - There is less than " << AggMin << " aggregats left" << endl;
+    if (WaitLimit > 0)
+    {
+        cout << " - It has been " << WaitLimit << " iterations without collision" <<endl;
+    }
+    if (CPULimit > 0)
+    {
+        cout << " - The simulations is running for more than " << CPULimit << " seconds" << endl;
+    }
+    cout << endl;
 }
 
 

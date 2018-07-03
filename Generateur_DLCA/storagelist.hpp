@@ -1,6 +1,8 @@
 #ifndef STORAGELIST_H
 #define STORAGELIST_H
 
+#define UNUSED(expr) do { (void)(expr); } while (0)
+
 #include <array>
 #include <vector>
 
@@ -199,6 +201,8 @@ storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& ow
     Storage(_Storage.Storage),
     external_storage(&_Storage)
 {
+    UNUSED(owner);
+
     const size_t start = (*Storage)[0].size();
     for (size_t i=0;i<N;i++)
     {

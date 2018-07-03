@@ -1,10 +1,10 @@
 #include "mainwindow.hpp"
-#include <climits> /* PATH_MAX */
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <experimental/filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -17,6 +17,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+namespace fs = std::experimental::filesystem;
 using namespace std;
 
 #ifdef WITH_GUI
@@ -85,7 +86,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             Aggregates.spheres.save();
             Aggregates.save();
             Stats.Analyze(Aggregates);
-            Stats.save();
+            //Stats.save();
         }
 
 
@@ -215,11 +216,12 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     Aggregates.spheres.save(true);
     Aggregates.save(true);
     Stats.Analyze(Aggregates);
-    Stats.save(true);
+    //Stats.save(true);
 
     cout << "Nombre total d'aggregats : " << Aggregates.size() << endl
          << "Nombre d'iterations sans contacts : " << physicalmodel.Wait << endl;
 
+    /*
     cout << "Aggregats" << endl;
     for (size_t i = 0; i < Aggregates.size(); i++)
     {
@@ -231,7 +233,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         }
         cout << Aggregates[i].GetVolAgregat()*1E25 << endl;
     }
-
+    */
     cout << endl;
     Stats.print();
     cout << endl;
@@ -780,7 +782,7 @@ PhysicalModel LectureParams(const string& FichierParam)
         else
         {
             sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.AggMin=atoi(commentaires);
+            physicalmodel.AggMin=size_t(atoi(commentaires));
         }
         if( fgets(com, 500, f) == nullptr)
         {
@@ -837,21 +839,26 @@ PhysicalModel LectureParams(const string& FichierParam)
 
 string extractPath(const string& file)
 {
-    string file1=file;
-    char* charfile = &file1[0];
-    char tmp[PATH_MAX + 1]; /* not sure about the "+ 1" */
-    char* err = realpath(dirname(charfile), tmp);
+    fs::path fullpath = file;
 
-    if (err==nullptr)
+    if(! fs::exists(fullpath))
     {
         cout << "File does not exist\n" << endl;
         exit(1);
     }
 
-    return tmp; //Cette variable ne retient que le chemin du fichier param
+    fs::path parentpath = fullpath.parent_path();
+
+    return parentpath; //Cette variable ne retient que le chemin du fichier param
 }
 
 int No_GUI(int argc, char *argv[]){
+    if(argc <=1)
+    {
+        cout << "Missing argument : param file" << endl;
+        return 1;
+    }
+
     string FichierParam = argv[1];
 
     PhysicalModel physicalmodel = LectureParams(FichierParam);

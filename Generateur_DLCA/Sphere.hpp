@@ -40,6 +40,7 @@ class Sphere : public storage_elem<9,ListSphere>
 {
     friend class ListSphere;
     friend class Aggregate;
+    friend class ListAggregat;
 
     /* Generic */
 

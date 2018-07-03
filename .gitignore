@@ -4,3 +4,6 @@ cas_test/TEST
 *.autosave
 Doxygen/docs/
 Doxygen/*_flowdoc
+*venv*
+*.h5
+*.xmf

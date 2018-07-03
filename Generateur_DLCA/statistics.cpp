@@ -104,7 +104,7 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
         //return false;
     }
 
-    auto ret = FractalLaw[Agg.Np].emplace(Agg.DgOverDp);
+    auto ret = FractalLaw[Agg.Np - 1].emplace(Agg.DgOverDp);
     if(ret.second)
     {
         Aggregate* newagg = SavedAggregates->add(Agg);
@@ -218,20 +218,25 @@ void StatisticStorage::Analyze(const ListAggregat& current)
 
 void StatisticStorage::print() const
 {
-    /*
-    ofstream myfile;
-    myfile.open ("testStats.dat", ios::out | ios::trunc);
 
     size_t total(0);
 
-    for (size_t Np=0;Np<FractalLaw.size();Np++)
+    /*
+    ofstream myfile;
+    myfile.open ("testStats.dat", ios::out | ios::trunc);
+    */
+
+    for (size_t Np=1;Np<=FractalLaw.size();Np++)
     {
-        total += FractalLaw[Np].size();
+        total += FractalLaw[Np - 1].size();
+        /*
         for (const double& DgOverDp : FractalLaw[Np])
         {
             myfile << DgOverDp << "\t" << Np << endl;
         }
+        */
     }
+    /*
     myfile.close();
     cout << "Total number of saved aggregates : " << total << endl;
     */
@@ -240,9 +245,9 @@ void StatisticStorage::print() const
     vector<double> DgOverDps;
     Nps.reserve(total);
     DgOverDps.reserve(total);
-    for (size_t Np=0;Np<FractalLaw.size();Np++)
+    for (size_t Np=1;Np<=FractalLaw.size();Np++)
     {
-        for (const double& DgOverDp : FractalLaw[Np])
+        for (const double& DgOverDp : FractalLaw[Np - 1])
         {
             Nps.push_back(double(Np));
             DgOverDps.push_back(DgOverDp);

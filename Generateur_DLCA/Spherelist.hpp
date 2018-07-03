@@ -38,6 +38,7 @@ class Verlet;
 class ListSphere : public storage_list<9,Sphere>
 {
     friend class Sphere;
+    friend class Aggregate;
     friend class StatisticStorage;
 
     /* Generic */

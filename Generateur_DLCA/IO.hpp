@@ -7,6 +7,8 @@
 #include <string>
 #include <thread>
 
+#define UNUSED(expr) do { (void)(expr); } while (0)
+
 //#define WITH_HDF5
 
 #ifdef WITH_HDF5
@@ -70,15 +72,16 @@ private:
 
 };
 
+std::string filename(const int step, const size_t N);
 void WriteTask(std::string fileName, shared_ptr<XdmfDomain>* data);
-std::string to_string(double& value);
-shared_ptr<XdmfInformation> xmfFormatDouble(std::string& name,double& number);
-shared_ptr<XdmfInformation> xmfFormatInteger(std::string& name,int& number);
-shared_ptr<XdmfInformation> xmfFormatBool(std::string& name, bool& active);
+std::string to_string(const double& value);
+shared_ptr<XdmfInformation> xmfFormatDouble(const std::string& name, const double& number);
+shared_ptr<XdmfInformation> xmfFormatInteger(const std::string& name, const int& number);
+shared_ptr<XdmfInformation> xmfFormatBool(const std::string& name, const bool& active);
 
 shared_ptr<XdmfTopology> theTopology();
 shared_ptr<XdmfTime> FormatTime(const double& value);
-shared_ptr<XdmfGeometry> thePositions(std::vector<double>& formatedPositions);
+shared_ptr<XdmfGeometry> thePositions(const std::vector<double>& formatedPositions);
 }  // namespace DLCA
 
 #else //WITHOUT_HDF5
@@ -86,7 +89,11 @@ namespace DLCA{
 
 class ThreadedIO{
 public:
-    ThreadedIO(PhysicalModel& _physicalmodel, size_t size){}
+    ThreadedIO(PhysicalModel& _physicalmodel, size_t size)
+    {
+            UNUSED(_physicalmodel);
+            UNUSED(size);
+    }
 };
 }  // namespace DLCA
 
