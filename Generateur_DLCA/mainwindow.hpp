@@ -7,6 +7,7 @@
 
 #include <array>
 #include <vector>
+#include <experimental/filesystem>
 
 
 #ifdef WITH_GUI
@@ -71,7 +72,7 @@ PhysicalModel LectureParams(const std::string& FichierParam);
 void Calcul(PhysicalModel&);
 void print(std::string str);
 bool dirExists(const char *path);
-std::string extractPath(const std::string& file);
+std::experimental::filesystem::path extractPath(const std::string& file);
 
 }  // namespace DLCA
 

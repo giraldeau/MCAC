@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <experimental/filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -815,20 +814,22 @@ PhysicalModel LectureParams(const string& FichierParam)
         physicalmodel.X = pow(double(physicalmodel.N)*PI/6.0/physicalmodel.FV*exp(9.0/2.0*log(physicalmodel.sigmaDpm)*log(physicalmodel.sigmaDpm)),1.0/3.0); //Loi log-normale
     }
 
-    string pathParam = extractPath(FichierParam);
+    fs::path pathParam = extractPath(FichierParam);
+    fs::path CheminSauve = pathParam / sauve;
 
-    char CheminSauve[500];
-
-    strcpy(CheminSauve,pathParam.c_str());
-    strcat(CheminSauve,"/");
-    strcat(CheminSauve,sauve);
-
-    if( !dirExists(CheminSauve))
+    if( ! fs::exists(CheminSauve))
     {
-        const int dir_err = mkdir(CheminSauve, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        if (-1 == dir_err)
+        if( ! fs::create_directory(CheminSauve))
         {
-            cout << "Error creating directory" << endl;
+            cout << "Error creating directory " << CheminSauve << endl;
+            exit(1);
+        }
+    }
+    else
+    {
+        if( ! fs::is_directory(CheminSauve))
+        {
+            cout << "Error not a directory " << CheminSauve << endl;
             exit(1);
         }
     }
@@ -836,10 +837,10 @@ PhysicalModel LectureParams(const string& FichierParam)
     return physicalmodel;
 }
 
-
-string extractPath(const string& file)
+fs::path extractPath(const string& filename)
 {
-    fs::path fullpath = file;
+    fs::path path = filename;
+    fs::path fullpath = fs::absolute(path);
 
     if(! fs::exists(fullpath))
     {
