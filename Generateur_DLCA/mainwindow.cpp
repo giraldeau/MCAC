@@ -250,23 +250,23 @@ void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& A
     physicalmodel.Init();
     if (physicalmodel.ActiveModulephysique)
     {
-        print("Physical module activated.\n");
+        print("Physical module activated.");
     }
     else
     {
-        print("Physical module not activated.\n");
+        print("Physical module not activated.");
     }
 
     if (physicalmodel.ActiveVariationTempo)
     {
         //LectureSuiviTempo();
         //print("Le fichier de données de suivi temporel est lu.");
-        print("Temporal variation of physical parameters not implemented");
+        print("Temporal variation of physical parameters not implemented.\n");
         exit(50);
     }
     else
     {
-        print("No temporal variation of physical parameters");
+        print("No temporal variation of physical parameters.\n");
     }
 
     //Initialize randomness

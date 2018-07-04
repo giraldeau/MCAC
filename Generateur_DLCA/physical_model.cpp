@@ -186,7 +186,7 @@ void PhysicalModel::print() const
          << " Mode : " << Mode << endl
          << endl
          << "Ending calcul when:" << endl
-         << " - There is " << AggMin << "aggregats left or less" << endl;
+         << " - There is " << AggMin << " aggregats left or less" << endl;
     if (WaitLimit > 0)
     {
         cout << " - It has been " << WaitLimit << " iterations without collision" <<endl;
