@@ -94,7 +94,7 @@ void PhysicalModel::Init()
 
 bool PhysicalModel::Finished(const size_t Nagg) const
 {
-    if (Nagg < AggMin)
+    if (Nagg <= AggMin)
     {
         cout << "We reach the AggMin condition" << endl << endl;
         return true;
@@ -186,7 +186,7 @@ void PhysicalModel::print() const
          << " Mode : " << Mode << endl
          << endl
          << "Ending calcul when:" << endl
-         << " - There is less than " << AggMin << " aggregats left" << endl;
+         << " - There is " << AggMin << "aggregats left or less" << endl;
     if (WaitLimit > 0)
     {
         cout << " - It has been " << WaitLimit << " iterations without collision" <<endl;

@@ -28,7 +28,7 @@ public:
     size_t GridDiv; // Number of Divisions of the box
     size_t N;// Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
     size_t AggMin;
-    int DeltaSauve;
+    size_t DeltaSauve;
     int root_method;
     int Mode;
     int Wait, WaitLimit;

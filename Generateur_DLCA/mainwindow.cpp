@@ -51,8 +51,8 @@ void InitRandom()
 {
     time_t t;
     time(&t);
-    //srand(t);
-    srand(0);
+    srand(uint(t));
+    //srand(0);
 }
 
 double Random()
@@ -194,9 +194,8 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             time(&t);
             int secondes = int(round(t-physicalmodel.CPUStart));
             cout << "NAgg=" << Aggregates.size() << "    "
-                 << "temps=" << physicalmodel.Time*1E6 << " E-6 s    "
+                 << "Time=" << physicalmodel.Time*1E6 << " E-6 s    "
                  << "CPU=" << secondes << "    "
-                 << "Agg=" << NumAgg << "  "
                  << "after " << physicalmodel.Wait << " it " << endl;
             physicalmodel.Wait = 0;
 #ifdef WITH_GUI
@@ -217,8 +216,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     Stats.Analyze(Aggregates);
     //Stats.save(true);
 
-    cout << "Nombre total d'aggregats : " << Aggregates.size() << endl
-         << "Nombre d'iterations sans contacts : " << physicalmodel.Wait << endl;
+    cout << "Final number of aggregates : " << Aggregates.size() << endl;
 
     /*
     cout << "Aggregats" << endl;
@@ -239,7 +237,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 
     //Fermeture();
 
-    print("\nFin du calcul  ...\n");
+    print("\nThe End\n");
 }
 
 
@@ -252,23 +250,23 @@ void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& A
     physicalmodel.Init();
     if (physicalmodel.ActiveModulephysique)
     {
-        print("Le module physique est activé.");
+        print("Physical module activated.\n");
     }
     else
     {
-        print("Le module physique n'est pas activé.");
+        print("Physical module not activated.\n");
     }
 
     if (physicalmodel.ActiveVariationTempo)
     {
         //LectureSuiviTempo();
         //print("Le fichier de données de suivi temporel est lu.");
-        print("Le fichier de données de suivi temporel n'est pas implémenté.");
+        print("Temporal variation of physical parameters not implemented");
         exit(50);
     }
     else
     {
-        print("Le fichier de données sélectionné est le fichier 'params.txt'.");
+        print("No temporal variation of physical parameters");
     }
 
     //Initialize randomness
@@ -626,13 +624,13 @@ PhysicalModel LectureParams(const string& FichierParam)
         }
         if( fgets(com, 500, f) == nullptr)
         {
-            cout << "I need the T parameter" << endl;
+            cout << "I need the FV parameter" << endl;
             exit(1);
         }
         else
         {
             sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.T=latof(commentaires);
+            physicalmodel.FV=latof(commentaires)*1E-6;
         }
         if( fgets(com, 500, f) == nullptr)
         {
@@ -646,6 +644,16 @@ PhysicalModel LectureParams(const string& FichierParam)
         }
         if( fgets(com, 500, f) == nullptr)
         {
+            cout << "I need the Mode parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.Mode=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
             cout << "I need the sigmaDpm parameter" << endl;
             exit(1);
         }
@@ -656,13 +664,23 @@ PhysicalModel LectureParams(const string& FichierParam)
         }
         if( fgets(com, 500, f) == nullptr)
         {
-            cout << "I need the FV parameter" << endl;
+            cout << "I need the ActiveModulephysique parameter" << endl;
             exit(1);
         }
         else
         {
             sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.FV=latof(commentaires)*1E-6;
+            physicalmodel.ActiveModulephysique=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the T parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.T=latof(commentaires);
         }
         if( fgets(com, 500, f) == nullptr)
         {
@@ -686,32 +704,23 @@ PhysicalModel LectureParams(const string& FichierParam)
         }
         if( fgets(com, 500, f) == nullptr)
         {
-            cout << "I need the Mode parameter" << endl;
+            cout << "I need the kfe parameter" << endl;
             exit(1);
         }
         else
         {
             sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.Mode=atoi(commentaires);
+            physicalmodel.kfe=atof(commentaires);
         }
         if( fgets(com, 500, f) == nullptr)
         {
-            cout << "I need the DeltaSauve parameter" << endl;
+            cout << "I need the dfe parameter" << endl;
             exit(1);
         }
         else
         {
             sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.DeltaSauve=atoi(commentaires);
-        }
-        if( fgets(com, 500, f) == nullptr)
-        {
-            cout << "I need the sauve parameter" << endl;
-            exit(1);
-        }
-        else
-        {
-            sscanf(com,"%s  %s",sauve,com);
+            physicalmodel.dfe=atof(commentaires);
         }
         if( fgets(com, 500, f) == nullptr)
         {
@@ -732,36 +741,6 @@ PhysicalModel LectureParams(const string& FichierParam)
         {
             sscanf(com,"%s  %s",commentaires,com);
             physicalmodel.xsurfgrowth=atof(commentaires);
-        }
-        if( fgets(com, 500, f) == nullptr)
-        {
-            cout << "I need the dfe parameter" << endl;
-            exit(1);
-        }
-        else
-        {
-            sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.dfe=atof(commentaires);
-        }
-        if( fgets(com, 500, f) == nullptr)
-        {
-            cout << "I need the kfe parameter" << endl;
-            exit(1);
-        }
-        else
-        {
-            sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.kfe=atof(commentaires);
-        }
-        if( fgets(com, 500, f) == nullptr)
-        {
-            cout << "I need the ActiveModulephysique parameter" << endl;
-            exit(1);
-        }
-        else
-        {
-            sscanf(com,"%s  %s",commentaires,com);
-            physicalmodel.ActiveModulephysique=atoi(commentaires);
         }
         if( fgets(com, 500, f) == nullptr)
         {
@@ -802,6 +781,25 @@ PhysicalModel LectureParams(const string& FichierParam)
         {
             sscanf(com,"%s  %s",commentaires,com);
             physicalmodel.CPULimit=atoi(commentaires);
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the DeltaSauve parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",commentaires,com);
+            physicalmodel.DeltaSauve=size_t(atoi(commentaires));
+        }
+        if( fgets(com, 500, f) == nullptr)
+        {
+            cout << "I need the output_dir parameter" << endl;
+            exit(1);
+        }
+        else
+        {
+            sscanf(com,"%s  %s",sauve,com);
         }
         fclose(f);
     }

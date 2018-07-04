@@ -545,7 +545,7 @@ ThreadedIO::ThreadedIO(PhysicalModel& _physicalmodel, size_t size):
     physicalmodel(&_physicalmodel),
     current_thread(0),
     step(0),
-    NTimePerFile(size/10),
+    NTimePerFile(_physicalmodel.DeltaSauve),
     N(size),
     NumFile(0)
 {}
