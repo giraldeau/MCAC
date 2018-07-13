@@ -7,3 +7,4 @@ Doxygen/*_flowdoc
 *venv*
 *.h5
 *.xmf
+.vscode
