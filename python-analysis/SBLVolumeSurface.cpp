@@ -16,13 +16,13 @@ typedef CGAL::Fixed_alpha_shape_cell_base_3<Traits>              Cb;
 typedef CGAL::Triangulation_data_structure_3<Vb, Cb>             Tds;
 typedef CGAL::Regular_triangulation_3<Traits, Tds>               Rt;
 typedef CGAL::Fixed_alpha_shape_3<Rt>                            Alpha_complex;
-#ifndef NDEBUG
+//#ifndef NDEBUG
 typedef CGAL::Exact_spherical_kernel_3                           SK;
-#else // This does not work, crash compilation if try to use it
+//#else // This does not work, crash compilation if try to use it
 //typedef CGAL::Simple_cartesian<double>                           KE;
 //typedef CGAL::Algebraic_kernel_for_spheres_2_3<double>           AK;
 //typedef CGAL::Spherical_kernel_3<KE, AK>                         SK;
-#endif
+//#endif
 typedef SBL::GT::T_Union_of_balls_surface_volume_3<Alpha_complex, SK>    Union_of_balls_surface_volume_3;
 
 
