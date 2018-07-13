@@ -580,24 +580,24 @@ __attribute((const)) auto ListAggregat::GetData() const
     return false;
 }
 
-__attribute((const)) void ListSphere::save()
+void ListSphere::save()
 {
     save(false);
 }
 
 
-__attribute((const)) void ListSphere::save(const bool finish)
+void ListSphere::save(const bool finish)
 {
     UNUSED(finish);
 }
 
-__attribute((const)) void ListAggregat::save()
+void ListAggregat::save()
 {
     save(false);
 }
 
 
-__attribute((const)) void ListAggregat::save(const bool finish)
+void ListAggregat::save(const bool finish)
 {
     UNUSED(finish);
 }
@@ -607,7 +607,7 @@ void StatisticStorage::save()
     save(false);
 }
 
-__attribute((const)) void StatisticStorage::save(bool finish)
+void StatisticStorage::save(bool finish)
 {
     UNUSED(finish);
 }

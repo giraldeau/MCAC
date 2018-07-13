@@ -1,4 +1,5 @@
 #include "aggregat.hpp"
+#include "sblvolumesurface.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
@@ -392,6 +393,19 @@ void Aggregate::Volume()
         surfaces[i] = *myspheres[i].surface;    //Calculation of the surface of i
     }
 
+
+#ifdef WITH_SBL
+    pair<vector<double>, vector<double>> volume_surface(compute_volume_surface(myspheres));
+
+    volumes = volume_surface.first;
+    surfaces = volume_surface.second;
+
+    for (size_t i = 0; i < Np; i++)
+    {
+        *volAgregat = *volAgregat + volumes[i];    //Total Volume of Agg id
+        *surfAgregat = *surfAgregat + surfaces[i]; //Total Surface of Agg id
+    }
+#else
     for (size_t i = 0; i < Np; i++)
     {
         for (size_t j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
@@ -419,6 +433,7 @@ void Aggregate::Volume()
         *volAgregat = *volAgregat + volumes[i];    //Total Volume of Agg id
         *surfAgregat = *surfAgregat + surfaces[i]; //Total Surface of Agg id
     }
+#endif
 }
 
 void Aggregate::MassCenter()
@@ -468,7 +483,7 @@ void Aggregate::CalcRadius()
     const size_t loopsize(Np);
     for (size_t i = 0; i < loopsize; i++)
     {
-        *rmax=MAX(*rmax,*myspheres[i].r+distances[i][Np]);
+        *rmax=MAX(*rmax,*myspheres[i].r + distances[i][Np]);
     }
 }
 

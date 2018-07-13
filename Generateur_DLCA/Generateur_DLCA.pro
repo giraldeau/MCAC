@@ -4,16 +4,13 @@
 #
 #-------------------------------------------------
 
-COMPILATOR = "GNU"
+COMPILATOR = "GNU" # GNU or INTEL or CLAN
+WITH_IO = "1"           # 1 or 0
+WITH_SBL = "0"          # 1 or 0
+WITH_QT = "0"           # 0
 
-QT=""
-#QT       += core gui
-
-#greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-
-#DEFINES += WITH_QT
-DEFINES += WITH_HDF5
+#PROFILING
+LIBS += -lprofiler -ltcmalloc
 
 TARGET = DLCA
 TEMPLATE = app
@@ -30,6 +27,7 @@ SOURCES +=\
         statistics.hpp \
         storagelist.hpp \
         verlet.hpp \
+        sblvolumesurface.hpp \
         verlet.cpp \
         physical_model.cpp \
         Sphere_storage.cpp \
@@ -40,10 +38,9 @@ SOURCES +=\
         aggregatList.cpp \
         mainwindow.cpp\
         main.cpp \
-#        boost_python.cpp \
         IO.cpp \
-        statistics.cpp
-
+        statistics.cpp \
+        sblvolumesurface.cpp
 
 #SOURCES +=\
 #        verlet.cpp \
@@ -55,45 +52,70 @@ SOURCES +=\
 #        aggregat.cpp \
 #        aggregatList.cpp \
 #        mainwindow.cpp\
-#        main.cpp
+#        main.cpp \
+#        sblvolumesurface.cpp
 
 #HEADERS += \
-#        mainwindow.h \
-#        Sphere.h \
-#        Spherelist.h \
-#        physical_model.h \
-#        aggregat.h \
-#        aggregatList.h \
-#        verlet.h \
-#        storage.h \
-#        storagelist.h
+#        mainwindow.hpp \
+#        Sphere.hpp \
+#        Spherelist.hpp \
+#        physical_model.hpp \
+#        aggregat.hpp \
+#        aggregatList.hpp \
+#        verlet.hpp \
+#        storage.hpp \
+#        storagelist.hpp
+#        sblvolumesurface.hpp \
 
-#FORMS += mainwindow.ui
 
-#RESOURCES += \
-#    mainwindow.qrc
-
-### HDF5 ###
-INCLUDEPATH += /usr/include/hdf5/serial /opt/xdmf/DLCA/include /usr/include/libxml2/
-# /usr/include/python2.7/
-LIBS += /opt/xdmf/DLCA/lib64/libXdmf.a /opt/xdmf/DLCA/lib/libXdmfCore.a -lxml2 -ltiff
-LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5
-#-lboost_python-py27 -lpython2.7
+LIBS += -lstdc++fs
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
-
 
 release: DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/release
 debug:   DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/debug
 
-OBJECTS_DIR = $$DESTDIR/.obj
-MOC_DIR = $$DESTDIR/.moc
-RCC_DIR = $$DESTDIR/.qrc
-UI_DIR = $$DESTDIR/.ui
+equals(WITH_QT, "1"){
+    QT       += core gui
+    greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+    DEFINES += WITH_QT
+
+    OBJECTS_DIR = $$DESTDIR/.obj
+    MOC_DIR = $$DESTDIR/.moc
+    RCC_DIR = $$DESTDIR/.qrc
+    UI_DIR = $$DESTDIR/.ui
+
+    FORMS += mainwindow.ui
+
+    RESOURCES += \
+        mainwindow.qrc
+
+} else {
+    QT=""
+}
+
+equals(WITH_SBL, "1"){
+    INCLUDEPATH +=  /home/pouxa/packages/sbl/install/include
+    LIBS += -lCGAL -lmpfr -lgmp
+}
+
+equals(WITH_IO, "1"){
+
+    DEFINES += WITH_HDF5
+
+    INCLUDEPATH += /usr/include/libxml2/
+    LIBS += -lXdmf -lXdmfCore -lxml2 -ltiff
+    LIBS += -lhdf5 -ldl
+
+    #INCLUDEPATH += /usr/include/hdf5/serial /opt/xdmf/DLCA/include
+    #LIBS += /opt/xdmf/DLCA/lib64/libXdmf.a /opt/xdmf/DLCA/lib/libXdmfCore.a
+    #LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5
+}
 
 equals(COMPILATOR, "INTEL"){
-    QMAKE_CXXFLAGS += -std=c++14 -g -traceback -xHost -qopenmp -static -fPIC
-    QMAKE_LFLAGS   += -std=c++14 -g -traceback -xHost -qopenmp
+    QMAKE_CXXFLAGS += -std=c++14 -g -traceback -xHost -qopenmp -static -fPIC -DNDEBUG
+    QMAKE_LFLAGS   += -std=c++14 -g -traceback -xHost -qopenmp -DNDEBUG
 
     ### WARNINGS ###
     QMAKE_CXXFLAGS += -Wall -w3 -diag-enable=3 -Wremarks -Wtrigraphs -Wcomment -Wdeprecated -Wno-effc++ -Wextra-tokens -Wformat -Wformat-security -Wic-pointer -Winline -Wmain
@@ -112,7 +134,7 @@ equals(COMPILATOR, "INTEL"){
 
 equals(COMPILATOR, "GNU"){
 
-    QMAKE_CXXFLAGS += -g -march=native -fopenmp  -std=c++14
+    QMAKE_CXXFLAGS += -g -march=native -fopenmp  -std=c++14 -frounding-math
     QMAKE_LFLAGS   += -g  -fopenmp  -std=c++14
 
     ### WARNINGS ###
@@ -147,7 +169,7 @@ equals(COMPILATOR, "GNU"){
 
 equals(COMPILATOR, "CLANG"){
 
-    QMAKE_CXXFLAGS += -g -march=native -static  -std=c++14 -Xanalyzer-analyzer-constraints=z3
+    QMAKE_CXXFLAGS += -g -march=native -static  -std=c++14
     QMAKE_LFLAGS   += -g -std=c++14
 
     ### WARNINGS ###
@@ -178,5 +200,3 @@ equals(COMPILATOR, "CLANG"){
     #QMAKE_LFLAGS_RELEASE   += -flto
 }
 
-#PROFILING
-#LIBS += -L/opt/local/gperftools/lib -lprofiler -ltcmalloc
