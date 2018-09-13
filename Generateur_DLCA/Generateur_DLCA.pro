@@ -4,13 +4,13 @@
 #
 #-------------------------------------------------
 
-COMPILATOR = "GNU" # GNU or INTEL or CLAN
+COMPILATOR = "GNU" # GNU or INTEL or CLANG
 WITH_IO = "1"           # 1 or 0
 WITH_SBL = "0"          # 1 or 0
 WITH_QT = "0"           # 0
 
 #PROFILING
-LIBS += -lprofiler -ltcmalloc
+#LIBS += -lprofiler -ltcmalloc
 
 TARGET = DLCA
 TEMPLATE = app
@@ -68,7 +68,7 @@ SOURCES +=\
 #        sblvolumesurface.hpp \
 
 
-LIBS += -lstdc++fs
+LIBS += -lstdc++fs -L/app/lib
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
