@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <sys/stat.h>
 
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -13,7 +14,7 @@
 #define POW2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
-
+namespace fs = std::experimental::filesystem;
 using namespace std;
 
 namespace DLCA{
@@ -22,45 +23,280 @@ const double PI = atan(1.0)*4;
 
 PhysicalModel::PhysicalModel() :
     Asurfgrowth(0),
-    dfe(0),
-    kfe(0),
-    xsurfgrowth(0),
+    dfe(1.4),
+    kfe(1.8),
+    xsurfgrowth(2),
     coeffB(0),
     lambda(0),
     Dpeqmass(0),
     rpeqmass(0),
     gamma_(0),
-    P(0),
-    T(0),
+    P(101300),
+    T(1500),
     Mu(0),
-    K(0),
-    Rho(0),
-    Dpm(0),
-    sigmaDpm(0),
+    K(1.38066E-23),
+    Rho(1.8e-3),
+    Dpm(30),
+    sigmaDpm(1.25),
     Time(0),
     X(0),
-    FV(0),
+    FV(3e-3),
     L(DBL_MAX),
-    precision(0),
+    precision(1e-5),
     FactorModelBeta(0),
     CPUStart(0),
-    CPULimit(0),
-    GridDiv(0),
-    N(0),
-    AggMin(0),
-    DeltaSauve(0),
-    root_method(0),
-    Mode(0),
+    CPULimit(-1),
+    GridDiv(10),
+    N(2500),
+    AggMin(1),
+    DeltaSauve(10),
+    root_method(2),
+    Mode(1),
     Wait(0),
-    WaitLimit(0),
-    ActiveModulephysique(false),
+    WaitLimit(-1),
+    ActiveModulephysique(true),
     ActiveVariationTempo(false),
-    use_verlet(false),
+    use_verlet(true),
     toBeDestroyed(true),
     CheminSauve()
 {}
 
 
+PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
+{
+    FILE* f;
+    char sauve[500];
+
+    f = fopen(FichierParam.c_str(), "rt");
+
+    if (f == nullptr)
+    {
+        cout << FichierParam.c_str() << " not found" << endl;
+        exit(1);
+    }
+    char commentaires[500];
+    char com[500]; // Char array used in the ASCII Save
+
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the N parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        N=size_t(atoi(commentaires));
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the FV parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        FV=latof(commentaires)*1E-6;
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the Dpm parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        Dpm=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the Mode parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        Mode=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the sigmaDpm parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        sigmaDpm=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the ActiveModulephysique parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        ActiveModulephysique=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the T parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        T=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the P parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        P=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the Rho parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        Rho=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the kfe parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        kfe=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the dfe parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        dfe=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the coeffB parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        coeffB=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the xsurfgrowth parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        xsurfgrowth=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the ActiveVariationTempo parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        ActiveVariationTempo=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the AggMin parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        AggMin=size_t(atoi(commentaires));
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the WaitLimit parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        WaitLimit=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the CPULimit parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        CPULimit=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the DeltaSauve parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        DeltaSauve=size_t(atoi(commentaires));
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the output_dir parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",sauve,com);
+    }
+    fclose(f);
+
+    if (Mode == 1)
+    {
+        X = pow(double(N)*PI/6.0/FV*(1.0+3.0*sigmaDpm*sigmaDpm/Dpm/Dpm),1.0/3.0); //Loi normale
+    }
+    else
+    {
+        X = pow(double(N)*PI/6.0/FV*exp(9.0/2.0*log(sigmaDpm)*log(sigmaDpm)),1.0/3.0); //Loi log-normale
+    }
+
+    fs::path pathParam = extractPath(FichierParam);
+    CheminSauve = pathParam / sauve;
+
+    if( ! fs::exists(CheminSauve))
+    {
+        if( ! fs::create_directory(CheminSauve))
+        {
+            cout << "Error creating directory " << CheminSauve << endl;
+            exit(1);
+        }
+    }
+    else
+    {
+        if( ! fs::is_directory(CheminSauve))
+        {
+            cout << "Error not a directory " << CheminSauve << endl;
+            exit(1);
+        }
+    }
+}
 
 
 void PhysicalModel::Init()
@@ -433,6 +669,85 @@ __attribute((const)) double inverfc(const double p)
         return (p < 1.0? x : -x);
 }
 __attribute((const)) double inverf(const double p) {return inverfc(1.-p);}
+
+
+
+
+bool locale_with_dots()
+{
+    static bool tested = false;
+    static bool with_dots;
+
+    if (tested)
+    {
+        return with_dots;
+    }
+    double testfloat = 1.5;
+    string teststr1 = "1.5";
+    string teststr2 = "1,5";
+    double test1=atof(teststr1.c_str());
+    double test2=atof(teststr2.c_str());
+
+    if (fabs(test1-testfloat)<1e-3)
+    {
+        with_dots = true;
+    }
+    else if (fabs(test2-testfloat)<1e-3)
+    {
+        with_dots = false;
+    }
+    else
+    {
+        cout << "What locale are you using ?" << endl;
+        exit(1);
+    }
+    return with_dots;
+}
+
+double latof(const char* _char)
+{
+    string mystring = _char;
+    if (!locale_with_dots())
+    {
+        size_t f = mystring.find('.');
+        if (f>0)
+        {
+            mystring.replace(f, 1, ",");
+        }
+    }
+    return atof(mystring.c_str());
+}
+
+fs::path extractPath(const string& filename)
+{
+    fs::path path = filename;
+    fs::path fullpath = fs::absolute(path);
+
+    if(! fs::exists(fullpath))
+    {
+        cout << "File does not exist\n" << endl;
+        exit(1);
+    }
+
+    fs::path parentpath = fullpath.parent_path();
+
+    return parentpath; //Cette variable ne retient que le chemin du fichier param
+}
+
+bool dirExists(const char *path)
+{
+    struct stat info{};
+
+    if(stat( path, &info ) != 0)
+    {
+        return false;
+    }
+    if(info.st_mode & S_IFDIR)
+    {
+        return true;
+    }
+    return false;
+}
 
 }  // namespace DLCA
 

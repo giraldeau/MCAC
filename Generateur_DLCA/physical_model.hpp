@@ -47,6 +47,7 @@ private:
 
 public:
     PhysicalModel();
+    PhysicalModel(const std::string& FichierParam);
     void Init();
     void SetPrecision(double _precision);
     void UseDichotomia();
@@ -110,6 +111,12 @@ __attribute((const)) inline T periodicPosition(T x, T dim) noexcept
 
     return pos;
 }
+
+
+bool locale_with_dots();
+double latof(const char* _char);
+bool dirExists(const char *path);
+std::experimental::filesystem::path extractPath(const std::string& file);
 
 }  // namespace DLCA
 

@@ -6,8 +6,6 @@
 #include <Spherelist.hpp>
 
 #include <vector>
-#include <array>
-#include <utility>
 
 using namespace std;
 namespace DLCA{
@@ -16,5 +14,5 @@ pair<vector<double>, vector<double>> compute_volume_surface(const ListSphere& sp
 
 }
 
-#endif
+#endif // WITH_SBL
 #endif // SBLVOLUMESURFACE_H

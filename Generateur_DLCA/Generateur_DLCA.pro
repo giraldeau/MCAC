@@ -7,19 +7,19 @@
 COMPILATOR = "GNU" # GNU or INTEL or CLANG
 WITH_IO = "1"           # 1 or 0
 WITH_SBL = "0"          # 1 or 0
-WITH_QT = "0"           # 0
 STATIC = "0"            # 0
 PROFILING = "0"         # 0 or 1
 
 TARGET = DLCA
 TEMPLATE = app
+QT = ""
 
 SOURCES +=\
         storage.hpp \
         aggregat.hpp \
         aggregatList.hpp \
         IO.hpp \
-        mainwindow.hpp \
+        calcul.hpp \
         physical_model.hpp \
         Sphere.hpp \
         Spherelist.hpp \
@@ -35,7 +35,7 @@ SOURCES +=\
         Spherelist_physics.cpp \
         aggregat.cpp \
         aggregatList.cpp \
-        mainwindow.cpp\
+        calcul.cpp\
         main.cpp \
         IO.cpp \
         statistics.cpp \
@@ -73,26 +73,6 @@ CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
 release: DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/release
 debug:   DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/debug
-
-equals(WITH_QT, "1"){
-    QT       += core gui
-    greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-    DEFINES += WITH_QT
-
-    OBJECTS_DIR = $$DESTDIR/.obj
-    MOC_DIR = $$DESTDIR/.moc
-    RCC_DIR = $$DESTDIR/.qrc
-    UI_DIR = $$DESTDIR/.ui
-
-    FORMS += mainwindow.ui
-
-    RESOURCES += \
-        mainwindow.qrc
-
-} else {
-    QT=""
-}
 
 equals(WITH_SBL, "1"){
     INCLUDEPATH +=  /home/pouxa/packages/sbl/install/include
