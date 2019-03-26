@@ -1,10 +1,11 @@
 #ifndef STATISTICS_H
-#define STATISTICS_H
+#define STATISTICS_H 1
 
 #include "IO.hpp"
 #include "physical_model.hpp"
 #include <set>
 #include <vector>
+#include <tuple>
 
 
 namespace DLCA{
@@ -35,18 +36,18 @@ private:
     double Dp;
     double DgOverDp;
 
-    double Dp3;
+    //double Dp3;
 
-    double DmOverDp;
-    double DgeoOverDp;
-    double SurfaceOverVolume;
+    //double DmOverDp;
+    //double DgeoOverDp;
+    //double SurfaceOverVolume;
 
-    double cov;
-    double Npe;
-    double Tv;
-    double Ts;
+    //double cov;
+    //double Npe;
+    //double Tv;
+    //double Ts;
 
-    std::size_t Nc;
+    //std::size_t Nc;
 
 public:
 
@@ -83,6 +84,8 @@ public:
     void save(bool finish);
 
     std::vector<double> FormatTimeData() const;
+    std::tuple<bool,double,double,double> getInstantaneousFractalLaw(const ListAggregat& current) const;
+    std::tuple<bool,double,double,double> getCompleteFractalLaw() const;
 
 public:
     /** Default constructor */

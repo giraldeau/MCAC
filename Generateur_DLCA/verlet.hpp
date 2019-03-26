@@ -1,5 +1,5 @@
 #ifndef VERLET_H
-#define VERLET_H
+#define VERLET_H 1
 
 #include <array>
 #include <list>

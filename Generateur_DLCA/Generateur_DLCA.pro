@@ -160,7 +160,7 @@ equals(COMPILATOR, "GNU"){
 
 equals(COMPILATOR, "CLANG"){
 
-    QMAKE_CXXFLAGS += -g -march=native -static  -std=c++14
+    QMAKE_CXXFLAGS += -g -march=native -static  -std=c++14 -fopenmp
     QMAKE_LFLAGS   += -g -std=c++14
 
     ### WARNINGS ###

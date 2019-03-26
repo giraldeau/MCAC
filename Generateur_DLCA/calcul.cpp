@@ -1,5 +1,6 @@
 #include "calcul.hpp"
 #include <cmath>
+#include <iomanip>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -56,7 +57,6 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             Stats.Analyze(Aggregates);
             //Stats.save();
         }
-
 
         // -- Generating a random direction --
         double thetarandom = Random()*PI*2;
@@ -158,13 +158,29 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         //$ Show progress
         if(contact)
         {
-            time_t t;
-            time(&t);
-            int secondes = int(round(t-physicalmodel.CPUStart));
-            cout << "NAgg=" << Aggregates.size() << "    "
-                 << "Time=" << physicalmodel.Time*1E6 << " E-6 s    "
-                 << "CPU=" << secondes << "    "
-                 << "after " << physicalmodel.Wait << " it " << endl;
+            clock_t now = clock();
+            double elapse = double(now - physicalmodel.CPUStart) / CLOCKS_PER_SEC;
+            cout.precision(3);
+            cout << scientific;
+            cout << "  NAgg=" << setw(5) << Aggregates.size()
+                 << "  Time=" << setw(5) << physicalmodel.Time << " s"
+                 << "   CPU=" << setw(5) << elapse << " s"
+                 << " after " << setw(5) << physicalmodel.Wait << " it --- ";
+
+            auto InstantaneousFractalLaw = Stats.getInstantaneousFractalLaw(Aggregates);
+            if(get<0>(InstantaneousFractalLaw))
+            {
+                cout << "  "
+                     << exp(get<2>(InstantaneousFractalLaw))
+                     << " * x^ "
+                     << get<1>(InstantaneousFractalLaw)
+                     << "  --- r= "
+                     << get<3>(InstantaneousFractalLaw) << endl;
+            }
+            else {
+                 cout << endl;
+            }
+
             physicalmodel.Wait = 0;
         }
         else

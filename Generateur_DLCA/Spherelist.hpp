@@ -1,5 +1,5 @@
 #ifndef SPHERELIST_H
-#define SPHERELIST_H
+#define SPHERELIST_H 1
 
 #include "IO.hpp"
 #include "Sphere.hpp"

@@ -1,5 +1,5 @@
 #ifndef CALCUL_H
-#define CALCUL_H
+#define CALCUL_H 1
 
 #include "physical_model.hpp"
 #include "aggregatList.hpp"

@@ -749,7 +749,7 @@ Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
     swap(Np,other.Np);
 
 
-    StatisicsData::operator=(move(static_cast<StatisicsData&>(other)));
+    StatisicsData::operator=(static_cast<StatisicsData&>(other));
     storage_elem<15,ListAggregat>::operator=(move(static_cast<storage_elem<15,ListAggregat>&>(other)));
 
     setpointers();

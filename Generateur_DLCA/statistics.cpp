@@ -40,6 +40,7 @@ void Aggregate::fullStatistics()
     //$ For the Spheres i in Agg Id
     for (size_t i = 0; i < Np; i++)
     {
+        /*
         for (size_t j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
         {
             double dist = distances[i][j];
@@ -53,29 +54,29 @@ void Aggregate::fullStatistics()
                 cov = cov - dbordabord/(2.0*rpmoy); //Coefficient of total Covering of Agg id
                 Nc += 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
             }
-        }
-        Tv = Tv + volumes[i]/(myspheres[i].Volume());
-        Ts = Ts + surfaces[i]/(myspheres[i].Surface());
+        }*/
+        //Tv = Tv + volumes[i]/(myspheres[i].Volume());
+        //Ts = Ts + surfaces[i]/(myspheres[i].Surface());
         Dp += myspheres[i].Radius();
-        Dp3 += POW3(2*myspheres[i].Radius());
+        //Dp3 += POW3(2*myspheres[i].Radius());
     }
 
-    if (Nc > 0)
-    {
-        cov = cov/double(Nc);
-    }
+    //if (Nc > 0)
+    //{
+    //    cov = cov/double(Nc);
+    //}
 
-    Tv = 1 - Tv / double(Np);
-    Ts = 1 - Ts / double(Np);
+    //Tv = 1 - Tv / double(Np);
+    //Ts = 1 - Ts / double(Np);
     Dp = 2 * Dp / double(Np);
-    Dp3 = pow(Dp3 / double(Np) , 1./3.);
+    //Dp3 = pow(Dp3 / double(Np) , 1./3.);
 
     DgOverDp=2*(*rg)/Dp;
-    DmOverDp=*dm/Dp;
-    DgeoOverDp=2*(*rmax)/Dp;
+    //DmOverDp=*dm/Dp;
+    //DgeoOverDp=2*(*rmax)/Dp;
 
-    SurfaceOverVolume = *surfAgregat / *volAgregat;
-    Npe = *volAgregat/(PI * POW3(Dp3)/6.0);
+    //SurfaceOverVolume = *surfAgregat / *volAgregat;
+    //Npe = *volAgregat/(PI * POW3(Dp3)/6.0);
 }
 
 
@@ -101,7 +102,7 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
 
     if (Agg.Np <10)
     {
-        //return false;
+        return false;
     }
 
     auto ret = FractalLaw[Agg.Np - 1].emplace(Agg.DgOverDp);
@@ -187,8 +188,10 @@ void StatisticStorage::Analyze(const ListAggregat& current)
     {
         InsertIfNew(*Agg);
     }
-    return;
+}
 
+tuple<bool,double,double,double> StatisticStorage::getInstantaneousFractalLaw(const ListAggregat& current) const
+{
     vector<double> Nps;
     vector<double> DgOverDps;
     Nps.reserve(current.size());
@@ -201,50 +204,21 @@ void StatisticStorage::Analyze(const ListAggregat& current)
     }
 
 
-    tuple<bool,double,double,double> InstantaneousFractalLaw = linreg(DgOverDps,Nps);
-    if(get<0>(InstantaneousFractalLaw))
-    {
-        cout << exp(get<2>(InstantaneousFractalLaw))
-             << " * x^ "
-             << get<1>(InstantaneousFractalLaw)
-             << "  --- r= "
-             << get<3>(InstantaneousFractalLaw) << endl;
-    }
-
-    print();
+    return linreg(DgOverDps,Nps);
 }
 
-
-
-void StatisticStorage::print() const
+tuple<bool,double,double,double> StatisticStorage::getCompleteFractalLaw() const
 {
-
     size_t total(0);
-
-    /*
-    ofstream myfile;
-    myfile.open ("testStats.dat", ios::out | ios::trunc);
-    */
-
     for (size_t Np=1;Np<=FractalLaw.size();Np++)
     {
         total += FractalLaw[Np - 1].size();
-        /*
-        for (const double& DgOverDp : FractalLaw[Np])
-        {
-            myfile << DgOverDp << "\t" << Np << endl;
-        }
-        */
     }
-    /*
-    myfile.close();
-    cout << "Total number of saved aggregates : " << total << endl;
-    */
-
     vector<double> Nps;
     vector<double> DgOverDps;
     Nps.reserve(total);
     DgOverDps.reserve(total);
+
     for (size_t Np=1;Np<=FractalLaw.size();Np++)
     {
         for (const double& DgOverDp : FractalLaw[Np - 1])
@@ -254,7 +228,36 @@ void StatisticStorage::print() const
         }
     }
 
-    tuple<bool,double,double,double> CompleteFractalLaw = linreg(DgOverDps,Nps);
+    return linreg(DgOverDps,Nps);
+}
+
+void StatisticStorage::print() const
+{
+
+    /*
+    ofstream myfile;
+    myfile.open ("testStats.dat", ios::out | ios::trunc);
+
+    for (size_t Np=1;Np<=FractalLaw.size();Np++)
+    {
+        for (const double& DgOverDp : FractalLaw[Np])
+        {
+            myfile << DgOverDp << "\t" << Np << endl;
+        }
+    }
+
+    myfile.close();
+    cout << "Total number of saved aggregates : " << total << endl;
+    */
+
+    size_t total(0);
+    for (size_t Np=1;Np<=FractalLaw.size();Np++)
+    {
+        total += FractalLaw[Np - 1].size();
+    }
+    cout << "Total number of saved aggregates : " << total << endl;
+
+    auto CompleteFractalLaw = getCompleteFractalLaw();
     if(get<0>(CompleteFractalLaw))
     {
         cout << "Estimation of the fractal law : " << endl << "  "

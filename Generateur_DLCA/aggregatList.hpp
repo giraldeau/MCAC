@@ -1,5 +1,5 @@
 #ifndef AGGREGATLIST_H
-#define AGGREGATLIST_H
+#define AGGREGATLIST_H 1
 
 #include "Sphere.hpp"
 #include "IO.hpp"

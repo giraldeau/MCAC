@@ -1,5 +1,5 @@
 #ifndef STORAGE_H
-#define STORAGE_H
+#define STORAGE_H 1
 
 #include <array>
 #include <vector>

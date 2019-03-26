@@ -319,7 +319,7 @@ void PhysicalModel::Init()
     GridDiv = 10;      // Number of Divisions of the box
 
     AggMin = MAX(AggMin, 1);
-    time(&CPUStart);
+    CPUStart = clock();
     SetPrecision(1e-5);
     UseSecante();
 
@@ -343,9 +343,9 @@ bool PhysicalModel::Finished(const size_t Nagg) const
 
     if (CPULimit > 0)
     {
-        time_t currentCPU;
-        time(&currentCPU);
-        if (currentCPU - CPUStart >= CPULimit)
+        clock_t currentCPU = clock();
+        double elapse = double(currentCPU - CPUStart) / CLOCKS_PER_SEC;
+        if (elapse >= CPULimit)
         {
             cout << "We reach the CPULimit condition" << endl << endl;
             return true;

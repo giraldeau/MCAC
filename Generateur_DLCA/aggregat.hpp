@@ -1,5 +1,5 @@
 #ifndef AGGREGAT_H
-#define AGGREGAT_H
+#define AGGREGAT_H 1
 
 #include "Sphere.hpp"
 #include "Spherelist.hpp"

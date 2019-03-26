@@ -1,5 +1,5 @@
 #ifndef STORAGELIST_H
-#define STORAGELIST_H
+#define STORAGELIST_H 1
 
 #define UNUSED(expr) do { (void)(expr); } while (0)
 

@@ -1,5 +1,5 @@
 #ifndef PHYSICAL_MODEL_H
-#define PHYSICAL_MODEL_H
+#define PHYSICAL_MODEL_H 1
 
 #include <cstddef>
 #include <ctime>
@@ -23,7 +23,8 @@ public:
     double precision;
     double FactorModelBeta;
 
-    time_t CPUStart, CPULimit;
+    clock_t CPUStart;
+    double CPULimit;
 
     size_t GridDiv; // Number of Divisions of the box
     size_t N;// Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps

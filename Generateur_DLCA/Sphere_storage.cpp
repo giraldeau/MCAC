@@ -252,7 +252,7 @@ Sphere::Sphere(const Sphere& other, ListSphere& aggregat, size_t id):
 
 /** Move constructor */
 Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimizations in containers */
-    storage_elem<9,ListSphere>(other),
+    storage_elem<9,ListSphere>(std::move(other)),
     x(nullptr),
     y(nullptr),
     z(nullptr),
