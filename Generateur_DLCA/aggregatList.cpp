@@ -1,8 +1,8 @@
-#include "aggregat.h"
-#include <math.h>
+#include "aggregatList.hpp"
+#include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <iomanip>
-#include <algorithm>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -11,8 +11,11 @@
 
 using namespace std;
 
-ListAggregat::ListAggregat(void):
-    storage_list<13,Aggregate>(),
+namespace DLCA{
+
+
+ListAggregat::ListAggregat():
+    storage_list<15,Aggregate>(),
     physicalmodel(new PhysicalModel),
     maxradius(0.),
     indexSortedTimeSteps(),
@@ -20,6 +23,7 @@ ListAggregat::ListAggregat(void):
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     Writer(new ThreadedIO(*physicalmodel, 0)),
+    lastSaved(0),
     spheres(),
     verlet()
 {
@@ -30,12 +34,14 @@ ListAggregat::ListAggregat(void):
 
     double m = *list[0]->time_step;
     for (const Aggregate* Agg : list)
+    {
         m =MAX(*Agg->time_step, m);
+    }
 
     return m;
 }
 
-void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
+void ListAggregat::Init(PhysicalModel& _physicalmodel,const size_t _size)
 {
     if(physicalmodel->toBeDestroyed)
     {
@@ -44,123 +50,144 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const int _N)
     }
 
     physicalmodel=&_physicalmodel;
-    Writer = new ThreadedIO(_physicalmodel, _N),
-    spheres.Init(_physicalmodel, _N);
+    Writer = new ThreadedIO(_physicalmodel, _size);
+    spheres.Init(_physicalmodel, _size);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
-    storage_list<13,Aggregate>::Init(_N,*this);
+    storage_list<15,Aggregate>::Init(_size,*this);
     setpointers();
 }
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-vector<int> ListAggregat::PotentialCollision(int AggMe,array<double,3> Vectdir, vector<int> SearchSpace) const
+vector< pair<size_t,double> > ListAggregat::SortSearchSpace(size_t MovingAgg,array<double,3> Vectdir, vector<size_t> SearchSpace) const
 {
-    vector<int> listOfPotentialCollision;
+    vector< pair<size_t,double> > SortedSearchSpace;
 
-    Sphere SphereMe(*list[AggMe]);
-    Sphere SphereOther(*list[AggMe]);
+    Sphere SphereMe(*list[MovingAgg]);
+    Sphere SphereOther(*list[MovingAgg]);
 
     //$ [For all other agregate]
-    for (const int& AggOther : SearchSpace)
+    for (const size_t& AggOther : SearchSpace)
     {
-        if (AggOther != AggMe)
+        SphereOther.InitVal(*list[AggOther]->x,
+                            *list[AggOther]->y,
+                            *list[AggOther]->z,
+                            *list[AggOther]->rmax);
+
+        auto pos = SortedSearchSpace.begin();
+        double dist = 0.;
+        bool collision = SphereMe.Contact(SphereOther);
+
+        if (!collision)
         {
-            SphereOther.InitVal(*list[AggOther]->x,
-                                *list[AggOther]->y,
-                                *list[AggOther]->z,
-                                *list[AggOther]->rmax);
-
-            double distForCollision;
-
-            if (SphereMe.Contact(SphereOther))
-                distForCollision = 0;
-            else
-                distForCollision = SphereMe.Collision(SphereOther,Vectdir);
-
-            if(0. <= distForCollision && distForCollision <= *list[AggMe]->lpm )
-                listOfPotentialCollision.push_back(AggOther);
+            pair<bool,double> Collision = SphereMe.Collision(SphereOther,Vectdir);
+            if (Collision.first && Collision.second <= *list[MovingAgg]->lpm )
+            {
+                collision=Collision.first;
+                dist = Collision.second;
+                pos = lower_bound (SortedSearchSpace.begin(), SortedSearchSpace.end(), dist,
+                                   [](pair<size_t,double> i1, double d){return i1.second < d;});
+            }
+        }
+        if (collision)
+        {
+            pair<size_t,double> suspect = {AggOther,dist};
+            SortedSearchSpace.insert(pos,suspect);
         }
     }
-    return listOfPotentialCollision;
+    return SortedSearchSpace;
 }
 
-vector<int> ListAggregat::GetSearchSpace(const int source, const array<double,3> Vectdir) const
+vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<double,3> Vectdir) const
 {
 
-    vector < int > SearchSpace;
-    if (!physicalmodel->use_verlet)
-    {
-        // The full aggregat list index
-        SearchSpace.resize(size());
-        iota(SearchSpace.begin(), SearchSpace.end(), 0);
-
-        // Except me
-        SearchSpace.erase(SearchSpace.begin()+source);
-
-        return SearchSpace;
-    }
-    else
-    {
+    vector < size_t > SearchSpace;
+    if (physicalmodel->use_verlet)
+    {   
         // Extract from verlet
 
         double lpm ( *list[source]->lpm );
         double mindist ( *list[source]->rmax + maxradius );
         array<double, 3> sourceposition = list[source]->GetPosition();
 
-        array<double, 3> Vector;
-        Vector[0] = lpm * Vectdir[0];
-        Vector[1] = lpm * Vectdir[1];
-        Vector[2] = lpm * Vectdir[2];
+        array<double, 3> Vector{{lpm * Vectdir[0],
+                                 lpm * Vectdir[1],
+                                 lpm * Vectdir[2]}};
 
         SearchSpace = verlet.GetSearchSpace(sourceposition , mindist, Vector);
 
         // Remove me
         for(size_t i =0;i<SearchSpace.size();i++)
+        {
             if (SearchSpace[i]==source)
             {
-                SearchSpace.erase(SearchSpace.begin()+i);
+                SearchSpace.erase(SearchSpace.begin()+long(i));
                 return SearchSpace;
             }
+        }
         cout << "I'm not on the verlet list ???"<<endl;
         cout << "This is an error"<<endl;
         exit(68);
         return SearchSpace;
     }
+
+    // The full aggregat list index
+    SearchSpace.resize(size());
+    iota(SearchSpace.begin(), SearchSpace.end(), 0);
+
+    // Except me
+    SearchSpace.erase(SearchSpace.begin()+long(source));
+
+    return SearchSpace;
 }
 
 
 
 //########################################## Determination of the contacts between agrgates ##########################################
-int ListAggregat::DistanceToNextContact(const int source, const array<double,3> Vectdir, double &distmin) const
+int ListAggregat::DistanceToNextContact(const size_t source, const array<double,3> Vectdir, double &distmin) const
 {
     // Use Verlet to reduce search
-    vector<int> SearchSpace(GetSearchSpace(source,Vectdir));
+    vector<size_t> SearchSpace(GetSearchSpace(source,Vectdir));
 
     // Assimilate Aggregate as sphere to drasticly speed-up search
-    vector<int> Potential(PotentialCollision(source,Vectdir,SearchSpace));
-    //vector<int> PotentialContact(SearchSpace);
+    vector< pair<size_t,double> > Potential(SortSearchSpace(source,Vectdir,SearchSpace));
 
     int aggcontact(-1);
     distmin = *list[source]->lpm;
+    double mindistagg(0.);
 
     //$ loop on the agregates potentially in contact
-    for (const int & agg : Potential) //For every aggregate that could be in contact
+    for (const pair<size_t,double> & suspect : Potential) //For every aggregate that could be in contact
     {
+        size_t agg=suspect.first;
+        double distagg=suspect.second;
+
+        // We already found the closest one
+        if (aggcontact>=0)
+        {
+            double secu = 2*(*list[size_t(aggcontact)]->rmax + *list[source]->rmax);
+            if (distagg - mindistagg > secu)
+            {
+                return aggcontact;
+            }
+        }
+        /*
         // If two aggragates are already in contact due to surface growing
         if (list[source]->Contact(*list[agg]))
         {
             distmin = 0;
-            return agg;
+            cout << "Surprise there is already a contact !" << endl;
+            cout << "This is probably due to surface growing" << endl;
+            return int(agg);
         }
-        else
+        */
+        double dist = list[source]->Distance(*list[agg],Vectdir);
+        if (dist >= 0 && dist <= distmin)
         {
-            double dist = list[source]->Distance(*list[agg],Vectdir);
-            if (dist >= 0 && dist <= distmin)
-            {
-                distmin = dist;
-                aggcontact = agg; //Prise en compte de l'image par translation d'un agrégat cible
-            }
+            distmin = dist;
+            aggcontact = int(agg); //Prise en compte de l'image par translation d'un agrégat cible
+            mindistagg = distagg;
         }
     }
 
@@ -169,10 +196,12 @@ int ListAggregat::DistanceToNextContact(const int source, const array<double,3> 
 
 void ListAggregat::setpointers()
 {
-    vector<double>::iterator newdeb((*Storage)[0].begin());
-    vector<double>::iterator newfin((*Storage)[0].end());
+    auto newdeb((*Storage)[0].begin());
+    auto newfin((*Storage)[0].end());
     if ((newdeb == ptr_deb) && (newfin == ptr_fin))
+    {
         return;
+    }
     for (Aggregate* Agg : list)
     {
         Agg->setpointers();
@@ -182,13 +211,14 @@ void ListAggregat::setpointers()
 }
 
 
-ListAggregat::~ListAggregat(void) noexcept
+ListAggregat::~ListAggregat() noexcept
 {
     if(physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
-        delete Writer;
     }
+
+    delete Writer;
 
     //#pragma omp for simd
     for (Aggregate* Agg : list)
@@ -199,25 +229,15 @@ ListAggregat::~ListAggregat(void) noexcept
 
 
 
-int ListAggregat::Merge(const int first, const int second)
+size_t ListAggregat::Merge(const size_t first, const size_t second)
 {
-    const int keeped(MIN(first,second));
-    const int removed(MAX(first,second));
+    const size_t keeped(MIN(first,second));
+    const size_t removed(MAX(first,second));
 
+    // Merge the two aggregate but do not remove the deleted one
     list[keeped]->Merge(*list[removed]);
 
-    if (list[removed]->InVerlet)
-    {
-        verlet.Remove(removed,list[removed]->GetVerletIndex());
-        list[removed]->InVerlet = false;
-    }
-
-    for (int i=removed+1;i<size();i++)
-    {
-        list[i]->DecreaseLabel();
-    }
-
-    remove(*list[removed]);
+    remove(removed);
 
     setpointers();
 
@@ -226,15 +246,15 @@ int ListAggregat::Merge(const int first, const int second)
 
 
 template <typename T>
-vector<int> sort_indexes(const vector<T> &v) {
+vector<size_t> sort_indexes(const vector<T> &v) {
 
   // initialize original index locations
-  vector<int> idx(v.size());
+  vector<size_t> idx(v.size());
   iota(idx.begin(), idx.end(), 0);
 
   // sort indexes based on comparing values in v
   sort(idx.begin(), idx.end(),
-       [&v](int i1, int i2) {return v[i1] < v[i2];});
+       [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
 
   return idx;
 }
@@ -244,8 +264,10 @@ void ListAggregat::SortTimeSteps(double factor)
     vector<double> TpT(size());
 
     #pragma omp for simd
-    for (int i=0; i < size(); i++)
+    for (size_t i=0; i < size(); i++)
+    {
         TpT[i] = factor/(*list[i]->time_step);
+    }
 
     indexSortedTimeSteps = sort_indexes(TpT);
 
@@ -253,20 +275,62 @@ void ListAggregat::SortTimeSteps(double factor)
 
     //$ Accumulate the timesteps
     CumulativeTimeSteps[0] = TpT[indexSortedTimeSteps[0]];
-    for (int i=1; i < size(); i++)
+    for (size_t i=1; i < size(); i++)
     {
         CumulativeTimeSteps[i] = CumulativeTimeSteps[i-1]+TpT[indexSortedTimeSteps[i]];
     }
 }
 
-int ListAggregat::RandomPick(double &deltatemps, const double random)
+size_t ListAggregat::RandomPick(double &deltatemps, const double random)
 {
     //$ Pick a random sphere
     double valAlea=random*CumulativeTimeSteps[size()-1];
-    long int n = lower_bound(CumulativeTimeSteps.begin(), CumulativeTimeSteps.end(), valAlea) - CumulativeTimeSteps.begin();
+    long n = lower_bound(CumulativeTimeSteps.begin(), CumulativeTimeSteps.end(), valAlea) - CumulativeTimeSteps.begin();
 
     deltatemps = CumulativeTimeSteps[size()-1];
 
-    return indexSortedTimeSteps[n];
+    return indexSortedTimeSteps[size_t(n)];
 }
+
+
+ListAggregat::ListAggregat(PhysicalModel& _physicalmodel, const size_t _size):
+    storage_list<15,Aggregate>(),
+    physicalmodel(&_physicalmodel),
+    maxradius(0.),
+    indexSortedTimeSteps(),
+    CumulativeTimeSteps(),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr),
+    Writer(new ThreadedIO(*physicalmodel, _size)),
+    lastSaved(0),
+    spheres(),
+    verlet()
+{
+    spheres.Init(_physicalmodel, _size);
+    verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
+
+    storage_list<15,Aggregate>::Init(_size,*this);
+    setpointers();
+}
+
+
+Aggregate* ListAggregat::add(const Aggregate& oldAgg)
+{
+    Aggregate* newAgg = storage_list<15,Aggregate>::add(oldAgg,*this);
+
+    setpointers();
+    for (Aggregate* Agg : list)
+    {
+        Agg->setpointers();
+        for (Sphere* Sph : Agg->myspheres)
+        {
+            Sph->setpointers();
+        }
+    }
+
+    return newAgg;
+}
+
+
+}// namespace DLCA
 

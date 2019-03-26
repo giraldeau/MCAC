@@ -1,0 +1,19 @@
+1000        N           []                  Initial number of spheres
+1000        FV          [ppm]               Volume fraction
+30          Dpm         [nm]                Initial diameter of spheres
+1           Mode        []                  Type of dispersion of the initial diameter of spheres 1=Normal,0=LogNormal
+1.25        sigmaDpm    [sigmageo] or [nm]  Dispersion of the initial diameter of spheres (depend on the dispersion type)
+1                       []                  Physical model (0 or 1)
+1700        T           [K]                 Temperature
+101300      P           [Pa]                Pressure
+1800        Rho         [kg/m3]             Density
+1.4         kfe         []                  Fractal law linear                             (to be converged)
+1.8         dfe         []                  Fractal law power law                          (to be converged)
+1e-3        coeffB      []                  Surface Growth linear                          (stick to zero)
+2           xsurfgrowth []                  Surface Growth power law
+0                       []                  Temporal variation of physical parameters       (stick to zero)
+1           Aggmin      []                  Final number of Aggregates
+-1          WaitLimit   []                  Stop if WaitLimit iterations without collision (negative value to deactivate)
+-1          CPULimit    [s]                 Stop when computation time is longer           (negative value to deactivate)
+10          DeltaSauve  []                  Number of time step per file
+output_dir  output_dir  []                  Output directory

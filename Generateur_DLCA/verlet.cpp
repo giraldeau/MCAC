@@ -1,5 +1,5 @@
-#include "verlet.h"
-#include <math.h>
+#include "verlet.hpp"
+#include "physical_model.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -8,66 +8,75 @@ using namespace std;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW2(a) ((a)*(a))
-#define POW3(a) ((a)*(a)*(a))
+
+namespace DLCA{
 
 
-void Verlet::Remove(const int id,const array<int, 3> Index)
+void Verlet::Remove(const size_t id,const array<size_t, 3> Index)
 {
-    (*this)[Index[0]][Index[1]][Index[2]].remove(id);
+    Cell[Index[0]][Index[1]][Index[2]].remove(id);
 }
-void Verlet::Add(const int id,const array<int, 3> Index)
+void Verlet::Add(const size_t id,const array<size_t, 3> Index)
 {
-    (*this)[Index[0]][Index[1]][Index[2]].push_front(id);
+    Cell[Index[0]][Index[1]][Index[2]].push_front(id);
 }
 
-void Verlet::Init(const int _GridDiv, const double _L)
+void Verlet::Init(const size_t _GridDiv, const double _L)
 {
-    (*this).clear();
+
+    Cell.clear();
 
     GridDiv = _GridDiv;
     L=_L;
 
-    (*this).resize(GridDiv);
-    for(vector< vector< list< int > > >& Vx : (*this))
+    Cell.resize(GridDiv);
+    for(vector< vector< list< size_t > > >& Vx : Cell)
     {
         Vx.resize(GridDiv);
 
-        for(vector< list< int > >& Vy : Vx)
+        for(vector< list< size_t > >& Vy : Vx)
         {
             Vy.resize(GridDiv);
         }
-
     }
+
 }
 
-
-vector<int> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double witdh, const array<double, 3> Vector) const
+vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double width, const array<double, 3> Vector) const
 {
 
-    double xp(sourceposition[0]+witdh + MAX(Vector[0],0));
-    double xm(sourceposition[0]-witdh + MIN(Vector[0],0));
-    double yp(sourceposition[1]+witdh + MAX(Vector[1],0));
-    double ym(sourceposition[1]-witdh + MIN(Vector[1],0));
-    double zp(sourceposition[2]+witdh + MAX(Vector[2],0));
-    double zm(sourceposition[2]-witdh + MIN(Vector[2],0));
+    double xp(sourceposition[0]+width + MAX(Vector[0],0));
+    double xm(sourceposition[0]-width + MIN(Vector[0],0));
+    double yp(sourceposition[1]+width + MAX(Vector[1],0));
+    double ym(sourceposition[1]-width + MIN(Vector[1],0));
+    double zp(sourceposition[2]+width + MAX(Vector[2],0));
+    double zm(sourceposition[2]-width + MIN(Vector[2],0));
 
-    int bornei1 (int(floor(xm*GridDiv/L)));
-    int bornei2 (int(floor(xp*GridDiv/L)+1));
-    int bornej1 (int(floor(ym*GridDiv/L)));
-    int bornej2 (int(floor(yp*GridDiv/L)+1));
-    int bornek1 (int(floor(zm*GridDiv/L)));
-    int bornek2 (int(floor(zp*GridDiv/L)+1));
+    auto bornei1 (int(floor(xm*double(GridDiv)/L)));
+    auto bornei2 (int(floor(xp*double(GridDiv)/L)+1));
+    auto bornej1 (int(floor(ym*double(GridDiv)/L)));
+    auto bornej2 (int(floor(yp*double(GridDiv)/L)+1));
+    auto bornek1 (int(floor(zm*double(GridDiv)/L)));
+    auto bornek2 (int(floor(zp*double(GridDiv)/L)+1));
 
-    if (bornei2-bornei1>=GridDiv)
-        {bornei1=0 ; bornei2=GridDiv-1;}
-    if (bornej2-bornej1>=GridDiv)
-        {bornej1=0 ; bornej2=GridDiv-1;}
-    if (bornek2-bornek1>=GridDiv)
-        {bornek1=0 ; bornek2=GridDiv-1;}
+    if (bornei2-bornei1>=int(GridDiv))
+    {
+        bornei1=0;
+        bornei2=int(GridDiv)-1;
+    }
+    if (bornej2-bornej1>=int(GridDiv))
+    {
+        bornej1=0;
+        bornej2=int(GridDiv)-1;
+    }
+    if (bornek2-bornek1>=int(GridDiv))
+    {
+        bornek1=0;
+        bornek2=int(GridDiv)-1;
+    }
 
 
-    list<int> tmpSearchSpace;
+    list<size_t> tmpSearchSpace;
 
     // ///////
     for (int i=bornei1;i<=bornei2;i++)
@@ -76,60 +85,64 @@ vector<int> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const
         {
             for (int k=bornek1;k<=bornek2;k++)
             {
-                int ii(i),jj(j),kk(k);
-
                 // periodic
-                while (ii<0)
-                    ii += GridDiv;
-                while (jj<0)
-                    jj += GridDiv;
-                while (kk<0)
-                    kk += GridDiv;
-                while (ii>=GridDiv)
-                    ii -= GridDiv;
-                while (jj>=GridDiv)
-                    jj -= GridDiv;
-                while (kk>=GridDiv)
-                    kk -= GridDiv;
-
+                auto ii = size_t(periodicPosition(i,int(GridDiv)));
+                auto jj = size_t(periodicPosition(j,int(GridDiv)));
+                auto kk = size_t(periodicPosition(k,int(GridDiv)));
                 tmpSearchSpace.insert(tmpSearchSpace.end(),
-                                      (*this)[ii][jj][kk].begin(),
-                                      (*this)[ii][jj][kk].end());
+                                      Cell[ii][jj][kk].begin(),
+                                      Cell[ii][jj][kk].end());
+
             }
         }
     }
-    vector<int> SearchSpace{ make_move_iterator(tmpSearchSpace.begin()),
+
+    vector<size_t> SearchSpace{ make_move_iterator(tmpSearchSpace.begin()),
                              make_move_iterator(tmpSearchSpace.end()) };
     return SearchSpace;
 }
 
 
-void Verlet::print(const std::array<int, 3> Index) const
+void Verlet::print(const std::array<size_t, 3> Index) const
 {
     cout << "list of agg registered in cell " << Index[0] << " "
                                               << Index[1] << " "
                                               << Index[2] << " " << endl;
 
-    for(const int agg : (*this)[Index[0]][Index[1]][Index[2]])
+    for(const size_t agg : Cell[Index[0]][Index[1]][Index[2]])
+    {
         cout << agg<<endl;
+    }
 }
 
-void Verlet::search(const int id) const
+void Verlet::search(const size_t id) const
 {
     cout << "Searching " << id << " in verlet"<<endl;
-    for (int i=0;i<GridDiv;i++)
+    for (size_t i=0;i<GridDiv;i++)
     {
-        for (int j=0;j<GridDiv;j++)
+        for (size_t j=0;j<GridDiv;j++)
         {
-            for (int k=0;k<GridDiv;k++)
+            for (size_t k=0;k<GridDiv;k++)
             {
-                for(const int agg : (*this)[i][j][k])
+                for(const size_t agg : Cell[i][j][k])
+                {
                     if (agg==id)
+                    {
                         cout << i << " "
                              << j << " "
                              << k << endl;
+                    }
+                }
             }
         }
     }
 }
 
+/* Default constructor */
+Verlet::Verlet():
+    Cell(),
+    GridDiv(0),
+    L(0)
+{}
+
+}  // namespace DLCA

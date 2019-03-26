@@ -14,24 +14,29 @@ protected:
 
     std::array< std::vector<double>, N>* Storage;
     mystorage* external_storage;
-    int indexInStorage;
+    size_t indexInStorage{0};
 
 public:
 
+    void DecreaseIndex();
+
     /** Default constructor in local storage */
-    storage_elem(void);
+    storage_elem();
 
     /** Constructor with external storage */
-    storage_elem(mystorage& Storage, const int id);
+    explicit storage_elem(mystorage& ext_storage, size_t id);
 
     /** Copy constructor */
-    storage_elem(const storage_elem&);
+    storage_elem(const storage_elem& other);
+
+    template <class elem>
+    storage_elem(const storage_elem& other,elem& sphere, mystorage& _Storage);
 
     /** Move constructor */
-    storage_elem (storage_elem&&) noexcept; /* noexcept needed to enable optimizations in containers */
+    storage_elem (storage_elem&& other) noexcept; /* noexcept needed to enable optimizations in containers */
 
     /** Destructor */
-    ~storage_elem(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+    ~storage_elem() noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
     /** Copy assignment operator */
     storage_elem& operator= (const storage_elem& other);
@@ -42,20 +47,29 @@ public:
 };
 
 
+template <int N,class mystorage>
+void storage_elem<N,mystorage>::DecreaseIndex()
+{
+    indexInStorage--;
+}
+
+
 /** Default constructor in local storage */
 template <int N,class mystorage>
-storage_elem<N,mystorage>::storage_elem(void) :
+storage_elem<N,mystorage>::storage_elem() :
     Storage(new std::array< std::vector<double>, N>),
     external_storage(nullptr),
     indexInStorage(0)
 {
-    for (int j=0;j<N;j++)
+    for (size_t j=0;j<N;j++)
+    {
         (*Storage)[j].assign(1, 0.);
+    }
 }
 
 /** Constructor with external storage */
 template <int N,class mystorage>
-storage_elem<N,mystorage>::storage_elem(mystorage& ext_storage, const int id):
+storage_elem<N,mystorage>::storage_elem(mystorage& ext_storage, const size_t id):
     Storage(ext_storage.Storage),
     external_storage(&ext_storage),
     indexInStorage(id)
@@ -65,15 +79,30 @@ storage_elem<N,mystorage>::storage_elem(mystorage& ext_storage, const int id):
 /** Copy constructor */
 template <int N,class mystorage>
 storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other):
-    Storage(nullptr),
-    external_storage(other.external_storage),
-    indexInStorage(other.indexInStorage)
+    Storage(new std::array< std::vector<double>, N>),
+    external_storage(nullptr),
+    indexInStorage(0)
 {
-    if(external_storage==nullptr)
-        Storage = new std::array< std::vector<double>, N>;
-    else
-        Storage = other.Storage;
+    for (size_t j=0;j<N;j++)
+    {
+        (*Storage)[j].assign(1, (*other.Storage)[j][other.indexInStorage]);
+    }
 }
+/** Copy constructor */
+template <int N,class mystorage>
+template <class elem>
+storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other, elem& sphere, mystorage& _Storage):
+    Storage(_Storage.Storage),
+    external_storage(&_Storage),
+    indexInStorage(external_storage->size())
+{
+    for (size_t j=0;j<N;j++)
+    {
+        (*Storage)[j].push_back((*other.Storage)[j][other.indexInStorage]);
+    }
+    external_storage->list.push_back(&sphere);
+}
+
 
 /** Move constructor */
 template <int N,class mystorage>
@@ -84,18 +113,19 @@ storage_elem<N,mystorage>::storage_elem (storage_elem<N,mystorage>&& other) noex
 {
     other.Storage = nullptr;
     other.external_storage = nullptr;
-    other.index = 0;
-
+    other.indexInStorage = 0;
 }
 
 /** Destructor */
 template <int N,class mystorage>
-storage_elem<N,mystorage>::~storage_elem(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+storage_elem<N,mystorage>::~storage_elem() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
     if(external_storage==nullptr && Storage!=nullptr)
     {
-        for (int j=0;j<N;j++)
-            (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
+        for (size_t j=0;j<N;j++)
+        {
+            (*Storage)[j].erase((*Storage)[j].begin() + long(indexInStorage));
+        }
         delete Storage;
     }
 }
@@ -117,8 +147,10 @@ storage_elem<N,mystorage>& storage_elem<N,mystorage>::operator=(storage_elem<N,m
 {
     if(external_storage==nullptr && Storage!=nullptr)
     {
-        for (int j=0;j<N;j++)
-            (*Storage)[j].erase((*Storage)[j].begin() + indexInStorage);
+        for (size_t j=0;j<N;j++)
+        {
+            (*Storage)[j].erase((*Storage)[j].begin() + long(indexInStorage));
+        }
         delete Storage;
     }
     Storage = other.Storage;

@@ -20,13 +20,12 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 
 
-#include "Sphere.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include "Spherelist.hpp"
 #include <cmath>
-#include <iostream>
+#include <cstdio>
+#include <cstdlib>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -41,6 +40,7 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #################################                                       #####################################
  * #############################################################################################################*/
 
+namespace DLCA{
 
 
 /* #############################################################################################################
@@ -53,4 +53,6 @@ void ListSphere::CroissanceSurface(const double dt)
         mysphere->CroissanceSurface(dt);
     }
 }
+
+}  // namespace DLCA
 

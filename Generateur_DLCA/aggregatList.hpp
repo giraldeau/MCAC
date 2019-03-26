@@ -1,57 +1,64 @@
 #ifndef AGGREGATLIST_H
 #define AGGREGATLIST_H
 
-#include "Sphere.h"
-#include "Spherelist.h"
-#include "aggregat.h"
-#include "aggregatList.h"
-#include "physical_model.h"
-#include "storage.h"
-#include "storagelist.h"
-#include "verlet.h"
-#include "IO.h"
+#include "Sphere.hpp"
+#include "IO.hpp"
+#include "Spherelist.hpp"
+#include "aggregat.hpp"
+#include "physical_model.hpp"
+#include "storage.hpp"
+#include "storagelist.hpp"
+#include "verlet.hpp"
 
+namespace DLCA{
 
 class Sphere;
 class ListSphere;
 class Aggregate;
 class ListAggregat;
+class StatisticStorage;
 
-class ListAggregat : public storage_list<13,Aggregate>
+
+class ListAggregat : public storage_list<15,Aggregate>
 {
     friend class Aggregate;
+    friend class StatisticStorage;
 
     private:
         PhysicalModel* physicalmodel;
 
         double maxradius;
-        std::vector<int> indexSortedTimeSteps;
+        std::vector<size_t> indexSortedTimeSteps;
         std::vector<double> CumulativeTimeSteps;
 
         std::vector<double>::iterator ptr_deb;
         std::vector<double>::iterator ptr_fin;
 
         ThreadedIO* Writer;
+        size_t lastSaved;
+
 
     public:
         ListSphere spheres;
         Verlet verlet;
-        void Init(PhysicalModel&, const int _size);
+        void Init(PhysicalModel&, size_t _size);
 
-        std::vector<int> PotentialCollision(int id,std::array<double,3> Vectdir, std::vector<int> SearchSpace) const;
-        std::vector<int> GetSearchSpace(int source, std::array<double,3> Vectdir) const;
-        int DistanceToNextContact(const int source, const std::array<double,3> Vectdir, double &distmin) const;
+        std::vector< std::pair<size_t,double> > SortSearchSpace(size_t MovingAgg,std::array<double,3> Vectdir, std::vector<size_t> SearchSpace) const;
+        std::vector<size_t> GetSearchSpace(size_t source, std::array<double,3> Vectdir) const;
+        int DistanceToNextContact(size_t source, std::array<double,3> Vectdir, double &distmin) const;
 
         double GetMaxTimeStep() const;
 
-        int Merge(const int first, const int second);
+        size_t Merge(size_t first, size_t second);
         void SortTimeSteps(double factor);
-        int RandomPick(double &deltatemps, const double random);
+        size_t RandomPick(double &deltatemps, double random);
 
 
 
-        void save(void) const;
-        void save(const bool) const;
+        void save();
+        void save(bool);
+
+        auto GetData() const;
 
         std::vector<double> FormatPositionData() const;
         std::vector<double> FormatRgData() const;
@@ -60,9 +67,10 @@ class ListAggregat : public storage_list<13,Aggregate>
         std::vector<double> FormatlpmData() const;
         std::vector<double> FormatdeltatData() const;
         std::vector<double> FormatRmaxData() const;
-        std::vector<double> FormatVoumeData() const;
+        std::vector<double> FormatVolumeData() const;
         std::vector<double> FormatSurfaceData() const;
         std::vector<int>    FormatLabelData() const;
+        std::vector<int>    FormatIndexData() const;
 
 
         /* Storage specific */
@@ -70,9 +78,12 @@ class ListAggregat : public storage_list<13,Aggregate>
         void setpointers();
 
     public:
+
+        Aggregate* add(const Aggregate& newAgg);
+
         /** Default constructor in local storage */
-        ListAggregat(void);
-        ListAggregat(PhysicalModel& _physicalmodel, const int _size);
+        ListAggregat();
+        explicit ListAggregat(PhysicalModel& _physicalmodel, size_t _size);
 
         /** Copy constructor */
         ListAggregat(const ListAggregat& other);
@@ -81,7 +92,7 @@ class ListAggregat : public storage_list<13,Aggregate>
         ListAggregat (ListAggregat&&) noexcept; /* noexcept needed to enable optimizations in containers */
 
         /** Destructor */
-        ~ListAggregat(void) noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
+        ~ListAggregat() noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
         /** Copy assignment operator */
         ListAggregat& operator= (const ListAggregat& other);
@@ -90,6 +101,7 @@ class ListAggregat : public storage_list<13,Aggregate>
         ListAggregat& operator= (ListAggregat&& other) noexcept;
 };
 
+}// namespace DLCA
 
 
 #endif // AGGREGATLIST_H

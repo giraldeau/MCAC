@@ -20,19 +20,19 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 
 
-#include "Sphere.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include "Spherelist.hpp"
 #include <cmath>
-#include <iostream>
+#include <cstdio>
+#include <cstdlib>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <utility>
 
 using namespace std;
+namespace DLCA{
 
-void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
+void ListSphere::Init(PhysicalModel& _physicalmodel, const size_t _size)
 {
     if(physicalmodel->toBeDestroyed)
     {
@@ -41,13 +41,13 @@ void ListSphere::Init(PhysicalModel& _physicalmodel, const int _N)
     }
 
     physicalmodel=&_physicalmodel;
-    Writer = new ThreadedIO(_physicalmodel, _N);
-    storage_list<9,Sphere>::Init(_N,*this);
+    Writer = new ThreadedIO(_physicalmodel, _size);
+    storage_list<9,Sphere>::Init(_size,*this);
     setpointers();
 }
 
 
-void ListSphere::DecreaseLabel(void) noexcept
+void ListSphere::DecreaseLabel() noexcept
 {
     for (Sphere* mysphere : list)
     {
@@ -58,10 +58,12 @@ void ListSphere::DecreaseLabel(void) noexcept
 
 void ListSphere::setpointers()
 {
-    vector<double>::iterator newdeb((*Storage)[0].begin());
-    vector<double>::iterator newfin((*Storage)[0].end());
+    auto newdeb((*Storage)[0].begin());
+    auto newfin((*Storage)[0].end());
     if ((newdeb == ptr_deb) && (newfin == ptr_fin))
+    {
         return;
+    }
     for (Sphere* mysphere : list)
     {
         mysphere->setpointers();
@@ -72,66 +74,101 @@ void ListSphere::setpointers()
 
 
 
+
 /** Default constructor in local storage */
-ListSphere::ListSphere(void):
+ListSphere::ListSphere():
     storage_list<9,Sphere>(),
     physicalmodel(new PhysicalModel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*physicalmodel,0))
+    Writer (new ThreadedIO(*physicalmodel,0)),
+    lastSaved(0)
 {}
 
-ListSphere::ListSphere(PhysicalModel& _physicalmodel, const int _N) :
+ListSphere::ListSphere(PhysicalModel& _physicalmodel, const size_t _size) :
     storage_list<9,Sphere>(),
     physicalmodel(&_physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(_physicalmodel,_N))
+    Writer (new ThreadedIO(_physicalmodel,_size)),
+    lastSaved(0)
 {
-    Init(_physicalmodel,_N);
+    Init(_physicalmodel,_size);
 }
 
 /** Constructor with external storage */
-ListSphere::ListSphere(ListSphere& parent,vector<int> _index):
+ListSphere::ListSphere(ListSphere& parent,vector<size_t>& _index):
     storage_list<9,Sphere>(parent, _index),
     physicalmodel(parent.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*parent.physicalmodel,size()))
+    Writer (new ThreadedIO(*parent.physicalmodel,size())),
+    lastSaved(0)
 {
     setpointers();
 }
-
+/** Constructor with external storage */
+ListSphere::ListSphere(ListSphere& parent,vector<size_t> _index):
+    storage_list<9,Sphere>(parent, move(_index)),
+    physicalmodel(parent.physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(*parent.physicalmodel,size())),
+    lastSaved(0)
+{
+    setpointers();
+}
 /** Copy constructor */
 ListSphere::ListSphere(const ListSphere& other):
-    storage_list<9,Sphere>(other),
+    storage_list<9,Sphere>(other,*this),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*other.physicalmodel,size()))
+    Writer (new ThreadedIO(*physicalmodel,size())),
+    lastSaved(other.lastSaved)
 {
+    for (Sphere* s: list)
+    {
+        s->physicalmodel = physicalmodel;
+    }
+    setpointers();
+}
+ListSphere::ListSphere(const ListSphere& other, ListSphere& _Storage):
+    storage_list<9,Sphere>(other,*this, _Storage),
+    physicalmodel(other.physicalmodel),
+    ptr_deb(nullptr),
+    ptr_fin(nullptr),
+    Writer (new ThreadedIO(*physicalmodel,size())),
+    lastSaved(other.lastSaved)
+{
+    for (Sphere* s: list)
+    {
+        s->physicalmodel = physicalmodel;
+    }
     setpointers();
 }
 
 /** Move constructor */
 ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enable optimizations in containers */
-    storage_list<9,Sphere>(other),
+    storage_list<9,Sphere>(move(other)),
     physicalmodel(other.physicalmodel),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*other.physicalmodel,size()))
+    Writer (new ThreadedIO(*other.physicalmodel,size())),
+    lastSaved(other.lastSaved)
 {
+    delete other.Writer;
     setpointers();
 }
 
 /** Destructor */
-ListSphere::~ListSphere(void) noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+ListSphere::~ListSphere() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
     if(physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
-        delete Writer;
     }
+    delete Writer;
 }
 
 /** Copy assignment operator */
@@ -149,35 +186,67 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
     if(physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
-        delete Writer;
     }
+    delete Writer;
 
-    std::swap(static_cast<storage_list<9,Sphere>&>(*this),static_cast<storage_list<9,Sphere>&>(other));
     physicalmodel = other.physicalmodel;
     Writer=other.Writer;
+
+    lastSaved=other.lastSaved;
 
     other.physicalmodel = new PhysicalModel;
     other.Writer = new ThreadedIO(*other.physicalmodel , other.size());
 
+    storage_list<9,Sphere>::operator=(move(other));
+
     setpointers();
     return *this;
+}
+
+void ListSphere::print() const
+{
+    cout << "Printing list of "<< size() << " Sphere" << endl;
+    if (external_storage!=nullptr)
+    {
+        cout << "  With external Storage" << endl;
+    }
+    else
+    {
+        cout << "  Without external Storage" << endl;
+    }
+    for (const Sphere* s : list)
+    {
+        s->print();
+    }
 }
 
 
  __attribute__((pure)) bool operator==(const ListSphere& A, const ListSphere& B)
 {
     if (A.physicalmodel != B.physicalmodel)
+    {
         return false;
+    }
     if (A.ptr_deb != B.ptr_deb)
+    {
         return false;
+    }
     if (A.ptr_fin != B.ptr_fin)
+    {
         return false;
+    }
     if (A.list != B.list)
+    {
         return false;
+    }
     if (A.Storage != B.Storage)
+    {
         return false;
+    }
     if (A.external_storage != B.external_storage)
-        return false;
+    {
+       return false;
+    }
     return true;
 }
 
@@ -185,3 +254,5 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 {
     return !(A==B);
 }
+}  // namespace DLCA
+

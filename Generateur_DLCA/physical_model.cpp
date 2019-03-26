@@ -1,80 +1,316 @@
-#include "physical_model.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <cmath>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
+#include "physical_model.hpp"
 #include <cfloat>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <sys/stat.h>
+
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define POW2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
-
+namespace fs = std::experimental::filesystem;
 using namespace std;
+
+namespace DLCA{
 
 const double PI = atan(1.0)*4;
 
-PhysicalModel::PhysicalModel(void) :
+PhysicalModel::PhysicalModel() :
     Asurfgrowth(0),
-    dfe(0),
-    kfe(0),
-    xsurfgrowth(0),
+    dfe(1.4),
+    kfe(1.8),
+    xsurfgrowth(2),
     coeffB(0),
     lambda(0),
     Dpeqmass(0),
     rpeqmass(0),
     gamma_(0),
-    P(0),
-    T(0),
+    P(101300),
+    T(1500),
     Mu(0),
-    K(0),
-    Rho(0),
-    Dpm(0),
-    sigmaDpm(0),
-    time(0),
+    K(1.38066E-23),
+    Rho(1.8e-3),
+    Dpm(30),
+    sigmaDpm(1.25),
+    Time(0),
     X(0),
-    FV(0),
+    FV(3e-3),
     L(DBL_MAX),
-    precision(0),
+    precision(1e-5),
     FactorModelBeta(0),
-    N(0),
-    DeltaSauve(0),
-    root_method(0),
-    Mode(0),
-    GridDiv(0),
-    ActiveModulephysique(false),
+    CPUStart(0),
+    CPULimit(-1),
+    GridDiv(10),
+    N(2500),
+    AggMin(1),
+    DeltaSauve(10),
+    root_method(2),
+    Mode(1),
+    Wait(0),
+    WaitLimit(-1),
+    ActiveModulephysique(true),
     ActiveVariationTempo(false),
-    use_verlet(false),
-    toBeDestroyed(true)
+    use_verlet(true),
+    toBeDestroyed(true),
+    CheminSauve()
 {}
 
 
-
-
-void PhysicalModel::Init(const double _P, const double _T, const double _dfe, const double _kfe, const double _Dpm, const double _sigmaDpm, const double _xsurfgrowth, const double _coeffB, const double _Rho)
+PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
 {
-    toBeDestroyed = false;
+    FILE* f;
+    char sauve[500];
 
-    dfe=_dfe;
-    kfe=_kfe;
-    P = _P;
-    T=_T;
-    Dpm=_Dpm;
-    sigmaDpm=_sigmaDpm;
-    xsurfgrowth = _xsurfgrowth;
-    coeffB = _coeffB;
-    Rho = _Rho;
+    f = fopen(FichierParam.c_str(), "rt");
+
+    if (f == nullptr)
+    {
+        cout << FichierParam.c_str() << " not found" << endl;
+        exit(1);
+    }
+    char commentaires[500];
+    char com[500]; // Char array used in the ASCII Save
+
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the N parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        N=size_t(atoi(commentaires));
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the FV parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        FV=latof(commentaires)*1E-6;
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the Dpm parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        Dpm=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the Mode parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        Mode=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the sigmaDpm parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        sigmaDpm=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the ActiveModulephysique parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        ActiveModulephysique=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the T parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        T=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the P parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        P=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the Rho parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        Rho=latof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the kfe parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        kfe=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the dfe parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        dfe=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the coeffB parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        coeffB=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the xsurfgrowth parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        xsurfgrowth=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the ActiveVariationTempo parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        ActiveVariationTempo=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the AggMin parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        AggMin=size_t(atoi(commentaires));
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the WaitLimit parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        WaitLimit=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the CPULimit parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        CPULimit=atoi(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the DeltaSauve parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        DeltaSauve=size_t(atoi(commentaires));
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the output_dir parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",sauve,com);
+    }
+    fclose(f);
+
+    if (Mode == 1)
+    {
+        X = pow(double(N)*PI/6.0/FV*(1.0+3.0*sigmaDpm*sigmaDpm/Dpm/Dpm),1.0/3.0); //Loi normale
+    }
+    else
+    {
+        X = pow(double(N)*PI/6.0/FV*exp(9.0/2.0*log(sigmaDpm)*log(sigmaDpm)),1.0/3.0); //Loi log-normale
+    }
+
+    fs::path pathParam = extractPath(FichierParam);
+    CheminSauve = pathParam / sauve;
+
+    if( ! fs::exists(CheminSauve))
+    {
+        if( ! fs::create_directory(CheminSauve))
+        {
+            cout << "Error creating directory " << CheminSauve << endl;
+            exit(1);
+        }
+    }
+    else
+    {
+        if( ! fs::is_directory(CheminSauve))
+        {
+            cout << "Error not a directory " << CheminSauve << endl;
+            exit(1);
+        }
+    }
+}
+
+
+void PhysicalModel::Init()
+{
+
+    L = X*Dpm*1E-9;
+    Time=0;
 
     K = 1.38066E-23;
     lambda = 66.5E-9*(101300/P)*(T/293.15)*(1+110/293.15)/(1+110/T);
     Dpeqmass = Dpm*exp(1.5*log(sigmaDpm)*log(sigmaDpm)); //Diamètre équivalent massique moyen des monomères
                                                          //donné par l'équation de Hatch-Choate
     rpeqmass = (Dpeqmass*1E-9)/2.0; //Rayon équivalent massique moyen des monomères
-    gamma_ = 1.378*(0.5+0.5*myerf(((lambda/rpeqmass)+4.454)/10.628));
+    gamma_ = 1.378*(0.5+0.5*erf(((lambda/rpeqmass)+4.454)/10.628));
     Mu = 18.203E-6*(293.15+110)/(T+110)*pow(T/293.15,1.5);
 
     Asurfgrowth = coeffB*1E-3;
@@ -82,11 +318,41 @@ void PhysicalModel::Init(const double _P, const double _T, const double _dfe, co
     use_verlet = true; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
     GridDiv = 10;      // Number of Divisions of the box
 
-
+    AggMin = MAX(AggMin, 1);
+    time(&CPUStart);
     SetPrecision(1e-5);
     UseSecante();
 
     print();
+
+    toBeDestroyed = false;
+}
+
+bool PhysicalModel::Finished(const size_t Nagg) const
+{
+    if (Nagg <= AggMin)
+    {
+        cout << "We reach the AggMin condition" << endl << endl;
+        return true;
+    }
+    if (WaitLimit > 0 && Wait >= WaitLimit)
+    {
+        cout << "We reach the WaitLimit condition" << endl << endl;
+        return true;
+    }
+
+    if (CPULimit > 0)
+    {
+        time_t currentCPU;
+        time(&currentCPU);
+        if (currentCPU - CPUStart >= CPULimit)
+        {
+            cout << "We reach the CPULimit condition" << endl << endl;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void PhysicalModel::SetPrecision(const double _precision)
@@ -94,54 +360,78 @@ void PhysicalModel::SetPrecision(const double _precision)
     precision = _precision;
 }
 
-void PhysicalModel::UseDichotomia(void)
+void PhysicalModel::UseDichotomia()
 {
     root_method = 0;
 }
 
-void PhysicalModel::UseBrent(void)
+void PhysicalModel::UseBrent()
 {
     root_method = 1;
 }
-void PhysicalModel::UseSecante(void)
+void PhysicalModel::UseSecante()
 {
     root_method = 2;
 }
 
-void PhysicalModel::print(void) const
+void PhysicalModel::print() const
 {
 
     string RootMethod;
-    if (root_method==0)
+    switch(root_method)
+    {
+    case 0 :
         RootMethod = "Dichotomia";
-    else if (root_method==1)
+        break;
+    case 1:
         RootMethod = "Brent";
-    else if (root_method==2)
+        break;
+    default:
+        cout << "Root method unknown, using secante" << endl;
+       /* FALLTHRU */
+    case 2 :
         RootMethod = "Secante";
+    }
 
 
     cout << "Physical parameters:" << endl
-         << " Box size    : " << L << endl
-         << " Pressure    : " << P << endl
-         << " Temperature : " << T << endl
-         << " diffusivity : " << Mu << endl
-         << " K           : " << K << endl
-         << " density     : " << Rho << endl
-         << " Dpm         : " << Dpm << endl
-         << " sigmaDpm    : " << sigmaDpm << endl
-         << " Asurfgrowth : " << Asurfgrowth << endl
-         << " xsurfgrowth : " << xsurfgrowth << endl
-         << " coeffB      : " << coeffB << endl
-         << " dfe         : " << dfe << endl
-         << " kfe         : " << kfe << endl
-         << " lambda      : " << lambda << endl
-         << " Dpeqmass    : " << Dpeqmass << endl
-         << " rpeqmass    : " << rpeqmass << endl
-         << " gamma_      : " << gamma_ << endl
+         << " Initial Nagg : " << N << endl
+         << " Box size     : " << L << endl
+         << " X            : " << X << endl
+         << " Pressure     : " << P << endl
+         << " Temperature  : " << T << endl
+         << " diffusivity  : " << Mu << endl
+         << " K            : " << K << endl
+         << " FV           : " << FV << endl
+         << " density      : " << Rho << endl
+         << " Dpm          : " << Dpm << endl
+         << " sigmaDpm     : " << sigmaDpm << endl
+         << " Asurfgrowth  : " << Asurfgrowth << endl
+         << " xsurfgrowth  : " << xsurfgrowth << endl
+         << " coeffB       : " << coeffB << endl
+         << " dfe          : " << dfe << endl
+         << " kfe          : " << kfe << endl
+         << " lambda       : " << lambda << endl
+         << " Dpeqmass     : " << Dpeqmass << endl
+         << " rpeqmass     : " << rpeqmass << endl
+         << " gamma_       : " << gamma_ << endl
          << endl
          << "Options for Pysical model: " << endl
          << " precision   : " << precision << endl
-         << " root method : " << RootMethod << endl;
+         << " root method : " << RootMethod << endl
+         << " Mode : " << Mode << endl
+         << endl
+         << "Ending calcul when:" << endl
+         << " - There is " << AggMin << " aggregats left or less" << endl;
+    if (WaitLimit > 0)
+    {
+        cout << " - It has been " << WaitLimit << " iterations without collision" <<endl;
+    }
+    if (CPULimit > 0)
+    {
+        cout << " - The simulations is running for more than " << CPULimit << " seconds" << endl;
+    }
+    cout << endl;
 }
 
 
@@ -172,21 +462,22 @@ double PhysicalModel::ModeleBeta(const double rm) const
 double PhysicalModel::Dichotomie(const double x0) const
 {
     double 	rmin, rmax, rmed, frmed, frmin, frmax;
-    int ite=1;
     rmin = x0/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
     rmax = 2*x0; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
 
     frmin = ModeleBeta(rmin);
     frmax = ModeleBeta(rmax);
 
-    if (frmin*frmax>=0) {printf("Intervalle incorrect : %e %e \n",frmin,frmax); return -1;} //Intervalle incorrect
-
     rmed = (rmin+rmax)/2 ;
     frmed = ModeleBeta(rmed);
 
     while (fabs(frmed)>precision)
     {
-
+        if (frmin*frmax>=0)
+        {
+            cout << "Intervalle incorrect : " << frmin << " " << frmax << endl;
+            return -1;
+        }
         if (frmin*frmed < 0)
         {
             rmax = rmed;
@@ -199,7 +490,6 @@ double PhysicalModel::Dichotomie(const double x0) const
         }
         rmed = (rmin+rmax)/2 ;
         frmed = ModeleBeta(rmed);
-        ite++;
     }
     return rmed;
 }
@@ -214,9 +504,7 @@ double PhysicalModel::brentq(const double x0) const
     xtol = rtol = precision;
 
     double xpre = xa, xcur = xb;
-    double xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
-    /* the tolerance is 2*delta */
-    double delta;
+    double xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0.;
     double stry, dpre, dblk;
     int i;
 
@@ -229,8 +517,11 @@ double PhysicalModel::brentq(const double x0) const
         return xcur;
     }
 
-    if (fpre*fcur > 0) {printf("Intervalle incorrect : %e %e \n",fpre,fcur); return -1;} //Intervalle incorrect
-
+    if (fpre*fcur > 0)
+    {
+        cout << "Intervalle incorrect : " << fpre << " " << fcur << endl;
+        return -1;
+    }
 
     for (i = 0; i < iter; i++) {
         if (fpre*fcur < 0) {
@@ -248,15 +539,15 @@ double PhysicalModel::brentq(const double x0) const
             fblk = fpre;
         }
 
-        delta = (xtol + rtol*fabs(xcur))/2;
-        sbis = (xblk - xcur)/2;
+        double delta = (xtol + rtol*fabs(xcur))/2;
+        double sbis = (xblk - xcur)/2;
         //if (fcur == 0 || fabs(sbis) < delta) {
         if (fabs(fcur) < precision) {
             return xcur;
         }
 
         if (fabs(spre) > delta && fabs(fcur) < fabs(fpre)) {
-            if (xpre == xblk) {
+            if (abs(xpre - xblk) <= 1e-16) {
                 /* interpolate */
                 stry = -fcur*(xcur - xpre)/(fcur - fpre);
             }
@@ -296,16 +587,16 @@ double PhysicalModel::brentq(const double x0) const
     return xcur;
 }
 
-double PhysicalModel::Secante(const double xsave) const
+double PhysicalModel::Secante(const double x0) const
 {
     double x[2];
     double fx[2];
     bool i=1;
 
-    x[0]=xsave+4.e-13;
+    x[0]=x0+4.e-13;
     fx[0] = ModeleBeta(x[0]);
 
-    x[1]=xsave;
+    x[1]=x0;
 
     try
     {
@@ -318,19 +609,18 @@ double PhysicalModel::Secante(const double xsave) const
     }
     catch (int)
     {
-        printf("FAILSAFE\n");
-        return brentq(xsave);
+        return brentq(x0);
     }
     return x[i];
 }
 
-__attribute((pure)) double PhysicalModel::ConvertRg2Dm(const double np, const double rg,const double rpmoy)
+__attribute((pure)) double PhysicalModel::ConvertRg2Dm(const size_t np, const double rg,const double rmoy)
 {
-    double start = 2*rpmoy*pow(np,gamma_/dfe);
+    double start = 2*rmoy*pow(np,gamma_/dfe);
     return ConvertRg2DmFromStart(np,rg,start);
 }
 
-double PhysicalModel::ConvertRg2DmFromStart(const double np, const double rg, const double start)
+double PhysicalModel::ConvertRg2DmFromStart(const size_t np, const double rg, const double start)
 {
     FactorModelBeta = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass)/rg;
 /*
@@ -364,51 +654,100 @@ __attribute((pure)) double PhysicalModel::diffusivity(const double dm) const
     return sqrt(8*K*T/PI/masse);
 }
 
-//###################################################### Fonction Erf ###########################################################
-const int ncof=28;
-
-const double cof[28] = {-1.3026537197817094, 6.4196979235649026e-1,
-        1.9476473204185836e-2,-9.561514786808631e-3,-9.46595344482036e-4,
-        3.66839497852761e-4,4.2523324806907e-5,-2.0278578112534e-5,
-        -1.624290004647e-6,1.303655835580e-6,1.5626441722e-8,-8.5238095915e-8,
-        6.529054439e-9,5.059343495e-9,-9.91364156e-10,-2.27365122e-10,
-        9.6467911e-11, 2.394038e-12,-6.886027e-12,8.94487e-13, 3.13092e-13,
-        -1.12708e-13,3.81e-16,7.106e-15,-1.523e-15,-9.4e-17,1.21e-16,-2.8e-17};
-
- __attribute__((const)) double erfccheb(const double z)
-{
-        int j;
-        double t,ty,tmp,d=0.,dd=0.;
-        //if (z < 0.) throw("erfccheb requires nonnegative argument");
-        t = 2./(2.+z);
-        ty = 4.*t - 2.;
-        for (j=ncof-1;j>0;j--) {
-                tmp = d;
-                d = ty*d - dd + cof[j];
-                dd = tmp;
-        }
-        return t*exp(-z*z + 0.5*(cof[0] + ty*d) - dd);
-}
-__attribute((const)) double myerfc(const double x)
-{
-                if (x >= 0.) return erfccheb(x);
-                else return 2.0 - erfccheb(-x);
-}
-
 __attribute((const)) double inverfc(const double p)
 {
-        double x,err,t,pp;
-        if (p >= 2.0) return -100.;
-        if (p <= 0.0) return 100.;
+        double x,t,pp;
+        if (p >= 2.0){ return -100.;}
+        if (p <= 0.0){ return 100.;}
         pp = (p < 1.0)? p : 2. - p;
         t = sqrt(-2.*log(pp/2.));
         x = -0.70711*((2.30753+t*0.27061)/(1.+t*(0.99229+t*0.04481)) - t);
         for (int j=0;j<2;j++) {
-                err = myerfc(x) - pp;
+                double err = erfc(x) - pp;
                 x += err/(1.12837916709551257*exp(-(x*x))-x*err);
         }
         return (p < 1.0? x : -x);
 }
-__attribute((const)) double myerf(const double x) { return 1-myerfc(x); }
 __attribute((const)) double inverf(const double p) {return inverfc(1.-p);}
+
+
+
+
+bool locale_with_dots()
+{
+    static bool tested = false;
+    static bool with_dots;
+
+    if (tested)
+    {
+        return with_dots;
+    }
+    double testfloat = 1.5;
+    string teststr1 = "1.5";
+    string teststr2 = "1,5";
+    double test1=atof(teststr1.c_str());
+    double test2=atof(teststr2.c_str());
+
+    if (fabs(test1-testfloat)<1e-3)
+    {
+        with_dots = true;
+    }
+    else if (fabs(test2-testfloat)<1e-3)
+    {
+        with_dots = false;
+    }
+    else
+    {
+        cout << "What locale are you using ?" << endl;
+        exit(1);
+    }
+    return with_dots;
+}
+
+double latof(const char* _char)
+{
+    string mystring = _char;
+    if (!locale_with_dots())
+    {
+        size_t f = mystring.find('.');
+        if (f>0)
+        {
+            mystring.replace(f, 1, ",");
+        }
+    }
+    return atof(mystring.c_str());
+}
+
+fs::path extractPath(const string& filename)
+{
+    fs::path path = filename;
+    fs::path fullpath = fs::absolute(path);
+
+    if(! fs::exists(fullpath))
+    {
+        cout << "File does not exist\n" << endl;
+        exit(1);
+    }
+
+    fs::path parentpath = fullpath.parent_path();
+
+    return parentpath; //Cette variable ne retient que le chemin du fichier param
+}
+
+bool dirExists(const char *path)
+{
+    struct stat info{};
+
+    if(stat( path, &info ) != 0)
+    {
+        return false;
+    }
+    if(info.st_mode & S_IFDIR)
+    {
+        return true;
+    }
+    return false;
+}
+
+}  // namespace DLCA
 

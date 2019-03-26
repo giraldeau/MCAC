@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/Images">
-        <file alias="Demo">Images/pic.png</file>
-        <file alias="Logo">Images/logo-coria.gif</file>
-        <file alias="Formules">Images/FormuleSG.png</file>
-    </qresource>
-</RCC>
