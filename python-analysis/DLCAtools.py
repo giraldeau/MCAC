@@ -10,6 +10,7 @@ from queue import Empty
 from scipy.special import erf
 from mpl_toolkits.mplot3d import Axes3D
 from skimage import measure
+from tqdm import tqdm
 
 from DLCA_Reader import DLCA
 from Analyze_cython import coverages_cython, label_argsort
@@ -86,57 +87,6 @@ def surface_volume_sbl(Agg, Spheres):
     spheres = Spheres[cols][Spheres["Label"] == label].loc[t].values.copy()
 
     return compute_volume_surface_sbl(spheres)
-
-
-class Advancement(object):
-    """
-        A context to print the advancement during computation
-    """
-    def __init__(self, njobs):
-        self.njobs = njobs
-        self.last_percent = 0
-        self.start = 0.
-        self.last_time = self.start
-        self.current = 0
-
-    def __enter__(self):
-        """
-            Start the timer
-        """
-        self.start = time()
-        self.last_time = self.start
-        print("{:4.0f}%".format(0), end="")
-        return self
-
-    def print(self, it):
-        """
-            Print the current advancement
-        """
-        self.current = it
-        current_percent = (100 * it) // self.njobs
-        current_time = time()
-        if (current_percent > self.last_percent or
-            current_time - self.last_time > 1):
-
-            if it > 0:
-                eta = (self.njobs - it) * (current_time - self.start) / it
-            else:
-                eta = np.inf
-
-            print("\r{:4.0f}% - ETA:{:4.0f}s".format(current_percent, eta),
-                  end="")
-
-            self.last_percent = current_percent
-            self.last_time = current_time
-
-    def __exit__(self, type, value, traceback):
-        """
-            Print the total time
-        """
-        end = time()
-        current_percent = (100 * self.current) // self.njobs
-        print("\r{:4.0f}% - Time:{:4.0f}s".format(current_percent,
-                                                  end - self.start))
 
 
 def par_volumes_autoco(q, r, spheres):
@@ -235,13 +185,10 @@ def parallel_volumes_autoco(spheres, lradius, nsamples, nprocs=None):
                 if i == 0:
                     break
 
-        with Advancement(njobs) as advancement:
-            # Recieve result
-            for k in range(njobs):
-                i, volume = p.qout.get()
-                volumes[i] += volume
-
-                advancement.print(k)
+        # Recieve result
+        for k in tqdm(range(njobs)):
+            i, volume = p.qout.get()
+            volumes[i] += volume
 
     return volumes
 
@@ -261,13 +208,13 @@ def seq_volumes_autoco(spheres, lradius, nsamples, nprocs=None):
     njobs = (len(lradius) - 1) * nsamples + 1
 
     it = 0
-    with Advancement(njobs) as advancement:
+    with tqdm(total=njobs) as progress_bar:
         for i, radius in enumerate(lradius):
             for j in range(nsamples):
 
                 volumes[i] += single_volume_autoco(i, radius, spheres)
                 it += 1
-                advancement.print(it)
+                progress_bar.update(it)
 
                 # Only compute the volume of the initial aggregate once
                 if i == 0:
@@ -301,7 +248,7 @@ def autocorrelation3d(agg, Spheres, nradius, nsamples, repart=np.geomspace,
     # convert pandas to numpy
     spheres = spheres.values
 
-    # computye volumes
+    # compute volumes
     if nprocs is None or nprocs > 0:
         volumes = parallel_volumes_autoco(spheres, radius, nsamples)
     else:

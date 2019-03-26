@@ -51,8 +51,8 @@ void InitRandom()
 {
     time_t t;
     time(&t);
-    srand(uint(t));
-    //srand(0);
+    //srand(uint(t));
+    srand(0);
 }
 
 double Random()

@@ -7,7 +7,8 @@
 # cython: wraparound=False
 # distutils: language = c++
 # distutils: sources = SBLVolumeSurface.cpp
-# distutils: include_dirs = . /home/pouxa/packages/sbl/install/include
+# distutils: include_dirs = . /opt/local/sbl/prefix/include /opt/cgal/include
+# distutils: library_dirs = /opt/cgal/lib64
 # distutils: libraries = CGAL mpfr gmp
 # distutils: extra_compile_args =-frounding-math
 

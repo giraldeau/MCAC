@@ -6,6 +6,7 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # distutils: extra_link_args = -fopenmp
+# distutils: include_dirs = /home/pouxa/.local/lib/python3.7/site-packages/numpy/core/include/
 
 import numpy as np
 cimport numpy as np

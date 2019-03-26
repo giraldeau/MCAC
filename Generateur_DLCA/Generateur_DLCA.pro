@@ -8,9 +8,8 @@ COMPILATOR = "GNU" # GNU or INTEL or CLANG
 WITH_IO = "1"           # 1 or 0
 WITH_SBL = "0"          # 1 or 0
 WITH_QT = "0"           # 0
-
-#PROFILING
-#LIBS += -lprofiler -ltcmalloc
+STATIC = "0"            # 0
+PROFILING = "0"         # 0 or 1
 
 TARGET = DLCA
 TEMPLATE = app
@@ -68,7 +67,7 @@ SOURCES +=\
 #        sblvolumesurface.hpp \
 
 
-LIBS += -lstdc++fs -L/app/lib
+LIBS += -lstdc++fs
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
@@ -103,14 +102,22 @@ equals(WITH_SBL, "1"){
 equals(WITH_IO, "1"){
 
     DEFINES += WITH_HDF5
-
     INCLUDEPATH += /usr/include/libxml2/
-    LIBS += -lXdmf -lXdmfCore -lxml2 -ltiff
-    LIBS += -lhdf5 -ldl
 
-    #INCLUDEPATH += /usr/include/hdf5/serial /opt/xdmf/DLCA/include
-    #LIBS += /opt/xdmf/DLCA/lib64/libXdmf.a /opt/xdmf/DLCA/lib/libXdmfCore.a
-    #LIBS += -L/usr/lib/x86_64-linux-gnu/hdf5/serial/lib -lhdf5
+    equals(STATIC, "0"){
+        LIBS += -lXdmf -lXdmfCore
+        LIBS += -lhdf5
+    } else {
+        INCLUDEPATH += /opt/local/xdmf/include/
+        LIBS += /opt/local/xdmf/lib/libXdmf.a /opt/local/xdmf/lib/libXdmfCore.a
+        LIBS += /usr/lib64/libhdf5.a  -lz -lsz
+    }
+
+    LIBS += -lxml2 -ltiff -ldl
+}
+
+equals(PROFILING, "1"){
+    LIBS += -lprofiler -ltcmalloc
 }
 
 equals(COMPILATOR, "INTEL"){
@@ -151,8 +158,6 @@ equals(COMPILATOR, "GNU"){
     # Not a problems
     QMAKE_CXXFLAGS += -Wno-aggregate-return  -Wno-padded
 
-
-
     #CHECKS
     QMAKE_CXXFLAGS_DEBUG += -fcheck-new -ggdb3 -gpubnames -g3  -O0
     #QMAKE_CXXFLAGS_DEBUG += -fsanitize=address
@@ -164,6 +169,12 @@ equals(COMPILATOR, "GNU"){
     QMAKE_CXXFLAGS_RELEASE += -Ofast -DNDEBUG -fPIC
     QMAKE_CXXFLAGS_RELEASE += -flto -fwhole-program
     QMAKE_LFLAGS_RELEASE   += -flto
+
+    equals(STATIC, "1"){
+        QMAKE_CXXFLAGS += -Wl,--no-allow-shlib-undefined,--no-undefined,--as-needed -static-libgcc -static-libstdc++
+        QMAKE_LFLAGS   += -Wl,--no-allow-shlib-undefined,--no-undefined,--as-needed -static-libgcc -static-libstdc++
+    }
+
 }
 
 
