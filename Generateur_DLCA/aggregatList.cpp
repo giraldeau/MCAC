@@ -331,6 +331,53 @@ Aggregate* ListAggregat::add(const Aggregate& oldAgg)
     return newAgg;
 }
 
+void ListAggregat::Multiply()
+{
+    size_t oldNAgg = size();
+    double oldL = physicalmodel->L;
+    physicalmodel->L *= 2;
+    physicalmodel->N *= 8;
+
+    for (size_t iagg=0;iagg<oldNAgg; iagg++)
+    {
+        for (int i=0;i<=1; i++){
+            for (int j=0;j<=1; j++){
+                for (int k=0;k<=1; k++){
+                    if (i!=0 or j!=0 or k!=0){
+
+                        Aggregate* newAgg = storage_list<15,Aggregate>::add(*list[iagg],*this);
+                        newAgg->Label = size() - 1;
+                        newAgg->verlet = &verlet;
+                        newAgg->InVerlet = true;
+
+                        setpointers();
+                        for (Aggregate* Agg : list)
+                        {
+                            Agg->setpointers();
+                            for (Sphere* Sph : Agg->myspheres)
+                            {
+                                Sph->setpointers();
+                            }
+                        }
+                        newAgg->verlet = &verlet;
+                        newAgg->InVerlet = true;
+
+                        array<double, 3> vec_move={i*oldL,
+                                                   j*oldL,
+                                                   k*oldL};
+                        newAgg->Translate(vec_move);
+                    }
+                }
+            }
+        }
+    }
+    //$ Update Verlet
+    verlet.Init(physicalmodel->GridDiv, physicalmodel->L);
+    for (Aggregate* Agg : list){
+        Agg->IndexVerlet = Agg->GetVerletIndex();
+        verlet.Add(Agg->GetLabel(), Agg->IndexVerlet);
+    }
+}
 
 }// namespace DLCA
 

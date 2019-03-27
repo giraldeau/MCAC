@@ -26,8 +26,8 @@ void InitRandom()
 {
     time_t t;
     time(&t);
-    srand(uint(t));
-    //srand(0);
+    //srand(uint(t));
+    srand(0);
 }
 
 double Random()
@@ -47,6 +47,8 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     // Contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool contact(true);
 
+    size_t multiply_threshold = Aggregates.size() / 8;
+
     //$ Loop on the N monomeres
     while (! physicalmodel.Finished(Aggregates.size()))
     {
@@ -56,6 +58,19 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             Aggregates.save();
             Stats.Analyze(Aggregates);
             //Stats.save();
+
+            if (Aggregates.size() <= multiply_threshold)
+            {
+                cout << "Duplication : " << Aggregates.spheres.size()
+                     << " spheres in " << Aggregates.size() << " aggregates";
+
+                Aggregates.Multiply();
+                multiply_threshold = Aggregates.size() / 8;
+
+                cout << " duplicated into " << Aggregates.spheres.size()
+                     << " spheres in " << Aggregates.size() << " aggregates" << endl;
+            }
+
         }
 
         // -- Generating a random direction --
@@ -176,6 +191,10 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
                      << get<1>(InstantaneousFractalLaw)
                      << "  --- r= "
                      << get<3>(InstantaneousFractalLaw) << endl;
+                /*
+                physicalmodel.dfe = get<1>(InstantaneousFractalLaw);
+                physicalmodel.kfe = get<2>(InstantaneousFractalLaw);
+                */
             }
             else {
                  cout << endl;

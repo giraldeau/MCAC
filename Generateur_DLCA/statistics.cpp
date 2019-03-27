@@ -105,6 +105,9 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
         return false;
     }
 
+    if (FractalLaw.size() < Agg.Np)
+        FractalLaw.resize(physicalmodel->N);
+
     auto ret = FractalLaw[Agg.Np - 1].emplace(Agg.DgOverDp);
     if(ret.second)
     {
@@ -279,7 +282,7 @@ StatisticStorage::~StatisticStorage() noexcept /* explicitly specified destructo
     }
     delete WriterAgg;
     delete WriterSph;
-
+    delete SavedAggregates;
 }
 
 

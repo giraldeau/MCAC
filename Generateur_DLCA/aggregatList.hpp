@@ -42,6 +42,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         ListSphere spheres;
         Verlet verlet;
         void Init(PhysicalModel&, size_t _size);
+        void Multiply();
 
         std::vector< std::pair<size_t,double> > SortSearchSpace(size_t MovingAgg,std::array<double,3> Vectdir, std::vector<size_t> SearchSpace) const;
         std::vector<size_t> GetSearchSpace(size_t source, std::array<double,3> Vectdir) const;

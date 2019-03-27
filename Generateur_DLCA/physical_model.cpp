@@ -624,7 +624,7 @@ double PhysicalModel::ConvertRg2DmFromStart(const size_t np, const double rg, co
 {
     FactorModelBeta = pow(kfe,-1/dfe)*pow(np,(1-gamma_)/dfe)*Cunningham(rpeqmass)/rg;
 /*
-    npeqmass = kfe*pow(rg/rpeqmass,dfe);
+    double npeqmass = kfe*pow(rg/rpeqmass,dfe);
     double nptmp = pow(npeqmass*pow(np,gamma_-1),1./gamma_);
     FactorModelBeta = 1./(rpeqmass*pow(nptmp,gamma_/dfe)/Cunningham(rpeqmass));
 */
