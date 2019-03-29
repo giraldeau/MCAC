@@ -449,8 +449,9 @@ def coverages(Spheres, Aggregates, nprocs=None):
     data = Spheres[['Label', 'Posx', 'Posy', 'Posz', 'Radius']]
     data = data.copy()
 
-    # Counting spheres
-    Nspheres = data.index.get_level_values("Num")[-1] + 1
+    # Counting spheres per timestep
+    Nspheres = Spheres['Posx'].groupby("Time").count().values
+    Nspheres = np.cumsum(Nspheres)
 
     # Reset index
     data.reset_index(level="Num", drop=True, inplace=True)

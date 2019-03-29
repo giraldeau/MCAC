@@ -90,23 +90,35 @@ def coverages_cython(const int[::1]& Aggs,
 
     return np.asarray(res)
 
-def label_argsort(const long nspheres,
+def label_argsort(const long[::1]& nspheres,
                   const long[::1]& values,
                   const long openmp):
     """
     Compute the indexes that would sort values
     for each block of nspheres values (time step)
     """
+    cdef Py_ssize_t ntime = nspheres.shape[0]
     cdef Py_ssize_t ndata = values.shape[0]
     cdef long[::1] idx = np.empty(ndata, dtype=np.int)
-    cdef Py_ssize_t it, i
+    cdef Py_ssize_t itime, i
+    cdef long start, end
+
 
     if openmp > 1:
-        for it in prange(0, ndata, nspheres, nogil=True, num_threads=openmp):
-            mergesort(&idx[0], &values[0], it, it + nspheres - 1)
+        for itime in prange(0, ntime, nogil=True, num_threads=openmp):
+            start = 0
+            if itime > 0:
+                start = nspheres[itime-1]
+            end = nspheres[itime]
+            mergesort(&idx[0], &values[0], start, end - 1)
     else:
-        for it in range(0, ndata, nspheres):
-            mergesort(&idx[0], &values[0], it, it + nspheres - 1)
+        for itime in range(0, ntime):
+            start = 0
+            if itime > 0:
+                start = nspheres[itime-1]
+            end = nspheres[itime]
+            mergesort(&idx[0], &values[0], start, end - 1)
+            start = end
 
     return np.asarray(idx)
 
