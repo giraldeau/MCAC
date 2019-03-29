@@ -64,7 +64,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
                 cout << "Duplication : " << Aggregates.spheres.size()
                      << " spheres in " << Aggregates.size() << " aggregates";
 
-                Aggregates.Multiply();
+                Aggregates.Duplication();
                 multiply_threshold = Aggregates.size() / 8;
 
                 cout << " duplicated into " << Aggregates.spheres.size()

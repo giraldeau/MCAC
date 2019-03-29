@@ -331,12 +331,14 @@ Aggregate* ListAggregat::add(const Aggregate& oldAgg)
     return newAgg;
 }
 
-void ListAggregat::Multiply()
+void ListAggregat::Duplication()
 {
     size_t oldNAgg = size();
     double oldL = physicalmodel->L;
     physicalmodel->L *= 2;
     physicalmodel->N *= 8;
+
+    // TODO Rework this in order not to to it aggregate by aggregate
 
     for (size_t iagg=0;iagg<oldNAgg; iagg++)
     {
