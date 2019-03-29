@@ -29,7 +29,7 @@ class StatisicsData
     friend class StatisticStorage;
     friend struct StatcmpAgg;
 
-private:
+public:
 
     // Here you can declare all the variables you need for statistical analysis
 
@@ -84,7 +84,6 @@ public:
     void save(bool finish);
 
     std::vector<double> FormatTimeData() const;
-    std::tuple<bool,double,double,double> getInstantaneousFractalLaw(const ListAggregat& current) const;
     std::tuple<bool,double,double,double> getCompleteFractalLaw() const;
 
 public:
@@ -106,9 +105,6 @@ public:
     /** Move assignment operator */
     StatisticStorage& operator= (StatisticStorage&& other) noexcept;
 };
-
-std::tuple<bool,double,double,double> linreg(const std::vector<double>& x, const std::vector<double>& y);
-
 
 }  // namespace DLCA
 

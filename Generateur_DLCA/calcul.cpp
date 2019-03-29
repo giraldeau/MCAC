@@ -182,7 +182,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
                  << "   CPU=" << setw(5) << elapse << " s"
                  << " after " << setw(5) << physicalmodel.Wait << " it --- ";
 
-            auto InstantaneousFractalLaw = Stats.getInstantaneousFractalLaw(Aggregates);
+            auto InstantaneousFractalLaw = Aggregates.getInstantaneousFractalLaw();
             if(get<0>(InstantaneousFractalLaw))
             {
                 cout << "  "

@@ -79,6 +79,22 @@ void Aggregate::fullStatistics()
     //Npe = *volAgregat/(PI * POW3(Dp3)/6.0);
 }
 
+tuple<bool,double,double,double> ListAggregat::getInstantaneousFractalLaw() const
+{
+    vector<double> Nps;
+    vector<double> DgOverDps;
+    Nps.reserve(size());
+    DgOverDps.reserve(size());
+
+    for (const Aggregate* Agg : list)
+    {
+        Nps.push_back(double(Agg->Np));
+        DgOverDps.push_back(Agg->DgOverDp);
+    }
+
+
+    return linreg(DgOverDps,Nps);
+}
 
  __attribute__((pure)) bool StatcmpAgg::operator() (const Aggregate& lhs, const Aggregate& rhs) const
 {
@@ -122,50 +138,6 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
     return ret.second;
 }
 
-tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<double>& y)
-{
-    double   sumx = 0.0;                        /* sum of x                      */
-    double   sumx2 = 0.0;                       /* sum of x**2                   */
-    double   sumxy = 0.0;                       /* sum of x * y                  */
-    double   sumy = 0.0;                        /* sum of y                      */
-    double   sumy2 = 0.0;                       /* sum of y**2                   */
-
-    size_t n = x.size();
-    auto N = double(n);
-
-   for (size_t i=0;i<n;i++)
-   {
-      double X(log(x[i]));
-      double Y(log(y[i]));
-      sumx  += X;
-      sumx2 += POW2(X);
-      sumxy += X * Y;
-      sumy  += Y;
-      sumy2 += POW2(Y);
-   }
-
-
-
-   double denom = (N * sumx2 - POW2(sumx));
-   if (n==0 || abs(denom) < 1e-9) {
-       // singular matrix. can't solve the problem.
-       tuple<bool,double,double,double> res{false,0.,0.,0.};
-       return res;
-   }
-
-   double a = (N * sumxy  -  sumx * sumy) / denom;
-   double b = (sumy * sumx2  -  sumx * sumxy) / denom;
-
-   /* compute correlation coeff     */
-   double r = (sumxy - sumx * sumy / N) /
-            POW2((sumx2 - POW2(sumx)/N) *
-            (sumy2 - POW2(sumy)/N));
-
-   tuple<bool,double,double,double> res{true,a,b,r};
-   return res;
-}
-
-
 StatisticStorage::StatisticStorage(PhysicalModel& _physicalmodel):
     physicalmodel(&_physicalmodel),
     SavedAggregates(new ListAggregat(*physicalmodel,0)),
@@ -192,24 +164,6 @@ void StatisticStorage::Analyze(const ListAggregat& current)
         InsertIfNew(*Agg);
     }
 }
-
-tuple<bool,double,double,double> StatisticStorage::getInstantaneousFractalLaw(const ListAggregat& current) const
-{
-    vector<double> Nps;
-    vector<double> DgOverDps;
-    Nps.reserve(current.size());
-    DgOverDps.reserve(current.size());
-
-    for (const Aggregate* Agg : current)
-    {
-        Nps.push_back(double(Agg->Np));
-        DgOverDps.push_back(Agg->DgOverDp);
-    }
-
-
-    return linreg(DgOverDps,Nps);
-}
-
 tuple<bool,double,double,double> StatisticStorage::getCompleteFractalLaw() const
 {
     size_t total(0);

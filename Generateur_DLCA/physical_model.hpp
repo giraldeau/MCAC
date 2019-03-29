@@ -119,6 +119,8 @@ double latof(const char* _char);
 bool dirExists(const char *path);
 std::experimental::filesystem::path extractPath(const std::string& file);
 
+std::tuple<bool,double,double,double> linreg(const std::vector<double>& x, const std::vector<double>& y);
+
 }  // namespace DLCA
 
 

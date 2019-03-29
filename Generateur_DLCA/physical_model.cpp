@@ -749,5 +749,50 @@ bool dirExists(const char *path)
     return false;
 }
 
+
+tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<double>& y)
+{
+    double   sumx = 0.0;                        /* sum of x                      */
+    double   sumx2 = 0.0;                       /* sum of x**2                   */
+    double   sumxy = 0.0;                       /* sum of x * y                  */
+    double   sumy = 0.0;                        /* sum of y                      */
+    double   sumy2 = 0.0;                       /* sum of y**2                   */
+
+    size_t n = x.size();
+    auto N = double(n);
+
+   for (size_t i=0;i<n;i++)
+   {
+      double X(log(x[i]));
+      double Y(log(y[i]));
+      sumx  += X;
+      sumx2 += POW2(X);
+      sumxy += X * Y;
+      sumy  += Y;
+      sumy2 += POW2(Y);
+   }
+
+
+
+   double denom = (N * sumx2 - POW2(sumx));
+   if (n==0 || abs(denom) < 1e-9) {
+       // singular matrix. can't solve the problem.
+       tuple<bool,double,double,double> res{false,0.,0.,0.};
+       return res;
+   }
+
+   double a = (N * sumxy  -  sumx * sumy) / denom;
+   double b = (sumy * sumx2  -  sumx * sumxy) / denom;
+
+   /* compute correlation coeff     */
+   double r = (sumxy - sumx * sumy / N) /
+            POW2((sumx2 - POW2(sumx)/N) *
+            (sumy2 - POW2(sumy)/N));
+
+   tuple<bool,double,double,double> res{true,a,b,r};
+   return res;
+}
+
+
 }  // namespace DLCA
 

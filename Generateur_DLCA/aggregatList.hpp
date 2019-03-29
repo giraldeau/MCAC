@@ -54,7 +54,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         void SortTimeSteps(double factor);
         size_t RandomPick(double &deltatemps, double random);
 
-
+        std::tuple<bool,double,double,double> getInstantaneousFractalLaw() const;
 
         void save();
         void save(bool);
