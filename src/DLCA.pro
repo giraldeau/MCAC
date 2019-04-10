@@ -71,8 +71,8 @@ LIBS += -lstdc++fs
 
 CONFIG += warn_on debug_and_release debug_and_release_target build_all
 
-release: DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/release
-debug:   DESTDIR = $$_PRO_FILE_PWD_/../build-Generateur_DLCA/debug
+release: DESTDIR = $$_PRO_FILE_PWD_/../bin/release
+debug:   DESTDIR = $$_PRO_FILE_PWD_/../bin/debug
 
 equals(WITH_SBL, "1"){
     INCLUDEPATH +=  /home/pouxa/packages/sbl/install/include
