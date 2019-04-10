@@ -91,8 +91,8 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             {
                 Aggregates.SortTimeSteps(max);
             }
-            NumAgg = Aggregates.RandomPick(deltatemps,Random());
-            deltatemps = max/deltatemps;
+            NumAgg = Aggregates.RandomPick(Random());
+            deltatemps = Aggregates.GetTimeStep(max);
         }
         else
         {

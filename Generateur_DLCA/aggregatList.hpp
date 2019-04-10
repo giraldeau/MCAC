@@ -49,10 +49,11 @@ class ListAggregat : public storage_list<15,Aggregate>
         int DistanceToNextContact(size_t source, std::array<double,3> Vectdir, double &distmin) const;
 
         double GetMaxTimeStep() const;
+        double GetTimeStep(const double max) const;
 
         size_t Merge(size_t first, size_t second);
         void SortTimeSteps(double factor);
-        size_t RandomPick(double &deltatemps, double random);
+        size_t RandomPick(double random);
 
         std::tuple<bool,double,double,double> getInstantaneousFractalLaw() const;
 

@@ -281,17 +281,23 @@ void ListAggregat::SortTimeSteps(double factor)
     }
 }
 
-size_t ListAggregat::RandomPick(double &deltatemps, const double random)
+__attribute__((pure)) size_t ListAggregat::RandomPick(const double random)
 {
     //$ Pick a random sphere
-    double valAlea=random*CumulativeTimeSteps[size()-1];
+    double valAlea = random*CumulativeTimeSteps[size()-1];
     long n = lower_bound(CumulativeTimeSteps.begin(), CumulativeTimeSteps.end(), valAlea) - CumulativeTimeSteps.begin();
 
-    deltatemps = CumulativeTimeSteps[size()-1];
+    size_t NumAgg = indexSortedTimeSteps[size_t(n)];
 
-    return indexSortedTimeSteps[size_t(n)];
+    return NumAgg;
 }
 
+__attribute__((pure)) double ListAggregat::GetTimeStep(const double max) const
+{
+    double deltatemps = max / CumulativeTimeSteps[size()-1];
+
+    return deltatemps ;
+}
 
 ListAggregat::ListAggregat(PhysicalModel& _physicalmodel, const size_t _size):
     storage_list<15,Aggregate>(),

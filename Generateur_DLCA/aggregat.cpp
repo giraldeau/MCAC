@@ -334,6 +334,11 @@ Aggregate::~Aggregate() noexcept
     return Label;
 }
 
+__attribute__((pure)) double Aggregate::GetTimeStep() const noexcept
+{
+    return *time_step;
+}
+
 //######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
 void Aggregate::Update()
 {
