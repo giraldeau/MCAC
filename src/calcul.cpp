@@ -104,33 +104,33 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             NumAgg = size_t(Random()*double(Aggregates.size()));
             deltatemps = 1e-9;
         }
+        double lpm = Aggregates[NumAgg].GetLpm();
 
         //$ looking for potential contacts
         double distmove;
         int aggcontact = Aggregates.DistanceToNextContact(NumAgg, Vectdir, distmove);
-        contact = (aggcontact >= 0);
+
+        // adjust time step
+        deltatemps = deltatemps*distmove/lpm;
 
         //$ Translation of the aggregate
         for (size_t i = 0; i < 3; i++)
         {
             Vectdir[i] = Vectdir[i]*distmove;
         }
-
         Aggregates[NumAgg].Translate(Vectdir);
         Aggregates[NumAgg].TimeForward(deltatemps);
 
-        double lpm = Aggregates[NumAgg].GetLpm();
+        //$ Time incrementation
+        deltatemps = deltatemps / double(Aggregates.size());
+        physicalmodel.Time = physicalmodel.Time + deltatemps;
+
+        contact = (aggcontact >= 0);
         if (contact)
         {
             //$ Aggregates in contact are reunited;
             NumAgg = Aggregates.Merge(NumAgg, size_t(aggcontact));
         }
-
-        // adjust time step
-        deltatemps = deltatemps*distmove/lpm / double(Aggregates.size());
-
-        //$ Time incrementation
-        physicalmodel.Time = physicalmodel.Time + deltatemps;
 
         //$ Update of the Aggregates/Spheres
         if (physicalmodel.ActiveModulephysique)
