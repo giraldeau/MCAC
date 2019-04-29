@@ -28,6 +28,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         PhysicalModel* physicalmodel;
 
         double maxradius;
+
         std::vector<size_t> indexSortedTimeSteps;
         std::vector<double> CumulativeTimeSteps;
 
@@ -54,6 +55,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         size_t Merge(size_t first, size_t second);
         void SortTimeSteps(double factor);
         size_t RandomPick(double random);
+        size_t PickLast();
 
         std::tuple<bool,double,double,double> getInstantaneousFractalLaw() const;
 

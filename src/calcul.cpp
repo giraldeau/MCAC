@@ -85,6 +85,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         size_t NumAgg(0);
         if (physicalmodel.ActiveModulephysique)
         {
+            /*
             //$ Choice of an aggregate according to his MFP
             double max = Aggregates.GetMaxTimeStep();
             if (contact)
@@ -93,6 +94,9 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             }
             NumAgg = Aggregates.RandomPick(Random());
             deltatemps = Aggregates.GetTimeStep(max);
+            */
+            NumAgg = Aggregates.PickLast();
+            deltatemps = Aggregates[NumAgg].GetTimeStep();
         }
         else
         {
@@ -113,16 +117,17 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         }
 
         Aggregates[NumAgg].Translate(Vectdir);
+        Aggregates[NumAgg].TimeForward(deltatemps);
 
         double lpm = Aggregates[NumAgg].GetLpm();
         if (contact)
         {
             //$ Aggregates in contact are reunited;
-            NumAgg = Aggregates.Merge(NumAgg,size_t(aggcontact));
+            NumAgg = Aggregates.Merge(NumAgg, size_t(aggcontact));
         }
 
         // adjust time step
-        deltatemps = deltatemps*distmove/lpm;
+        deltatemps = deltatemps*distmove/lpm / double(Aggregates.size());
 
         //$ Time incrementation
         physicalmodel.Time = physicalmodel.Time + deltatemps;
@@ -144,7 +149,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 */
             if (physicalmodel.Asurfgrowth > 0.)
             {
-	        //$ Growth of all spheres
+                //$ Growth of all spheres
                 Aggregates.spheres.CroissanceSurface(deltatemps);
  
                 //$ Aggregates update

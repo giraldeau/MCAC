@@ -58,6 +58,7 @@ class Aggregate :
 
         double *x,*y,*z; // position of the gravity center
         double *rx,*ry,*rz; // position of the gravity center
+        double *time; // Proper time of the aggregate
 
         size_t Np;     //Number of spheres
         size_t Label;
@@ -88,6 +89,7 @@ class Aggregate :
         void SetPosition(std::array<double, 3> position) noexcept;
         void SetPosition(double newx, double newy, double newz) noexcept;
         void Translate(std::array<double, 3> vector) noexcept;
+        void TimeForward(double deltatemps) noexcept;
 
 
         void Update();

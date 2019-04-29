@@ -39,6 +39,7 @@ Aggregate::Aggregate():
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    time(nullptr),
     Np(0),
     Label(0),
     InVerlet(false)
@@ -69,6 +70,7 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    time(nullptr),
     Np(0),
     Label(0),
     InVerlet(false)
@@ -100,6 +102,7 @@ Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    time(nullptr),
     Np(0),
     Label(label),
     InVerlet(false)
@@ -126,6 +129,7 @@ void Aggregate::Init()
     *rx = 0;
     *ry = 0;
     *rz = 0;
+    *time = 0;
 
     IndexVerlet = {{0,0,0}};
 
@@ -151,6 +155,7 @@ void Aggregate::setpointers()
     rx=&(*Storage)[10][myindex];
     ry=&(*Storage)[11][myindex];
     rz=&(*Storage)[12][myindex];
+    time=&(*Storage)[13][myindex];
 }
 
 void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const size_t _label, ListSphere& spheres,const double D)
@@ -303,6 +308,11 @@ void Aggregate::Translate(const array<double, 3> vector) noexcept
                               *myspheres[0].y+*mysphere->ry,
                               *myspheres[0].z+*mysphere->rz);
     }
+}
+
+void Aggregate::TimeForward(double deltatemps) noexcept
+{
+    *time += deltatemps;
 }
 
 Aggregate::~Aggregate() noexcept
@@ -541,7 +551,6 @@ Sphere::Sphere(const Aggregate& Agg) : Sphere()
 
 void Aggregate::Merge(Aggregate& other)
 {
-
     //$ Update of the labels of the spheres that were in the deleted aggregate
     //$ And their new relative position
     double dx = periodicDistance(*other.myspheres[0].x-*myspheres[0].x,physicalmodel->L);
@@ -644,6 +653,7 @@ Aggregate::Aggregate(const Aggregate& other):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    time(nullptr),
     Np(other.Np),
     Label(other.Label),
     InVerlet(false)
@@ -675,6 +685,7 @@ Aggregate::Aggregate(const Aggregate& other, ListAggregat& _Storage):
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    time(nullptr),
     Np(other.Np),
     Label(other.Label),
     InVerlet(false)
@@ -711,6 +722,7 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
+    time(nullptr),
     Np(other.Np),
     Label(other.Label),
     InVerlet(false)
@@ -753,7 +765,6 @@ Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
 
     swap(Np,other.Np);
 
-
     StatisicsData::operator=(static_cast<StatisicsData&>(other));
     storage_elem<15,ListAggregat>::operator=(move(static_cast<storage_elem<15,ListAggregat>&>(other)));
 
@@ -795,6 +806,7 @@ void Aggregate::print() const
     cout << "    Volume            : " << *volAgregat << endl;
     cout << "    Surface           : " << *surfAgregat << endl;
     cout << "    Position          : " << *x << " "<< *y << " "<< *z << endl;
+    cout << "    Proper time       : " << *time << endl;
     myspheres.print();
 
     /*

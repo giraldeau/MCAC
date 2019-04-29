@@ -129,7 +129,7 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
         cout << "I'm not on the verlet list ???"<<endl;
         cout << "This is an error"<<endl;
         exit(68);
-        return SearchSpace;
+        //return SearchSpace;
     }
 
     // The full aggregat list index
@@ -227,12 +227,14 @@ ListAggregat::~ListAggregat() noexcept
     }
 }
 
-
-
 size_t ListAggregat::Merge(const size_t first, const size_t second)
 {
     const size_t keeped(MIN(first,second));
     const size_t removed(MAX(first,second));
+
+    // compute proper time of the final aggregate
+    // keeping global time constant
+    double newtime = double(size() - 1) * (*list[keeped]->time + *list[removed]->time) / double(size()) - physicalmodel->Time;
 
     // Merge the two aggregate but do not remove the deleted one
     list[keeped]->Merge(*list[removed]);
@@ -240,6 +242,8 @@ size_t ListAggregat::Merge(const size_t first, const size_t second)
     remove(removed);
 
     setpointers();
+
+    *list[keeped]->time = newtime;
 
     return keeped;
 }
@@ -297,6 +301,22 @@ __attribute__((pure)) double ListAggregat::GetTimeStep(const double max) const
     double deltatemps = max / CumulativeTimeSteps[size()-1];
 
     return deltatemps ;
+}
+
+__attribute__((pure)) size_t ListAggregat::PickLast()
+{
+      double time = *list[0]->time;
+      size_t latest = 0;
+      for (const Aggregate* Agg : list)
+      {
+          if (*Agg->time < time)
+          {
+              time = *Agg->time;
+              latest = Agg->Label;
+          }
+      }
+
+      return latest;
 }
 
 ListAggregat::ListAggregat(PhysicalModel& _physicalmodel, const size_t _size):
