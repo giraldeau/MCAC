@@ -216,22 +216,16 @@ __attribute__((pure)) pair<bool,double> Sphere::Collision(const Sphere& c,const 
               {
                   for (int k=-1;k<=1;k++)
                   {
-                      array < double, 3> tmp{};
+                      array < double, 3> tmp;
 
                       tmp[0] = pos[0] + i*perx[0] + j*pery[0] + k*perz[0];
+                      tmp[1] = pos[1] + i*perx[1] + j*pery[1] + k*perz[1];
+                      tmp[2] = pos[2] + i*perx[2] + j*pery[2] + k*perz[2];
 
                       // in the future
                       if (tmp[0] <0.)
                       {
                         continue;
-                      }
-
-                      for(size_t l = 1; l < 3; ++l)
-                      {
-                          tmp[l] = pos[l]
-                                 + i*perx[l]
-                                 + j*pery[l]
-                                 + k*perz[l];
                       }
 
                       double dist1 = POW2(tmp[1]) + POW2(tmp[2]);
