@@ -143,6 +143,31 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
 }
 
 
+//########################################## Determination of the contacts between agrgates ##########################################
+bool ListAggregat::TestFreeSpace(const std::array<double,3> pos, const double diameter) const
+{
+    // Use Verlet to reduce search
+    double mindist(diameter*0.5 + maxradius);
+
+    vector<size_t> SearchSpace = verlet.GetSearchSpace(pos , mindist);
+
+    double mindist2 = POW2(mindist);
+
+    //$ loop on the agregates potentially in contact
+    for (const size_t & suspect : SearchSpace) //For every aggregate that could be in contact
+    {
+        //$ Loop on all the spheres of the aggregate
+        for (const Sphere* sphere : list[suspect]->myspheres)
+        {
+            if (sphere->Distance2(pos[0], pos[1], pos[2]) <= mindist2)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 //########################################## Determination of the contacts between agrgates ##########################################
 int ListAggregat::DistanceToNextContact(const size_t source, const array<double,3> Vectdir, double &distmin) const

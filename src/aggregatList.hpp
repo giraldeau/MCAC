@@ -48,6 +48,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         std::vector< std::pair<size_t,double> > SortSearchSpace(size_t MovingAgg,std::array<double,3> Vectdir, std::vector<size_t> SearchSpace) const;
         std::vector<size_t> GetSearchSpace(size_t source, std::array<double,3> Vectdir) const;
         int DistanceToNextContact(size_t source, std::array<double,3> Vectdir, double &distmin) const;
+        bool TestFreeSpace(const std::array<double,3> pos, const double diameter) const;
 
         double GetMaxTimeStep() const;
         double GetTimeStep(const double max) const;

@@ -307,23 +307,10 @@ void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& A
         }
 
         //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
-        size_t test=0;
-        if (i>0)
-        {
-            for (size_t k = 0; k <= i-1; k++)
-            {
-                double dist = Aggregates.spheres[k].Distance(newpos); // Calcule la distance centre à centre entre le monomère k et tous les autres
-                if (dist <= Aggregates.spheres[k].Radius()+Dp/2)
-                {
-                    test++;
-                }
-            }
-        }
-        testmem = testmem + test; //Comptabilise le nombre d'échecs à positionner une sphère sans superposition
-
-        if (test > 0)
+        if (Aggregates.TestFreeSpace(newpos, Dp))
         {
             i--;
+            testmem++;
         }
         else
         {

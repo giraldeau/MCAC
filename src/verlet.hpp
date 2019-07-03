@@ -23,6 +23,7 @@ public:
 
     void Init(size_t _GridDiv, double _L);
     std::vector<size_t> GetSearchSpace(std::array<double, 3> sourceposition , double width, std::array<double, 3> Vector) const;
+    std::vector<size_t> GetSearchSpace(std::array<double, 3> sourceposition , double width) const;
 
     /* Default constructor */
     Verlet();

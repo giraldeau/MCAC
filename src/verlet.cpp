@@ -42,6 +42,68 @@ void Verlet::Init(const size_t _GridDiv, const double _L)
 
 }
 
+
+vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double width) const
+{
+
+    double xp(sourceposition[0]+width);
+    double xm(sourceposition[0]-width);
+    double yp(sourceposition[1]+width);
+    double ym(sourceposition[1]-width);
+    double zp(sourceposition[2]+width);
+    double zm(sourceposition[2]-width);
+
+    auto bornei1 (int(floor(xm*double(GridDiv)/L)));
+    auto bornei2 (int(floor(xp*double(GridDiv)/L)+1));
+    auto bornej1 (int(floor(ym*double(GridDiv)/L)));
+    auto bornej2 (int(floor(yp*double(GridDiv)/L)+1));
+    auto bornek1 (int(floor(zm*double(GridDiv)/L)));
+    auto bornek2 (int(floor(zp*double(GridDiv)/L)+1));
+
+    if (bornei2-bornei1>=int(GridDiv))
+    {
+        bornei1=0;
+        bornei2=int(GridDiv)-1;
+    }
+    if (bornej2-bornej1>=int(GridDiv))
+    {
+        bornej1=0;
+        bornej2=int(GridDiv)-1;
+    }
+    if (bornek2-bornek1>=int(GridDiv))
+    {
+        bornek1=0;
+        bornek2=int(GridDiv)-1;
+    }
+
+
+    list<size_t> tmpSearchSpace;
+
+    // ///////
+    for (int i=bornei1;i<=bornei2;i++)
+    {
+        for (int j=bornej1;j<=bornej2;j++)
+        {
+            for (int k=bornek1;k<=bornek2;k++)
+            {
+                // periodic
+                auto ii = size_t(periodicPosition(i,int(GridDiv)));
+                auto jj = size_t(periodicPosition(j,int(GridDiv)));
+                auto kk = size_t(periodicPosition(k,int(GridDiv)));
+                tmpSearchSpace.insert(tmpSearchSpace.end(),
+                                      Cell[ii][jj][kk].begin(),
+                                      Cell[ii][jj][kk].end());
+
+            }
+        }
+    }
+ 
+    vector<size_t> SearchSpace{ make_move_iterator(tmpSearchSpace.begin()),
+                             make_move_iterator(tmpSearchSpace.end()) };
+    return SearchSpace;
+}
+
+
 vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double width, const array<double, 3> Vector) const
 {
 
