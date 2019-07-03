@@ -127,12 +127,8 @@ bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
     auto ret = FractalLaw[Agg.Np - 1].emplace(Agg.DgOverDp);
     if(ret.second)
     {
-        Aggregate* newagg = SavedAggregates->add(Agg);
-        times.push_back(newagg->physicalmodel->Time);
-//        cout << "before" << endl;
-//        Agg.print();
-//        cout << endl << "after" << endl;
-//        newagg->print();
+//        Aggregate* newagg = SavedAggregates->add(Agg);
+//        times.push_back(newagg->physicalmodel->Time);
     }
 
     return ret.second;
