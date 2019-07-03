@@ -805,7 +805,7 @@ double Aggregate::SphereDistance(size_t i, size_t j) const
     }
     return -1;
 }
-double Aggregate::SphereDistance(size_t i) const
+__attribute__((pure)) double Aggregate::SphereDistance(size_t i) const
 {
     return distances_center[i];
 }

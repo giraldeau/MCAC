@@ -281,12 +281,7 @@ void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& A
 
 
     for (size_t i = 0; i < Aggregates.size(); i++)
-    {          
-
-        //random position
-        array<double, 3> newpos{{Random()*physicalmodel.L,
-                                 Random()*physicalmodel.L,
-                                 Random()*physicalmodel.L}};
+    {
 
         //random size
         double x = Random();
@@ -306,24 +301,33 @@ void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& A
             Dp = physicalmodel.Dpm*1E-9;
         }
 
-        //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
-        if (Aggregates.TestFreeSpace(newpos, Dp))
+        bool placed = false;
+        while (!placed)
         {
-            i--;
-            testmem++;
-        }
-        else
-        {
-            Aggregates[i].Init(physicalmodel,Aggregates.verlet,newpos,i,Aggregates.spheres,Dp);
-        }
-        if (testmem > Aggregates.size())
-        {
-            cout << "Impossible de générer tous les monomères sans superposition." << endl;
-            cout << "La fraction volumique doit être diminuée." << endl;
-            exit(0);
-        }
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            //random position
+            array<double, 3> newpos{{Random()*physicalmodel.L,
+                                     Random()*physicalmodel.L,
+                                     Random()*physicalmodel.L}};
 
+            //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
+            if (Aggregates.TestFreeSpace(newpos, Dp))
+            {
+                i--;
+                testmem++;
+            }
+            else
+            {
+                Aggregates[i].Init(physicalmodel,Aggregates.verlet,newpos,i,Aggregates.spheres,Dp);
+                placed = true;
+            }
+            if (testmem > Aggregates.size())
+            {
+                cout << "Impossible de générer tous les monomères sans superposition." << endl;
+                cout << "La fraction volumique doit être diminuée." << endl;
+                exit(0);
+            }
+            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        }
     }
 
 
