@@ -8,6 +8,7 @@
 #include "storage.hpp"
 #include "storagelist.hpp"
 
+#include <list>
 
 namespace DLCA{
 
@@ -44,7 +45,8 @@ class Aggregate :
         Verlet* verlet;
         std::array<size_t, 3> IndexVerlet;
 
-        std::vector<std::vector <double > > distances;
+        std::vector<std::list < std::pair<size_t, double > > > _distances;
+        std::vector<double> distances_center;
         std::vector<double> volumes;
         std::vector<double> surfaces;
 
@@ -76,6 +78,8 @@ class Aggregate :
         void Init();
         void Init(PhysicalModel&,Verlet&, std::array<double, 3> position ,size_t _label, ListSphere&, double D);
 
+        double SphereDistance(size_t i, size_t j) const;
+        double SphereDistance(size_t i) const;
         double GetLpm() const noexcept;
         double GetTimeStep() const noexcept;
         double GetVolAgregat() const noexcept;

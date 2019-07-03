@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
-
+#include <functional>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -23,7 +23,8 @@ Aggregate::Aggregate():
     myspheres(),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    distances(),
+    _distances(),
+    distances_center(),
     volumes(),
     surfaces(),
     rg(nullptr),
@@ -54,7 +55,8 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     myspheres(),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    distances(),
+    _distances(),
+    distances_center(),
     volumes(),
     surfaces(),
     rg(nullptr),
@@ -86,7 +88,8 @@ Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
     myspheres(),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    distances(),
+    _distances(),
+    distances_center(),
     volumes(),
     surfaces(),
     rg(nullptr),
@@ -429,8 +432,9 @@ void Aggregate::Volume()
             double voli, volj, surfi, surfj;
             voli = volj = surfi = surfj = 0.;
 
-            //$ Calculation of the intersection between the spheres i and j
-            myspheres[i].Intersection(myspheres[j],distances[i][j], voli,volj,surfi,surfj);
+            //$ Calculation of the intersection between the spheres i and j if in contact
+            if (SphereDistance(i, j) > 0)
+                myspheres[i].Intersection(myspheres[j],SphereDistance(i, j), voli,volj,surfi,surfj);
 
             //$ The volume and surface covered by j is substracted from those of i
             volumes[i] = volumes[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
@@ -476,7 +480,7 @@ void Aggregate::MassCenter()
         double dx = *myspheres[i].rx - _rx;
         double dy = *myspheres[i].ry - _ry;
         double dz = *myspheres[i].rz - _rz;
-        distances[i][Np]=sqrt(POW2(dx)+POW2(dy)+POW2(dz));
+        distances_center[i]=sqrt(POW2(dx)+POW2(dy)+POW2(dz));
     }
 
     SetPosition(*myspheres[0].x+_rx,
@@ -498,7 +502,7 @@ void Aggregate::CalcRadius()
     const size_t loopsize(Np);
     for (size_t i = 0; i < loopsize; i++)
     {
-        *rmax=MAX(*rmax,*myspheres[i].r + distances[i][Np]);
+        *rmax=MAX(*rmax,*myspheres[i].r + SphereDistance(i));
     }
 }
 
@@ -514,7 +518,7 @@ void Aggregate::RayonGiration()
     for (size_t i = 0; i < loopsize; i++)
     {
         //$ Calculation of Rg
-        Arg = Arg + volumes[i]*POW2(distances[i][Np]); // distance to the gravity center
+        Arg = Arg + volumes[i]*POW2(SphereDistance(i)); // distance to the gravity center
         Brg = Brg + volumes[i]*POW2(*myspheres[i].r);
     }
 
@@ -605,26 +609,30 @@ void Aggregate::DecreaseLabel() noexcept
 
 void Aggregate::UpdateDistances() noexcept
 {
-    distances.resize(Np);
+    _distances.resize(Np);
+    distances_center.resize(Np);
+
     const size_t loopsize(Np);
     for (size_t i = 0; i < loopsize; i++)
     {
         // The last index is the distance to the mass center
-        distances[i].resize(Np+1);
+        _distances[i].clear();
     }
 
     for (size_t i = 0; i < loopsize; i++)
     {
-        // a sphere is that close to itself
-        distances[i][i]=0;
-
         for (size_t j = i+1; j < loopsize; j++)
         {
             // Compute the distance between sphere i and j without taking periodicity into account
-            distances[i][j] = myspheres[i].RelativeDistance(myspheres[j]);
+            double dist = myspheres[i].RelativeDistance(myspheres[j]);
 
-            // distances are symetric !
-            distances[j][i] = distances[i][j];
+            // if in contact
+            if (dist < myspheres[i].Radius() + myspheres[j].Radius())
+            {
+                _distances[i].push_back(pair<size_t, double>(j, dist));
+                // distances are symetric !
+                _distances[j].push_back(pair<size_t, double>(i, dist));
+            }
         }
     }
 }
@@ -637,7 +645,8 @@ Aggregate::Aggregate(const Aggregate& other):
     myspheres(other.myspheres),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    distances(other.distances),
+    _distances(other._distances),
+    distances_center(other.distances_center),
     volumes(other.volumes),
     surfaces(other.surfaces),
     rg(nullptr),
@@ -669,7 +678,8 @@ Aggregate::Aggregate(const Aggregate& other, ListAggregat& _Storage):
     myspheres(other.myspheres,_Storage.spheres),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    distances(other.distances),
+    _distances(other._distances),
+    distances_center(other.distances_center),
     volumes(other.volumes),
     surfaces(other.surfaces),
     rg(nullptr),
@@ -706,7 +716,8 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
     myspheres(move(other.myspheres)),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
-    distances(),
+    _distances(),
+    distances_center(),
     volumes(),
     surfaces(),
     rg(nullptr),
@@ -727,7 +738,8 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
     Label(other.Label),
     InVerlet(false)
 {
-    swap(distances,other.distances);
+    swap(_distances,other._distances);
+    swap(distances_center,other.distances_center);
     swap(volumes,other.volumes);
     swap(surfaces,other.surfaces);
 
@@ -757,7 +769,8 @@ Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
     other.physicalmodel=new PhysicalModel;
 
     swap(myspheres,other.myspheres);
-    swap(distances,other.distances);
+    swap(_distances,other._distances);
+    swap(distances_center,other.distances_center);
     swap(volumes,other.volumes);
     swap(surfaces,other.surfaces);
     swap(IndexVerlet,other.IndexVerlet);
@@ -772,7 +785,30 @@ Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
     return *this;
 }
 
+double Aggregate::SphereDistance(size_t i, size_t j) const
+{
+    size_t ii = i;
+    size_t jj = j;
 
+    if (_distances[i].size() > _distances[j].size())
+    {
+        ii=j;
+        jj=i;
+    }
+
+    std::function<bool (pair<size_t, double>)> IsJJ = [jj](pair<size_t, double> e) { return e.first == jj; };
+
+    auto findIter = std::find_if(_distances[ii].begin(), _distances[ii].end(), IsJJ);
+    if (findIter != _distances[ii].end())
+    {
+        return findIter->second;
+    }
+    return -1;
+}
+double Aggregate::SphereDistance(size_t i) const
+{
+    return distances_center[i];
+}
 
 void Aggregate::print() const
 {
