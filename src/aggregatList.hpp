@@ -68,7 +68,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         std::vector<double> FormatPositionData() const;
         std::vector<double> FormatRgData() const;
         std::vector<int>    FormatNpData() const;
-        std::vector<double> FormatDmData() const;
+        std::vector<double> FormatFaggData() const;
         std::vector<double> FormatlpmData() const;
         std::vector<double> FormatdeltatData() const;
         std::vector<double> FormatRmaxData() const;

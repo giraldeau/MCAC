@@ -28,7 +28,7 @@ Aggregate::Aggregate():
     volumes(),
     surfaces(),
     rg(nullptr),
-    dm(nullptr),
+    f_agg(nullptr),
     lpm(nullptr),
     time_step(nullptr),
     rmax(nullptr),
@@ -60,7 +60,7 @@ Aggregate::Aggregate(PhysicalModel& _physicalmodel) :
     volumes(),
     surfaces(),
     rg(nullptr),
-    dm(nullptr),
+    f_agg(nullptr),
     lpm(nullptr),
     time_step(nullptr),
     rmax(nullptr),
@@ -93,7 +93,7 @@ Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
     volumes(),
     surfaces(),
     rg(nullptr),
-    dm(nullptr),
+    f_agg(nullptr),
     lpm(nullptr),
     time_step(nullptr),
     rmax(nullptr),
@@ -121,18 +121,18 @@ void Aggregate::Init()
     }
     setpointers();
 
-    *rg=0.;  //Gyration Radius
-    *dm=0.;  //Mobility Diameter
-    *lpm=0.; //Mean Free Path
-    *time_step=0.;
-    *rmax=0.;                   //Radius of the sphere containing Agg
-    *volAgregat=0.;             //Etimation of the Aggregate's volume
-    *surfAgregat=0.;            //Estimation of the sufrace of the aggregate
+    *rg             =0.;              //Gyration Radius
+    *f_agg          =0.;              //Friction coeff
+    *lpm            =0.;              //Aggregate apparent Mean Free Path
+    *time_step      =0.;              //Time to move along lpm
+    *rmax           =0.;              //Radius of the sphere containing Agg
+    *volAgregat     =0.;              //Etimation of the Aggregate's volume
+    *surfAgregat    =0.;              //Estimation of the sufrace of the aggregate
 
-    *rx = 0;
-    *ry = 0;
-    *rz = 0;
-    *time = 0;
+    *rx             = 0;
+    *ry             = 0;
+    *rz             = 0;
+    *time           = 0;
 
     IndexVerlet = {{0,0,0}};
 
@@ -145,20 +145,20 @@ void Aggregate::setpointers()
 {
     size_t myindex = indexInStorage;
 
-    rg=&(*Storage)[0][myindex];  //Gyration Radius
-    dm=&(*Storage)[1][myindex];  //Mobility Diameter
-    lpm=&(*Storage)[2][myindex]; //Mean Free Path
-    time_step=&(*Storage)[3][myindex];
-    rmax=&(*Storage)[4][myindex];                   //Radius of the sphere containing Agg
-    volAgregat=&(*Storage)[5][myindex];             //Etimation of the Aggregate's volume
-    surfAgregat=&(*Storage)[6][myindex];            //Estimation of the surface of the aggregate
-    x=&(*Storage)[7][myindex];
-    y=&(*Storage)[8][myindex];
-    z=&(*Storage)[9][myindex];
-    rx=&(*Storage)[10][myindex];
-    ry=&(*Storage)[11][myindex];
-    rz=&(*Storage)[12][myindex];
-    time=&(*Storage)[13][myindex];
+    rg          =&(*Storage)[0][myindex];               //Gyration Radius
+    f_agg       =&(*Storage)[1][myindex];               //Friction coeff
+    lpm         =&(*Storage)[2][myindex];               //Aggregate apparent Mean Free Path
+    time_step   =&(*Storage)[3][myindex];               //Time to move along lpm
+    rmax        =&(*Storage)[4][myindex];               //Radius of the sphere containing Agg
+    volAgregat  =&(*Storage)[5][myindex];               //Etimation of the Aggregate's volume
+    surfAgregat =&(*Storage)[6][myindex];               //Estimation of the surface of the aggregate
+    x           =&(*Storage)[7][myindex];
+    y           =&(*Storage)[8][myindex];
+    z           =&(*Storage)[9][myindex];
+    rx          =&(*Storage)[10][myindex];
+    ry          =&(*Storage)[11][myindex];
+    rz          =&(*Storage)[12][myindex];
+    time        =&(*Storage)[13][myindex];
 }
 
 void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const size_t _label, ListSphere& spheres,const double D)
@@ -191,7 +191,6 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     Np = myspheres.size();
 
     UpdateDistances();
-    *dm = D;                   //Diamètre de mobilité
     Update();
     fullStatistics();
 
@@ -364,16 +363,17 @@ void Aggregate::Update()
 
     RayonGiration();
 
-    //$ Determination of Dm using ConvertRg2Dm
-    *dm = physicalmodel->ConvertRg2DmFromStart(Np,*rg,*dm);
+    //$ Determination of the friction coefficient
+    *f_agg = physicalmodel->friction_coeff(Np);
+    //*f_agg = physicalmodel->friction_coeff2(*rg);
 
     if (physicalmodel->ActiveModulephysique)
     {
-        double masse = physicalmodel->Rho*(*volAgregat);//Determination of the real mass of Agg
-        double vit =  physicalmodel->velocity(masse);
-        double diff = physicalmodel->diffusivity(*dm);
-        *lpm = 8*diff/PI/vit;
-        *time_step = *lpm/vit; //Displacement duration
+        double masse = physicalmodel->Rho*(*volAgregat);    //Determination of the real mass of Agg
+        double diff = physicalmodel->diffusivity(*f_agg);
+        double rel_time =  physicalmodel->relax_time(masse, *f_agg);
+        *time_step = 3.0*rel_time;
+        *lpm = sqrt(6.0*diff*(*time_step));
     }
     else
     {
@@ -407,7 +407,7 @@ void Aggregate::Volume()
     for (size_t i = 0; i < Np; i++)
     {
         //$ Calculation of the volume and surface of monomere i of Agg id
-        volumes[i] = *myspheres[i].volume; //Calculation of the volume of i
+        volumes[i] = *myspheres[i].volume;      //Calculation of the volume of i
         surfaces[i] = *myspheres[i].surface;    //Calculation of the surface of i
     }
 
@@ -437,16 +437,16 @@ void Aggregate::Volume()
                 myspheres[i].Intersection(myspheres[j],SphereDistance(i, j), voli,volj,surfi,surfj);
 
             //$ The volume and surface covered by j is substracted from those of i
-            volumes[i] = volumes[i] - voli;    //Calcul du volume de la sphérule i moins le volume de
-                                             //la calotte due à la sphérule j
-            surfaces[i] = surfaces[i] - surfi; //Calcul de la surface de la sphérule i moins la surface de
-                                             //la calotte due à la sphérule j
+            volumes[i] = volumes[i] - voli;     //Calcul du volume de la sphérule i moins le volume de
+                                                //la calotte due à la sphérule j
+            surfaces[i] = surfaces[i] - surfi;  //Calcul de la surface de la sphérule i moins la surface de
+                                                //la calotte due à la sphérule j
 
             //$ The volume and surface covered by i is substracted from those of j
-            volumes[j] = volumes[j] - volj;    //Calcul du volume de la sphérule j moins le volume de
-                                             //la calotte due à la sphérule i
-            surfaces[j] = surfaces[j] - surfj; //Calcul de la surface de la sphérule j moins la surface de
-                                             //la calotte due à la sphérule i
+            volumes[j] = volumes[j] - volj;     //Calcul du volume de la sphérule j moins le volume de
+                                                //la calotte due à la sphérule i
+            surfaces[j] = surfaces[j] - surfj;  //Calcul de la surface de la sphérule j moins la surface de
+                                                //la calotte due à la sphérule i
         }
         //$ Calculation of the total volume and surface of the aggregate
         *volAgregat = *volAgregat + volumes[i];    //Total Volume of Agg id
@@ -533,9 +533,9 @@ array<size_t, 3> Aggregate::GetVerletIndex() noexcept
     array<size_t, 3>  index({{0,0,0}});
     double step = double(physicalmodel->GridDiv)/physicalmodel->L;
 
-    index[0]=size_t(floor((*x)*step));
-    index[1]=size_t(floor((*y)*step));
-    index[2]=size_t(floor((*z)*step));
+    index[0] = size_t(floor((*x)*step));
+    index[1] = size_t(floor((*y)*step));
+    index[2] = size_t(floor((*z)*step));
 
     return index;
 }
@@ -650,7 +650,7 @@ Aggregate::Aggregate(const Aggregate& other):
     volumes(other.volumes),
     surfaces(other.surfaces),
     rg(nullptr),
-    dm(nullptr),
+    f_agg(nullptr),
     lpm(nullptr),
     time_step(nullptr),
     rmax(nullptr),
@@ -683,7 +683,7 @@ Aggregate::Aggregate(const Aggregate& other, ListAggregat& _Storage):
     volumes(other.volumes),
     surfaces(other.surfaces),
     rg(nullptr),
-    dm(nullptr),
+    f_agg(nullptr),
     lpm(nullptr),
     time_step(nullptr),
     rmax(nullptr),
@@ -721,7 +721,7 @@ Aggregate::Aggregate(Aggregate&& other) noexcept: /* noexcept needed to enable o
     volumes(),
     surfaces(),
     rg(nullptr),
-    dm(nullptr),
+    f_agg(nullptr),
     lpm(nullptr),
     time_step(nullptr),
     rmax(nullptr),
@@ -836,7 +836,7 @@ void Aggregate::print() const
 
     cout << "    Gyration radius   : " << *rg << endl;
     cout << "    Geometric radius  : " << *rmax << endl;
-    cout << "    Mobility Diameter : " << *dm << endl;
+    cout << "    Friction coeff.   : " << *f_agg << endl;
     cout << "    Mean Free Path    : " << *lpm << endl;
     cout << "    Delta t           : " << *time_step << endl;
     cout << "    Volume            : " << *volAgregat << endl;

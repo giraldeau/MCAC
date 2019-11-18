@@ -61,14 +61,14 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 
             if (Aggregates.size() <= multiply_threshold)
             {
-                cout << "Duplication : " << Aggregates.spheres.size()
-                     << " spheres in " << Aggregates.size() << " aggregates";
+                cout << "Duplication : "    << Aggregates.spheres.size()
+                     << " spheres in "      << Aggregates.size() << " aggregates";
 
                 Aggregates.Duplication();
                 multiply_threshold = Aggregates.size() / 8;
 
-                cout << " duplicated into " << Aggregates.spheres.size()
-                     << " spheres in " << Aggregates.size() << " aggregates" << endl;
+                cout << " duplicated into "     << Aggregates.spheres.size()
+                     << " spheres in "          << Aggregates.size() << " aggregates" << endl;
             }
 
         }
@@ -288,11 +288,11 @@ void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& A
         double Dp =0;
         if (physicalmodel.Mode == 1)
         {
-            Dp = physicalmodel.Dpm+sqrt(2.0)*physicalmodel.sigmaDpm*inverf(2*x-1); //Loi normale
+            Dp = physicalmodel.Dpm+sqrt(2.0)*physicalmodel.sigmaDpm*inverf(2.0*x-1.0); //Loi normale
         }
         else
         {
-            Dp = exp(log(physicalmodel.Dpm)+sqrt(2.0)*log(physicalmodel.sigmaDpm)*inverf(2*x-1)); //Loi log-normale
+            Dp = exp(log(physicalmodel.Dpm)+sqrt(2.0)*log(physicalmodel.sigmaDpm)*inverf(2.0*x-1.0)); //Loi log-normale
         }
 
         Dp = Dp/1E9;

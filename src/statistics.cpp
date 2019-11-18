@@ -72,7 +72,6 @@ void Aggregate::fullStatistics()
     //Dp3 = pow(Dp3 / double(Np) , 1./3.);
 
     DgOverDp=2*(*rg)/Dp;
-    //DmOverDp=*dm/Dp;
     //DgeoOverDp=2*(*rmax)/Dp;
 
     //SurfaceOverVolume = *surfAgregat / *volAgregat;

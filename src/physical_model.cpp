@@ -307,16 +307,16 @@ void PhysicalModel::Init()
 
     K = 1.38066E-23;
     lambda = 66.5E-9*(101300/P)*(T/293.15)*(1+110/293.15)/(1+110/T);
-    Dpeqmass = Dpm*exp(1.5*log(sigmaDpm)*log(sigmaDpm)); //Diamètre équivalent massique moyen des monomères
-                                                         //donné par l'équation de Hatch-Choate
-    rpeqmass = (Dpeqmass*1E-9)/2.0; //Rayon équivalent massique moyen des monomères
+    Dpeqmass = Dpm*exp(1.5*log(sigmaDpm)*log(sigmaDpm));        //Diamètre équivalent massique moyen des monomères
+                                                                //donné par l'équation de Hatch-Choate
+    rpeqmass = (Dpeqmass*1E-9)/2.0;                             //Rayon équivalent massique moyen des monomères
     gamma_ = 1.378*(0.5+0.5*erf(((lambda/rpeqmass)+4.454)/10.628));
     Mu = 18.203E-6*(293.15+110)/(T+110)*pow(T/293.15,1.5);
 
     Asurfgrowth = coeffB*1E-3;
 
-    use_verlet = true; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
-    GridDiv = 10;      // Number of Divisions of the box
+    use_verlet = true;          // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
+    GridDiv = 10;               // Number of Divisions of the box
 
     AggMin = MAX(AggMin, 1);
     CPUStart = clock();
@@ -369,6 +369,7 @@ void PhysicalModel::UseBrent()
 {
     root_method = 1;
 }
+
 void PhysicalModel::UseSecante()
 {
     root_method = 2;
@@ -389,39 +390,39 @@ void PhysicalModel::print() const
     default:
         cout << "Root method unknown, using secante" << endl;
        /* FALLTHRU */
-    case 2 :
+    [[clang::fallthrough]]; case 2 :
         RootMethod = "Secante";
     }
 
 
-    cout << "Physical parameters:" << endl
-         << " Initial Nagg : " << N << endl
-         << " Box size     : " << L << endl
-         << " X            : " << X << endl
-         << " Pressure     : " << P << endl
-         << " Temperature  : " << T << endl
-         << " diffusivity  : " << Mu << endl
-         << " K            : " << K << endl
-         << " FV           : " << FV << endl
-         << " density      : " << Rho << endl
-         << " Dpm          : " << Dpm << endl
-         << " sigmaDpm     : " << sigmaDpm << endl
-         << " Asurfgrowth  : " << Asurfgrowth << endl
-         << " xsurfgrowth  : " << xsurfgrowth << endl
-         << " coeffB       : " << coeffB << endl
-         << " dfe          : " << dfe << endl
-         << " kfe          : " << kfe << endl
-         << " lambda       : " << lambda << endl
-         << " Dpeqmass     : " << Dpeqmass << endl
-         << " rpeqmass     : " << rpeqmass << endl
-         << " gamma_       : " << gamma_ << endl
+    cout << "Physical parameters:"              << endl
+         << " Initial Nagg : " << N             << endl
+         << " Box size     : " << L             << endl
+         << " X            : " << X             << endl
+         << " Pressure     : " << P             << endl
+         << " Temperature  : " << T             << endl
+         << " diffusivity  : " << Mu            << endl
+         << " K            : " << K             << endl
+         << " FV           : " << FV            << endl
+         << " density      : " << Rho           << endl
+         << " Dpm          : " << Dpm           << endl
+         << " sigmaDpm     : " << sigmaDpm      << endl
+         << " Asurfgrowth  : " << Asurfgrowth   << endl
+         << " xsurfgrowth  : " << xsurfgrowth   << endl
+         << " coeffB       : " << coeffB        << endl
+         << " dfe          : " << dfe           << endl
+         << " kfe          : " << kfe           << endl
+         << " lambda       : " << lambda        << endl
+         << " Dpeqmass     : " << Dpeqmass      << endl
+         << " rpeqmass     : " << rpeqmass      << endl
+         << " gamma_       : " << gamma_        << endl
          << endl
-         << "Options for Pysical model: " << endl
-         << " precision   : " << precision << endl
-         << " root method : " << RootMethod << endl
-         << " Mode : " << Mode << endl
+         << "Options for Pysical model: "       << endl
+         << " precision   : " << precision      << endl
+         << " root method : " << RootMethod     << endl
+         << " Mode : " << Mode                  << endl
          << endl
-         << "Ending calcul when:" << endl
+         << "Ending calcul when:"               << endl
          << " - There is " << AggMin << " aggregats left or less" << endl;
     if (WaitLimit > 0)
     {
@@ -442,7 +443,7 @@ void PhysicalModel::print() const
     double A = 1.142;
     double B = 0.558;
     double C = 0.999;
-    return 1+A*lambda/R+B*lambda/R*exp(-C*R/lambda);
+    return 1.0+A*lambda/R+B*lambda/R*exp(-C*R/lambda);
 }
 
 
@@ -499,8 +500,8 @@ double PhysicalModel::brentq(const double x0) const
     double xa,xb,xtol,rtol;
     int iter=500;
 
-    xa = x0/100;   //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
-    xb = 2*x0; //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
+    xa = x0/100;    //pow(np/1.5,1/1.8)*rp/40; //borne inférieure de rm
+    xb = 2*x0;      //pow(np/1.5,1/1.8)*rp*40; //bornes de recherche de rm
     xtol = rtol = precision;
 
     double xpre = xa, xcur = xb;
@@ -644,14 +645,32 @@ double PhysicalModel::ConvertRg2DmFromStart(const size_t np, const double rg, co
     return R + Asurfgrowth*pow(R, xsurfgrowth-2)*dt;
 }
 
-__attribute((pure)) double PhysicalModel::diffusivity(const double dm) const
-{
-    double cc = Cunningham(dm/2);
-    return K*T/3/PI/Mu/dm*cc;
-}
+ __attribute((pure)) double PhysicalModel::friction_coeff(const size_t npp) const
+ {
+     double cc = Cunningham(rpeqmass);
+     return (6.0*PI*Mu*rpeqmass/cc)*pow(npp,gamma_/dfe); //to be expressed in terms of V_agg/V_pp
+ }
+
+ __attribute((pure)) double PhysicalModel::friction_coeff2(const double rgg) const
+ {
+     double rmm = rgg*1.3;
+     double cc = Cunningham(rmm);
+     return (6.0*PI*Mu*rmm/cc);
+ }
+
+ __attribute((pure)) double PhysicalModel::diffusivity(const double f_agg) const
+ {
+     return K*T/f_agg;
+ }
+
  __attribute__((pure)) double PhysicalModel::velocity(const double masse) const
 {
-    return sqrt(8*K*T/PI/masse);
+    return sqrt(8.0*K*T/PI/masse);
+}
+
+ __attribute__((pure)) double PhysicalModel::relax_time(const double masse, const double f_agg) const
+{
+    return masse/f_agg;
 }
 
 __attribute((const)) double inverfc(const double p)
@@ -668,10 +687,10 @@ __attribute((const)) double inverfc(const double p)
         }
         return (p < 1.0? x : -x);
 }
-__attribute((const)) double inverf(const double p) {return inverfc(1.-p);}
 
-
-
+__attribute((const)) double inverf(const double p) {
+    return inverfc(1.-p);
+}
 
 bool locale_with_dots()
 {

@@ -50,19 +50,19 @@ class Aggregate :
         std::vector<double> volumes;
         std::vector<double> surfaces;
 
-        double *rg;  //Gyration Radius
-        double *dm;  //Mobility Diameter
-        double *lpm; //Mean Free Path
-        double *time_step;
+        double *rg;                     //Gyration Radius
+        double *f_agg;                  //Friction coeff
+        double *lpm;                    //Apparent Mean Free Path
+        double *time_step;              //Time to move along lpm
         double *rmax;                   //Radius of the sphere containing Agg
         double *volAgregat;             //Etimation of the Aggregate's volume
         double *surfAgregat;            //Estimation of the sufrace of the aggregate
 
-        double *x,*y,*z; // position of the gravity center
-        double *rx,*ry,*rz; // position of the gravity center
-        double *time; // Proper time of the aggregate
+        double *x,*y,*z;                // position of the gravity center
+        double *rx,*ry,*rz;             // position of the gravity center
+        double *time;                   // Proper time of the aggregate
 
-        size_t Np;     //Number of spheres
+        size_t Np;                      //Number of spheres
         size_t Label;
 
 

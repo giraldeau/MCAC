@@ -12,29 +12,29 @@ class PhysicalModel
 public:
 
     // Physics
-    double Asurfgrowth; // surface growth coefficient
-    double dfe, kfe; // dimension fractale et préfacteur fractal
-    double xsurfgrowth, coeffB; // surface growth parameter, Bêta
-    double lambda, Dpeqmass, rpeqmass, gamma_; // libre parcours moyen d'une sphère
-    double P, T, Mu, K, Rho; // pressure, temperature, diffusivity, ?, density
+    double Asurfgrowth;                         // surface growth coefficient
+    double dfe, kfe;                            // dimension fractale et préfacteur fractal
+    double xsurfgrowth, coeffB;                 // surface growth parameter, Bêta
+    double lambda, Dpeqmass, rpeqmass, gamma_;  // libre parcours moyen d'une sphère
+    double P, T, Mu, K, Rho;                    // pressure, temperature, diffusivity, ?, density
     double Dpm, sigmaDpm;
-    double Time; // Time
-    double X, FV, L; // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
+    double Time;                                // Time
+    double X, FV, L;                            // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
     double precision;
     double FactorModelBeta;
 
     clock_t CPUStart;
     double CPULimit;
 
-    size_t GridDiv; // Number of Divisions of the box
-    size_t N;// Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
+    size_t GridDiv;     // Number of Divisions of the box
+    size_t N;           // Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
     size_t AggMin;
     size_t DeltaSauve;
     int root_method;
     int Mode;
     int Wait, WaitLimit;
     bool ActiveModulephysique, ActiveVariationTempo;
-    bool use_verlet; // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
+    bool use_verlet;    // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
 
     bool toBeDestroyed;
     std::experimental::filesystem::path CheminSauve;
@@ -59,8 +59,11 @@ public:
 
     double Cunningham(double R) const;
     double Grow(double R,double dt) const;
-    double diffusivity(double dm) const;
+    double friction_coeff(size_t npp) const;
+    double friction_coeff2(double rgg) const;
+    double diffusivity(double) const;
     double velocity(double masse) const;
+    double relax_time(const double masse, const double) const;
     void print() const;
     bool Finished(const size_t Nagg) const;
 

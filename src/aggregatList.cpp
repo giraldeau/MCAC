@@ -104,7 +104,7 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
 
     vector < size_t > SearchSpace;
     if (physicalmodel->use_verlet)
-    {   
+    {
         // Extract from verlet
 
         double lpm ( *list[source]->lpm );
@@ -245,7 +245,7 @@ ListAggregat::~ListAggregat() noexcept
 
     delete Writer;
 
-    //#pragma omp for simd
+    //#pragma omp simd
     for (Aggregate* Agg : list)
     {
         Agg->InVerlet=false;
@@ -292,7 +292,7 @@ void ListAggregat::SortTimeSteps(double factor)
 {
     vector<double> TpT(size());
 
-    #pragma omp for simd
+    #pragma omp simd
     for (size_t i=0; i < size(); i++)
     {
         TpT[i] = factor/(*list[i]->time_step);

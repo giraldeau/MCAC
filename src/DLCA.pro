@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-COMPILATOR = "GNU" # GNU or INTEL or CLANG
+COMPILATOR = "CLANG" # GNU or INTEL or CLANG
 WITH_IO = "1"           # 1 or 0
 WITH_SBL = "0"          # 1 or 0
 STATIC = "0"            # 0
@@ -161,7 +161,7 @@ equals(COMPILATOR, "GNU"){
 equals(COMPILATOR, "CLANG"){
 
     QMAKE_CXXFLAGS += -g -march=native -static  -std=c++14 -fopenmp
-    QMAKE_LFLAGS   += -g -std=c++14
+    QMAKE_LFLAGS   += -g -std=c++14 -fopenmp
 
     ### WARNINGS ###
     QMAKE_CXXFLAGS += -Wpedantic -Wall -Wextra -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wstrict-overflow=5

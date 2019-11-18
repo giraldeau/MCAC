@@ -136,16 +136,16 @@ std::vector<int>    ListAggregat::FormatNpData() const
     }
     return NpData;
 }
-std::vector<double> ListAggregat::FormatDmData() const
+std::vector<double> ListAggregat::FormatFaggData() const
 {
     const size_t N = size();
 
-    std::vector<double> DmData(N);
+    std::vector<double> FaggData(N);
     for (size_t i=lastSaved; i<N;i++)
     {
-        DmData[i] = *list[i]->dm;
+        FaggData[i] = *list[i]->f_agg;
     }
-    return DmData;
+    return FaggData;
 }
 std::vector<double> ListAggregat::FormatlpmData() const
 {
@@ -379,7 +379,7 @@ auto ListAggregat::GetData() const
     // Set Radius
     AggregatsData->insert(Scalar("Rg",FormatRgData()));
     AggregatsData->insert(Scalar("Np",FormatNpData()));
-    AggregatsData->insert(Scalar("Dm",FormatDmData()));
+    AggregatsData->insert(Scalar("f_agg",FormatFaggData()));
     AggregatsData->insert(Scalar("lpm",FormatlpmData()));
     AggregatsData->insert(Scalar("Deltat",FormatdeltatData()));
     AggregatsData->insert(Scalar("Rmax",FormatRmaxData()));
