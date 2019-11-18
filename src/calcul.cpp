@@ -50,7 +50,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     size_t multiply_threshold = Aggregates.size() / 8;
 
     //$ Loop on the N monomeres
-    while (! physicalmodel.Finished(Aggregates.size()))
+    while (! physicalmodel.Finished(Aggregates.size(), Aggregates.GetAvg_npp()))
     {
         if(contact)
         {
@@ -182,10 +182,11 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             double elapse = double(now - physicalmodel.CPUStart) / CLOCKS_PER_SEC;
             cout.precision(3);
             cout << scientific;
-            cout << "  NAgg=" << setw(5) << Aggregates.size()
-                 << "  Time=" << setw(5) << physicalmodel.Time << " s"
-                 << "   CPU=" << setw(5) << elapse << " s"
-                 << " after " << setw(5) << physicalmodel.Wait << " it --- ";
+            cout << "  Npp_avg=" << setw(4) << Aggregates.GetAvg_npp()
+                 << "  NAgg=" << setw(4) << Aggregates.size()
+                 << "  Time=" << setw(4) << physicalmodel.Time << " s"
+                 << "   CPU=" << setw(4) << elapse << " s"
+                 << " after " << setw(4) << physicalmodel.Wait << " it --- ";
 
             auto InstantaneousFractalLaw = Aggregates.getInstantaneousFractalLaw();
             if(get<0>(InstantaneousFractalLaw))
@@ -202,7 +203,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
                 */
             }
             else {
-                 cout << endl;
+                cout << "1.000e+00 * x^ 1.000e+00  --- r= 0" << endl;
             }
 
             physicalmodel.Wait = 0;

@@ -432,5 +432,17 @@ void ListAggregat::Duplication()
     }
 }
 
+__attribute__((pure)) size_t ListAggregat::GetAvg_npp(){
+    int npp_av(0);
+    int counter(0);
+    for (Aggregate* Agg : list)
+    {
+        npp_av += int(Agg->Np);
+        counter += 1;
+    }
+    //cout << "npp_av/counter " << npp_av <<"/" << counter << endl;
+    return size_t(double(npp_av)/double(counter));
+}
+
 }// namespace DLCA
 

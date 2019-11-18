@@ -24,7 +24,8 @@ public:
     double FactorModelBeta;
 
     clock_t CPUStart;
-    double CPULimit;
+    double CPULimit, PHY_Time_limit;
+    size_t NPP_avg_limit;
 
     size_t GridDiv;     // Number of Divisions of the box
     size_t N;           // Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
@@ -65,7 +66,7 @@ public:
     double velocity(double masse) const;
     double relax_time(const double masse, const double) const;
     void print() const;
-    bool Finished(const size_t Nagg) const;
+    bool Finished(const size_t Nagg, const size_t NPP_avg) const;
 
     auto xmfWrite() const;
 

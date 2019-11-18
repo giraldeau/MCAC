@@ -14,6 +14,8 @@
 0                       []                  Temporal variation of physical parameters       (stick to zero)
 1           Aggmin      []                  Final number of Aggregates
 -1          WaitLimit   []                  Stop if WaitLimit iterations without collision (negative value to deactivate)
--1          CPULimit    [s]                 Stop when computation time is longer           (negative value to deactivate)
+60          CPULimit    [s]                 Stop when computation time is longer           (negative value to deactivate)
+-1          PHY_Time_limit [s]              Stop when this physical time has been simulated
+20          NPP_avg_limit []                Stop when this average number of sphere per aggregate is reached
 10          DeltaSauve  []                  Number of time step per file
 output_dir  output_dir  []                  Output directory

@@ -46,6 +46,8 @@ PhysicalModel::PhysicalModel() :
     FactorModelBeta(0),
     CPUStart(0),
     CPULimit(-1),
+    PHY_Time_limit(-1),
+    NPP_avg_limit(0),
     GridDiv(10),
     N(2500),
     AggMin(1),
@@ -249,6 +251,26 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
     }
     if( fgets(com, 500, f) == nullptr)
     {
+        cout << "I need the PHY_Time_limit parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        PHY_Time_limit=atof(commentaires);
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
+        cout << "I need the NPP_avg_limit parameter" << endl;
+        exit(1);
+    }
+    else
+    {
+        sscanf(com,"%s  %s",commentaires,com);
+        NPP_avg_limit=size_t(atoi(commentaires));
+    }
+    if( fgets(com, 500, f) == nullptr)
+    {
         cout << "I need the DeltaSauve parameter" << endl;
         exit(1);
     }
@@ -328,7 +350,7 @@ void PhysicalModel::Init()
     toBeDestroyed = false;
 }
 
-bool PhysicalModel::Finished(const size_t Nagg) const
+bool PhysicalModel::Finished(const size_t Nagg, const size_t NPP_avg) const
 {
     if (Nagg <= AggMin)
     {
@@ -350,6 +372,18 @@ bool PhysicalModel::Finished(const size_t Nagg) const
             cout << "We reach the CPULimit condition" << endl << endl;
             return true;
         }
+    }
+
+    if (PHY_Time_limit>0 && Time >= PHY_Time_limit)
+    {
+        cout << "We reach the Maximum physical time condition " << Time << "/" << PHY_Time_limit  << endl;
+        return true;
+    }
+
+    if (NPP_avg >= NPP_avg_limit)
+    {
+        cout << "We reach the NPP_avg_limit condition " << NPP_avg << "/" << NPP_avg_limit << endl;
+        return true;
     }
 
     return false;
@@ -431,6 +465,14 @@ void PhysicalModel::print() const
     if (CPULimit > 0)
     {
         cout << " - The simulations is running for more than " << CPULimit << " seconds" << endl;
+    }
+    if (PHY_Time_limit > 0)
+    {
+        cout << " - The residence time is larger than " << PHY_Time_limit << " seconds" << endl;
+    }
+    if (NPP_avg_limit > 0)
+    {
+        cout << " - The average Npp per aggregate reach " << NPP_avg_limit << " monomers" << endl;
     }
     cout << endl;
 }
