@@ -71,7 +71,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
 
     f = fopen(FichierParam.c_str(), "rt");
 
-    if (f == nullptr)
+    if (!f)
     {
         cout << FichierParam.c_str() << " not found" << endl;
         exit(1);
@@ -79,7 +79,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
     char commentaires[500];
     char com[500]; // Char array used in the ASCII Save
 
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the N parameter" << endl;
         exit(1);
@@ -89,7 +89,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         N=size_t(atoi(commentaires));
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the FV parameter" << endl;
         exit(1);
@@ -99,7 +99,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         FV=latof(commentaires)*1E-6;
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the Dpm parameter" << endl;
         exit(1);
@@ -109,7 +109,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         Dpm=latof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the Mode parameter" << endl;
         exit(1);
@@ -119,7 +119,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         Mode=atoi(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the sigmaDpm parameter" << endl;
         exit(1);
@@ -129,7 +129,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         sigmaDpm=latof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the ActiveModulephysique parameter" << endl;
         exit(1);
@@ -139,7 +139,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         ActiveModulephysique=atoi(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the T parameter" << endl;
         exit(1);
@@ -149,7 +149,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         T=latof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the P parameter" << endl;
         exit(1);
@@ -159,7 +159,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         P=latof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the Rho parameter" << endl;
         exit(1);
@@ -169,7 +169,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         Rho=latof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the kfe parameter" << endl;
         exit(1);
@@ -179,7 +179,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         kfe=atof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the dfe parameter" << endl;
         exit(1);
@@ -189,7 +189,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         dfe=atof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the coeffB parameter" << endl;
         exit(1);
@@ -199,7 +199,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         coeffB=atof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the xsurfgrowth parameter" << endl;
         exit(1);
@@ -209,7 +209,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         xsurfgrowth=atof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the ActiveVariationTempo parameter" << endl;
         exit(1);
@@ -219,7 +219,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         ActiveVariationTempo=atoi(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the AggMin parameter" << endl;
         exit(1);
@@ -229,7 +229,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         AggMin=size_t(atoi(commentaires));
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the WaitLimit parameter" << endl;
         exit(1);
@@ -239,7 +239,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         WaitLimit=atoi(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the CPULimit parameter" << endl;
         exit(1);
@@ -249,7 +249,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         CPULimit=atoi(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the PHY_Time_limit parameter" << endl;
         exit(1);
@@ -259,7 +259,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         PHY_Time_limit=atof(commentaires);
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the NPP_avg_limit parameter" << endl;
         exit(1);
@@ -269,7 +269,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         NPP_avg_limit=size_t(atoi(commentaires));
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the DeltaSauve parameter" << endl;
         exit(1);
@@ -279,7 +279,7 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
         sscanf(com,"%s  %s",commentaires,com);
         DeltaSauve=size_t(atoi(commentaires));
     }
-    if( fgets(com, 500, f) == nullptr)
+    if( !fgets(com, 500, f))
     {
         cout << "I need the output_dir parameter" << endl;
         exit(1);

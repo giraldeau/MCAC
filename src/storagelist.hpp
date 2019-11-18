@@ -125,9 +125,9 @@ __attribute__((pure)) const elem& storage_list<N,elem>::operator[](const size_t 
 template <int N,class elem>
 void storage_list<N,elem>::Destroy()
 {
-    if (external_storage==nullptr)
+    if (!external_storage)
     {
-        if (Storage!=nullptr)
+        if (Storage)
         {
             if (size()>0)
             {
@@ -273,7 +273,7 @@ void swap(storage_list<N,elem>& first, storage_list<N,elem>& second)
 template <int N,class elem>
 void storage_list<N,elem>::merge(storage_list<N,elem>& other)
 {
-    if(external_storage==nullptr)
+    if(!external_storage)
     {
         for (size_t i=0;i<N;i++)
         {

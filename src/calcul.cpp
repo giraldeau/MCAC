@@ -151,7 +151,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             {
                 //$ Growth of all spheres
                 Aggregates.spheres.CroissanceSurface(deltatemps);
- 
+
                 //$ Aggregates update
                 for (Aggregate* Agg : Aggregates)
                 {
@@ -355,7 +355,7 @@ int LectureSuiviTempo()
 
     nb_line=0;
 
-    if (f != nullptr)
+    if (f)
     {
         //On lit la première ligne pour la sauter
         if( fgets(skip_line, 500, f) == nullptr)

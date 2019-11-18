@@ -34,12 +34,14 @@ namespace DLCA{
 
 void ListSphere::Init(PhysicalModel& _physicalmodel, const size_t _size)
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
+    }
+    if(Writer)
+    {
         delete Writer;
     }
-
     physicalmodel=&_physicalmodel;
     Writer = new ThreadedIO(_physicalmodel, _size);
     storage_list<9,Sphere>::Init(_size,*this);
@@ -78,10 +80,10 @@ void ListSphere::setpointers()
 /** Default constructor in local storage */
 ListSphere::ListSphere():
     storage_list<9,Sphere>(),
-    physicalmodel(new PhysicalModel),
+    physicalmodel(nullptr),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer (new ThreadedIO(*physicalmodel,0)),
+    Writer (nullptr),
     lastSaved(0)
 {}
 
@@ -164,11 +166,14 @@ ListSphere::ListSphere (ListSphere&& other) noexcept: /* noexcept needed to enab
 /** Destructor */
 ListSphere::~ListSphere() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
-    delete Writer;
+    if(Writer)
+    {
+        delete Writer;
+    }
 }
 
 /** Copy assignment operator */
@@ -183,7 +188,7 @@ ListSphere& ListSphere::operator= (const ListSphere& other)
 /** Move assignment operator */
 ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
@@ -194,8 +199,8 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 
     lastSaved=other.lastSaved;
 
-    other.physicalmodel = new PhysicalModel;
-    other.Writer = new ThreadedIO(*other.physicalmodel , other.size());
+    other.physicalmodel = nullptr;
+    other.Writer = nullptr;
 
     storage_list<9,Sphere>::operator=(move(other));
 
@@ -206,7 +211,7 @@ ListSphere& ListSphere::operator= (ListSphere&& other) noexcept
 void ListSphere::print() const
 {
     cout << "Printing list of "<< size() << " Sphere" << endl;
-    if (external_storage!=nullptr)
+    if (external_storage)
     {
         cout << "  With external Storage" << endl;
     }

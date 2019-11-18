@@ -16,18 +16,17 @@ namespace DLCA{
 
 ListAggregat::ListAggregat():
     storage_list<15,Aggregate>(),
-    physicalmodel(new PhysicalModel),
+    physicalmodel(nullptr),
     maxradius(0.),
     indexSortedTimeSteps(),
     CumulativeTimeSteps(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    Writer(new ThreadedIO(*physicalmodel, 0)),
+    Writer(nullptr),
     lastSaved(0),
     spheres(),
     verlet()
-{
-}
+{}
 
   __attribute__((pure)) double ListAggregat::GetMaxTimeStep() const
 {
@@ -43,9 +42,12 @@ ListAggregat::ListAggregat():
 
 void ListAggregat::Init(PhysicalModel& _physicalmodel,const size_t _size)
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
+    }
+    if(Writer)
+    {
         delete Writer;
     }
 
@@ -238,12 +240,15 @@ void ListAggregat::setpointers()
 
 ListAggregat::~ListAggregat() noexcept
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
 
-    delete Writer;
+    if(Writer)
+    {
+        delete Writer;
+    }
 
     //#pragma omp simd
     for (Aggregate* Agg : list)

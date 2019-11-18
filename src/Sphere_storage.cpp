@@ -166,7 +166,7 @@ Sphere::Sphere():
     rz(nullptr),
     volume(nullptr),
     surface(nullptr),
-    physicalmodel(new PhysicalModel),
+    physicalmodel(nullptr),
     AggLabel(-1)
 {
     InitVal();
@@ -281,7 +281,7 @@ Sphere::Sphere (Sphere&& other) noexcept : /* noexcept needed to enable optimiza
 /** Destructor */
 Sphere::~Sphere() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
@@ -298,7 +298,7 @@ Sphere& Sphere::operator= (const Sphere& other)
 /** Move assignment operator */
 Sphere& Sphere::operator= (Sphere&& other) noexcept
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
@@ -307,7 +307,7 @@ Sphere& Sphere::operator= (Sphere&& other) noexcept
     physicalmodel = other.physicalmodel;
     AggLabel = other.AggLabel;
     other.AggLabel=-1;
-    other.physicalmodel=new PhysicalModel;
+    other.physicalmodel=nullptr;
 
     storage_elem<9,ListSphere>::operator=(move(other));
 
@@ -319,7 +319,7 @@ Sphere& Sphere::operator= (Sphere&& other) noexcept
 void Sphere::print() const
 {
     cout << "Printing Sphere " << (indexInStorage) << endl;
-    if (external_storage!=nullptr)
+    if (!external_storage)
     {
         cout << "  With external Storage" << endl;
     }

@@ -19,7 +19,7 @@ const double PI = atan(1.0)*4;
 Aggregate::Aggregate():
     storage_elem<15,ListAggregat>(),
     StatisicsData(),
-    physicalmodel(new PhysicalModel),
+    physicalmodel(nullptr),
     myspheres(),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
@@ -85,7 +85,7 @@ Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
     storage_elem<15,ListAggregat>(_storage, label),
     StatisicsData(),
     physicalmodel(_storage.physicalmodel),
-    myspheres(),
+    myspheres(*_storage.physicalmodel, 1),
     verlet(nullptr),
     IndexVerlet({{0,0,0}}),
     _distances(),
@@ -115,7 +115,7 @@ Aggregate::Aggregate(ListAggregat& _storage, const size_t label):
 
 void Aggregate::Init()
 {
-    if(!(external_storage==nullptr))
+    if(external_storage)
     {
         external_storage->setpointers();
     }
@@ -163,7 +163,7 @@ void Aggregate::setpointers()
 
 void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const size_t _label, ListSphere& spheres,const double D)
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
@@ -173,7 +173,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
     Label = _label;
     indexInStorage = _label;
 
-    if(!(external_storage==nullptr))
+    if(external_storage)
     {
         external_storage->setpointers();
     }
@@ -324,7 +324,7 @@ Aggregate::~Aggregate() noexcept
             verlet->Remove(GetLabel(),IndexVerlet);
     }
 
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
@@ -383,7 +383,7 @@ void Aggregate::Update()
 
     partialStatistics();
 
-    if(!(external_storage==nullptr))
+    if(external_storage)
     {
         if (*rmax > external_storage->maxradius)
         {
@@ -543,7 +543,7 @@ array<size_t, 3> Aggregate::GetVerletIndex() noexcept
 
 Sphere::Sphere(const Aggregate& Agg) : Sphere()
 {
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
@@ -760,13 +760,13 @@ Aggregate& Aggregate::operator= (const Aggregate& other)
 Aggregate& Aggregate::operator= (Aggregate&& other) noexcept
 {
 
-    if(physicalmodel->toBeDestroyed)
+    if(physicalmodel && physicalmodel->toBeDestroyed)
     {
         delete physicalmodel;
     }
 
     physicalmodel = other.physicalmodel;
-    other.physicalmodel=new PhysicalModel;
+    other.physicalmodel=nullptr;
 
     swap(myspheres,other.myspheres);
     swap(_distances,other._distances);
@@ -813,7 +813,7 @@ __attribute__((pure)) double Aggregate::SphereDistance(size_t i) const
 void Aggregate::print() const
 {
     cout << "Printing details of Aggregat " << indexInStorage << " " << Label << endl;
-    if (external_storage!=nullptr)
+    if (external_storage)
     {
         cout << "  With external Storage" << endl;
     }

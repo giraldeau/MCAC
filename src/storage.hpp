@@ -120,7 +120,7 @@ storage_elem<N,mystorage>::storage_elem (storage_elem<N,mystorage>&& other) noex
 template <int N,class mystorage>
 storage_elem<N,mystorage>::~storage_elem() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
 {
-    if(external_storage==nullptr && Storage!=nullptr)
+    if(!external_storage && Storage)
     {
         for (size_t j=0;j<N;j++)
         {
@@ -145,7 +145,7 @@ storage_elem<N,mystorage>& storage_elem<N,mystorage>::operator=(const storage_el
 template <int N,class mystorage>
 storage_elem<N,mystorage>& storage_elem<N,mystorage>::operator=(storage_elem<N,mystorage>&& other) noexcept
 {
-    if(external_storage==nullptr && Storage!=nullptr)
+    if(!external_storage && Storage)
     {
         for (size_t j=0;j<N;j++)
         {
