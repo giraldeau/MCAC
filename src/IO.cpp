@@ -288,6 +288,16 @@ shared_ptr<XdmfAttribute> Scalar(const std::string& name, const std::vector<T>& 
     return xdmfField;
 }
 
+template <class T>
+shared_ptr<XdmfAttribute> Attribute(const std::string& name, const T& value)
+{
+    shared_ptr<XdmfAttribute> xdmfField = XdmfAttribute::New();
+    xdmfField->setName(name);
+    xdmfField->setType(XdmfAttributeType::NoAttributeType());
+    xdmfField->insert(0, value);
+    return xdmfField;
+}
+
 auto PhysicalModel::xmfWrite() const
 {
 
@@ -330,6 +340,8 @@ auto ListSphere::GetData() const
 
     // Set time
     SpheresData->setTime(FormatTime(physicalmodel->Time));
+    SpheresData->insert(Attribute("Time",physicalmodel->Time));
+    SpheresData->insert(Attribute("BoxSize",physicalmodel->L));
 
     // Set Positions
     SpheresData->setGeometry(thePositions(FormatPositionData()));
@@ -372,6 +384,8 @@ auto ListAggregat::GetData() const
     // Set time
     shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->Time);
     AggregatsData->setTime(time);
+    AggregatsData->insert(Attribute("Time",physicalmodel->Time));
+    AggregatsData->insert(Attribute("BoxSize",physicalmodel->L));
 
     // Set Positions
     AggregatsData->setGeometry(thePositions(FormatPositionData()));

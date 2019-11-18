@@ -118,6 +118,13 @@ class H5Reader(object):
                     else:
                         datat[attrib] = npdata
 #                datat["Aggkey"] = list(map(lambda x: hash((time,x)),datat["Label"]))
+
+                n = datat['Posx'].size
+                datat["Time"] = np.repeat(datat["Time"], n)
+                datat["BoxSize"] = np.repeat(datat["BoxSize"], n)
+
+                del datat["Time"]
+
                 data[time] = pd.DataFrame.from_dict(datat)
 
                 if index is not None:
@@ -218,7 +225,7 @@ class DLCA(object):
         times = self.extract_time(data, lock)
 
         # turn data into a large panda multiindex dataframe
-        self.Aggregates = pd.concat(data, names=['Time', 'Label'])
+        self.Aggregates = pd.concat(data, names=['Time', 'Label']).sort_index(0)
 
     #@profile
     def read_all_spheres(self, lock=None):
@@ -236,7 +243,7 @@ class DLCA(object):
         times = self.extract_time(data, lock)
 
         # turn data into a large panda multiindex dataframe
-        self.Spheres = pd.concat(data, names=['Time', 'Num'])
+        self.Spheres = pd.concat(data, names=['Time', 'Num']).sort_index(0)
 
     def read_seq(self):
         """
