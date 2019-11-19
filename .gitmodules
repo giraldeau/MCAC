@@ -1,0 +1,3 @@
+[submodule "ext/sbl"]
+	path = ext/sbl
+	url = git://sbl.inria.fr/git/sbl.git
