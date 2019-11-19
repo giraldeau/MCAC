@@ -15,7 +15,7 @@
 
 using namespace std;
 
-namespace DLCA{
+namespace MCAC{
 
 const double PI = atan(1.0)*4;
 
@@ -239,5 +239,5 @@ void StatisicsData::partialStatistics(){}
 void StatisicsData::fullStatistics(){}
 
 
-}  // namespace DLCA
+}  // namespace MCAC
 

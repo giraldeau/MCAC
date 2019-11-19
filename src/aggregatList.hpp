@@ -10,7 +10,7 @@
 #include "storagelist.hpp"
 #include "verlet.hpp"
 
-namespace DLCA{
+namespace MCAC{
 
 class Sphere;
 class ListSphere;
@@ -107,7 +107,7 @@ class ListAggregat : public storage_list<15,Aggregate>
         ListAggregat& operator= (ListAggregat&& other) noexcept;
 };
 
-}// namespace DLCA
+}// namespace MCAC
 
 
 #endif // AGGREGATLIST_H

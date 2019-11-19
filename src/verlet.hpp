@@ -5,7 +5,7 @@
 #include <list>
 #include <vector>
 
-namespace DLCA{
+namespace MCAC{
 
 class Verlet
 {
@@ -28,6 +28,6 @@ public:
     /* Default constructor */
     Verlet();
 };
-}  // namespace DLCA
+}  // namespace MCAC
 
 #endif // VERLET_H

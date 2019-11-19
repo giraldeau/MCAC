@@ -10,7 +10,7 @@ WITH_SBL = "0"          # 1 or 0
 STATIC = "0"            # 0
 PROFILING = "0"         # 0 or 1
 
-TARGET = DLCA
+TARGET = MCAC
 TEMPLATE = app
 QT = ""
 

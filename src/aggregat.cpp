@@ -12,7 +12,7 @@
 
 using namespace std;
 
-namespace DLCA{
+namespace MCAC{
 
 const double PI = atan(1.0)*4;
 
@@ -855,4 +855,4 @@ void Aggregate::print() const
     */
 }
 
-}  // namespace DLCA
+}  // namespace MCAC

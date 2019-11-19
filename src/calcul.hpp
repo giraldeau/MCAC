@@ -6,7 +6,7 @@
 #include "statistics.hpp"
 #include <string>
 
-namespace DLCA{
+namespace MCAC{
 
 void InitRandom();
 double Random();
@@ -17,7 +17,7 @@ void Init(PhysicalModel&,StatisticStorage&, ListAggregat&);
 //void Fermeture();
 void print(std::string str);
 
-}  // namespace DLCA
+}  // namespace MCAC
 
 
 #endif // CALCUL_H

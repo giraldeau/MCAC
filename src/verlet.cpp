@@ -9,7 +9,7 @@ using namespace std;
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-namespace DLCA{
+namespace MCAC{
 
 
 void Verlet::Remove(const size_t id,const array<size_t, 3> Index)
@@ -207,4 +207,4 @@ Verlet::Verlet():
     L(0)
 {}
 
-}  // namespace DLCA
+}  // namespace MCAC

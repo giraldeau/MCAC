@@ -27,7 +27,7 @@ Sphere.h and Sphere.cpp defines the data storage.
  Data can be shared between multiple Aggregat
 
 */
-namespace DLCA{
+namespace MCAC{
 
 class Sphere;
 class ListSphere;
@@ -107,6 +107,6 @@ class ListSphere : public storage_list<9,Sphere>
 };
 
 std::string filename(int, int);
-}  // namespace DLCA
+}  // namespace MCAC
 
 #endif // SPHERELIST_H

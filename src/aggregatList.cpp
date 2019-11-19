@@ -11,7 +11,7 @@
 
 using namespace std;
 
-namespace DLCA{
+namespace MCAC{
 
 
 ListAggregat::ListAggregat():
@@ -449,5 +449,5 @@ __attribute__((pure)) size_t ListAggregat::GetAvg_npp(){
     return size_t(double(npp_av)/double(counter));
 }
 
-}// namespace DLCA
+}// namespace MCAC
 

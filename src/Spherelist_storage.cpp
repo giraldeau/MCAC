@@ -30,7 +30,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <utility>
 
 using namespace std;
-namespace DLCA{
+namespace MCAC{
 
 void ListSphere::Init(PhysicalModel& _physicalmodel, const size_t _size)
 {
@@ -259,5 +259,5 @@ void ListSphere::print() const
 {
     return !(A==B);
 }
-}  // namespace DLCA
+}  // namespace MCAC
 

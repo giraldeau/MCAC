@@ -30,7 +30,7 @@ typedef SBL::GT::T_Union_of_balls_surface_volume_3<Alpha_complex, SK>    Union_o
 
 #include "sblvolumesurface.hpp"
 
-namespace DLCA{
+namespace MCAC{
 
 pair<std::vector<double>, std::vector<double>> compute_volume_surface(const ListSphere& spherelist)
 {

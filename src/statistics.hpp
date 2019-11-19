@@ -8,7 +8,7 @@
 #include <tuple>
 
 
-namespace DLCA{
+namespace MCAC{
 
 class StatisticStorage;
 class ListAggregat;
@@ -106,6 +106,6 @@ public:
     StatisticStorage& operator= (StatisticStorage&& other) noexcept;
 };
 
-}  // namespace DLCA
+}  // namespace MCAC
 
 #endif // STATISTICS_H

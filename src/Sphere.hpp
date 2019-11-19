@@ -28,7 +28,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 */
 
 
-namespace DLCA{
+namespace MCAC{
 
 class Sphere;
 class ListSphere;
@@ -149,6 +149,6 @@ class Sphere : public storage_elem<9,ListSphere>
 std::array < std::array < double, 3>, 3> GetRotMat(std::array<double,3> vectordir);
 
 
-}  // namespace DLCA
+}  // namespace MCAC
 
 #endif // SPHERE_H

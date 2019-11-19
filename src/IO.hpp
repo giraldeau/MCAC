@@ -17,7 +17,7 @@
 #include "XdmfUnstructuredGrid.hpp"
 #include <experimental/filesystem>
 
-namespace DLCA{
+namespace MCAC{
 
 class ThreadedIO
 {
@@ -84,10 +84,10 @@ shared_ptr<XdmfInformation> xmfFormatBool(const std::string& name, const bool& a
 shared_ptr<XdmfTopology> theTopology();
 shared_ptr<XdmfTime> FormatTime(const double& value);
 shared_ptr<XdmfGeometry> thePositions(const std::vector<double>& formatedPositions);
-}  // namespace DLCA
+}  // namespace MCAC
 
 #else //WITHOUT_HDF5
-namespace DLCA{
+namespace MCAC{
 
 class ThreadedIO{
 public:
@@ -97,7 +97,7 @@ public:
             UNUSED(size);
     }
 };
-}  // namespace DLCA
+}  // namespace MCAC
 
 #endif
 

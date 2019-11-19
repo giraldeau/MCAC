@@ -5,7 +5,7 @@
 #include <ctime>
 #include <experimental/filesystem>
 
-namespace DLCA{
+namespace MCAC{
 
 class PhysicalModel
 {
@@ -125,7 +125,7 @@ std::experimental::filesystem::path extractPath(const std::string& file);
 
 std::tuple<bool,double,double,double> linreg(const std::vector<double>& x, const std::vector<double>& y);
 
-}  // namespace DLCA
+}  // namespace MCAC
 
 
 #endif // PHYSICAL_MODEL_H

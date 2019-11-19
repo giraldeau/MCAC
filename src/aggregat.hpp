@@ -10,7 +10,7 @@
 
 #include <list>
 
-namespace DLCA{
+namespace MCAC{
 
 class Sphere;
 class ListSphere;
@@ -147,7 +147,7 @@ class Aggregate :
         /** Move assignment operator */
         Aggregate& operator= (Aggregate&& other) noexcept;
 };
-}  // namespace DLCA
+}  // namespace MCAC
 
 
 #endif // AGGREGAT_H

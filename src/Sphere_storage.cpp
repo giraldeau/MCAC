@@ -31,7 +31,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 using namespace std;
 
-namespace DLCA{
+namespace MCAC{
 
 /* Getters */
 
@@ -348,5 +348,5 @@ void Sphere::print() const
 
 }
 
-}  // namespace DLCA
+}  // namespace MCAC
 

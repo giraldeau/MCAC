@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace DLCA{
+namespace MCAC{
 
 const double PI = atan(1.0)*4; // 3.14159
 
@@ -462,6 +462,6 @@ int rechercheValTab() //Programme qui cherche les données physiques dans le tab
 
     */
 
-}  // namespace DLCA
+}  // namespace MCAC
 
 

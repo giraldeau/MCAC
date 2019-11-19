@@ -34,7 +34,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #define POW3(a) ((a)*(a)*(a))
 
 using namespace std;
-namespace DLCA{
+namespace MCAC{
 
 
 /* #############################################################################################################
@@ -348,5 +348,5 @@ array < array < double, 3>, 3> GetRotMat(const array<double,3> vectordir)
     return matrot;
 }
 
-}  // namespace DLCA
+}  // namespace MCAC
 

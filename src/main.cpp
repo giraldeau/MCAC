@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
 
     string FichierParam = argv[1];
 
-    DLCA::PhysicalModel physicalmodel(FichierParam);
-    DLCA::Calcul(physicalmodel);
+    MCAC::PhysicalModel physicalmodel(FichierParam);
+    MCAC::Calcul(physicalmodel);
 
     return 0;
 }

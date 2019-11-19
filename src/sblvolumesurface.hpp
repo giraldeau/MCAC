@@ -8,7 +8,7 @@
 #include <vector>
 
 using namespace std;
-namespace DLCA{
+namespace MCAC{
 
 pair<vector<double>, vector<double>> compute_volume_surface(const ListSphere& spherelist);
 

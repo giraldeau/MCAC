@@ -17,7 +17,7 @@
 namespace fs = std::experimental::filesystem;
 using namespace std;
 
-namespace DLCA{
+namespace MCAC{
 
 const double PI = atan(1.0)*4;
 
@@ -855,5 +855,5 @@ tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<do
 }
 
 
-}  // namespace DLCA
+}  // namespace MCAC
 

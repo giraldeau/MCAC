@@ -20,7 +20,7 @@
 
 namespace fs = std::experimental::filesystem;
 
-namespace DLCA{
+namespace MCAC{
 
 
 // Usefull tool
@@ -464,7 +464,7 @@ void ThreadedIO::CreateFile()
         {
             // Prepare Xmf file
             xmfFile[current_thread] = XdmfDomain::New();
-            shared_ptr<XdmfInformation> xmfInfo = XdmfInformation::New("Copyright", "Produced by DLCA");
+            shared_ptr<XdmfInformation> xmfInfo = XdmfInformation::New("Copyright", "Produced by MCAC");
             xmfFile[current_thread]->insert(xmfInfo);
 
             // Save simulation properties in every xmf file
@@ -578,12 +578,12 @@ ThreadedIO::~ThreadedIO() noexcept
     }
 }
 
-}  // namespace DLCA
+}  // namespace MCAC
 
 
 #else
 
-namespace DLCA{
+namespace MCAC{
 
 __attribute((const)) auto ListSphere::GetData() const
 {
@@ -626,7 +626,7 @@ void StatisticStorage::save(bool finish)
     UNUSED(finish);
 }
 
-}  // namespace DLCA
+}  // namespace MCAC
 
 
 #endif
