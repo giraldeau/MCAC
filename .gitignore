@@ -142,3 +142,6 @@ dmypy.json
 .idea
 dask-worker-space
 pymcac/version.py
+bin
+ext
+ext_bin
