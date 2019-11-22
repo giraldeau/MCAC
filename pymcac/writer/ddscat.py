@@ -8,6 +8,7 @@ from typing import Union, Optional, Sequence
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 
 from pymcac.tools.coverage import coverages
 from pymcac.tools.discretize import discretize
