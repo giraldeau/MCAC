@@ -10,7 +10,7 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW2(a) ((a)*(a))
+#define POW_2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
 using namespace std;
@@ -55,10 +55,10 @@ void Aggregate::fullStatistics()
                 Nc += 1; //Nombre de coordination (nombre de points de contact entre deux sphérules)
             }
         }*/
-        //Tv = Tv + volumes[i]/(myspheres[i].Volume());
-        //Ts = Ts + surfaces[i]/(myspheres[i].Surface());
-        Dp += myspheres[i].Radius();
-        //Dp3 += POW3(2*myspheres[i].Radius());
+        //Tv = Tv + volumes[i]/(myspheres[i].get_volume());
+        //Ts = Ts + surfaces[i]/(myspheres[i].get_surface());
+        Dp += myspheres[i].get_radius();
+        //Dp3 += POW3(2*myspheres[i].get_radius());
     }
 
     //if (Nc > 0)

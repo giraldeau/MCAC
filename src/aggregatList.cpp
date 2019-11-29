@@ -1,12 +1,16 @@
 #include "aggregatList.hpp"
+#include "spheres/sphere_collision.hpp"
+#include "spheres/sphere_distance.hpp"
 #include <algorithm>
 #include <numeric>
 #include <cmath>
 #include <iomanip>
+#include <iostream>
+
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW2(a) ((a)*(a))
+#define POW_2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
 using namespace std;
@@ -74,27 +78,25 @@ vector< pair<size_t,double> > ListAggregat::SortSearchSpace(size_t MovingAgg,
     //$ [For all other agregate]
     for (const size_t& AggOther : SearchSpace)
     {
-        SphereOther.InitVal(*list[AggOther]->x,
-                            *list[AggOther]->y,
-                            *list[AggOther]->z,
-                            *list[AggOther]->rmax);
+        SphereOther.init_val(list[AggOther]->GetPosition(),
+                             *list[AggOther]->rmax);
 
         auto pos = SortedSearchSpace.begin();
         double dist = 0.;
-        bool collision = SphereMe.Contact(SphereOther);
+        bool iscollision = contact(SphereMe, SphereOther);
 
-        if (!collision)
+        if (!iscollision)
         {
-            pair<bool,double> Collision = SphereMe.Collision(SphereOther,Vectdir);
+            pair<bool,double> Collision = collision(SphereMe, SphereOther, Vectdir);
             if (Collision.first && Collision.second <= *list[MovingAgg]->lpm )
             {
-                collision=Collision.first;
+                iscollision=Collision.first;
                 dist = Collision.second;
                 pos = lower_bound (SortedSearchSpace.begin(), SortedSearchSpace.end(), dist,
                                    [](pair<size_t,double> i1, double d){return i1.second < d;});
             }
         }
-        if (collision)
+        if (iscollision)
         {
             pair<size_t,double> suspect = {AggOther,dist};
             SortedSearchSpace.insert(pos,suspect);
@@ -155,7 +157,7 @@ bool ListAggregat::TestFreeSpace(const std::array<double,3> pos, const double di
 
     vector<size_t> SearchSpace = verlet.GetSearchSpace(pos , mindist);
 
-    double mindist2 = POW2(mindist);
+    double mindist2 = POW_2(mindist);
 
     //$ loop on the agregates potentially in contact
     for (const size_t & suspect : SearchSpace) //For every aggregate that could be in contact
@@ -163,7 +165,7 @@ bool ListAggregat::TestFreeSpace(const std::array<double,3> pos, const double di
         //$ Loop on all the spheres of the aggregate
         for (const Sphere* sphere : list[suspect]->myspheres)
         {
-            if (sphere->Distance2(pos[0], pos[1], pos[2]) <= mindist2)
+            if (distance_2(sphere->get_position(), pos, sphere->physicalmodel->L) <= mindist2)
             {
                 return true;
             }
@@ -203,7 +205,7 @@ int ListAggregat::DistanceToNextContact(const size_t source, const array<double,
         }
         /*
         // If two aggragates are already in contact due to surface growing
-        if (list[source]->Contact(*list[agg]))
+        if (list[source]->contact(*list[agg]))
         {
             distmin = 0;
             cout << "Surprise there is already a contact !" << endl;

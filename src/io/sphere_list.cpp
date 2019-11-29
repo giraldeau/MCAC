@@ -1,4 +1,4 @@
-#include "Spherelist.hpp"
+#include "spheres/Spherelist.hpp"
 
 
 #ifdef WITH_HDF5
@@ -28,8 +28,8 @@ auto ListSphere::get_data() const {
     spheres_data->setGeometry(the_positions(Format_Position()));
 
     // Set Radius
-    spheres_data->insert(scalar("Radius", Format_Radius()));
-    spheres_data->insert(scalar("Label", Format_AggLabel()));
+    spheres_data->insert(scalar("Radius", Format_get_radius()));
+    spheres_data->insert(scalar("Label", Format_agg_label()));
     return spheres_data;
 }
 void ListSphere::save(const bool _finish) {
@@ -37,9 +37,9 @@ void ListSphere::save(const bool _finish) {
     auto data = get_data();
     Writer->write(physicalmodel->CheminSauve / "Spheres", data, _finish);
 }
-POSITION_FORMATER(ListSphere);
-DEF_FORMATER(ListSphere, AggLabel, long);
-DEF_FORMATER_FUNC(ListSphere, Radius, double);
+DEF_FORMATER_POSITION(ListSphere);
+DEF_FORMATER(ListSphere, agg_label, long);
+DEF_FORMATER_FUNC(ListSphere, get_radius, double);
 }  // namespace MCAC
 
 

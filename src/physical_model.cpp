@@ -11,7 +11,7 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW2(a) ((a)*(a))
+#define POW_2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
 namespace fs = std::experimental::filesystem;
@@ -828,15 +828,15 @@ tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<do
       double X(log(x[i]));
       double Y(log(y[i]));
       sumx  += X;
-      sumx2 += POW2(X);
+      sumx2 += POW_2(X);
       sumxy += X * Y;
       sumy  += Y;
-      sumy2 += POW2(Y);
+      sumy2 += POW_2(Y);
    }
 
 
 
-   double denom = (N * sumx2 - POW2(sumx));
+   double denom = (N * sumx2 - POW_2(sumx));
    if (n==0 || abs(denom) < 1e-9) {
        // singular matrix. can't solve the problem.
        tuple<bool,double,double,double> res{false,0.,0.,0.};
@@ -848,8 +848,8 @@ tuple<bool,double,double,double> linreg(const vector<double>& x, const vector<do
 
    /* compute correlation coeff     */
    double r = (sumxy - sumx * sumy / N) /
-            POW2((sumx2 - POW2(sumx)/N) *
-            (sumy2 - POW2(sumy)/N));
+              POW_2((sumx2 - POW_2(sumx) / N) *
+                    (sumy2 - POW_2(sumy) / N));
 
    tuple<bool,double,double,double> res{true,a,b,r};
    return res;

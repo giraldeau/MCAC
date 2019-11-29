@@ -51,6 +51,20 @@
   }\
   return data;\
 }
+#define DEF_FORMATER_POSITION(obj) \
+  std::vector<double> obj::Format_Position () const \
+{ \
+  const size_t list_size = size(); \
+  std::vector<double> data(list_size * 3); \
+  for (size_t i=lastSaved; i<list_size;i++) \
+  { \
+    auto pos = list[i]->get_position(); \
+    data[3*i] = pos[0];    \
+    data[3*i+1] = pos[1];  \
+    data[3*i+2] = pos[2];  \
+  }\
+  return data;\
+}
 namespace MCAC {
 std::string filename(int step, size_t n);
 std::string to_string(const double &value);

@@ -271,9 +271,10 @@ void storage_list<N,elem>::merge(storage_list<N,elem>& other)
         {
             (*Storage)[i].insert((*Storage)[i].end(),(*other.Storage)[i].begin(),(*other.Storage)[i].end());
         }
-        for (const auto& data : other.list)
+        for (auto& data : other.list)
         {
-            list.push_back(new elem(*data));
+            list.push_back(data);
+            data = nullptr;
         }
     }
     else

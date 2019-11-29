@@ -29,7 +29,7 @@ private:
     static gsl::owner<std::thread *> writer;
     static ThreadedIO *writer_owner;
     bool current_thread;
-    std::array<Writer_status, 2> status;
+    std::array<WriterStatus, 2> status;
     std::array<shared_ptr<XdmfDomain>, 2> xmf_file;
     std::array<shared_ptr<XdmfGridCollection>, 2> time_collection;
     // Total number of time steps written (or ready to be saved)
@@ -40,18 +40,18 @@ private:
     //    int padding;
 
 public:
-    ThreadedIO(const PhysicalModel &physicalmodel, size_t size);
+    ThreadedIO(const PhysicalModel &physicalmodel, size_t size) noexcept;
     ~ThreadedIO() noexcept;
     /** Copy constructor */
-    ThreadedIO(ThreadedIO const &) = delete;
+    explicit ThreadedIO(ThreadedIO const &) = delete;
     /** Copy assignment operator */
     void operator=(ThreadedIO const &) = delete;
     /** Move constructor */
-    ThreadedIO(ThreadedIO &&) = delete;
+    explicit ThreadedIO(ThreadedIO &&) = delete;
     /** Move assignment operator */
     ThreadedIO &operator=(ThreadedIO &&other) = delete;
 private:
-    friend void write_task(const std::string &filename, shared_ptr<XdmfDomain> *data);
+    friend void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data);
 };
 }  // namespace MCAC
 

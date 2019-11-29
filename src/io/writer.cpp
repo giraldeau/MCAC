@@ -60,13 +60,13 @@ void ThreadedIO::wait() {
     }
 }
 void ThreadedIO::create_file() {
-    if (gsl::at(status, static_cast<size_t>(current_thread)) == Writer_status::Writing) {
+    if (gsl::at(status, static_cast<size_t>(current_thread)) == WriterStatus::WRITING) {
         if (writer_owner == this) {
             wait();
         }
-        gsl::at(status, static_cast<size_t>(current_thread)) = Writer_status::Idle;
+        gsl::at(status, static_cast<size_t>(current_thread)) = WriterStatus::IDLE;
     }
-    if (gsl::at(status, static_cast<size_t>(current_thread)) == Writer_status::Appending) {
+    if (gsl::at(status, static_cast<size_t>(current_thread)) == WriterStatus::APPENDING) {
         std::cout << "And what should happen to the old file ?" << std::endl;
         exit(5);
     }
@@ -79,13 +79,13 @@ void ThreadedIO::create_file() {
     gsl::at(xmf_file, static_cast<size_t>(current_thread))->insert(physicalmodel->xmf_write());
     gsl::at(time_collection, static_cast<size_t>(current_thread)) = XdmfGridCollection::New();
     gsl::at(time_collection, static_cast<size_t>(current_thread))->setType(XdmfGridCollectionType::Temporal());
-    gsl::at(status, static_cast<size_t>(current_thread)) = Writer_status::Appending;
+    gsl::at(status, static_cast<size_t>(current_thread)) = WriterStatus::APPENDING;
 }
 void ThreadedIO::write(const fs::path &prefix, const shared_ptr<XdmfUnstructuredGrid> &data, bool all) {
     if (step % _n_time_per_file == 0) {
         create_file();
     }
-    if (gsl::at(status, static_cast<size_t>(current_thread)) != Writer_status::Appending) {
+    if (gsl::at(status, static_cast<size_t>(current_thread)) != WriterStatus::APPENDING) {
         std::cout << "File is not ready..." << std::endl;
         exit(5);
     }
@@ -102,26 +102,26 @@ void ThreadedIO::write(const fs::path &prefix, const shared_ptr<XdmfUnstructured
             writer =
                 new std::thread(write_task, file_name, &gsl::at(xmf_file, static_cast<size_t>(current_thread)));
             writer_owner = this;
-            gsl::at(status, static_cast<size_t>(current_thread)) = Writer_status::Writing;
+            gsl::at(status, static_cast<size_t>(current_thread)) = WriterStatus::WRITING;
         } else { // Sequential
             write_task(file_name, &gsl::at(xmf_file, static_cast<size_t>(current_thread)));
-            gsl::at(status, static_cast<size_t>(current_thread)) = Writer_status::Idle;
+            gsl::at(status, static_cast<size_t>(current_thread)) = WriterStatus::IDLE;
         }
-        gsl::at(status, static_cast<size_t>(current_thread)) = Writer_status::Idle;
+        gsl::at(status, static_cast<size_t>(current_thread)) = WriterStatus::IDLE;
         current_thread = !current_thread;
         num_file++;
         if (all) {
-            if (gsl::at(status, static_cast<size_t>(!current_thread)) == Writer_status::Writing) {
+            if (gsl::at(status, static_cast<size_t>(!current_thread)) == WriterStatus::WRITING) {
                 if (ThreadedIO::writer_owner == this) {
                     wait();
                 }
-                gsl::at(status, static_cast<size_t>(!current_thread)) = Writer_status::Idle;
+                gsl::at(status, static_cast<size_t>(!current_thread)) = WriterStatus::IDLE;
             }
             step = 0;
         }
     }
 }
-void write_task(const std::string &filename, shared_ptr<XdmfDomain> *data) {
+void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data) {
     shared_ptr<XdmfHDF5Writer> hdf5_file = XdmfHDF5Writer::New(filename + ".h5", false);
     shared_ptr<XdmfWriter> xmf_file = XdmfWriter::New(filename + ".xmf", hdf5_file);
     hdf5_file->setUseDeflate(false); // do not use compression (too slow)

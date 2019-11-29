@@ -5,7 +5,7 @@
 
 
 namespace MCAC {
-void write_task(const std::string &filename, shared_ptr<XdmfDomain> *data);
+void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data);
 shared_ptr<XdmfTopology> the_topology();
 shared_ptr<XdmfGeometry> the_positions(const std::vector<double> &formated_positions);
 template<class T>

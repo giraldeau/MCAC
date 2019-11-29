@@ -20,7 +20,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 
 
-#include "Spherelist.hpp"
+#include "spheres/Spherelist.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -30,7 +30,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW2(a) ((a)*(a))
+#define POW_2(a) ((a)*(a))
 #define POW3(a) ((a)*(a)*(a))
 
 
@@ -50,7 +50,7 @@ void ListSphere::CroissanceSurface(const double dt)
 {
     for (Sphere* mysphere : list)
     {
-        mysphere->CroissanceSurface(dt);
+        mysphere->croissance_surface(dt);
     }
 }
 

@@ -1,8 +1,8 @@
 #ifndef AGGREGATLIST_H
 #define AGGREGATLIST_H 1
 
-#include "Sphere.hpp"
-#include "Spherelist.hpp"
+#include "spheres/sphere.hpp"
+#include "spheres/Spherelist.hpp"
 #include "aggregat.hpp"
 #include "physical_model.hpp"
 #include "storage.hpp"

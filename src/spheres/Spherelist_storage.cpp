@@ -20,7 +20,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 
 
-#include "Spherelist.hpp"
+#include "spheres/Spherelist.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -53,7 +53,7 @@ void ListSphere::DecreaseLabel() noexcept
 {
     for (Sphere* mysphere : list)
     {
-        mysphere->DecreaseLabel();
+        mysphere->decrease_label();
     }
 }
 
