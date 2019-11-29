@@ -81,7 +81,9 @@ __attribute((pure)) double Sphere::Distance2(const array<double, 3> point) const
     return Distance2(point[0],point[1],point[2]);
 }
 
-__attribute__((pure)) double Sphere::Distance2(const double otherx, const double othery, const double otherz) const noexcept
+__attribute__((pure)) double Sphere::Distance2(const double otherx,
+    const double othery,
+    const double otherz) const noexcept
 {
    double dx(periodicDistance((*x-otherx),physicalmodel->L));
    double dy(periodicDistance((*y-othery),physicalmodel->L));
@@ -93,17 +95,23 @@ __attribute((pure)) double Sphere::RelativeDistance2(const Sphere& c) const noex
 {
     return Distance2(*c.rx,*c.ry,*c.rz);
 }
-__attribute__((pure)) double Sphere::RelativeDistance2(const double otherx, const double othery, const double otherz) const noexcept
+__attribute__((pure)) double Sphere::RelativeDistance2(const double otherx,
+    const double othery,
+    const double otherz) const noexcept
 {
    return POW2(*rx-otherx)+POW2(*ry-othery)+POW2(*rz-otherz);
 }
 
-__attribute__((pure)) double Sphere::RelativeDistance(const double otherx, const double othery, const double otherz) const noexcept
+__attribute__((pure)) double Sphere::RelativeDistance(const double otherx,
+    const double othery,
+    const double otherz) const noexcept
 {
    return sqrt(RelativeDistance2(otherx,othery,otherz));
 }
 
- __attribute__((pure)) double Sphere::Distance(const double otherx, const double othery, const double otherz) const noexcept
+ __attribute__((pure)) double Sphere::Distance(const double otherx,
+     const double othery,
+     const double otherz) const noexcept
 {
     return sqrt(Distance2(otherx,othery,otherz));
 }
@@ -162,7 +170,8 @@ __attribute__((pure)) pair<bool,double> Sphere::Collision(const Sphere& c,const 
 }
 
 
-  __attribute__((pure)) pair<bool,double> Sphere::CollisionR(const Sphere& c,const array < array < double, 3>, 3> RotMat) const
+  __attribute__((pure)) pair<bool,double> Sphere::CollisionR(const Sphere& c,
+      const array < array < double, 3>, 3> RotMat) const
   {
       /*
        * We use a change of axis system
@@ -216,7 +225,7 @@ __attribute__((pure)) pair<bool,double> Sphere::Collision(const Sphere& c,const 
               {
                   for (int k=-1;k<=1;k++)
                   {
-                      array < double, 3> tmp;
+                      array < double, 3> tmp{};
 
                       tmp[0] = pos[0] + i*perx[0] + j*pery[0] + k*perz[0];
                       tmp[1] = pos[1] + i*perx[1] + j*pery[1] + k*perz[1];
@@ -254,7 +263,10 @@ __attribute__((pure)) pair<bool,double> Sphere::Collision(const Sphere& c,const 
 /* #############################################################################################################
  * ######################## Surface and volume of the intersection of two sphere ###############################
  * #############################################################################################################*/
-double Sphere::Intersection(const Sphere& c, const double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const
+double Sphere::Intersection(const Sphere& c,
+    const double dist,
+    double& vol1, double& vol2,
+    double& surf1, double& surf2 ) const
 {
 
     vol1 = vol2 = 0.;

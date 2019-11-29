@@ -11,7 +11,9 @@ namespace MCAC{
 void InitRandom();
 double Random();
 void Calcul(PhysicalModel&);
-void Init(PhysicalModel&,StatisticStorage&, ListAggregat&);
+void Init(PhysicalModel&,
+//    StatisticStorage&,
+    ListAggregat&);
 //int LectureSuiviTempo();
 //int rechercheValTab();
 //void Fermeture();

@@ -61,8 +61,10 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const size_t _size)
 }
 
 
-//########################################## Determination of the contacts between agrgates ##########################################
-vector< pair<size_t,double> > ListAggregat::SortSearchSpace(size_t MovingAgg,array<double,3> Vectdir, vector<size_t> SearchSpace) const
+//############################## Determination of the contacts between agrgates #######################################
+vector< pair<size_t,double> > ListAggregat::SortSearchSpace(size_t MovingAgg,
+    array<double,3> Vectdir,
+    const vector<size_t>& SearchSpace) const
 {
     vector< pair<size_t,double> > SortedSearchSpace;
 
@@ -145,7 +147,7 @@ vector<size_t> ListAggregat::GetSearchSpace(const size_t source, const array<dou
 }
 
 
-//########################################## Determination of the contacts between agrgates ##########################################
+//################################### Determination of the contacts between agrgates ###################################
 bool ListAggregat::TestFreeSpace(const std::array<double,3> pos, const double diameter) const
 {
     // Use Verlet to reduce search
@@ -171,7 +173,7 @@ bool ListAggregat::TestFreeSpace(const std::array<double,3> pos, const double di
 }
 
 
-//########################################## Determination of the contacts between agrgates ##########################################
+//################################# Determination of the contacts between agrgates ####################################
 int ListAggregat::DistanceToNextContact(const size_t source, const array<double,3> Vectdir, double &distmin) const
 {
     // Use Verlet to reduce search
@@ -264,7 +266,8 @@ size_t ListAggregat::Merge(const size_t first, const size_t second)
 
     // compute proper time of the final aggregate
     // keeping global time constant
-    double newtime = double(size() - 1) * (*list[keeped]->time + *list[removed]->time) / double(size()) - physicalmodel->Time;
+    double newtime = double(size() - 1) * (*list[keeped]->time + *list[removed]->time) / double(size())
+        - physicalmodel->Time;
 
     // Merge the two aggregate but do not remove the deleted one
     list[keeped]->Merge(*list[removed]);

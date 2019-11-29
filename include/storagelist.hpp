@@ -1,8 +1,6 @@
 #ifndef STORAGELIST_H
 #define STORAGELIST_H 1
 
-#define UNUSED(expr) do { (void)(expr); } while (0)
-
 #include <array>
 #include <vector>
 
@@ -23,7 +21,6 @@ public:
     elem& operator[](size_t i);
     const elem& operator[](size_t i) const;
 
-
     template<class mylist>
     void Init(size_t _size, mylist& owner);
 
@@ -33,7 +30,6 @@ public:
 
     template <class mylist>
     elem* add(const elem& other, mylist& owner);
-
 
     /** Default constructor in local storage */
     storage_list();
@@ -47,7 +43,6 @@ public:
 
     template<class mylist>
     storage_list(const storage_list& other, mylist& owner, mylist& _Storage);
-
 
     /** Copy constructor in local storage */
     storage_list(const storage_list& other);
@@ -76,6 +71,118 @@ private:
 
 };
 
+/** Default constructor in local storage */
+template <int N,class elem>
+storage_list<N,elem>::storage_list():
+    list(),
+    Storage(nullptr),
+    external_storage(nullptr)
+{}
+
+/** Constructor with external storage */
+template <int N,class elem>
+storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<size_t> _index):
+    list(),
+    Storage(parent.Storage),
+    external_storage(&parent)
+{
+  list.assign(_index.size(), nullptr);
+
+  const size_t listSize = size();
+  //#pragma omp for simd
+  for (size_t i = 0; i < listSize; i++)
+  {
+    list[i] = external_storage->list[_index[i]];
+  }
+}
+
+/** Copy constructor */
+template <int N,class elem>
+template<class mylist>
+storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner):
+    list(),
+    Storage(new std::array< std::vector<double>, N>),
+    external_storage(nullptr)
+{
+  for (size_t i=0;i<N;i++)
+  {
+    (*Storage)[i].reserve(other.size());
+  }
+  const size_t listSize = other.size();
+  for (size_t _size = 0; _size < listSize; _size++)
+  {
+    for (size_t i=0;i<N;i++)
+    {
+      (*Storage)[i][_size] = (*other.Storage)[i][other.list[_size]->indexInStorage];
+    }
+    list.push_back(new elem(owner,_size));
+  }
+}
+
+/** Copy constructor */
+template <int N,class elem>
+template<class mylist>
+storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner, mylist& _Storage):
+    list(),
+    Storage(_Storage.Storage),
+    external_storage(&_Storage)
+{
+  const size_t start = (*Storage)[0].size();
+  for (size_t i=0;i<N;i++)
+  {
+    (*Storage)[i].reserve(other.size()+start);
+  }
+  list.reserve(other.size()+start);
+  const size_t listSize = other.size();
+  for (size_t _size = 0; _size < listSize; _size++)
+  {
+    list.push_back(new elem(*other.list[_size],_Storage,_size+start));
+  }
+}
+
+/** Move constructor */
+template <int N,class elem>
+storage_list<N,elem>::storage_list (storage_list&& other) noexcept :
+    list(other.list),
+    Storage(other.Storage),
+    external_storage(other.external_storage)
+{
+  Storage=nullptr;
+  external_storage=nullptr;
+}
+
+/** Destructor */
+template <int N,class elem>
+storage_list<N,elem>::~storage_list() noexcept
+{
+  Destroy();
+}
+
+/** Copy assignment operator */
+template <int N,class elem>
+storage_list<N,elem>& storage_list<N,elem>::operator= (const storage_list<N,elem>& other)
+{
+  storage_list<N,elem> tmp{other};         // re-use copy-constructor
+  *this = std::move(tmp);                  // re-use move-assignment
+  return *this;
+}
+
+/** Move assignment operator */
+template <int N,class elem>
+storage_list<N,elem>& storage_list<N,elem>::operator= (storage_list<N,elem>&& other) noexcept
+{
+  Destroy();
+
+  Storage = other.Storage;
+  external_storage = other.external_storage;
+
+  list = std::move(other.list);
+
+  other.Storage = nullptr;
+  other.external_storage = nullptr;
+
+  return *this;
+}
 
 
 template <int N,class elem>
@@ -143,121 +250,6 @@ void storage_list<N,elem>::Destroy()
     {
         Storage = nullptr;
     }
-}
-
-
-/** Default constructor in local storage */
-template <int N,class elem>
-storage_list<N,elem>::storage_list():
-    list(),
-    Storage(nullptr),
-    external_storage(nullptr)
-{}
-
-/** Constructor with external storage */
-template <int N,class elem>
-storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<size_t> _index):
-    list(),
-    Storage(parent.Storage),
-    external_storage(&parent)
-{
-        list.assign(_index.size(), nullptr);
-
-        const size_t listSize = size();
-        //#pragma omp for simd
-        for (size_t i = 0; i < listSize; i++)
-        {
-            list[i] = external_storage->list[_index[i]];
-        }
-}
-
-/** Copy constructor */
-template <int N,class elem>
-template<class mylist>
-storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner):
-    list(),
-    Storage(new std::array< std::vector<double>, N>),
-    external_storage(nullptr)
-{
-    for (size_t i=0;i<N;i++)
-    {
-        (*Storage)[i].reserve(other.size());
-    }
-    const size_t listSize = other.size();
-    for (size_t _size = 0; _size < listSize; _size++)
-    {
-        for (size_t i=0;i<N;i++)
-        {
-            (*Storage)[i][_size] = (*other.Storage)[i][other.list[_size]->indexInStorage];
-        }
-        list.push_back(new elem(owner,_size));
-    }
-}
-/** Copy constructor */
-template <int N,class elem>
-template<class mylist>
-storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner, mylist& _Storage):
-    list(),
-    Storage(_Storage.Storage),
-    external_storage(&_Storage)
-{
-    UNUSED(owner);
-
-    const size_t start = (*Storage)[0].size();
-    for (size_t i=0;i<N;i++)
-    {
-        (*Storage)[i].reserve(other.size()+start);
-    }
-    list.reserve(other.size()+start);
-    const size_t listSize = other.size();
-    for (size_t _size = 0; _size < listSize; _size++)
-    {
-        list.push_back(new elem(*other.list[_size],_Storage,_size+start));
-    }
-}
-
-/** Move constructor */
-template <int N,class elem>
-storage_list<N,elem>::storage_list (storage_list&& other) noexcept :/* noexcept needed to enable optimizations in containers */
-    list(other.list),
-    Storage(other.Storage),
-    external_storage(other.external_storage)
-{
-    Storage=nullptr;
-    external_storage=nullptr;
-}
-
-/** Destructor */
-template <int N,class elem>
-storage_list<N,elem>::~storage_list() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
-{
-    Destroy();
-}
-
-/** Copy assignment operator */
-template <int N,class elem>
-storage_list<N,elem>& storage_list<N,elem>::operator= (const storage_list<N,elem>& other)
-{
-    storage_list<N,elem> tmp(other);         // re-use copy-constructor
-    *this = move(tmp);                  // re-use move-assignment
-    return *this;
-}
-
-/** Move assignment operator */
-template <int N,class elem>
-storage_list<N,elem>& storage_list<N,elem>::operator= (storage_list<N,elem>&& other) noexcept
-{
-    Destroy();
-
-    Storage = other.Storage;
-    external_storage = other.external_storage;
-
-    list = std::move(other.list);
-
-    other.Storage = nullptr;
-    other.external_storage = nullptr;
-
-    return *this;
 }
 
 

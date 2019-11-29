@@ -86,7 +86,7 @@ class Aggregate :
         size_t GetLabel() const noexcept;
 
 
-        const std::array<double, 3> GetPosition() const noexcept;
+        std::array<double, 3> GetPosition() const noexcept;
         std::array<size_t, 3> GetVerletIndex() noexcept;
 
 
@@ -108,7 +108,6 @@ class Aggregate :
 
         void UpdateDistances() noexcept;
 
-        void check();
         void print() const ;
 
         void partialStatistics();
@@ -124,9 +123,9 @@ class Aggregate :
         explicit Aggregate(PhysicalModel&);
 
         /** Constructor in local storage with initialization */
-        explicit Aggregate(PhysicalModel&, double x, double y, double z, double r);
-        explicit Aggregate(PhysicalModel&, std::array<double, 3> position, double r);
-        explicit Aggregate(Sphere&);
+         explicit Aggregate(PhysicalModel&, double x, double y, double z, double r);
+         explicit Aggregate(PhysicalModel&, std::array<double, 3> position, double r);
+         explicit Aggregate(Sphere&);
 
         /** Constructor with external storage */
         explicit Aggregate(ListAggregat&, size_t label);

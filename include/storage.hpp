@@ -106,7 +106,7 @@ storage_elem<N,mystorage>::storage_elem(const storage_elem<N,mystorage>& other, 
 
 /** Move constructor */
 template <int N,class mystorage>
-storage_elem<N,mystorage>::storage_elem (storage_elem<N,mystorage>&& other) noexcept :/* noexcept needed to enable optimizations in containers */
+storage_elem<N,mystorage>::storage_elem (storage_elem<N,mystorage>&& other) noexcept :
     Storage(other.Storage),
     external_storage(other.external_storage),
     indexInStorage(other.indexInStorage)
@@ -118,7 +118,7 @@ storage_elem<N,mystorage>::storage_elem (storage_elem<N,mystorage>&& other) noex
 
 /** Destructor */
 template <int N,class mystorage>
-storage_elem<N,mystorage>::~storage_elem() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+storage_elem<N,mystorage>::~storage_elem() noexcept
 {
     if(!external_storage && Storage)
     {

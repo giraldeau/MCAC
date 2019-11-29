@@ -11,17 +11,6 @@ namespace MCAC{
 
 const double PI = atan(1.0)*4; // 3.14159
 
-/*
-// suivit tempo
-string FichierSuiviTempo = "___";
-double** tab; // generic array
-int iValTab=0;
-int nb_line;
-
-char CheminSauve[500];
-char commentaires[500];
-*/
-
 void InitRandom()
 {
     time_t t;
@@ -40,9 +29,11 @@ double Random()
 void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 {
     ListAggregat Aggregates;
-    StatisticStorage Stats(physicalmodel);
+//    StatisticStorage Stats(physicalmodel);
 
-    Init(physicalmodel, Stats, Aggregates);
+    Init(physicalmodel,
+//        Stats,
+        Aggregates);
 
     // Contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool contact(true);
@@ -54,10 +45,10 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     {
         if(contact)
         {
-            Aggregates.spheres.save();
-            Aggregates.save();
-            Stats.Analyze(Aggregates);
-            //Stats.save();
+          Aggregates.spheres.save();
+          Aggregates.save();
+//            Stats.Analyze(Aggregates);
+            //Stats.Save();
 
             if (Aggregates.size() <= multiply_threshold)
             {
@@ -135,18 +126,6 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         //$ Update of the Aggregates/Spheres
         if (physicalmodel.ActiveModulephysique)
         {
-/*
-            if (physicalmodel.ActiveVariationTempo)
-            {
-                //$ Get Temperature in file
-                finfichiersuivitempo = rechercheValTab();
-                if (finmem != finfichiersuivitempo)
-                {
-                    cout << commentaires << endl;
-                }
-                finmem = finfichiersuivitempo;
-            }
-*/
             if (physicalmodel.Asurfgrowth > 0.)
             {
                 //$ Growth of all spheres
@@ -214,10 +193,10 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
         }
     }
 
-    Aggregates.spheres.save(true);
-    Aggregates.save(true);
-    Stats.Analyze(Aggregates);
-    //Stats.save(true);
+  Aggregates.spheres.save(true);
+  Aggregates.save(true);
+//    Stats.Analyze(Aggregates);
+    //Stats.Save(true);
 
     cout << "Final number of aggregates : " << Aggregates.size() << endl;
 
@@ -235,8 +214,8 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
     }
     */
     cout << endl;
-    Stats.print();
-    cout << endl;
+//    Stats.print();
+//    cout << endl;
 
     //Fermeture();
 
@@ -244,7 +223,9 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
 }
 
 
-void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& Aggregates)
+void Init(PhysicalModel& physicalmodel,
+//    StatisticStorage& Stats,
+    ListAggregat& Aggregates)
 {
 
     //Initialize physical model
@@ -332,135 +313,8 @@ void Init(PhysicalModel& physicalmodel, StatisticStorage& Stats, ListAggregat& A
     }
 
 
-    Stats.Init();
+//    Stats.Init();
 }
-
-
-/*
-
-void Fermeture()
-{
-    delete[] tab;
-}
-
-
-
-//################################ Lecture des données physiques d'entrée variables dans le temps ###############################
-int LectureSuiviTempo()
-{
-    FILE* f = nullptr;
-    f = fopen(FichierSuiviTempo.c_str(), "rt");
-    int i, j, k;
-    char skip_line[500], data[500];
-
-    nb_line=0;
-
-    if (f)
-    {
-        //On lit la première ligne pour la sauter
-        if( fgets(skip_line, 500, f) == nullptr)
-        {
-            cout << "le fichier d'entrée est vide !" << endl;
-            exit(1);
-        }
-
-        while(fgets(data, 500, f) != nullptr)
-        {
-            nb_line++; //On compte le nombre de lignes ...
-        }
-
-        printf("\nLe fichier contient %d lignes.\n", nb_line); //... et on l'affiche à l'écran
-        printf("\n");
-
-        //On se replace au début du fichier ...
-        fseek(f, 0, SEEK_SET);
-
-        //On lit la première ligne pour la sauter
-        if( fgets(skip_line, 500, f) == nullptr)
-        {
-            cout << "le fichier d'entrée est vide !" << endl;
-            exit(1);
-        }
-
-        //On déclare un tableau de type double de deux colonnes qui contiendra les valeurs lues
-        tab = new double* [nb_line];
-        for(k = 0; k < nb_line; k++)
-        {
-            tab[k] = new double[2];
-        }
-
-        //On lit chaque ligne suivante du fichier
-        for (i = 0; i < nb_line; i++)
-        {
-            //On lit la ligne
-            if (fgets(data, 500, f) != nullptr)
-            {
-                //On crée une chaine qui contiendra le token
-                char *token;
-
-                //On découpe selon les tabulations
-                token = strtok(data, "\t");
-
-                while(token != nullptr)
-                {
-                    for (j = 0; j < 2; j++)
-                    {
-                        //On enregistre la valeur convertie en double dans le tableau
-                        tab[i][j] = atof(token);
-
-                        //On affiche le tableau
-                        //printf("ligne %d : tableau[%d][%d] = %.6f\n",i, i, j, tab[i][j]);
-
-                        token = strtok(nullptr, "\t");
-                    }
-                }
-            }
-        }
-
-        //for (i = 0; i < nb_line; i++)
-        //{
-        //    for (j = 0; j < 2; j++)
-        //    {
-        //        cout << tab[i][j] << "  ";
-        //    }
-        //    cout << endl;
-        //}
-
-        fclose(f);
-        printf("\nLecture terminee\n");
-    }
-    else
-    {
-        cout << "Impossible d'ouvrir le fichier de donnees de suivi temporel" << endl;
-        exit(1);
-    }
-
-    return nb_line;
-}
-//###############################################################################################################################
-
-//########################################### Recherche d'une valeur dans un tableau ############################################
-int rechercheValTab() //Programme qui cherche les données physiques dans le tableau de suivi temporel et qui retourne 1 si on atteint la limite de ce fichier
-{
-    int test = 0;
-
-    while (tab[iValTab][0] < physicalmodel.Time && iValTab < (nb_line-1))
-    {
-        iValTab++;
-//        cout << "temps residence = " << temps << "s"
-//             << "       temps fichier = " << tab[iValTab][0] << "s"
-//             << "    T = " << tab[iValTab][1] << "K" << endl;
-    }
-
-    physicalmodel.T = tab[iValTab-1][1];
-
-    if (iValTab == nb_line-1)     test = 1;
-
-    return test;
-}
-//###############################################################################################################################
-
-    */
 
 }  // namespace MCAC
 

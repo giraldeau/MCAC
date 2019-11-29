@@ -1,9 +1,12 @@
 #ifndef PHYSICAL_MODEL_H
 #define PHYSICAL_MODEL_H 1
 
+#include <cst.hpp>
+#include <io/xmf_includes.hpp>
 #include <cstddef>
 #include <ctime>
 #include <experimental/filesystem>
+
 
 namespace MCAC{
 
@@ -19,7 +22,7 @@ public:
     double P, T, Mu, K, Rho;                    // pressure, temperature, diffusivity, ?, density
     double Dpm, sigmaDpm;
     double Time;                                // Time
-    double X, FV, L;                            // Temperature, size parameter of the box, Volume ratio, lenght of the box, pressure, density
+    double X, FV, L;                            // size of the box, Volume ratio, lenght of the box, pressure, density
     double precision;
     double FactorModelBeta;
 
@@ -28,14 +31,14 @@ public:
     size_t NPP_avg_limit;
 
     size_t GridDiv;     // Number of Divisions of the box
-    size_t N;           // Nombre de sphères initial, bool pour l'activation du module phy, bool pour l'activation de la variation de temps
+    size_t N;           // Nombre de sphères initial
     size_t AggMin;
     size_t DeltaSauve;
     int root_method;
     int Mode;
     int Wait, WaitLimit;
     bool ActiveModulephysique, ActiveVariationTempo;
-    bool use_verlet;    // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
+    bool use_verlet;    // Bool used to chose if the script will run a Verlet list
 
     bool toBeDestroyed;
     std::experimental::filesystem::path CheminSauve;
@@ -49,7 +52,7 @@ private:
 
 public:
     PhysicalModel();
-    PhysicalModel(const std::string& FichierParam);
+    explicit PhysicalModel(const std::string& FichierParam);
     void Init();
     void SetPrecision(double _precision);
     void UseDichotomia();
@@ -64,11 +67,11 @@ public:
     double friction_coeff2(double rgg) const;
     double diffusivity(double) const;
     double velocity(double masse) const;
-    double relax_time(const double masse, const double) const;
+    double relax_time(double masse, double) const;
     void print() const;
-    bool Finished(const size_t Nagg, const size_t NPP_avg) const;
+    bool Finished(size_t Nagg, size_t NPP_avg) const;
 
-    auto xmfWrite() const;
+    XMF_OUTPUT xmf_write() const;
 
 };
 

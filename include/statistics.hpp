@@ -1,7 +1,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H 1
 
-#include "IO.hpp"
+#include "io/threaded_io.hpp"
 #include "physical_model.hpp"
 #include <set>
 #include <vector>
@@ -51,7 +51,7 @@ public:
 
 public:
 
-    // This routine will be called for each update of the aggregate
+   // This routine will be called for each update of the aggregate
     void partialStatistics();
 
     // This routine will be called after each aggregation
@@ -80,8 +80,8 @@ public:
     void print() const;
     bool InsertIfNew(const Aggregate& Agg);
 
-    void save();
-    void save(bool finish);
+    void Save();
+    void Save(bool finish);
 
     std::vector<double> FormatTimeData() const;
     std::tuple<bool,double,double,double> getCompleteFractalLaw() const;
@@ -90,20 +90,14 @@ public:
     /** Default constructor */
     explicit StatisticStorage(PhysicalModel& _physicalmodel);
 
-    /** Copy constructor */
-    StatisticStorage(const StatisticStorage&);
-
-    /** Move constructor */
-    StatisticStorage (StatisticStorage&&) noexcept; /* noexcept needed to enable optimizations in containers */
-
     /** Destructor */
     ~StatisticStorage() noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
 
     /** Copy assignment operator */
-    StatisticStorage& operator= (const StatisticStorage& other);
+     StatisticStorage& operator= (const StatisticStorage& other);
 
     /** Move assignment operator */
-    StatisticStorage& operator= (StatisticStorage&& other) noexcept;
+     StatisticStorage& operator= (StatisticStorage&& other) noexcept;
 };
 
 }  // namespace MCAC

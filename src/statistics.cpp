@@ -223,7 +223,7 @@ void StatisticStorage::print() const
 }
 
 /** Destructor */
-StatisticStorage::~StatisticStorage() noexcept /* explicitly specified destructors should be annotated noexcept as best-practice */
+StatisticStorage::~StatisticStorage() noexcept
 {
     if(physicalmodel->toBeDestroyed)
     {

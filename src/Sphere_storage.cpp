@@ -50,7 +50,7 @@ namespace MCAC{
     return *r;
 }
 
- __attribute__((pure)) const array<double, 3> Sphere::Position() const noexcept
+ __attribute__((pure)) array<double, 3> Sphere::GetPosition() const noexcept
 {
     array<double, 3> mypos{{*x,*y,*z}};
     return mypos;
@@ -191,11 +191,18 @@ Sphere::Sphere(PhysicalModel& _physicalmodel):
 
 
 /** Constructor in local storage with initialization */
-Sphere::Sphere(PhysicalModel& _physicalmodel, const double newx,const double newy,const double newz,const double newr) : Sphere(_physicalmodel)
+Sphere::Sphere(PhysicalModel& _physicalmodel,
+    const double newx,
+    const double newy,
+    const double newz,
+    const double newr) : Sphere(_physicalmodel)
 {
     InitVal(newx, newy, newz, newr);
 }
-Sphere::Sphere(PhysicalModel& _physicalmodel, const array<double, 3> newposition,const double newr) : Sphere(_physicalmodel,newposition[0],newposition[1],newposition[2],newr){}
+Sphere::Sphere(PhysicalModel& _physicalmodel,
+    const array<double, 3> newposition,
+    const double newr) :
+    Sphere(_physicalmodel,newposition[0],newposition[1],newposition[2],newr){}
 
 /** Constructor with external storage */
 Sphere::Sphere(ListSphere& aggregat,const size_t id):

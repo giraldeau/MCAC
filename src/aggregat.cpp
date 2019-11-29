@@ -1,9 +1,9 @@
 #include "aggregat.hpp"
-#include "sblvolumesurface.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <functional>
+#include "sblvolumesurface.hpp"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -161,7 +161,11 @@ void Aggregate::setpointers()
     time        =&(*Storage)[13][myindex];
 }
 
-void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<double, 3> position ,const size_t _label, ListSphere& spheres,const double D)
+void Aggregate::Init(PhysicalModel& _physicalmodel,
+    Verlet& _verlet,
+    const array<double, 3> position ,
+    const size_t _label,
+    ListSphere& spheres,const double D)
 {
     if(physicalmodel && physicalmodel->toBeDestroyed)
     {
@@ -197,7 +201,7 @@ void Aggregate::Init(PhysicalModel& _physicalmodel,Verlet& _verlet,const array<d
 }
 
 
-//############################################# Calcul de la distance inter-agrégats ############################################
+//####################################### Calcul de la distance inter-agrégats ########################################
 bool Aggregate::Contact(Aggregate& other) const noexcept
 {
 /*
@@ -250,9 +254,9 @@ double Aggregate::Distance(Aggregate& other,array<double,3> Vectdir) const
     return -1.;
 }
 
-//###############################################################################################################################
+//###################################################################################################################
 
- __attribute__((pure)) const array<double, 3> Aggregate::GetPosition() const noexcept
+ __attribute__((pure)) array<double, 3> Aggregate::GetPosition() const noexcept
 {
      array<double, 3> mypos{{*x,*y,*z}};
     return mypos;
@@ -351,7 +355,7 @@ __attribute__((pure)) double Aggregate::GetTimeStep() const noexcept
     return *time_step;
 }
 
-//######### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #########
+//### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #####
 void Aggregate::Update()
 {
     // This function will update the parameter of Agg
@@ -394,7 +398,7 @@ void Aggregate::Update()
 
 
 
-//############# Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ##############
+//####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
 void Aggregate::Volume()
 {
     *volAgregat = *surfAgregat = 0.0; // Volume and surface of Agg Id
@@ -495,9 +499,13 @@ void Aggregate::MassCenter()
 
 void Aggregate::CalcRadius()
 {
+    // Maximum radius of the aggregate,
+    // this corresponds to the distance between
+    //    the center of mass of the aggregate
+    //    and the edge of the furthest ball from said center.
+    // It is used to assimilate the aggregate to a sphere when checking for intersections
+    *rmax = 0.0;
 
-    *rmax = 0.0; // Maximum radius of the aggregate, this corresponds to the distance between the center of mass of the aggregate and the edge of the furthest ball from said center.
-                 // It is used to assimilate the aggregate to a sphere when checking for intersections
 
     const size_t loopsize(Np);
     for (size_t i = 0; i < loopsize; i++)
@@ -510,7 +518,8 @@ void Aggregate::RayonGiration()
 {
     // This function determines the Gyration Radius of the Aggregate Id.
 
-    // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient, they are used  used in the final formula of the Radius of Gyration
+    // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient,
+    // they are used  used in the final formula of the Radius of Gyration
     double Arg(0.);
     double Brg(0.);
 
@@ -525,7 +534,7 @@ void Aggregate::RayonGiration()
     *rg = sqrt(fabs((Arg+3.0/5.0*Brg)/(*volAgregat)));
     *volAgregat=fabs(*volAgregat);
 }
-//###############################################################################################################################
+//#####################################################################################################################
 
 
 array<size_t, 3> Aggregate::GetVerletIndex() noexcept

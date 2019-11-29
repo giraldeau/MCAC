@@ -1,7 +1,7 @@
 #ifndef SPHERELIST_H
 #define SPHERELIST_H 1
 
-#include "IO.hpp"
+#include "io/threaded_io.hpp"
 #include "Sphere.hpp"
 #include "physical_model.hpp"
 #include "storagelist.hpp"
@@ -62,14 +62,14 @@ class ListSphere : public storage_list<9,Sphere>
 
         void print() const;
 
-        void save();
-        void save(bool finish);
+        void save(){save(false);};
+        void save(bool _finish);
 
-        auto GetData() const;
+        auto get_data() const;
 
-        std::vector<double> FormatPositionData() const;
-        std::vector<double> FormatRadiusData() const;
-        std::vector<long>    FormatLabelData() const;
+        std::vector<double> Format_Position() const;
+        std::vector<double> Format_Radius() const;
+        std::vector<long>    Format_AggLabel() const;
 
     /* Storage specific */
     private:

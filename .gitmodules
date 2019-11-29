@@ -1,3 +1,6 @@
 [submodule "ext/sbl"]
 	path = ext/sbl
 	url = git://sbl.inria.fr/git/sbl.git
+[submodule "ext/GSL"]
+	path = ext/GSL
+	url = https://github.com/microsoft/GSL.git

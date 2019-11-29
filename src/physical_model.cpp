@@ -337,7 +337,8 @@ void PhysicalModel::Init()
 
     Asurfgrowth = coeffB*1E-3;
 
-    use_verlet = true;          // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
+    // Bool used to chose if the script will run a Verlet list, significantly reducing the cost of Calcul_Distance
+    use_verlet = true;
     GridDiv = 10;               // Number of Divisions of the box
 
     AggMin = MAX(AggMin, 1);
@@ -478,7 +479,7 @@ void PhysicalModel::print() const
 }
 
 
-//###############################################################################################################################
+//#####################################################################################################################
 
  __attribute__((pure)) double PhysicalModel::Cunningham(const double R) const //Facteur correctif de Cunningham
 {
@@ -489,7 +490,7 @@ void PhysicalModel::print() const
 }
 
 
-//######################################## Fonctions pour le calcul du diamètre de mobilité #####################################
+//############################# Fonctions pour le calcul du diamètre de mobilité ################################
 
 /*
  Fonction permettant de retrouver le rayon de mobilité en régime transitoire
@@ -634,7 +635,7 @@ double PhysicalModel::Secante(const double x0) const
 {
     double x[2];
     double fx[2];
-    bool i=1;
+    bool i=true;
 
     x[0]=x0+4.e-13;
     fx[0] = ModeleBeta(x[0]);

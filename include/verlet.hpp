@@ -11,6 +11,7 @@ class Verlet
 {
 public:
     std::vector< std::vector< std::vector< std::list< size_t > > > > Cell;
+
 private:
     size_t GridDiv{0};
     double L{0};
@@ -22,12 +23,15 @@ public:
     void search(size_t id) const;
 
     void Init(size_t _GridDiv, double _L);
-    std::vector<size_t> GetSearchSpace(std::array<double, 3> sourceposition , double width, std::array<double, 3> Vector) const;
+    std::vector<size_t> GetSearchSpace(std::array<double, 3> sourceposition ,
+        double width,
+        std::array<double, 3> Vector) const;
     std::vector<size_t> GetSearchSpace(std::array<double, 3> sourceposition , double width) const;
 
     /* Default constructor */
     Verlet();
-};
+}; // class verlet
+
 }  // namespace MCAC
 
 #endif // VERLET_H

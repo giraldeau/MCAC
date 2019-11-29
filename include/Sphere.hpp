@@ -81,7 +81,7 @@ class Sphere : public storage_elem<9,ListSphere>
         double Volume() const noexcept;
         double Surface() const noexcept;
         double Radius() const noexcept;
-        const std::array<double, 3> Position() const noexcept;
+        std::array<double, 3> GetPosition() const noexcept;
 
         std::string str(double coef) const ;
         void Aff(double coef) const ;
@@ -108,7 +108,10 @@ class Sphere : public storage_elem<9,ListSphere>
         std::pair<bool,double> Collision(const Sphere&, std::array<double,3> vectordir) const;
         std::vector<double> Collisions(const ListSphere& list, std::array<double,3> vectordir) const;
 
-        double Intersection(const Sphere& c, double dist,double& vol1, double& vol2, double& surf1, double& surf2 ) const;
+        double Intersection(const Sphere& c,
+            double dist,
+            double& vol1, double& vol2,
+            double& surf1, double& surf2 ) const;
 
     /* Storage specific */
     private:

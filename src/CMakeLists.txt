@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(MCAC CXX)
 
-option(WITH_SBL "Use SBL for aggregate volume measure" ON)
+option(WITH_SBL "Use SBL for aggregate volume measure" OFF)
 option(WITH_IO  "Write output" ON)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -9,8 +9,7 @@ SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ### definitions des dependences  ###
 
-include_directories(${PROJECT_SOURCE_DIR})
-FILE(GLOB SRC_FILES *.cpp *.hpp )
+FILE(GLOB_RECURSE SRC_FILES *.cpp )
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 ### Definition des options de compilation ###
@@ -18,7 +17,7 @@ add_executable(${PROJECT_NAME} ${SRC_FILES})
 if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE Release)
 endif()
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../bin/${CMAKE_BUILD_TYPE})
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../bin/${CMAKE_BUILD_TYPE}/)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake)
 if (WITH_IO)
@@ -49,6 +48,7 @@ message( STATUS "Flags:")
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)
 target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/gsl/include)
 
 if (WITH_SBL)
     message( STATUS "    With SBL")
@@ -107,7 +107,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       -Weffc++ -Wunused-variable -Wunused-result -Wunused-parameter\
       -Wzero-as-null-pointer-constant -Wlong-long -Wuseless-cast -Wconversion -Wfloat-equal -Wpacked -Wswitch-default -Wstrict-overflow \
       -Wmissing-declarations \
-      -Wno-aggregate-return  -Wno-padded ")
+      -Wno-aggregate-return  -Wno-padded")
   # Problems in SBL
    set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -Wno-catch-value -Wno-unused-parameter -Wno-effc++ \
                                 -Wno-zero-as-null-pointer-constant -Wno-conversion -Wno-old-style-cast\
@@ -119,7 +119,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS_DEBUG   "-fcheck-new -ggdb3 -gpubnames -g3  -O0  -ftrapv \
                                 -Wall -Wextra -Wpedantic -Weverything \
                                 -Wno-c++98-compat -Wno-padded -Wno-global-constructors -Wno-unused-macros\
-                                -Wno-unreachable-code -Wno-header-hygiene")
+                                -Wno-unreachable-code -Wno-header-hygiene -Wno-c++98-compat-pedantic -Wno-weak-vtables")
     # Problems in SBL
     set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -Wno-reserved-id-macro -Wno-documentation-unknown-command \
                                  -Wno-extra-semi -Wno-documentation -Wno-sign-conversion -Wno-old-style-cast\

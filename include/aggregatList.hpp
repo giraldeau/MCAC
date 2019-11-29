@@ -2,7 +2,6 @@
 #define AGGREGATLIST_H 1
 
 #include "Sphere.hpp"
-#include "IO.hpp"
 #include "Spherelist.hpp"
 #include "aggregat.hpp"
 #include "physical_model.hpp"
@@ -46,13 +45,15 @@ class ListAggregat : public storage_list<15,Aggregate>
         void Duplication();
         size_t GetAvg_npp();
 
-        std::vector< std::pair<size_t,double> > SortSearchSpace(size_t MovingAgg,std::array<double,3> Vectdir, std::vector<size_t> SearchSpace) const;
+        std::vector< std::pair<size_t,double> > SortSearchSpace(size_t MovingAgg,
+            std::array<double,3> Vectdir,
+            const std::vector<size_t>& SearchSpace) const;
         std::vector<size_t> GetSearchSpace(size_t source, std::array<double,3> Vectdir) const;
         int DistanceToNextContact(size_t source, std::array<double,3> Vectdir, double &distmin) const;
-        bool TestFreeSpace(const std::array<double,3> pos, const double diameter) const;
+        bool TestFreeSpace(std::array<double,3> pos, double diameter) const;
 
         double GetMaxTimeStep() const;
-        double GetTimeStep(const double max) const;
+        double GetTimeStep(double max) const;
 
         size_t Merge(size_t first, size_t second);
         void SortTimeSteps(double factor);
@@ -61,22 +62,21 @@ class ListAggregat : public storage_list<15,Aggregate>
 
         std::tuple<bool,double,double,double> getInstantaneousFractalLaw() const;
 
-        void save();
+        void save(){save(false);};
         void save(bool);
 
-        auto GetData() const;
+        auto get_data() const;
 
-        std::vector<double> FormatPositionData() const;
-        std::vector<double> FormatRgData() const;
-        std::vector<int>    FormatNpData() const;
-        std::vector<double> FormatFaggData() const;
-        std::vector<double> FormatlpmData() const;
-        std::vector<double> FormatdeltatData() const;
-        std::vector<double> FormatRmaxData() const;
-        std::vector<double> FormatVolumeData() const;
-        std::vector<double> FormatSurfaceData() const;
-        std::vector<int>    FormatLabelData() const;
-        std::vector<int>    FormatIndexData() const;
+        std::vector<double> Format_Position() const;
+        std::vector<double> Format_rg() const;
+        std::vector<int>    Format_Np() const;
+        std::vector<double> Format_f_agg() const;
+        std::vector<double> Format_lpm() const;
+        std::vector<double> Format_time_step() const;
+        std::vector<double> Format_rmax() const;
+        std::vector<double> Format_volAgregat() const;
+        std::vector<double> Format_surfAgregat() const;
+        std::vector<int>    Format_Label() const;
 
 
         /* Storage specific */

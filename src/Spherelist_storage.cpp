@@ -135,6 +135,7 @@ ListSphere::ListSphere(const ListSphere& other):
     }
     setpointers();
 }
+
 ListSphere::ListSphere(const ListSphere& other, ListSphere& _Storage):
     storage_list<9,Sphere>(other,*this, _Storage),
     physicalmodel(other.physicalmodel),

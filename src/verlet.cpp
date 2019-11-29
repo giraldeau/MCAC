@@ -46,34 +46,34 @@ void Verlet::Init(const size_t _GridDiv, const double _L)
 vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double width) const
 {
 
-    double xp(sourceposition[0]+width);
-    double xm(sourceposition[0]-width);
-    double yp(sourceposition[1]+width);
-    double ym(sourceposition[1]-width);
-    double zp(sourceposition[2]+width);
-    double zm(sourceposition[2]-width);
+    double xp{sourceposition[0]+width};
+    double xm{sourceposition[0]-width};
+    double yp{sourceposition[1]+width};
+    double ym{sourceposition[1]-width};
+    double zp{sourceposition[2]+width};
+    double zm{sourceposition[2]-width};
 
-    auto bornei1 (int(floor(xm*double(GridDiv)/L)));
-    auto bornei2 (int(floor(xp*double(GridDiv)/L)+1));
-    auto bornej1 (int(floor(ym*double(GridDiv)/L)));
-    auto bornej2 (int(floor(yp*double(GridDiv)/L)+1));
-    auto bornek1 (int(floor(zm*double(GridDiv)/L)));
-    auto bornek2 (int(floor(zp*double(GridDiv)/L)+1));
+    auto bornei1 {static_cast<int>(floor(xm*static_cast<double>(GridDiv)/L))};
+    auto bornei2 {static_cast<int>(floor(xp*static_cast<double>(GridDiv)/L)+1)};
+    auto bornej1 {static_cast<int>(floor(ym*static_cast<double>(GridDiv)/L))};
+    auto bornej2 {static_cast<int>(floor(yp*static_cast<double>(GridDiv)/L)+1)};
+    auto bornek1 {static_cast<int>(floor(zm*static_cast<double>(GridDiv)/L))};
+    auto bornek2 {static_cast<int>(floor(zp*static_cast<double>(GridDiv)/L)+1)};
 
-    if (bornei2-bornei1>=int(GridDiv))
+    if (bornei2-bornei1>=static_cast<int>(GridDiv))
     {
         bornei1=0;
-        bornei2=int(GridDiv)-1;
+        bornei2=static_cast<int>(GridDiv)-1;
     }
-    if (bornej2-bornej1>=int(GridDiv))
+    if (bornej2-bornej1>=static_cast<int>(GridDiv))
     {
         bornej1=0;
-        bornej2=int(GridDiv)-1;
+        bornej2=static_cast<int>(GridDiv)-1;
     }
-    if (bornek2-bornek1>=int(GridDiv))
+    if (bornek2-bornek1>=static_cast<int>(GridDiv))
     {
         bornek1=0;
-        bornek2=int(GridDiv)-1;
+        bornek2=static_cast<int>(GridDiv)-1;
     }
 
 
@@ -87,9 +87,9 @@ vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , co
             for (int k=bornek1;k<=bornek2;k++)
             {
                 // periodic
-                auto ii = size_t(periodicPosition(i,int(GridDiv)));
-                auto jj = size_t(periodicPosition(j,int(GridDiv)));
-                auto kk = size_t(periodicPosition(k,int(GridDiv)));
+                auto ii = static_cast<size_t>(periodicPosition(i,static_cast<int>(GridDiv)));
+                auto jj = static_cast<size_t>(periodicPosition(j,static_cast<int>(GridDiv)));
+                auto kk = static_cast<size_t>(periodicPosition(k,static_cast<int>(GridDiv)));
                 tmpSearchSpace.insert(tmpSearchSpace.end(),
                                       Cell[ii][jj][kk].begin(),
                                       Cell[ii][jj][kk].end());
@@ -104,37 +104,39 @@ vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , co
 }
 
 
-vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , const double width, const array<double, 3> Vector) const
+vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition,
+    const double width,
+    const array<double, 3> Vector) const
 {
 
-    double xp(sourceposition[0]+width + MAX(Vector[0],0));
-    double xm(sourceposition[0]-width + MIN(Vector[0],0));
-    double yp(sourceposition[1]+width + MAX(Vector[1],0));
-    double ym(sourceposition[1]-width + MIN(Vector[1],0));
-    double zp(sourceposition[2]+width + MAX(Vector[2],0));
-    double zm(sourceposition[2]-width + MIN(Vector[2],0));
+    double xp{sourceposition[0]+width + MAX(Vector[0],0)};
+    double xm{sourceposition[0]-width + MIN(Vector[0],0)};
+    double yp{sourceposition[1]+width + MAX(Vector[1],0)};
+    double ym{sourceposition[1]-width + MIN(Vector[1],0)};
+    double zp{sourceposition[2]+width + MAX(Vector[2],0)};
+    double zm{sourceposition[2]-width + MIN(Vector[2],0)};
 
-    auto bornei1 (int(floor(xm*double(GridDiv)/L)));
-    auto bornei2 (int(floor(xp*double(GridDiv)/L)+1));
-    auto bornej1 (int(floor(ym*double(GridDiv)/L)));
-    auto bornej2 (int(floor(yp*double(GridDiv)/L)+1));
-    auto bornek1 (int(floor(zm*double(GridDiv)/L)));
-    auto bornek2 (int(floor(zp*double(GridDiv)/L)+1));
+    auto bornei1 {static_cast<int>(floor(xm*static_cast<double>(GridDiv)/L))};
+    auto bornei2 {static_cast<int>(floor(xp*static_cast<double>(GridDiv)/L)+1)};
+    auto bornej1 {static_cast<int>(floor(ym*static_cast<double>(GridDiv)/L))};
+    auto bornej2 {static_cast<int>(floor(yp*static_cast<double>(GridDiv)/L)+1)};
+    auto bornek1 {static_cast<int>(floor(zm*static_cast<double>(GridDiv)/L))};
+    auto bornek2 {static_cast<int>(floor(zp*static_cast<double>(GridDiv)/L)+1)};
 
-    if (bornei2-bornei1>=int(GridDiv))
+    if (bornei2-bornei1>=static_cast<int>(GridDiv))
     {
         bornei1=0;
-        bornei2=int(GridDiv)-1;
+        bornei2=static_cast<int>(GridDiv)-1;
     }
-    if (bornej2-bornej1>=int(GridDiv))
+    if (bornej2-bornej1>=static_cast<int>(GridDiv))
     {
         bornej1=0;
-        bornej2=int(GridDiv)-1;
+        bornej2=static_cast<int>(GridDiv)-1;
     }
-    if (bornek2-bornek1>=int(GridDiv))
+    if (bornek2-bornek1>=static_cast<int>(GridDiv))
     {
         bornek1=0;
-        bornek2=int(GridDiv)-1;
+        bornek2=static_cast<int>(GridDiv)-1;
     }
 
 
@@ -148,9 +150,9 @@ vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , co
             for (int k=bornek1;k<=bornek2;k++)
             {
                 // periodic
-                auto ii = size_t(periodicPosition(i,int(GridDiv)));
-                auto jj = size_t(periodicPosition(j,int(GridDiv)));
-                auto kk = size_t(periodicPosition(k,int(GridDiv)));
+                auto ii = static_cast<size_t>(periodicPosition(i,static_cast<int>(GridDiv)));
+                auto jj = static_cast<size_t>(periodicPosition(j,static_cast<int>(GridDiv)));
+                auto kk = static_cast<size_t>(periodicPosition(k,static_cast<int>(GridDiv)));
                 tmpSearchSpace.insert(tmpSearchSpace.end(),
                                       Cell[ii][jj][kk].begin(),
                                       Cell[ii][jj][kk].end());
