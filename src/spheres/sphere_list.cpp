@@ -17,21 +17,15 @@ Sphere.h and Sphere.cpp defines the data storage.
  Data can be shared between multiple Aggregat
 
 */
-
-
-
-#include "spheres/Spherelist.hpp"
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
+#include "spheres/sphere_list.hpp"
 #include <iomanip>
 #include <iostream>
-#include <sstream>
+
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define POW_2(a) ((a)*(a))
-#define POW3(a) ((a)*(a)*(a))
+#define POW_3(a) ((a)*(a)*(a))
 
 
 /* #############################################################################################################
@@ -39,20 +33,41 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #################################              AGREGATE                 #####################################
  * #################################                                       #####################################
  * #############################################################################################################*/
-
-namespace MCAC{
-
-
+using namespace std;
+namespace MCAC {
+void SphereList::init(const PhysicalModel &physical_model, size_t size) {
+    if (static_cast<bool>(physicalmodel) && physicalmodel->toBeDestroyed) {
+        delete physicalmodel;
+    }
+    delete writer;
+    physicalmodel = &physical_model;
+    writer = new ThreadedIO(physical_model, size);
+    storage_list<SpheresFields::NFIELD, Sphere>::Init(size, *this);
+    setpointers();
+}
+void SphereList::decrease_label() noexcept {
+    for (Sphere *mysphere : list) {
+        mysphere->decrease_label();
+    }
+}
+void SphereList::print() const {
+    cout << "Printing list of " << size() << " Sphere" << endl;
+    if (static_cast<bool>(external_storage)) {
+        cout << "  With external Storage" << endl;
+    } else {
+        cout << "  Without external Storage" << endl;
+    }
+    for (const Sphere *s : list) {
+        s->print();
+    }
+}
 /* #############################################################################################################
  * ########################################### Grow all spheres ################################################
  * #############################################################################################################*/
-void ListSphere::CroissanceSurface(const double dt)
-{
-    for (Sphere* mysphere : list)
-    {
+void SphereList::croissance_surface(double dt) noexcept {
+    for (Sphere *mysphere : list) {
         mysphere->croissance_surface(dt);
     }
 }
-
 }  // namespace MCAC
 

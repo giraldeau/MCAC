@@ -2,7 +2,7 @@
 #define AGGREGATLIST_H 1
 
 #include "spheres/sphere.hpp"
-#include "spheres/Spherelist.hpp"
+#include "spheres/sphere_list.hpp"
 #include "aggregat.hpp"
 #include "physical_model.hpp"
 #include "storage.hpp"
@@ -12,7 +12,7 @@
 namespace MCAC{
 
 class Sphere;
-class ListSphere;
+class SphereList;
 class Aggregate;
 class ListAggregat;
 class StatisticStorage;
@@ -35,11 +35,11 @@ class ListAggregat : public storage_list<15,Aggregate>
         std::vector<double>::iterator ptr_fin;
 
         ThreadedIO* Writer;
-        size_t lastSaved;
+        size_t last_saved;
 
 
     public:
-        ListSphere spheres;
+        SphereList spheres;
         Verlet verlet;
         void Init(PhysicalModel&, size_t _size);
         void Duplication();

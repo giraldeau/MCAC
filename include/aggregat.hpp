@@ -2,7 +2,7 @@
 #define AGGREGAT_H 1
 
 #include "spheres/sphere.hpp"
-#include "spheres/Spherelist.hpp"
+#include "spheres/sphere_list.hpp"
 #include "aggregatList.hpp"
 #include "statistics.hpp"
 #include "storage.hpp"
@@ -13,7 +13,7 @@
 namespace MCAC{
 
 class Sphere;
-class ListSphere;
+class SphereList;
 class Aggregate;
 class ListAggregat;
 class Verlet;
@@ -40,7 +40,7 @@ class Aggregate :
     private:
         PhysicalModel* physicalmodel;
 
-        ListSphere myspheres;
+        SphereList myspheres;
 
         Verlet* verlet;
         std::array<size_t, 3> IndexVerlet;
@@ -76,7 +76,7 @@ class Aggregate :
     public:
 
         void Init();
-        void Init(PhysicalModel&,Verlet&, std::array<double, 3> position ,size_t _label, ListSphere&, double D);
+        void Init(PhysicalModel&, Verlet&, std::array<double, 3> position , size_t _label, SphereList&, double D);
 
         double SphereDistance(size_t i, size_t j) const;
         double SphereDistance(size_t i) const;

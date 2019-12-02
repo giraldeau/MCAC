@@ -7,7 +7,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define POW_2(a) ((a)*(a))
-#define POW3(a) ((a)*(a)*(a))
+#define POW_3(a) ((a)*(a)*(a))
 using namespace std;
 namespace MCAC {
 Intersection::Intersection(const Sphere &sphere_1,

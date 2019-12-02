@@ -22,7 +22,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define POW_2(a) ((a)*(a))
-#define POW3(a) ((a)*(a)*(a))
+#define POW_3(a) ((a)*(a)*(a))
 using namespace std;
 namespace MCAC {
 /* Getters */
@@ -114,7 +114,7 @@ void Sphere::print() const noexcept {
 
 void Sphere::update_vol_and_surf() noexcept {
     if (agg_label > -1) {
-        *volume = _facvol * POW3(*r);
+        *volume = _facvol * POW_3(*r);
         *surface = _facsurf * POW_2(*r);
     }
 }

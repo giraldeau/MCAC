@@ -112,7 +112,7 @@ namespace MCAC {
     return result;
 }
 [[gnu::pure]]  vector<double> collisions(const Sphere &sphere_1,
-                                         const ListSphere &list,
+                                         const SphereList &list,
                                          array<double, 3> displacement) noexcept {
     array<array<double, 3>, 3> rot_mat = get_rot_mat(displacement);
     vector<double> dist_to_collision;

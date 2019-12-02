@@ -13,7 +13,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define POW_2(a) ((a)*(a))
-#define POW3(a) ((a)*(a)*(a))
+#define POW_3(a) ((a)*(a)*(a))
 using namespace std;
 namespace MCAC {
 const double PI = atan(1.0) * 4;
@@ -149,7 +149,7 @@ void Aggregate::Init(PhysicalModel &_physicalmodel,
                      Verlet &_verlet,
                      const array<double, 3> position,
                      const size_t _label,
-                     ListSphere &spheres, const double D) {
+                     SphereList &spheres, const double D) {
     if (physicalmodel && physicalmodel->toBeDestroyed) {
         delete physicalmodel;
     }
@@ -168,7 +168,7 @@ void Aggregate::Init(PhysicalModel &_physicalmodel,
     SetPosition(position);
     spheres[_label].set_label(int(_label));
     spheres[_label].init_val(position, D / 2);
-    myspheres = ListSphere(spheres, {_label});
+    myspheres = SphereList(spheres, {_label});
     Np = myspheres.size();
     UpdateDistances();
     Update();
@@ -498,7 +498,7 @@ void Aggregate::DecreaseLabel() noexcept {
     Label--;
 
     // Keep aggLabel of myspheres in sync
-    myspheres.DecreaseLabel();
+    myspheres.decrease_label();
     if (InVerlet) {
         verlet->Add(GetLabel(), IndexVerlet);
     }
@@ -526,37 +526,37 @@ void Aggregate::UpdateDistances() noexcept {
     }
 }
 /** Copy constructor */
-Aggregate::Aggregate(const Aggregate &other) :
-    storage_elem<15, ListAggregat>(other),
-    StatisicsData(other),
-    physicalmodel(other.physicalmodel),
-    myspheres(other.myspheres),
-    verlet(nullptr),
-    IndexVerlet({{0, 0, 0}}),
-    _distances(other._distances),
-    distances_center(other.distances_center),
-    volumes(other.volumes),
-    surfaces(other.surfaces),
-    rg(nullptr),
-    f_agg(nullptr),
-    lpm(nullptr),
-    time_step(nullptr),
-    rmax(nullptr),
-    volAgregat(nullptr),
-    surfAgregat(nullptr),
-    x(nullptr),
-    y(nullptr),
-    z(nullptr),
-    rx(nullptr),
-    ry(nullptr),
-    rz(nullptr),
-    time(nullptr),
-    Np(other.Np),
-    Label(other.Label),
-    InVerlet(false) {
-    setpointers();
-}
-/** Copy constructor */
+//Aggregate::Aggregate(const Aggregate &other) :
+//    storage_elem<15, ListAggregat>(other),
+//    StatisicsData(other),
+//    physicalmodel(other.physicalmodel),
+//    myspheres(other.myspheres),
+//    verlet(nullptr),
+//    IndexVerlet({{0, 0, 0}}),
+//    _distances(other._distances),
+//    distances_center(other.distances_center),
+//    volumes(other.volumes),
+//    surfaces(other.surfaces),
+//    rg(nullptr),
+//    f_agg(nullptr),
+//    lpm(nullptr),
+//    time_step(nullptr),
+//    rmax(nullptr),
+//    volAgregat(nullptr),
+//    surfAgregat(nullptr),
+//    x(nullptr),
+//    y(nullptr),
+//    z(nullptr),
+//    rx(nullptr),
+//    ry(nullptr),
+//    rz(nullptr),
+//    time(nullptr),
+//    Np(other.Np),
+//    Label(other.Label),
+//    InVerlet(false) {
+//    setpointers();
+//}
+///** Copy constructor */
 Aggregate::Aggregate(const Aggregate &other, ListAggregat &_Storage) :
     storage_elem<15, ListAggregat>(other, *this, _Storage),
     StatisicsData(other),
@@ -637,25 +637,25 @@ Aggregate& Aggregate::operator= (const Aggregate& other)
 }
 */
 /** Move assignment operator */
-Aggregate &Aggregate::operator=(Aggregate &&other) noexcept {
-    if (physicalmodel && physicalmodel->toBeDestroyed) {
-        delete physicalmodel;
-    }
-    physicalmodel = other.physicalmodel;
-    other.physicalmodel = nullptr;
-    swap(myspheres, other.myspheres);
-    swap(_distances, other._distances);
-    swap(distances_center, other.distances_center);
-    swap(volumes, other.volumes);
-    swap(surfaces, other.surfaces);
-    swap(IndexVerlet, other.IndexVerlet);
-    swap(Label, other.Label);
-    swap(Np, other.Np);
-    StatisicsData::operator=(static_cast<StatisicsData &>(other));
-    storage_elem<15, ListAggregat>::operator=(move(static_cast<storage_elem<15, ListAggregat> &>(other)));
-    setpointers();
-    return *this;
-}
+//Aggregate &Aggregate::operator=(Aggregate &&other) noexcept {
+//    if (physicalmodel && physicalmodel->toBeDestroyed) {
+//        delete physicalmodel;
+//    }
+//    physicalmodel = other.physicalmodel;
+//    other.physicalmodel = nullptr;
+//    swap(myspheres, other.myspheres);
+//    swap(_distances, other._distances);
+//    swap(distances_center, other.distances_center);
+//    swap(volumes, other.volumes);
+//    swap(surfaces, other.surfaces);
+//    swap(IndexVerlet, other.IndexVerlet);
+//    swap(Label, other.Label);
+//    swap(Np, other.Np);
+//    StatisicsData::operator=(static_cast<StatisicsData &>(other));
+//    storage_elem<15, ListAggregat>::operator=(move(static_cast<storage_elem<15, ListAggregat> &>(other)));
+//    setpointers();
+//    return *this;
+//}
 double Aggregate::SphereDistance(size_t i, size_t j) const {
     size_t ii = i;
     size_t jj = j;

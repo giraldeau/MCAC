@@ -1,7 +1,7 @@
 #ifndef INCLUDE_SPHERES_SPHERE_HPP_
 #define INCLUDE_SPHERES_SPHERE_HPP_
 #include "physical_model.hpp"
-#include "Spherelist.hpp"
+#include "sphere_list.hpp"
 #include "storage.hpp"
 #include "cst.hpp"
 #include <array>
@@ -24,23 +24,17 @@ Sphere.h and Sphere.cpp defines the data storage.
  Data can be shared between multiple Aggregat
 
 */
-
-
 namespace MCAC {
-class Sphere;
-
-class ListSphere;
-
 class Aggregate;
+
+class SphereList;
 
 class ListAggregat;
 
-class Verlet;
-
-class Sphere : public storage_elem<SpheresFields::NFIELD, ListSphere> {
-    friend class ListSphere;
-
+class Sphere : public storage_elem<SpheresFields::NFIELD, SphereList> {
     friend class Aggregate;
+
+    friend class SphereList;
 
     friend class ListAggregat;
 
@@ -59,7 +53,7 @@ private:
     void update_vol_and_surf() noexcept;
 public:
     long agg_label;
-    PhysicalModel *physicalmodel;
+    const PhysicalModel *physicalmodel;
     /* getters */
     double get_volume() const noexcept;
     double get_surface() const noexcept;
@@ -84,19 +78,19 @@ private:
 public:
     /** Default constructor in local storage */
     Sphere() noexcept;
-    explicit Sphere(PhysicalModel &) noexcept;
+    explicit Sphere(const PhysicalModel &) noexcept;
     explicit Sphere(const Aggregate &) noexcept;
     /** Constructor in local storage with initialization */
-    Sphere(PhysicalModel &, std::array<double, 3> newposition, double newr) noexcept;
+    Sphere(const PhysicalModel &, std::array<double, 3> newposition, double newr) noexcept;
     /** Constructor with external storage */
-    Sphere(ListSphere &aggregat, size_t id) noexcept;
+    Sphere(SphereList &aggregat, size_t id) noexcept;
     /** Destructor */
     ~Sphere() noexcept;
     /** Copy constructor */
-    explicit Sphere(const Sphere &) noexcept = delete;
-    Sphere(const Sphere &, ListSphere &aggregat, size_t id) noexcept;
+    Sphere(const Sphere &) noexcept = delete;
+    Sphere(const Sphere &, SphereList &aggregat, size_t id) noexcept;
     /** Move constructor */
-    explicit Sphere(Sphere &&) noexcept = delete;
+    Sphere(Sphere &&) noexcept = delete;
     /** Copy assignment operator */
     Sphere &operator=(const Sphere &other) noexcept = delete;
     /** Move assignment operator */

@@ -9,7 +9,7 @@
 { \
   const size_t list_size = size(); \
   std::vector<type> data(list_size); \
-  for (size_t i=lastSaved; i<list_size;i++) \
+  for (size_t i=last_saved; i<list_size;i++) \
   { \
     data[i] = list[i]->varname;\
   }\
@@ -20,7 +20,7 @@
 { \
   const size_t list_size = size(); \
   std::vector<type> data(list_size); \
-  for (size_t i=lastSaved; i<list_size;i++) \
+  for (size_t i=last_saved; i<list_size;i++) \
   { \
     data[i] = *list[i]->varname;\
   }\
@@ -31,7 +31,7 @@
 { \
   const size_t list_size = size(); \
   std::vector<type> data(list_size); \
-  for (size_t i=lastSaved; i<list_size;i++) \
+  for (size_t i=last_saved; i<list_size;i++) \
   { \
     data[i] = list[i]->varname();\
   }\
@@ -42,7 +42,7 @@
 { \
   const size_t list_size = size(); \
   std::vector<double> data(list_size * 3); \
-  for (size_t i=lastSaved; i<list_size;i++) \
+  for (size_t i=last_saved; i<list_size;i++) \
   { \
     auto pos = list[i]->GetPosition(); \
     data[3*i] = pos[0];    \
@@ -56,7 +56,7 @@
 { \
   const size_t list_size = size(); \
   std::vector<double> data(list_size * 3); \
-  for (size_t i=lastSaved; i<list_size;i++) \
+  for (size_t i=last_saved; i<list_size;i++) \
   { \
     auto pos = list[i]->get_position(); \
     data[3*i] = pos[0];    \

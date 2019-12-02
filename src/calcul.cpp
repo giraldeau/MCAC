@@ -130,7 +130,7 @@ void Calcul(PhysicalModel& physicalmodel) //Coeur du programme
             if (physicalmodel.Asurfgrowth > 0.)
             {
                 //$ Growth of all spheres
-                Aggregates.spheres.CroissanceSurface(deltatemps);
+                Aggregates.spheres.croissance_surface(deltatemps);
 
                 //$ Aggregates update
                 for (Aggregate* Agg : Aggregates)

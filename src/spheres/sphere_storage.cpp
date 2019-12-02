@@ -39,7 +39,7 @@ void Sphere::setpointers() {
 }
 /** Default constructor in local storage */
 Sphere::Sphere() noexcept:
-    storage_elem<SpheresFields::NFIELD, ListSphere>(),
+    storage_elem<SpheresFields::NFIELD, SphereList>(),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -53,8 +53,8 @@ Sphere::Sphere() noexcept:
     physicalmodel(nullptr) {
     init_val();
 }
-Sphere::Sphere(PhysicalModel &physical_model) noexcept:
-    storage_elem<SpheresFields::NFIELD, ListSphere>(),
+Sphere::Sphere(const PhysicalModel &physical_model) noexcept:
+    storage_elem<SpheresFields::NFIELD, SphereList>(),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -69,15 +69,15 @@ Sphere::Sphere(PhysicalModel &physical_model) noexcept:
     init_val();
 }
 /** Constructor in local storage with initialization */
-Sphere::Sphere(PhysicalModel &physical_model,
+Sphere::Sphere(const PhysicalModel &physical_model,
                array<double, 3> newposition,
                double newr) noexcept:
     Sphere(physical_model) {
     init_val(newposition, newr);
 }
 /** Constructor with external storage */
-Sphere::Sphere(ListSphere &aggregat, size_t id) noexcept:
-    storage_elem<SpheresFields::NFIELD, ListSphere>(aggregat, id),
+Sphere::Sphere(SphereList &aggregat, size_t id) noexcept:
+    storage_elem<SpheresFields::NFIELD, SphereList>(aggregat, id),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -99,8 +99,8 @@ Sphere::~Sphere() noexcept {
     }
 }
 /** Copy constructor */
-Sphere::Sphere(const Sphere &other, ListSphere &aggregat, size_t id) noexcept:
-    storage_elem<SpheresFields::NFIELD, ListSphere>(other, *this, aggregat),
+Sphere::Sphere(const Sphere &other, SphereList &aggregat, size_t id) noexcept:
+    storage_elem<SpheresFields::NFIELD, SphereList>(other, *this, aggregat),
     x(nullptr),
     y(nullptr),
     z(nullptr),

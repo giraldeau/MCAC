@@ -1,12 +1,10 @@
-#ifndef SPHERELIST_H
-#define SPHERELIST_H 1
+#ifndef INCLUDE_SPHERES_SPHERE_LIST_HPP_
+#define INCLUDE_SPHERES_SPHERE_LIST_HPP_ 1
 #include "io/threaded_io.hpp"
 #include "sphere.hpp"
 #include "physical_model.hpp"
 #include "storagelist.hpp"
-
-
-
+#include "cst.hpp"
 
 /*
 
@@ -29,38 +27,26 @@ Sphere.h and Sphere.cpp defines the data storage.
 namespace MCAC {
 class Sphere;
 
-class ListSphere;
-
-class Aggregate;
-
-class ListAggregat;
-
-class Verlet;
-
-class ListSphere : public storage_list<9, Sphere> {
+class SphereList : public storage_list<SpheresFields::NFIELD, Sphere> {
     friend class Sphere;
-
-    friend class Aggregate;
-
-    friend class StatisticStorage;
 
     /* Generic */
 
 private:
-    PhysicalModel *physicalmodel;
     std::vector<double>::iterator ptr_deb;
     std::vector<double>::iterator ptr_fin;
-    ThreadedIO *Writer;
-    size_t lastSaved;
+    gsl::owner<ThreadedIO *> writer;
+    size_t last_saved;
 public:
-    void Init(PhysicalModel &_physicalmodel, size_t _size);
-    void DecreaseLabel() noexcept;
-    void CroissanceSurface(double dt);
+    const PhysicalModel *physicalmodel;
+    void init(const PhysicalModel &physical_model, size_t size);
+    void decrease_label() noexcept;
+    void croissance_surface(double dt) noexcept;
     void print() const;
     void save() {
         save(false);
     };
-    void save(bool _finish);
+    void save(bool finish);
     auto get_data() const;
     std::vector<double> Format_Position() const;
     std::vector<double> Format_get_radius() const;
@@ -71,29 +57,22 @@ private:
     void setpointers();
 public:
     /** Default constructor in local storage */
-    ListSphere();
-    explicit ListSphere(PhysicalModel &_physicalmodel, size_t _size);
+    SphereList() noexcept;
+    SphereList(const PhysicalModel &physical_model, size_t size) noexcept;
     /** Constructor with external storage */
-    explicit ListSphere(ListSphere &parent, std::vector<size_t> &_index);
-    explicit ListSphere(ListSphere &parent, std::vector<size_t> _index);
+    SphereList(SphereList &parent, const std::vector<size_t>& index) noexcept;
     /** Copy constructor */
-    ListSphere(const ListSphere &other);
-    ListSphere(const ListSphere &other, ListSphere &_Storage);
+    explicit SphereList(const SphereList &other) noexcept = delete;
+    SphereList(const SphereList &other, SphereList &storage) noexcept; // TODO delete
     /** Move constructor */
-    ListSphere(ListSphere &&) noexcept; /* noexcept needed to enable optimizations in containers */
-
+    explicit SphereList(SphereList &&) noexcept; // TODO delete
     /** Destructor */
-    ~ListSphere() noexcept; /* explicitly specified destructors should be annotated noexcept as best-practice */
-
+    ~SphereList() noexcept;
     /** Copy assignment operator */
-    ListSphere &operator=(const ListSphere &other);
+    SphereList &operator=(const SphereList &other) noexcept = delete;
     /** Move assignment operator */
-    ListSphere &operator=(ListSphere &&other) noexcept;
-    friend bool operator==(const ListSphere &, const ListSphere &);
-    friend bool operator!=(const ListSphere &, const ListSphere &);
+    SphereList &operator=(SphereList &&other) noexcept;
 };
-
-std::string filename(int, int);
 }  // namespace MCAC
 
-#endif // SPHERELIST_H
+#endif //INCLUDE_SPHERES_SPHERE_LIST_HPP_

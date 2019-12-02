@@ -10,7 +10,7 @@
 using namespace std;
 namespace MCAC{
 
-pair<vector<double>, vector<double>> compute_volume_surface(const ListSphere& spherelist);
+pair<vector<double>, vector<double>> compute_volume_surface(const SphereList& spherelist);
 
 }
 

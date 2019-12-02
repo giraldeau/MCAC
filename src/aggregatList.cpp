@@ -11,7 +11,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define POW_2(a) ((a)*(a))
-#define POW3(a) ((a)*(a)*(a))
+#define POW_3(a) ((a)*(a)*(a))
 
 using namespace std;
 
@@ -27,7 +27,7 @@ ListAggregat::ListAggregat():
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     Writer(nullptr),
-    lastSaved(0),
+    last_saved(0),
     spheres(),
     verlet()
 {}
@@ -57,7 +57,7 @@ void ListAggregat::Init(PhysicalModel& _physicalmodel,const size_t _size)
 
     physicalmodel=&_physicalmodel;
     Writer = new ThreadedIO(_physicalmodel, _size);
-    spheres.Init(_physicalmodel, _size);
+    spheres.init(_physicalmodel, _size);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
     storage_list<15,Aggregate>::Init(_size,*this);
@@ -363,11 +363,11 @@ ListAggregat::ListAggregat(PhysicalModel& _physicalmodel, const size_t _size):
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     Writer(new ThreadedIO(*physicalmodel, _size)),
-    lastSaved(0),
+    last_saved(0),
     spheres(),
     verlet()
 {
-    spheres.Init(_physicalmodel, _size);
+    spheres.init(_physicalmodel, _size);
     verlet.Init(_physicalmodel.GridDiv,_physicalmodel.L);
 
     storage_list<15,Aggregate>::Init(_size,*this);

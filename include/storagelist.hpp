@@ -35,11 +35,11 @@ public:
     storage_list();
 
     /** Constructor with external storage */
-    explicit storage_list(storage_list& parent,std::vector<size_t> _index);
+    explicit storage_list(storage_list& parent, const std::vector<size_t>& _index);
 
     /** Copy constructor with external storage */
     template<class mylist>
-    storage_list(const storage_list& other, mylist& owner);
+    storage_list(const storage_list& other, const mylist& owner);
 
     template<class mylist>
     storage_list(const storage_list& other, mylist& owner, mylist& _Storage);
@@ -81,7 +81,7 @@ storage_list<N,elem>::storage_list():
 
 /** Constructor with external storage */
 template <int N,class elem>
-storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<size_t> _index):
+storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, const std::vector<size_t>& _index):
     list(),
     Storage(parent.Storage),
     external_storage(&parent)
@@ -99,7 +99,7 @@ storage_list<N,elem>::storage_list(storage_list<N,elem>& parent, std::vector<siz
 /** Copy constructor */
 template <int N,class elem>
 template<class mylist>
-storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner):
+storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, const mylist& owner):
     list(),
     Storage(new std::array< std::vector<double>, N>),
     external_storage(nullptr)
@@ -118,8 +118,8 @@ storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& ow
     list.push_back(new elem(owner,_size));
   }
 }
-
-/** Copy constructor */
+//
+///** Copy constructor */
 template <int N,class elem>
 template<class mylist>
 storage_list<N,elem>::storage_list(const storage_list<N,elem>& other, mylist& owner, mylist& _Storage):
