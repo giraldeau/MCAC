@@ -15,14 +15,10 @@ Sphere.h and Sphere.cpp defines the data storage.
 */
 
 #include "spheres/sphere.hpp"
-#include "cst.hpp"
+#include "tools.hpp"
 #include <iostream>
 
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW_2(a) ((a)*(a))
-#define POW_3(a) ((a)*(a)*(a))
 using namespace std;
 namespace MCAC {
 /* Getters */
@@ -30,19 +26,17 @@ namespace MCAC {
 [[gnu::pure]] double Sphere::get_volume() const noexcept {
     return *volume;
 }
-[[gnu::pure]]  double Sphere::get_surface() const noexcept {
+[[gnu::pure]] double Sphere::get_surface() const noexcept {
     return *surface;
 }
-[[gnu::pure]]  double Sphere::get_radius() const noexcept {
+[[gnu::pure]] double Sphere::get_radius() const noexcept {
     return *r;
 }
-[[gnu::pure]]  array<double, 3> Sphere::get_position() const noexcept {
-    array<double, 3> mypos{{*x, *y, *z}};
-    return mypos;
+[[gnu::pure]] array<double, 3> Sphere::get_position() const noexcept {
+    return {*x, *y, *z};
 }
-[[gnu::pure]]  array<double, 3> Sphere::get_relative_position() const noexcept {
-    array<double, 3> mypos{{*rx, *ry, *rz}};
-    return mypos;
+[[gnu::pure]] array<double, 3> Sphere::get_relative_position() const noexcept {
+    return {*rx, *ry, *rz};
 }
 /* Modifiers */
 void Sphere::set_label(long value) noexcept {
@@ -51,12 +45,10 @@ void Sphere::set_label(long value) noexcept {
 void Sphere::decrease_label() noexcept {
     agg_label--;
 }
-void Sphere::translate(array<double, 3> trans) noexcept {
-    array<double, 3> newpos = get_position();
-    newpos[0] += trans[0];
-    newpos[1] += trans[1];
-    newpos[2] += trans[2];
-    set_position(newpos);
+void Sphere::translate(const array<double, 3> &trans) noexcept {
+    *x += trans[0];
+    *y += trans[1];
+    *z += trans[2];
 }
 void Sphere::relative_translate(array<double, 3> trans) noexcept {
     *rx += trans[0];
@@ -85,6 +77,17 @@ void Sphere::init_val(array<double, 3> newposition, double newr) noexcept {
     *rz = 0.;
     update_vol_and_surf();
 }
+/* #############################################################################################################
+ * ############################################# Sphere growing ################################################
+ * #############################################################################################################*/
+void Sphere::croissance_surface(double dt) noexcept {
+    double new_r = physicalmodel->Grow(*r, dt);
+    double new_r_2 = new_r * new_r;
+    double new_r_3 = new_r_2 * new_r;
+    *r = new_r;
+    *volume = _facvol * new_r_3;
+    *surface = _facsurf * new_r_2;
+}
 void Sphere::print() const noexcept {
     cout << "Printing Sphere " << (indexInStorage) << endl;
     if (!static_cast<bool>(external_storage)) {
@@ -108,7 +111,7 @@ void Sphere::print() const noexcept {
     */
 }
 /* #############################################################################################################
- * ##################################### Volume and surface of a sphere ########################################
+ * ##################################### compute_volume and surface of a sphere ########################################
  * #############################################################################################################*/
 
 
@@ -117,17 +120,6 @@ void Sphere::update_vol_and_surf() noexcept {
         *volume = _facvol * POW_3(*r);
         *surface = _facsurf * POW_2(*r);
     }
-}
-/* #############################################################################################################
- * ############################################# Sphere growing ################################################
- * #############################################################################################################*/
-void Sphere::croissance_surface(double dt) noexcept {
-    double new_r = physicalmodel->Grow(*r, dt);
-    double new_r_2 = new_r * new_r;
-    double new_r_3 = new_r_2 * new_r;
-    *r = new_r;
-    *volume = _facvol * new_r_3;
-    *surface = _facsurf * new_r_2;
 }
 }  // namespace MCAC
 

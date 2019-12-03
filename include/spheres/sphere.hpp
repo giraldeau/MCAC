@@ -1,7 +1,6 @@
 #ifndef INCLUDE_SPHERES_SPHERE_HPP_
 #define INCLUDE_SPHERES_SPHERE_HPP_
 #include "physical_model.hpp"
-#include "sphere_list.hpp"
 #include "storage.hpp"
 #include "cst.hpp"
 #include <array>
@@ -31,12 +30,9 @@ class SphereList;
 
 class ListAggregat;
 
-class Sphere : public storage_elem<SpheresFields::NFIELD, SphereList> {
-    friend class Aggregate;
-
-    friend class SphereList;
-
-    friend class ListAggregat;
+class Sphere : public storage_elem<SpheresFields::SPHERE_NFIELDS, SphereList> {
+    friend class SphereList; // TODO remove (pointers)
+    friend class ListAggregat; // TODO remove (pointers)
 
     /* Generic */
 
@@ -61,13 +57,14 @@ public:
     std::array<double, 3> get_position() const noexcept;
     std::array<double, 3> get_relative_position() const noexcept;
     /* modifiers */
+    void set_label(long value) noexcept;
+    void decrease_label() noexcept;
+    void set_position(std::array<double, 3> newposition) noexcept;
+    void translate(const std::array<double, 3>& trans) noexcept;
+
+    void relative_translate(std::array<double, 3> trans) noexcept;
     void init_val() noexcept;
     void init_val(std::array<double, 3> newposition, double newr) noexcept;
-    void set_position(std::array<double, 3> newposition) noexcept;
-    void translate(std::array<double, 3> trans) noexcept;
-    void relative_translate(std::array<double, 3> trans) noexcept;
-    void set_label(long) noexcept;
-    void decrease_label() noexcept;
     void croissance_surface(double dt) noexcept;
     /* other */
     void print() const noexcept;
@@ -81,7 +78,7 @@ public:
     explicit Sphere(const PhysicalModel &) noexcept;
     explicit Sphere(const Aggregate &) noexcept;
     /** Constructor in local storage with initialization */
-    Sphere(const PhysicalModel &, std::array<double, 3> newposition, double newr) noexcept;
+    Sphere(const PhysicalModel &, const std::array<double, 3> &newposition, double newr) noexcept;
     /** Constructor with external storage */
     Sphere(SphereList &aggregat, size_t id) noexcept;
     /** Destructor */

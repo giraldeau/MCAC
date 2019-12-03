@@ -1,4 +1,5 @@
 #include "spheres/sphere_list.hpp"
+#include "spheres/sphere.hpp"
 
 
 #ifdef WITH_HDF5

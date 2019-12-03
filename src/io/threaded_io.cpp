@@ -2,7 +2,6 @@
 #include "io/threaded_io.hpp"
 #include "cst.hpp"
 #include <gsl/gsl>
-#include <iomanip>
 #include <iostream>
 
 

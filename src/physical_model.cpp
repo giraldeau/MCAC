@@ -21,30 +21,31 @@ namespace MCAC{
 
 const double PI = atan(1.0)*4;
 
-PhysicalModel::PhysicalModel() :
-    Asurfgrowth(0),
+
+PhysicalModel::PhysicalModel(const string& FichierParam) :
     dfe(1.4),
     kfe(1.8),
     xsurfgrowth(2),
     coeffB(0),
-    lambda(0),
-    Dpeqmass(0),
-    rpeqmass(0),
-    gamma_(0),
+    Asurfgrowth(coeffB*1E-3),
     P(101300),
     T(1500),
-    Mu(0),
+    lambda(66.5E-9*(101300/P)*(T/293.15)*(1+110/293.15)/(1+110/T)),
+    Mu(18.203E-6*(293.15+110)/(T+110)*pow(T/293.15,1.5)),
     K(1.38066E-23),
     Rho(1.8e-3),
     Dpm(30),
     sigmaDpm(1.25),
+    Dpeqmass(Dpm*exp(1.5*log(sigmaDpm)*log(sigmaDpm))), //donné par l'équation de Hatch-Choate
+    rpeqmass((Dpeqmass*1E-9)/2.0), //Rayon équivalent massique moyen des monomères
+    gamma_(1.378*(0.5+0.5*erf(((lambda/rpeqmass)+4.454)/10.628))),
     Time(0),
     X(0),
     FV(3e-3),
-    L(DBL_MAX),
+    L(X*Dpm*1E-9),
     precision(1e-5),
     FactorModelBeta(0),
-    CPUStart(0),
+    CPUStart(clock()),
     CPULimit(-1),
     PHY_Time_limit(-1),
     NPP_avg_limit(0),
@@ -57,14 +58,8 @@ PhysicalModel::PhysicalModel() :
     Wait(0),
     WaitLimit(-1),
     ActiveModulephysique(true),
-    ActiveVariationTempo(false),
     use_verlet(true),
-    toBeDestroyed(true),
     CheminSauve()
-{}
-
-
-PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
 {
     FILE* f;
     char sauve[500];
@@ -211,23 +206,13 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
     }
     if( !fgets(com, 500, f))
     {
-        cout << "I need the ActiveVariationTempo parameter" << endl;
-        exit(1);
-    }
-    else
-    {
-        sscanf(com,"%s  %s",commentaires,com);
-        ActiveVariationTempo=atoi(commentaires);
-    }
-    if( !fgets(com, 500, f))
-    {
         cout << "I need the AggMin parameter" << endl;
         exit(1);
     }
     else
     {
         sscanf(com,"%s  %s",commentaires,com);
-        AggMin=size_t(atoi(commentaires));
+        AggMin=MAX(size_t(atoi(commentaires)), 1);
     }
     if( !fgets(com, 500, f))
     {
@@ -318,11 +303,6 @@ PhysicalModel::PhysicalModel(const string& FichierParam) : PhysicalModel()
             exit(1);
         }
     }
-}
-
-
-void PhysicalModel::Init()
-{
 
     L = X*Dpm*1E-9;
     Time=0;
@@ -347,11 +327,9 @@ void PhysicalModel::Init()
     UseSecante();
 
     print();
-
-    toBeDestroyed = false;
 }
 
-bool PhysicalModel::Finished(const size_t Nagg, const size_t NPP_avg) const
+bool PhysicalModel::Finished(const size_t Nagg, const double NPP_avg) const
 {
     if (Nagg <= AggMin)
     {
@@ -476,6 +454,15 @@ void PhysicalModel::print() const
         cout << " - The average Npp per aggregate reach " << NPP_avg_limit << " monomers" << endl;
     }
     cout << endl;
+
+    if (ActiveModulephysique)
+    {
+        cout << "Physical module activated." << endl;
+    }
+    else
+    {
+        cout << "Physical module not activated." << endl;
+    }
 }
 
 

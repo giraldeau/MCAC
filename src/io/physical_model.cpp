@@ -29,7 +29,6 @@ shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
     info->insert(xmf_format_double("L", L));
     info->insert(xmf_format_integer("N []", N));
     info->insert(xmf_format_bool("ActiveModulephysique", ActiveModulephysique));
-    info->insert(xmf_format_bool("ActiveVariationTempo", ActiveVariationTempo));
     return info;
 }
 } // namespace MCAC

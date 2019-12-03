@@ -1,12 +1,11 @@
 #ifdef WITH_HDF5
 #include "io/writer.hpp"
-#include <io/threaded_io.hpp>
+#include "io/threaded_io.hpp"
 #include "io/format.hpp"
-#include <io/xmf_includes.hpp>
-#include <iomanip>
+#include "io/xmf_includes.hpp"
 #include <iostream>
 #include <gsl/gsl>
-#include "XdmfGridCollection.hpp"
+#include <XdmfGridCollection.hpp>
 
 
 namespace fs = std::experimental::filesystem;
@@ -68,7 +67,7 @@ void ThreadedIO::create_file() {
     }
     if (gsl::at(status, static_cast<size_t>(current_thread)) == WriterStatus::APPENDING) {
         std::cout << "And what should happen to the old file ?" << std::endl;
-        exit(5);
+        exit(ErrorCodes::IO_ERROR);
     }
     // Prepare Xmf file
     gsl::at(xmf_file, static_cast<size_t>(current_thread)) = XdmfDomain::New();
@@ -87,7 +86,7 @@ void ThreadedIO::write(const fs::path &prefix, const shared_ptr<XdmfUnstructured
     }
     if (gsl::at(status, static_cast<size_t>(current_thread)) != WriterStatus::APPENDING) {
         std::cout << "File is not ready..." << std::endl;
-        exit(5);
+        exit(ErrorCodes::IO_ERROR);
     }
     gsl::at(time_collection, static_cast<size_t>(current_thread))->insert(data);
     step++;

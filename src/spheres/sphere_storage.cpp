@@ -19,27 +19,25 @@ Sphere.h and Sphere.cpp defines the data storage.
 */
 
 #include "spheres/sphere.hpp"
-#include <cstdio>
-#include <iomanip>
-#include <iostream>
+#include "aggregats/aggregat.hpp"
 
 
 using namespace std;
 namespace MCAC {
 void Sphere::setpointers() {
-    x = &(*Storage)[SpheresFields::X][indexInStorage];
-    y = &(*Storage)[SpheresFields::Y][indexInStorage];
-    z = &(*Storage)[SpheresFields::Z][indexInStorage];
-    r = &(*Storage)[SpheresFields::R][indexInStorage];
-    volume = &(*Storage)[SpheresFields::VOLUME][indexInStorage];
-    surface = &(*Storage)[SpheresFields::SURFACE][indexInStorage];
-    rx = &(*Storage)[SpheresFields::RX][indexInStorage];
-    ry = &(*Storage)[SpheresFields::RY][indexInStorage];
-    rz = &(*Storage)[SpheresFields::RZ][indexInStorage];
+    x = &(*Storage)[SpheresFields::SPHERE_X][indexInStorage];
+    y = &(*Storage)[SpheresFields::SPHERE_Y][indexInStorage];
+    z = &(*Storage)[SpheresFields::SPHERE_Z][indexInStorage];
+    r = &(*Storage)[SpheresFields::SPHERE_R][indexInStorage];
+    volume = &(*Storage)[SpheresFields::SPHERE_VOLUME][indexInStorage];
+    surface = &(*Storage)[SpheresFields::SPHERE_SURFACE][indexInStorage];
+    rx = &(*Storage)[SpheresFields::SPHERE_RX][indexInStorage];
+    ry = &(*Storage)[SpheresFields::SPHERE_RY][indexInStorage];
+    rz = &(*Storage)[SpheresFields::SPHERE_RZ][indexInStorage];
 }
 /** Default constructor in local storage */
 Sphere::Sphere() noexcept:
-    storage_elem<SpheresFields::NFIELD, SphereList>(),
+    storage_elem<SpheresFields::SPHERE_NFIELDS, SphereList>(),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -54,7 +52,7 @@ Sphere::Sphere() noexcept:
     init_val();
 }
 Sphere::Sphere(const PhysicalModel &physical_model) noexcept:
-    storage_elem<SpheresFields::NFIELD, SphereList>(),
+    storage_elem<SpheresFields::SPHERE_NFIELDS, SphereList>(),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -70,14 +68,14 @@ Sphere::Sphere(const PhysicalModel &physical_model) noexcept:
 }
 /** Constructor in local storage with initialization */
 Sphere::Sphere(const PhysicalModel &physical_model,
-               array<double, 3> newposition,
+               const array<double, 3> &newposition,
                double newr) noexcept:
     Sphere(physical_model) {
     init_val(newposition, newr);
 }
 /** Constructor with external storage */
 Sphere::Sphere(SphereList &aggregat, size_t id) noexcept:
-    storage_elem<SpheresFields::NFIELD, SphereList>(aggregat, id),
+    storage_elem<SpheresFields::SPHERE_NFIELDS, SphereList>(aggregat, id),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -92,15 +90,16 @@ Sphere::Sphere(SphereList &aggregat, size_t id) noexcept:
     init_val();
     external_storage->setpointers();
 }
+Sphere::Sphere(const Aggregate &aggregate) noexcept : Sphere() {
+    physicalmodel = aggregate.physicalmodel;
+    init_val(aggregate.get_position(), aggregate.get_rmax());
+}
 /** Destructor */
 Sphere::~Sphere() noexcept {
-    if (static_cast<bool>(physicalmodel) && physicalmodel->toBeDestroyed) {
-        delete physicalmodel;
-    }
 }
 /** Copy constructor */
 Sphere::Sphere(const Sphere &other, SphereList &aggregat, size_t id) noexcept:
-    storage_elem<SpheresFields::NFIELD, SphereList>(other, *this, aggregat),
+    storage_elem<SpheresFields::SPHERE_NFIELDS, SphereList>(other, *this, aggregat),
     x(nullptr),
     y(nullptr),
     z(nullptr),

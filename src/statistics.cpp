@@ -1,5 +1,7 @@
 #include "statistics.hpp"
-#include "aggregat.hpp"
+#include "aggregats/aggregat.hpp"
+#include "aggregats/aggregat_list.hpp"
+#include "spheres/sphere.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -33,12 +35,12 @@ void Aggregate::fullStatistics()
 
     Dp=0.;
     //$ For the Spheres i in Agg Id
-    for (size_t i = 0; i < Np; i++)
+    for (size_t i = 0; i < n_spheres; i++)
     {
     }
 
     //$ For the Spheres i in Agg Id
-    for (size_t i = 0; i < Np; i++)
+    for (size_t i = 0; i < n_spheres; i++)
     {
         /*
         for (size_t j = i+1; j < Np; j++) //for the j spheres composing Aggregate n°id
@@ -68,7 +70,7 @@ void Aggregate::fullStatistics()
 
     //Tv = 1 - Tv / double(Np);
     //Ts = 1 - Ts / double(Np);
-    Dp = 2 * Dp / double(Np);
+    Dp = 2 * Dp / double(n_spheres);
     //Dp3 = pow(Dp3 / double(Np) , 1./3.);
 
     DgOverDp=2*(*rg)/Dp;
@@ -78,7 +80,7 @@ void Aggregate::fullStatistics()
     //Npe = *volAgregat/(PI * POW3(Dp3)/6.0);
 }
 
-tuple<bool,double,double,double> ListAggregat::getInstantaneousFractalLaw() const
+tuple<bool,double,double,double> ListAggregat::get_instantaneous_fractal_law() const
 {
     vector<double> Nps;
     vector<double> DgOverDps;
@@ -87,7 +89,7 @@ tuple<bool,double,double,double> ListAggregat::getInstantaneousFractalLaw() cons
 
     for (const Aggregate* Agg : list)
     {
-        Nps.push_back(double(Agg->Np));
+        Nps.push_back(double(Agg->size()));
         DgOverDps.push_back(Agg->DgOverDp);
     }
 
@@ -110,130 +112,6 @@ tuple<bool,double,double,double> ListAggregat::getInstantaneousFractalLaw() cons
     }
     return d<0;
 }
-
-
-bool StatisticStorage::InsertIfNew(const Aggregate& Agg)
-{
-
-    if (Agg.Np <10)
-    {
-        return false;
-    }
-
-    if (FractalLaw.size() < Agg.Np)
-        FractalLaw.resize(physicalmodel->N);
-
-    auto ret = FractalLaw[Agg.Np - 1].emplace(Agg.DgOverDp);
-    if(ret.second)
-    {
-//        Aggregate* newagg = SavedAggregates->add(Agg);
-//        times.push_back(newagg->physicalmodel->Time);
-    }
-
-    return ret.second;
-}
-
-StatisticStorage::StatisticStorage(PhysicalModel& _physicalmodel):
-    physicalmodel(&_physicalmodel),
-    SavedAggregates(new ListAggregat(*physicalmodel,0)),
-    FractalLaw(),
-    times(),
-    WriterAgg(),
-    WriterSph()
-{
-}
-
-void StatisticStorage::Init()
-{
-    FractalLaw.resize(physicalmodel->N);
-    WriterAgg = new ThreadedIO(*physicalmodel, physicalmodel->N);
-    WriterSph = new ThreadedIO(*physicalmodel, physicalmodel->N);
-
-}
-
-void StatisticStorage::Analyze(const ListAggregat& current)
-{
-    // Store aggregates for statistical analysis
-    for (const Aggregate* Agg : current)
-    {
-        InsertIfNew(*Agg);
-    }
-}
-tuple<bool,double,double,double> StatisticStorage::getCompleteFractalLaw() const
-{
-    size_t total(0);
-    for (size_t Np=1;Np<=FractalLaw.size();Np++)
-    {
-        total += FractalLaw[Np - 1].size();
-    }
-    vector<double> Nps;
-    vector<double> DgOverDps;
-    Nps.reserve(total);
-    DgOverDps.reserve(total);
-
-    for (size_t Np=1;Np<=FractalLaw.size();Np++)
-    {
-        for (const double& DgOverDp : FractalLaw[Np - 1])
-        {
-            Nps.push_back(double(Np));
-            DgOverDps.push_back(DgOverDp);
-        }
-    }
-
-    return linreg(DgOverDps,Nps);
-}
-
-void StatisticStorage::print() const
-{
-
-    /*
-    ofstream myfile;
-    myfile.open ("testStats.dat", ios::out | ios::trunc);
-
-    for (size_t Np=1;Np<=FractalLaw.size();Np++)
-    {
-        for (const double& DgOverDp : FractalLaw[Np])
-        {
-            myfile << DgOverDp << "\t" << Np << endl;
-        }
-    }
-
-    myfile.close();
-    cout << "Total number of saved aggregates : " << total << endl;
-    */
-
-    size_t total(0);
-    for (size_t Np=1;Np<=FractalLaw.size();Np++)
-    {
-        total += FractalLaw[Np - 1].size();
-    }
-    cout << "Total number of saved aggregates : " << total << endl;
-
-    auto CompleteFractalLaw = getCompleteFractalLaw();
-    if(get<0>(CompleteFractalLaw))
-    {
-        cout << "Estimation of the fractal law : " << endl << "  "
-             << exp(get<2>(CompleteFractalLaw))
-             << " * x^ "
-             << get<1>(CompleteFractalLaw)
-             << "  --- r= "
-             << get<3>(CompleteFractalLaw) << endl;
-    }
-
-}
-
-/** Destructor */
-StatisticStorage::~StatisticStorage() noexcept
-{
-    if(physicalmodel->toBeDestroyed)
-    {
-        delete physicalmodel;
-    }
-    delete WriterAgg;
-    delete WriterSph;
-    delete SavedAggregates;
-}
-
 
 void StatisicsData::partialStatistics(){}
 void StatisicsData::fullStatistics(){}

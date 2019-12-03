@@ -1,7 +1,6 @@
 #ifndef INCLUDE_SPHERES_SPHERE_LIST_HPP_
 #define INCLUDE_SPHERES_SPHERE_LIST_HPP_ 1
 #include "io/threaded_io.hpp"
-#include "sphere.hpp"
 #include "physical_model.hpp"
 #include "storagelist.hpp"
 #include "cst.hpp"
@@ -27,7 +26,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 namespace MCAC {
 class Sphere;
 
-class SphereList : public storage_list<SpheresFields::NFIELD, Sphere> {
+class SphereList : public storage_list<SpheresFields::SPHERE_NFIELDS, Sphere> {
     friend class Sphere;
 
     /* Generic */
@@ -60,7 +59,7 @@ public:
     SphereList() noexcept;
     SphereList(const PhysicalModel &physical_model, size_t size) noexcept;
     /** Constructor with external storage */
-    SphereList(SphereList &parent, const std::vector<size_t>& index) noexcept;
+    SphereList(SphereList &parent, const std::vector<size_t> &index) noexcept;
     /** Copy constructor */
     explicit SphereList(const SphereList &other) noexcept = delete;
     SphereList(const SphereList &other, SphereList &storage) noexcept; // TODO delete

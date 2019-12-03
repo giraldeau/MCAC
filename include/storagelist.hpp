@@ -294,7 +294,7 @@ void storage_list<N,elem>::remove(const size_t& id)
     }
     for (size_t i = id; i<list.size();i++)
     {
-        list[i]->DecreaseLabel();
+        list[i]->decrease_label();
     }
 }
 

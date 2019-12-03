@@ -22,24 +22,19 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 #include "spheres/sphere_collision.hpp"
 #include "spheres/sphere_distance.hpp"
+#include "tools.hpp"
 #include <cmath>
-#include <cstdio>
-#include <iomanip>
-#include <iostream>
 
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW_2(a) ((a)*(a))
 using namespace std;
 namespace MCAC {
 [[gnu::pure]]  pair<bool, double> collision(const Sphere &sphere_1, const Sphere &sphere_2,
-                                            array<double, 3> displacement) noexcept {
+                                            const array<double, 3> &displacement) noexcept {
     array<array<double, 3>, 3> rot_mat = get_rot_mat(displacement);
     return collision_r(sphere_1, sphere_2, rot_mat);
 }
 [[gnu::pure]]  pair<bool, double> collision_r(const Sphere &sphere_1, const Sphere &sphere_2,
-                                              array<array<double, 3>, 3> rot_mat) noexcept {
+                                              const array<array<double, 3>, 3> &rot_mat) noexcept {
     /*
      * We use a change of axis system
      * the center is placed on the mobil sphere
@@ -65,30 +60,25 @@ namespace MCAC {
         double L = sphere_1.physicalmodel->L;
         collision = false;
         minval = 10 * L;
-        array<double, 3> oldpos1 = sphere_1.get_position();
-        array<double, 3> oldpos2 = sphere_2.get_position();
+        array<double, 3> oldpos1{sphere_1.get_position()};
+        array<double, 3> oldpos2{sphere_2.get_position()};
         array<double, 3> pos{};
         for (size_t l = 0; l < 3; ++l) {
-            pos[l] = rot_mat[l][0] * (oldpos2[0] - oldpos1[0])
-                     + rot_mat[l][1] * (oldpos2[1] - oldpos1[1])
-                     + rot_mat[l][2] * (oldpos2[2] - oldpos1[2]);
+            pos[l] = sum(rot_mat[l] * (oldpos2 - oldpos1));
         }
-        array<double, 3> perx{{L * rot_mat[0][0],
-                               L * rot_mat[1][0],
-                               L * rot_mat[2][0],}};
-        array<double, 3> pery{{L * rot_mat[0][1],
-                               L * rot_mat[1][1],
-                               L * rot_mat[2][1],}};
-        array<double, 3> perz{{L * rot_mat[0][2],
-                               L * rot_mat[1][2],
-                               L * rot_mat[2][2],}};
+        array<double, 3> perx{L * rot_mat[0][0],
+                              L * rot_mat[1][0],
+                              L * rot_mat[2][0],};
+        array<double, 3> pery{L * rot_mat[0][1],
+                              L * rot_mat[1][1],
+                              L * rot_mat[2][1],};
+        array<double, 3> perz{L * rot_mat[0][2],
+                              L * rot_mat[1][2],
+                              L * rot_mat[2][2],};
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 for (int k = -1; k <= 1; k++) {
-                    array<double, 3> tmp{};
-                    tmp[0] = pos[0] + i * perx[0] + j * pery[0] + k * perz[0];
-                    tmp[1] = pos[1] + i * perx[1] + j * pery[1] + k * perz[1];
-                    tmp[2] = pos[2] + i * perx[2] + j * pery[2] + k * perz[2];
+                    array<double, 3> tmp{pos + i * perx + j * pery + k * perz};
 
                     // in the future
                     if (tmp[0] < 0.) {
@@ -113,8 +103,8 @@ namespace MCAC {
 }
 [[gnu::pure]]  vector<double> collisions(const Sphere &sphere_1,
                                          const SphereList &list,
-                                         array<double, 3> displacement) noexcept {
-    array<array<double, 3>, 3> rot_mat = get_rot_mat(displacement);
+                                         const array<double, 3> &displacement) noexcept {
+    array<array<double, 3>, 3> rot_mat{get_rot_mat(displacement)};
     vector<double> dist_to_collision;
     for (const Sphere *sphere_2 : list) {
         pair<bool, double> suspect = collision_r(sphere_1, *sphere_2, rot_mat);
@@ -124,7 +114,7 @@ namespace MCAC {
     }
     return dist_to_collision;
 }
-[[gnu::pure]] array<array<double, 3>, 3> get_rot_mat(array<double, 3> displacement) noexcept {
+[[gnu::pure]] array<array<double, 3>, 3> get_rot_mat(const array<double, 3> &displacement) noexcept {
     double anglez = -atan2(displacement[1], displacement[0]);
     array<array<double, 3>, 3> rotz{};
     rotz[0] = {{cos(anglez), -sin(anglez), 0}};
@@ -132,10 +122,7 @@ namespace MCAC {
     rotz[2] = {{0, 0, 1}};
     array<double, 3> tmp{};
     for (size_t i = 0; i < 3; ++i) {
-        tmp[i] = 0;
-        for (size_t j = 0; j < 3; ++j) {
-            tmp[i] += rotz[i][j] * displacement[j];
-        }
+        tmp[i] = sum(rotz[i] * displacement);
     }
     double angley = atan2(tmp[2], tmp[0]);
     array<array<double, 3>, 3> roty{};

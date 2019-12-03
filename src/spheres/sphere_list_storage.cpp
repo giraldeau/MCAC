@@ -18,12 +18,9 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 */
 
-
-
 #include "spheres/sphere_list.hpp"
-#include <cstdio>
+#include "spheres/sphere.hpp"
 #include <iostream>
-#include <utility>
 
 
 using namespace std;
@@ -42,7 +39,7 @@ void SphereList::setpointers() {
 }
 /** Default constructor in local storage */
 SphereList::SphereList() noexcept :
-    storage_list<SpheresFields::NFIELD, Sphere>(),
+    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(nullptr),
@@ -50,7 +47,7 @@ SphereList::SphereList() noexcept :
     physicalmodel(nullptr) {
 }
 SphereList::SphereList(const PhysicalModel &physical_model, size_t size) noexcept :
-    storage_list<SpheresFields::NFIELD, Sphere>(),
+    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(new ThreadedIO(physical_model, size)),
@@ -60,7 +57,7 @@ SphereList::SphereList(const PhysicalModel &physical_model, size_t size) noexcep
 }
 /** Constructor with external storage */
 SphereList::SphereList(SphereList &parent, const vector<size_t> &index) noexcept:
-    storage_list<SpheresFields::NFIELD, Sphere>(parent, index),
+    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(parent, index),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(new ThreadedIO(*parent.physicalmodel, size())),
@@ -85,7 +82,7 @@ SphereList::SphereList(SphereList &parent, const vector<size_t> &index) noexcept
 //}
 //
 SphereList::SphereList(const SphereList &other, SphereList &storage) noexcept:
-    storage_list<SpheresFields::NFIELD, Sphere>(other, *this, storage),
+    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(other, *this, storage),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(new ThreadedIO(*other.physicalmodel, size())),
@@ -98,7 +95,7 @@ SphereList::SphereList(const SphereList &other, SphereList &storage) noexcept:
 }
 /** Move constructor */
 SphereList::SphereList(SphereList &&other) noexcept:
-    storage_list<SpheresFields::NFIELD, Sphere>(move(other)),
+    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(move(other)),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(other.writer),
@@ -109,9 +106,6 @@ SphereList::SphereList(SphereList &&other) noexcept:
 }
 /** Destructor */
 SphereList::~SphereList() noexcept {
-    if (static_cast<bool>(physicalmodel) && physicalmodel->toBeDestroyed) {
-        delete physicalmodel;
-    }
     delete writer;
 }
 
@@ -126,16 +120,13 @@ SphereList::~SphereList() noexcept {
 
 /** Move assignment operator */
 SphereList &SphereList::operator=(SphereList &&other) noexcept {
-    if (static_cast<bool>(physicalmodel) && physicalmodel->toBeDestroyed) {
-        delete physicalmodel;
-    }
     delete writer;
     physicalmodel = other.physicalmodel;
     writer = other.writer;
     last_saved = other.last_saved;
     other.physicalmodel = nullptr;
     other.writer = nullptr;
-    storage_list<SpheresFields::NFIELD, Sphere>::operator=(move(other));
+    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>::operator=(move(other));
     setpointers();
     return *this;
 }

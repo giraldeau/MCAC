@@ -1,13 +1,9 @@
 #include "spheres/sphere_intersection.hpp"
 #include "spheres/sphere_distance.hpp"
-#include "cst.hpp"
+#include "tools.hpp"
 #include <cmath>
 
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW_2(a) ((a)*(a))
-#define POW_3(a) ((a)*(a)*(a))
 using namespace std;
 namespace MCAC {
 Intersection::Intersection(const Sphere &sphere_1,
@@ -19,8 +15,11 @@ Intersection::Intersection(const Sphere &sphere_1, const Sphere &sphere_2,
     volume_1{0.},
     volume_2{0.},
     surface_1{0.},
-    surface_2{0.} {
-    dist = given_dist;
+    surface_2{0.},
+    dist{given_dist} {
+    if (given_dist <= 0) {
+        return;
+    }
     double radius_1 = sphere_1.get_radius();
     double radius_2 = sphere_2.get_radius();
 

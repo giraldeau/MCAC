@@ -18,14 +18,9 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 */
 #include "spheres/sphere_list.hpp"
-#include <iomanip>
+#include "spheres/sphere.hpp"
 #include <iostream>
 
-
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW_2(a) ((a)*(a))
-#define POW_3(a) ((a)*(a)*(a))
 
 
 /* #############################################################################################################
@@ -36,13 +31,10 @@ Sphere.h and Sphere.cpp defines the data storage.
 using namespace std;
 namespace MCAC {
 void SphereList::init(const PhysicalModel &physical_model, size_t size) {
-    if (static_cast<bool>(physicalmodel) && physicalmodel->toBeDestroyed) {
-        delete physicalmodel;
-    }
     delete writer;
     physicalmodel = &physical_model;
     writer = new ThreadedIO(physical_model, size);
-    storage_list<SpheresFields::NFIELD, Sphere>::Init(size, *this);
+    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>::Init(size, *this);
     setpointers();
 }
 void SphereList::decrease_label() noexcept {
