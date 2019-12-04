@@ -26,8 +26,8 @@ Sphere.h and Sphere.cpp defines the data storage.
 using namespace std;
 namespace MCAC {
 void SphereList::setpointers() {
-    auto newdeb((*Storage)[0].begin());
-    auto newfin((*Storage)[0].end());
+    auto newdeb((*storage)[0].begin());
+    auto newfin((*storage)[0].end());
     if ((newdeb == ptr_deb) && (newfin == ptr_fin)) {
         return;
     }
@@ -39,7 +39,7 @@ void SphereList::setpointers() {
 }
 /** Default constructor in local storage */
 SphereList::SphereList() noexcept :
-    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(),
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(nullptr),
@@ -47,7 +47,7 @@ SphereList::SphereList() noexcept :
     physicalmodel(nullptr) {
 }
 SphereList::SphereList(const PhysicalModel &physical_model, size_t size) noexcept :
-    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(),
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(new ThreadedIO(physical_model, size)),
@@ -57,7 +57,7 @@ SphereList::SphereList(const PhysicalModel &physical_model, size_t size) noexcep
 }
 /** Constructor with external storage */
 SphereList::SphereList(SphereList &parent, const vector<size_t> &index) noexcept:
-    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(parent, index),
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(parent, index),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(new ThreadedIO(*parent.physicalmodel, size())),
@@ -81,8 +81,8 @@ SphereList::SphereList(SphereList &parent, const vector<size_t> &index) noexcept
 //    setpointers();
 //}
 //
-SphereList::SphereList(const SphereList &other, SphereList &storage) noexcept:
-    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(other, *this, storage),
+SphereList::SphereList(const SphereList &other, SphereList &_Storage) noexcept:
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(other, *this, _Storage),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(new ThreadedIO(*other.physicalmodel, size())),
@@ -95,7 +95,7 @@ SphereList::SphereList(const SphereList &other, SphereList &storage) noexcept:
 }
 /** Move constructor */
 SphereList::SphereList(SphereList &&other) noexcept:
-    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>(move(other)),
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(move(other)),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
     writer(other.writer),
@@ -126,7 +126,7 @@ SphereList &SphereList::operator=(SphereList &&other) noexcept {
     last_saved = other.last_saved;
     other.physicalmodel = nullptr;
     other.writer = nullptr;
-    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>::operator=(move(other));
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>::operator=(move(other));
     setpointers();
     return *this;
 }

@@ -58,7 +58,7 @@ void Aggregate::decrease_label() noexcept {
         verlet->Remove(get_label(), index_verlet);
     }
     // Keep index and label in sync
-    DecreaseIndex();
+    decrease_index();
     label--;
 
     // Keep aggLabel of myspheres in sync
@@ -114,7 +114,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
         verlet->Remove(label, index_verlet);
     }
     label = new_label;
-    indexInStorage = new_label;
+    index_in_storage = new_label;
     if (static_cast<bool>(external_storage)) {
         external_storage->setpointers();
     }
@@ -285,7 +285,7 @@ void Aggregate::merge(Aggregate &other) noexcept {
     fullStatistics();
 }
 void Aggregate::print() const noexcept {
-    cout << "Printing details of Aggregat " << indexInStorage << " " << label << endl;
+    cout << "Printing details of Aggregat " << index_in_storage << " " << label << endl;
     if (static_cast<bool>(external_storage)) {
         cout << "  With external Storage" << endl;
     } else {

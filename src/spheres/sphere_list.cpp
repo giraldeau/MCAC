@@ -34,7 +34,7 @@ void SphereList::init(const PhysicalModel &physical_model, size_t size) {
     delete writer;
     physicalmodel = &physical_model;
     writer = new ThreadedIO(physical_model, size);
-    storage_list<SpheresFields::SPHERE_NFIELDS, Sphere>::Init(size, *this);
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>::init(size, *this);
     setpointers();
 }
 void SphereList::decrease_label() noexcept {

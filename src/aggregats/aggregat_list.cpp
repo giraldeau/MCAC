@@ -85,7 +85,7 @@ void AggregatList::duplication() {
                 for (int k = 0; k <= 1; k++) {
                     if (i != 0 or j != 0 or k != 0) {
                         Aggregate *newAgg =
-                            storage_list<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
+                            ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
                         newAgg->label = size() - 1;
                         newAgg->set_verlet(verlet);
                         setpointers();

@@ -2,7 +2,7 @@
 #define INCLUDE_AGGREGATS_AGGREGAT_HPP_ 1
 #include "spheres/sphere_list.hpp"
 #include "statistics/statistics.hpp"
-#include "elem_storage/storage.hpp"
+#include "elem_storage/elem_storage.hpp"
 #include "cst.hpp"
 #include <list>
 
@@ -13,7 +13,7 @@ class AggregatList;
 class Verlet;
 
 class Aggregate :
-    public storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>,
+    public ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>,
     public StatisicsData {
     friend class AggregatList;
 
@@ -76,7 +76,7 @@ public:
               Verlet &,
               const std::array<double, 3> &position,
               size_t new_label,
-              SphereList&,
+              SphereList &,
               double sphere_diameter) noexcept;
     void update() noexcept;
     void compute_volume() noexcept;
@@ -106,7 +106,7 @@ public:
     /** Move constructor */
     Aggregate(Aggregate &&) noexcept = delete;
     /** Copy assignment operator */
-    Aggregate &operator=(const Aggregate &other) noexcept= delete;
+    Aggregate &operator=(const Aggregate &other) noexcept = delete;
     /** Move assignment operator */
     Aggregate &operator=(Aggregate &&other) noexcept = delete;
 };

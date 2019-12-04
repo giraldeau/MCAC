@@ -6,23 +6,23 @@
 using namespace std;
 namespace MCAC {
 void Aggregate::setpointers() noexcept {
-    rg = &(*Storage)[AggregatesFields::AGGREGAT_RG][indexInStorage];
-    f_agg = &(*Storage)[AggregatesFields::AGGREGAT_F_AGG][indexInStorage];
-    lpm = &(*Storage)[AggregatesFields::AGGREGAT_LPM][indexInStorage];
-    time_step = &(*Storage)[AggregatesFields::AGGREGAT_TIME_STEP][indexInStorage];
-    rmax = &(*Storage)[AggregatesFields::AGGREGAT_RMAX][indexInStorage];
-    agregat_volume = &(*Storage)[AggregatesFields::AGGREGAT_VOLUME][indexInStorage];
-    agregat_surface = &(*Storage)[AggregatesFields::AGGREGAT_SURFACE][indexInStorage];
-    x = &(*Storage)[AggregatesFields::AGGREGAT_X][indexInStorage];
-    y = &(*Storage)[AggregatesFields::AGGREGAT_Y][indexInStorage];
-    z = &(*Storage)[AggregatesFields::AGGREGAT_Z][indexInStorage];
-    rx = &(*Storage)[AggregatesFields::AGGREGAT_RX][indexInStorage];
-    ry = &(*Storage)[AggregatesFields::AGGREGAT_RY][indexInStorage];
-    rz = &(*Storage)[AggregatesFields::AGGREGAT_RZ][indexInStorage];
-    time = &(*Storage)[AggregatesFields::AGGREGAT_TIME][indexInStorage];
+    rg = &(*storage)[AggregatesFields::AGGREGAT_RG][index_in_storage];
+    f_agg = &(*storage)[AggregatesFields::AGGREGAT_F_AGG][index_in_storage];
+    lpm = &(*storage)[AggregatesFields::AGGREGAT_LPM][index_in_storage];
+    time_step = &(*storage)[AggregatesFields::AGGREGAT_TIME_STEP][index_in_storage];
+    rmax = &(*storage)[AggregatesFields::AGGREGAT_RMAX][index_in_storage];
+    agregat_volume = &(*storage)[AggregatesFields::AGGREGAT_VOLUME][index_in_storage];
+    agregat_surface = &(*storage)[AggregatesFields::AGGREGAT_SURFACE][index_in_storage];
+    x = &(*storage)[AggregatesFields::AGGREGAT_X][index_in_storage];
+    y = &(*storage)[AggregatesFields::AGGREGAT_Y][index_in_storage];
+    z = &(*storage)[AggregatesFields::AGGREGAT_Z][index_in_storage];
+    rx = &(*storage)[AggregatesFields::AGGREGAT_RX][index_in_storage];
+    ry = &(*storage)[AggregatesFields::AGGREGAT_RY][index_in_storage];
+    rz = &(*storage)[AggregatesFields::AGGREGAT_RZ][index_in_storage];
+    time = &(*storage)[AggregatesFields::AGGREGAT_TIME][index_in_storage];
 }
 Aggregate::Aggregate() noexcept:
-    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(),
+    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(),
     StatisicsData(),
     rg(nullptr),
     f_agg(nullptr),
@@ -50,7 +50,7 @@ Aggregate::Aggregate() noexcept:
     myspheres() {
 }
 Aggregate::Aggregate(AggregatList &_storage, const size_t newlabel) noexcept:
-    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(_storage, newlabel),
+    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(_storage, newlabel),
     StatisicsData(),
     rg(nullptr),
     f_agg(nullptr),
@@ -84,7 +84,7 @@ Aggregate::~Aggregate() noexcept {
 }
 /** Copy constructor */
 Aggregate::Aggregate(const Aggregate &other, AggregatList &_Storage) noexcept:
-    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(other, *this, _Storage),
+    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(other, *this, _Storage),
     StatisicsData(other),
     rg(nullptr),
     f_agg(nullptr),
@@ -112,7 +112,7 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList &_Storage) noexcept:
     myspheres(other.myspheres, _Storage.spheres) {
     setpointers();
     for (Sphere *s : myspheres) {
-        s->set_label(long(indexInStorage));
+        s->set_label(long(index_in_storage));
     }
 }
 //Aggregate::Aggregate(const Aggregate &other) :

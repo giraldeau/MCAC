@@ -5,8 +5,8 @@
 using namespace std;
 namespace MCAC {
 void AggregatList::setpointers() {
-    auto newdeb((*Storage)[0].begin());
-    auto newfin((*Storage)[0].end());
+    auto newdeb((*storage)[0].begin());
+    auto newfin((*storage)[0].end());
     if ((newdeb == ptr_deb) && (newfin == ptr_fin)) {
         return;
     }
@@ -17,7 +17,7 @@ void AggregatList::setpointers() {
     ptr_fin = newfin;
 }
 AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
-    storage_list<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),
+    ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),
     physicalmodel(the_physical_model),
     maxradius(0.),
     avg_npp(1),
@@ -31,7 +31,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     spheres(*the_physical_model, physicalmodel->N),
     verlet() {
     verlet.Init(the_physical_model->GridDiv, the_physical_model->L);
-    storage_list<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::Init(physicalmodel->N, *this);
+    ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::init(physicalmodel->N, *this);
     setpointers();
 
     //Initialize the aggregates

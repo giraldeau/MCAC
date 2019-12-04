@@ -3,12 +3,12 @@
 #include "spheres/sphere_list.hpp"
 #include "aggregat.hpp"
 #include "physical_model/physical_model.hpp"
-#include "list_storage/storagelist.hpp"
+#include "list_storage/list_storage.hpp"
 #include "verlet/verlet.hpp"
 
 
 namespace MCAC {
-class AggregatList : public storage_list<AggregatesFields::AGGREGAT_NFIELDS, Aggregate> {
+class AggregatList : public ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate> {
     friend class Aggregate;
 
 private:

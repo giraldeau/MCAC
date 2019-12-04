@@ -1,7 +1,7 @@
 #ifndef INCLUDE_SPHERES_SPHERE_HPP_
 #define INCLUDE_SPHERES_SPHERE_HPP_
 #include "physical_model/physical_model.hpp"
-#include "elem_storage/storage.hpp"
+#include "elem_storage/elem_storage.hpp"
 #include "cst.hpp"
 #include <array>
 #include <vector>
@@ -30,7 +30,7 @@ class SphereList;
 
 class AggregatList;
 
-class Sphere : public storage_elem<SpheresFields::SPHERE_NFIELDS, SphereList> {
+class Sphere : public ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList> {
     friend class SphereList; // TODO remove (pointers)
     friend class AggregatList; // TODO remove (pointers)
 

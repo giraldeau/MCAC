@@ -2,7 +2,7 @@
 #define INCLUDE_SPHERES_SPHERE_LIST_HPP_ 1
 #include "io/threaded_io.hpp"
 #include "physical_model/physical_model.hpp"
-#include "list_storage/storagelist.hpp"
+#include "list_storage/list_storage.hpp"
 #include "cst.hpp"
 
 /*
@@ -26,7 +26,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 namespace MCAC {
 class Sphere;
 
-class SphereList : public storage_list<SpheresFields::SPHERE_NFIELDS, Sphere> {
+class SphereList : public ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere> {
     friend class Sphere;
 
     /* Generic */

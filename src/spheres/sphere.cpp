@@ -89,7 +89,7 @@ void Sphere::croissance_surface(double dt) noexcept {
     *surface = _facsurf * new_r_2;
 }
 void Sphere::print() const noexcept {
-    cout << "Printing Sphere " << (indexInStorage) << endl;
+    cout << "Printing Sphere " << (index_in_storage) << endl;
     if (!static_cast<bool>(external_storage)) {
         cout << "  With external Storage" << endl;
     } else {
