@@ -3,8 +3,8 @@
 #include "spheres/sphere.hpp"
 #include "spheres/sphere_intersection.hpp"
 #include "spheres/sphere_distance.hpp"
-#include "verlet.hpp"
-#include "tools.hpp"
+#include "verlet/verlet.hpp"
+#include "tools/tools.hpp"
 #include <iostream>
 
 

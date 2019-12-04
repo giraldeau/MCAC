@@ -1,4 +1,4 @@
-#include "statistics.hpp"
+#include "statistics/statistics.hpp"
 #include "aggregats/aggregat.hpp"
 #include "aggregats/aggregat_list.hpp"
 #include "spheres/sphere.hpp"
@@ -80,7 +80,7 @@ void Aggregate::fullStatistics()
     //Npe = *volAgregat/(PI * POW3(Dp3)/6.0);
 }
 
-tuple<bool,double,double,double> ListAggregat::get_instantaneous_fractal_law() const
+tuple<bool,double,double,double> AggregatList::get_instantaneous_fractal_law() const
 {
     vector<double> Nps;
     vector<double> DgOverDps;

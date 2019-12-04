@@ -1,10 +1,10 @@
 #include "aggregats/aggregat_list.hpp"
-#include "tools.hpp"
+#include "tools/tools.hpp"
 #include <iostream>
 
 using namespace std;
 namespace MCAC {
-void ListAggregat::setpointers() {
+void AggregatList::setpointers() {
     auto newdeb((*Storage)[0].begin());
     auto newfin((*Storage)[0].end());
     if ((newdeb == ptr_deb) && (newfin == ptr_fin)) {
@@ -16,7 +16,7 @@ void ListAggregat::setpointers() {
     ptr_deb = newdeb;
     ptr_fin = newfin;
 }
-ListAggregat::ListAggregat(PhysicalModel *the_physical_model) noexcept:
+AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     storage_list<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),
     physicalmodel(the_physical_model),
     maxradius(0.),
@@ -77,7 +77,7 @@ ListAggregat::ListAggregat(PhysicalModel *the_physical_model) noexcept:
         }
     }
 }
-ListAggregat::~ListAggregat() noexcept {
+AggregatList::~AggregatList() noexcept {
     delete writer;
 
     //#pragma omp simd

@@ -1,6 +1,6 @@
 #include "calcul.hpp"
-#include "physical_model.hpp"
-#include "tools.hpp"
+#include "physical_model/physical_model.hpp"
+#include "tools/tools.hpp"
 #include "cst.hpp"
 #include <iostream>
 
@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     }
     MCAC::PhysicalModel physicalmodel(argv[1]);
     MCAC::InitRandom();
-    MCAC::ListAggregat aggregates(&physicalmodel);
+    MCAC::AggregatList aggregates(&physicalmodel);
     MCAC::Calcul(physicalmodel, aggregates);
     return MCAC::ErrorCodes::VERLET_ERROR;
 }

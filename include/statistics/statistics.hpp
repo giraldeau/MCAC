@@ -4,7 +4,7 @@
 namespace MCAC {
 class StatisticStorage;
 
-class ListAggregat;
+class AggregatList;
 
 class Aggregate;
 

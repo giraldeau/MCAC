@@ -19,7 +19,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 */
 
 #include "spheres/sphere_distance.hpp"
-#include "tools.hpp"
+#include "tools/tools.hpp"
 #include <cmath>
 
 

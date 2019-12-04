@@ -1,21 +1,21 @@
 #ifndef INCLUDE_AGGREGATS_AGGREGAT_HPP_
 #define INCLUDE_AGGREGATS_AGGREGAT_HPP_ 1
 #include "spheres/sphere_list.hpp"
-#include "statistics.hpp"
-#include "storage.hpp"
+#include "statistics/statistics.hpp"
+#include "elem_storage/storage.hpp"
 #include "cst.hpp"
 #include <list>
 
 
 namespace MCAC {
-class ListAggregat;
+class AggregatList;
 
 class Verlet;
 
 class Aggregate :
-    public storage_elem<AggregatesFields::AGGREGAT_NFIELDS, ListAggregat>,
+    public storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>,
     public StatisicsData {
-    friend class ListAggregat;
+    friend class AggregatList;
 
 private:
     double *rg;                     // Gyration Radius
@@ -97,11 +97,11 @@ public:
     Aggregate() noexcept;
 //    explicit Aggregate(PhysicalModel &);
     /** Constructor with external storage */
-    Aggregate(ListAggregat &, size_t label) noexcept;
+    Aggregate(AggregatList &, size_t label) noexcept;
     /** Destructor */
     ~Aggregate() noexcept;
     /** Copy constructor */
-    Aggregate(const Aggregate &, ListAggregat &) noexcept;
+    Aggregate(const Aggregate &, AggregatList &) noexcept;
     Aggregate(const Aggregate &) noexcept = delete;
     /** Move constructor */
     Aggregate(Aggregate &&) noexcept = delete;

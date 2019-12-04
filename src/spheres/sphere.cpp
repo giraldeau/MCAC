@@ -15,7 +15,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 */
 
 #include "spheres/sphere.hpp"
-#include "tools.hpp"
+#include "tools/tools.hpp"
 #include <iostream>
 
 

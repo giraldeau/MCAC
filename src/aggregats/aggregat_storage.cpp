@@ -22,7 +22,7 @@ void Aggregate::setpointers() noexcept {
     time = &(*Storage)[AggregatesFields::AGGREGAT_TIME][indexInStorage];
 }
 Aggregate::Aggregate() noexcept:
-    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, ListAggregat>(),
+    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(),
     StatisicsData(),
     rg(nullptr),
     f_agg(nullptr),
@@ -49,8 +49,8 @@ Aggregate::Aggregate() noexcept:
     index_verlet({{0, 0, 0}}),
     myspheres() {
 }
-Aggregate::Aggregate(ListAggregat &_storage, const size_t newlabel) noexcept:
-    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, ListAggregat>(_storage, newlabel),
+Aggregate::Aggregate(AggregatList &_storage, const size_t newlabel) noexcept:
+    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(_storage, newlabel),
     StatisicsData(),
     rg(nullptr),
     f_agg(nullptr),
@@ -83,8 +83,8 @@ Aggregate::~Aggregate() noexcept {
     }
 }
 /** Copy constructor */
-Aggregate::Aggregate(const Aggregate &other, ListAggregat &_Storage) noexcept:
-    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, ListAggregat>(other, *this, _Storage),
+Aggregate::Aggregate(const Aggregate &other, AggregatList &_Storage) noexcept:
+    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(other, *this, _Storage),
     StatisicsData(other),
     rg(nullptr),
     f_agg(nullptr),

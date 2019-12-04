@@ -12,7 +12,7 @@ extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                  const std::vector<int> &formated_field);
 extern template shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                                     const double &value);
-auto ListAggregat::get_data() const {
+auto AggregatList::get_data() const {
     // Set geometry
     shared_ptr<XdmfUnstructuredGrid> aggregats_data = XdmfUnstructuredGrid::New();
     aggregats_data->setName("Aggregats");
@@ -39,24 +39,24 @@ auto ListAggregat::get_data() const {
     aggregats_data->insert(scalar("Label", Format_label()));
     return aggregats_data;
 }
-void ListAggregat::save(const bool _finish) {
+void AggregatList::save(const bool _finish) {
     auto data = get_data();
     writer->write(physicalmodel->CheminSauve / "Aggregats", data, _finish);
 }
-DEF_FORMATER_POSITION(ListAggregat);
-DEF_FORMATER_PTR(ListAggregat, rg, double);
-DEF_FORMATER_PTR(ListAggregat, f_agg, double);
-DEF_FORMATER_PTR(ListAggregat, lpm, double);
-DEF_FORMATER_PTR(ListAggregat, time_step, double);
-DEF_FORMATER_PTR(ListAggregat, rmax, double);
-DEF_FORMATER_PTR(ListAggregat, agregat_volume, double);
-DEF_FORMATER_PTR(ListAggregat, agregat_surface, double);
-DEF_FORMATER(ListAggregat, n_spheres, int);
-DEF_FORMATER(ListAggregat, label, int);
+DEF_FORMATER_POSITION(AggregatList);
+DEF_FORMATER_PTR(AggregatList, rg, double);
+DEF_FORMATER_PTR(AggregatList, f_agg, double);
+DEF_FORMATER_PTR(AggregatList, lpm, double);
+DEF_FORMATER_PTR(AggregatList, time_step, double);
+DEF_FORMATER_PTR(AggregatList, rmax, double);
+DEF_FORMATER_PTR(AggregatList, agregat_volume, double);
+DEF_FORMATER_PTR(AggregatList, agregat_surface, double);
+DEF_FORMATER(AggregatList, n_spheres, int);
+DEF_FORMATER(AggregatList, label, int);
 #else
 
 
-void ListAggregat::save(const bool finish){}
+void AggregatList::save(const bool finish){}
 
 #endif
 }  // namespace MCAC

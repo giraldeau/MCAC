@@ -1,12 +1,12 @@
 #include "calcul.hpp"
-#include "tools.hpp"
+#include "tools/tools.hpp"
 #include <iomanip>
 #include <iostream>
 
 
 using namespace std;
 namespace MCAC {
-void Calcul(PhysicalModel &physicalmodel, ListAggregat &Aggregates) {//Coeur du programme
+void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du programme
 
     // contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool contact(true);

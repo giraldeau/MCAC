@@ -1,8 +1,8 @@
 #ifndef INCLUDE_SPHERES_SPHERE_LIST_HPP_
 #define INCLUDE_SPHERES_SPHERE_LIST_HPP_ 1
 #include "io/threaded_io.hpp"
-#include "physical_model.hpp"
-#include "storagelist.hpp"
+#include "physical_model/physical_model.hpp"
+#include "list_storage/storagelist.hpp"
 #include "cst.hpp"
 
 /*

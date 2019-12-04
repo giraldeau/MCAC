@@ -1,6 +1,6 @@
 #ifndef INCLUDE_IO_THREADED_IO_HPP_
 #define INCLUDE_IO_THREADED_IO_HPP_ 1
-#include "physical_model.hpp"
+#include "physical_model/physical_model.hpp"
 
 
 #ifdef WITH_HDF5

@@ -1,4 +1,4 @@
-#include "physical_model.hpp"
+#include "physical_model/physical_model.hpp"
 
 
 #ifdef WITH_HDF5

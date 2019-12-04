@@ -2,22 +2,22 @@
 #include "aggregats/aggregat_distance.hpp"
 #include "spheres/sphere_collision.hpp"
 #include "spheres/sphere_distance.hpp"
-#include "tools.hpp"
+#include "tools/tools.hpp"
 #include <iostream>
 
 using namespace std;
 namespace MCAC {
-[[gnu::pure]] double ListAggregat::get_avg_npp() const {
+[[gnu::pure]] double AggregatList::get_avg_npp() const {
     return avg_npp;
 }
-[[gnu::pure]] double ListAggregat::get_max_time_step() const {
+[[gnu::pure]] double AggregatList::get_max_time_step() const {
     return max_time_step;
 }
-[[gnu::pure]] double ListAggregat::get_time_step(double max) const {
+[[gnu::pure]] double AggregatList::get_time_step(double max) const {
     double deltatemps = max / cumulative_time_steps[size() - 1];
     return deltatemps;
 }
-[[gnu::pure]] size_t ListAggregat::pick_random() const {
+[[gnu::pure]] size_t AggregatList::pick_random() const {
     //$ Pick a random sphere
     double valAlea = Random() * cumulative_time_steps[size() - 1];
     size_t n = lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), valAlea)
@@ -25,7 +25,7 @@ namespace MCAC {
     size_t NumAgg = index_sorted_time_steps[n];
     return NumAgg;
 }
-[[gnu::pure]]  size_t ListAggregat::pick_last() const {
+[[gnu::pure]]  size_t AggregatList::pick_last() const {
     // TODO cache result
     double time = *list[0]->time;
     size_t latest = 0;
@@ -37,7 +37,7 @@ namespace MCAC {
     }
     return latest;
 }
-void ListAggregat::refresh() {
+void AggregatList::refresh() {
     max_time_step = *list[0]->time_step;
     for (const Aggregate *Agg : list) {
         max_time_step = MAX(*Agg->time_step, max_time_step);
@@ -56,7 +56,7 @@ vector<size_t> sort_indexes(const vector<T> &v) {
          });
     return idx;
 }
-void ListAggregat::sort_time_steps(double factor) {
+void AggregatList::sort_time_steps(double factor) {
     vector<double> TpT(size());
 #pragma omp simd
     for (size_t i = 0; i < size(); i++) {
@@ -71,7 +71,7 @@ void ListAggregat::sort_time_steps(double factor) {
         cumulative_time_steps[i] = cumulative_time_steps[i - 1] + TpT[index_sorted_time_steps[i]];
     }
 }
-void ListAggregat::duplication() {
+void AggregatList::duplication() {
     size_t oldNAgg = size();
     double oldL = physicalmodel->L;
     physicalmodel->L *= 2;
@@ -111,7 +111,7 @@ void ListAggregat::duplication() {
         Agg->update_verlet_index();
     }
 }
-size_t ListAggregat::merge(size_t first, size_t second) {
+size_t AggregatList::merge(size_t first, size_t second) {
     const size_t keeped(MIN(first, second));
     const size_t removed(MAX(first, second));
 
@@ -132,7 +132,7 @@ size_t ListAggregat::merge(size_t first, size_t second) {
     return keeped;
 }
 //################################# Determination of the contacts between agrgates ####################################
-pair<size_t, double> ListAggregat::distance_to_next_contact(size_t source, array<double, 3> direction) const {
+pair<size_t, double> AggregatList::distance_to_next_contact(size_t source, array<double, 3> direction) const {
     // Use Verlet to reduce search
     vector<size_t> SearchSpace(get_search_space(source, direction));
 
@@ -169,7 +169,7 @@ pair<size_t, double> ListAggregat::distance_to_next_contact(size_t source, array
     }
     return {aggcontact, distmin};
 }
-vector<size_t> ListAggregat::get_search_space(size_t source, array<double, 3> direction) const {
+vector<size_t> AggregatList::get_search_space(size_t source, array<double, 3> direction) const {
     vector<size_t> SearchSpace;
     if (physicalmodel->use_verlet) {
         // Extract from verlet
@@ -202,7 +202,7 @@ vector<size_t> ListAggregat::get_search_space(size_t source, array<double, 3> di
     return SearchSpace;
 }
 //############################## Determination of the contacts between agrgates #######################################
-vector<pair<size_t, double> > ListAggregat::sort_search_space(size_t moving_aggregate,
+vector<pair<size_t, double> > AggregatList::sort_search_space(size_t moving_aggregate,
                                                               array<double, 3> direction,
                                                               const vector<size_t> &search_space) const {
     vector<pair<size_t, double> > SortedSearchSpace;
@@ -235,7 +235,7 @@ vector<pair<size_t, double> > ListAggregat::sort_search_space(size_t moving_aggr
     return SortedSearchSpace;
 }
 //################################### Determination of the contacts between agrgates ###################################
-bool ListAggregat::test_free_space(array<double, 3> pos, double diameter) const {
+bool AggregatList::test_free_space(array<double, 3> pos, double diameter) const {
     // Use Verlet to reduce search
     double mindist(diameter * 0.5 + maxradius);
     vector<size_t> SearchSpace = verlet.GetSearchSpace(pos, mindist);

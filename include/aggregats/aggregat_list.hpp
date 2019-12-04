@@ -2,13 +2,13 @@
 #define AGGREGATLIST_H 1
 #include "spheres/sphere_list.hpp"
 #include "aggregat.hpp"
-#include "physical_model.hpp"
-#include "storagelist.hpp"
-#include "verlet.hpp"
+#include "physical_model/physical_model.hpp"
+#include "list_storage/storagelist.hpp"
+#include "verlet/verlet.hpp"
 
 
 namespace MCAC {
-class ListAggregat : public storage_list<AggregatesFields::AGGREGAT_NFIELDS, Aggregate> {
+class AggregatList : public storage_list<AggregatesFields::AGGREGAT_NFIELDS, Aggregate> {
     friend class Aggregate;
 
 private:
@@ -67,17 +67,17 @@ private:
     void setpointers();
 public:
     /** Default constructor in local storage */
-    explicit ListAggregat(PhysicalModel *) noexcept;
+    explicit AggregatList(PhysicalModel *) noexcept;
     /** Destructor */
-    ~ListAggregat() noexcept;
+    ~AggregatList() noexcept;
     /** Copy constructor */
-    ListAggregat(const ListAggregat &other) noexcept = delete;
+    AggregatList(const AggregatList &other) noexcept = delete;
     /** Move constructor */
-    ListAggregat(ListAggregat &&) noexcept = delete;
+    AggregatList(AggregatList &&) noexcept = delete;
     /** Copy assignment operator */
-    ListAggregat &operator=(const ListAggregat &other) noexcept = delete;
+    AggregatList &operator=(const AggregatList &other) noexcept = delete;
     /** Move assignment operator */
-    ListAggregat &operator=(ListAggregat &&other) noexcept = delete;
+    AggregatList &operator=(AggregatList &&other) noexcept = delete;
 };
 }// namespace MCAC
 

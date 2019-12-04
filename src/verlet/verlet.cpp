@@ -1,5 +1,5 @@
-#include "verlet.hpp"
-#include "physical_model.hpp"
+#include "verlet/verlet.hpp"
+#include "physical_model/physical_model.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>
