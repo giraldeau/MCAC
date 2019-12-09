@@ -55,7 +55,7 @@ namespace MCAC {
 /* modifiers */
 void Aggregate::decrease_label() noexcept {
     if (static_cast<bool>(verlet)) {
-        verlet->Remove(get_label(), index_verlet);
+        verlet->remove(get_label(), index_verlet);
     }
     // Keep index and label in sync
     decrease_index();
@@ -64,7 +64,7 @@ void Aggregate::decrease_label() noexcept {
     // Keep aggLabel of myspheres in sync
     myspheres.decrease_label();
     if (static_cast<bool>(verlet)) {
-        verlet->Add(get_label(), index_verlet);
+        verlet->add(get_label(), index_verlet);
     }
 }
 void Aggregate::set_verlet(Verlet &newverlet) noexcept {
@@ -111,7 +111,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
                      double sphere_diameter) noexcept {
     physicalmodel = &new_physicalmodel;
     if (static_cast<bool>(verlet)) {
-        verlet->Remove(label, index_verlet);
+        verlet->remove(label, index_verlet);
     }
     label = new_label;
     index_in_storage = new_label;
@@ -311,9 +311,9 @@ void Aggregate::update_verlet_index() noexcept {
     std::array<size_t, 3> new_verlet_index{size_t(floor((*x) * step)),
                                            size_t(floor((*y) * step)),
                                            size_t(floor((*z) * step))};
-    verlet->Remove(get_label(), index_verlet);
+    verlet->remove(get_label(), index_verlet);
     index_verlet = new_verlet_index;
-    verlet->Add(get_label(), index_verlet);
+    verlet->add(get_label(), index_verlet);
 }
 void Aggregate::update_distances() noexcept {
     distances.resize(n_spheres);

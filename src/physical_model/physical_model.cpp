@@ -1,15 +1,11 @@
 #include "physical_model/physical_model.hpp"
 #include "constants.hpp"
 #include "tools/tools.hpp"
-#include <cfloat>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
 #include <fstream>
-#include <sys/stat.h>
 #include <inipp.h>
 
 
@@ -17,8 +13,8 @@ namespace fs = std::experimental::filesystem;
 using namespace std;
 namespace MCAC {
 PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
-    dfe(1.4),
-    kfe(1.8),
+    fractal_dimension(1.4),
+    fractal_prefactor(1.8),
     x_surfgrowth(2),
     pressure(_pressure_ref),
     temperature(_temperature_ref),
@@ -48,14 +44,14 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
     inipp::extract(ini.sections["monomeres"]["mean_diameter"], mean_diameter);
     string default_mode = "normal";
     inipp::extract(ini.sections["monomeres"]["initialisation_mode"], default_mode);
-    monomeres_initialisation_type = resolveMonomeresInitialisationMode(default_mode);
+    monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_mode);
     // environment
     inipp::extract(ini.sections["environment"]["volume_fraction"], volume_fraction);
     inipp::extract(ini.sections["environment"]["temperature"], temperature);
     inipp::extract(ini.sections["environment"]["pressure"], pressure);
+    inipp::extract(ini.sections["environment"]["fractal_prefactor"], fractal_prefactor);
+    inipp::extract(ini.sections["environment"]["fractal_dimension"], fractal_dimension);
     // surface_growth
-    inipp::extract(ini.sections["surface_growth"]["kfe"], kfe);
-    inipp::extract(ini.sections["surface_growth"]["dfe"], dfe);
     inipp::extract(ini.sections["surface_growth"]["coeff_b"], coeff_b);
     inipp::extract(ini.sections["surface_growth"]["x_surfgrowth"], x_surfgrowth);
     // limits
@@ -165,8 +161,8 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
          << " Asurfgrowth  : " << a_surfgrowth << endl
          << " xsurfgrowth  : " << x_surfgrowth << endl
          << " coeffB       : " << coeff_b << endl
-         << " dfe          : " << dfe << endl
-         << " kfe          : " << kfe << endl
+         << " dfe          : " << fractal_dimension << endl
+         << " kfe          : " << fractal_prefactor << endl
          << " lambda       : " << gaz_mean_free_path << endl
          << " rpeqmass     : " << mean_massic_radius << endl
          << " gamma_       : " << friction_exponnant << endl
@@ -216,7 +212,7 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
 [[gnu::pure]] double PhysicalModel::friction_coeff(size_t npp) const {
     //to be expressed in terms of V_agg/V_pp
     double cc = cunningham(mean_massic_radius);
-    return (6.0 * _pi * viscosity * mean_massic_radius / cc) * pow(npp, friction_exponnant / dfe);
+    return (6.0 * _pi * viscosity * mean_massic_radius / cc) * pow(npp, friction_exponnant / fractal_dimension);
 }
 [[gnu::pure]] double PhysicalModel::friction_coeff2(double rgg) const {
     double rmm = rgg * 1.3;

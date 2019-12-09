@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TOOLS_HPP_
-#define INCLUDE_TOOLS_HPP_ 1
+#ifndef INCLUDE_TOOLS_TOOLS_HPP_
+#define INCLUDE_TOOLS_TOOLS_HPP_ 1
 #include "constants.hpp"
 #include <array>
 
@@ -47,8 +47,8 @@ std::array<T, 3> &operator/=(std::array<T, 3> &a, const T &rhs) {
     a[2] /= rhs;
     return a;
 }
-void InitRandom();
-double Random();
-MonomeresInitialisationMode resolveMonomeresInitialisationMode(std::string input) ;
+void init_random();
+double random();
+MonomeresInitialisationMode resolve_monomeres_initialisation_mode(std::string input);
 }  //namespace MCAC
-#endif //INCLUDE_TOOLS_HPP_
+#endif //INCLUDE_TOOLS_TOOLS_HPP_

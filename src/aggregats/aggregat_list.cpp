@@ -19,7 +19,7 @@ namespace MCAC {
 }
 [[gnu::pure]] size_t AggregatList::pick_random() const {
     //$ Pick a random sphere
-    double valAlea = Random() * cumulative_time_steps[size() - 1];
+    double valAlea = random() * cumulative_time_steps[size() - 1];
     size_t n = lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), valAlea)
                - cumulative_time_steps.begin();
     size_t NumAgg = index_sorted_time_steps[n];
@@ -106,7 +106,7 @@ void AggregatList::duplication() {
         }
     }
     //$ update Verlet
-    verlet.Init(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
+    verlet = Verlet(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
     for (Aggregate *Agg : list) {
         Agg->update_verlet_index();
     }
@@ -178,7 +178,7 @@ vector<size_t> AggregatList::get_search_space(size_t source, array<double, 3> di
     double mindist(*list[source]->rmax + maxradius);
     array<double, 3> sourceposition = list[source]->get_position();
     array<double, 3> Vector{lpm * direction};
-    SearchSpace = verlet.GetSearchSpace(sourceposition, mindist, Vector);
+    SearchSpace = verlet.get_search_space(sourceposition, mindist, Vector);
 
     // Remove me
     for (size_t i = 0; i < SearchSpace.size(); i++) {
@@ -229,7 +229,7 @@ vector<pair<size_t, double> > AggregatList::sort_search_space(size_t moving_aggr
 bool AggregatList::test_free_space(array<double, 3> pos, double diameter) const {
     // Use Verlet to reduce search
     double mindist(diameter * 0.5 + maxradius);
-    vector<size_t> SearchSpace = verlet.GetSearchSpace(pos, mindist);
+    vector<size_t> SearchSpace = verlet.get_search_space(pos, mindist);
     double mindist2 = POW_2(mindist);
 
     //$ loop on the agregates potentially in contact

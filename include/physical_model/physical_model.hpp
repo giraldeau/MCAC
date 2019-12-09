@@ -10,7 +10,7 @@
 namespace MCAC {
 class PhysicalModel {
 public:
-    double dfe, kfe;
+    double fractal_dimension, fractal_prefactor;
     double x_surfgrowth, coeff_b;
     double a_surfgrowth;
     double pressure, temperature, gaz_mean_free_path, viscosity, density;

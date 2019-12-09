@@ -79,7 +79,7 @@ Aggregate::Aggregate(AggregatList &_storage, const size_t newlabel) noexcept:
 }
 Aggregate::~Aggregate() noexcept {
     if (static_cast<bool>(verlet)) {
-        verlet->Remove(get_label(), index_verlet);
+        verlet->remove(get_label(), index_verlet);
     }
 }
 /** Copy constructor */

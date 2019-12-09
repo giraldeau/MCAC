@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     MCAC::PhysicalModel physicalmodel(argv[1]);
-    MCAC::InitRandom();
+    MCAC::init_random();
     MCAC::AggregatList aggregates(&physicalmodel);
     MCAC::Calcul(physicalmodel, aggregates);
     return MCAC::ErrorCodes::VERLET_ERROR;

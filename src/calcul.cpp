@@ -29,8 +29,8 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
         }
 
         // -- Generating a random direction --
-        double thetarandom = Random() * 2 * _pi;
-        double phirandom = acos(1 - 2 * Random());
+        double thetarandom = random() * 2 * _pi;
+        double phirandom = acos(1 - 2 * random());
         array<double, 3> Vectdir{{sin(phirandom) * cos(thetarandom),
                                   sin(phirandom) * sin(thetarandom),
                                   cos(phirandom)}};

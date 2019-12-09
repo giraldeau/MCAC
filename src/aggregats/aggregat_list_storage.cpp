@@ -30,8 +30,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     writer(new ThreadedIO(*physicalmodel, physicalmodel->n_monomeres)),
     last_saved(0),
     spheres(*the_physical_model, physicalmodel->n_monomeres),
-    verlet() {
-    verlet.Init(the_physical_model->n_verlet_divisions, the_physical_model->box_lenght);
+    verlet(the_physical_model->n_verlet_divisions, the_physical_model->box_lenght) {
     ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::init(physicalmodel->n_monomeres, *this);
     setpointers();
 
@@ -42,7 +41,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     for (size_t i = 0; i < size(); i++) {
 
         //random size
-        double x = Random();
+        double x = random();
         double dp = 0;
         if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
             dp = (physicalmodel->mean_diameter)
@@ -61,9 +60,9 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
         bool placed = false;
         while (!placed) {
             //random position
-            array<double, 3> newpos{{Random() * physicalmodel->box_lenght,
-                                     Random() * physicalmodel->box_lenght,
-                                     Random() * physicalmodel->box_lenght}};
+            array<double, 3> newpos{{random() * physicalmodel->box_lenght,
+                                     random() * physicalmodel->box_lenght,
+                                     random() * physicalmodel->box_lenght}};
 
             //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
             if (test_free_space(newpos, dp)) {

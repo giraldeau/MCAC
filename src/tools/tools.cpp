@@ -2,18 +2,18 @@
 
 
 namespace MCAC {
-void InitRandom() {
+void init_random() {
     time_t t;
     time(&t);
     //srand(uint(t));
     srand(0);
 }
-double Random() {
+double random() {
     double v = rand();
     v = v / RAND_MAX;
     return v;
 }
-MonomeresInitialisationMode resolveMonomeresInitialisationMode(std::string input) {
+MonomeresInitialisationMode resolve_monomeres_initialisation_mode(std::string input) {
     const std::map<std::string, MonomeresInitialisationMode> InitialisationModeStrings {
         { "lognormal", LOG_NORMAL_INITIALISATION },
         { "normal", NORMAL_INITIALISATION },

@@ -9,8 +9,8 @@ namespace MCAC {
 shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
     shared_ptr<XdmfInformation> info = XdmfInformation::New("Physics", "Physical properties of the simulation");
     info->insert(xmf_format_double("Asurfgrowth", a_surfgrowth));
-    info->insert(xmf_format_double("dfe", dfe));
-    info->insert(xmf_format_double("kfe", kfe));
+    info->insert(xmf_format_double("dfe", fractal_dimension));
+    info->insert(xmf_format_double("kfe", fractal_prefactor));
     info->insert(xmf_format_double("xsurfgrowth", x_surfgrowth));
     info->insert(xmf_format_double("coeffB", coeff_b));
     info->insert(xmf_format_double("lambda", gaz_mean_free_path));
