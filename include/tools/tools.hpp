@@ -1,5 +1,6 @@
 #ifndef INCLUDE_TOOLS_HPP_
 #define INCLUDE_TOOLS_HPP_ 1
+#include "constants.hpp"
 #include <array>
 
 
@@ -48,5 +49,6 @@ std::array<T, 3> &operator/=(std::array<T, 3> &a, const T &rhs) {
 }
 void InitRandom();
 double Random();
+MonomeresInitialisationMode resolveMonomeresInitialisationMode(std::string input) ;
 }  //namespace MCAC
 #endif //INCLUDE_TOOLS_HPP_

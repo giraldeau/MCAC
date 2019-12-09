@@ -56,11 +56,11 @@ void Sphere::relative_translate(array<double, 3> trans) noexcept {
     *rz += trans[2];
 }
 void Sphere::set_position(array<double, 3> newposition) noexcept {
-    /*
-    *x = periodicPosition(_newx,physicalmodel->L);
-    *y = periodicPosition(_newy,physicalmodel->L);
-    *z = periodicPosition(_newz,physicalmodel->L);
-    */
+
+//    *x = periodic_position(_newx,physicalmodel->box_lenght);
+//    *y = periodic_position(_newy,physicalmodel->box_lenght);
+//    *z = periodic_position(_newz,physicalmodel->box_lenght);
+
     *x = newposition[0];
     *y = newposition[1];
     *z = newposition[2];
@@ -81,12 +81,12 @@ void Sphere::init_val(array<double, 3> newposition, double newr) noexcept {
  * ############################################# Sphere growing ################################################
  * #############################################################################################################*/
 void Sphere::croissance_surface(double dt) noexcept {
-    double new_r = physicalmodel->Grow(*r, dt);
+    double new_r = physicalmodel->grow(*r, dt);
     double new_r_2 = new_r * new_r;
     double new_r_3 = new_r_2 * new_r;
     *r = new_r;
-    *volume = _facvol * new_r_3;
-    *surface = _facsurf * new_r_2;
+    *volume = _volume_factor * new_r_3;
+    *surface = _surface_factor * new_r_2;
 }
 void Sphere::print() const noexcept {
     cout << "Printing Sphere " << (index_in_storage) << endl;
@@ -117,8 +117,8 @@ void Sphere::print() const noexcept {
 
 void Sphere::update_vol_and_surf() noexcept {
     if (agg_label > -1) {
-        *volume = _facvol * POW_3(*r);
-        *surface = _facsurf * POW_2(*r);
+        *volume = _volume_factor * POW_3(*r);
+        *surface = _surface_factor * POW_2(*r);
     }
 }
 }  // namespace MCAC

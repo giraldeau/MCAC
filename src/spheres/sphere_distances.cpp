@@ -29,10 +29,10 @@ namespace MCAC {
  * ################################# distance between a sphere and a point #####################################
  * #############################################################################################################*/
 [[gnu::pure]]  double distance(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
-    return distance(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->L);
+    return distance(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->box_lenght);
 }
 [[gnu::pure]]  double distance_2(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
-    return distance_2(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->L);
+    return distance_2(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->box_lenght);
 }
 [[gnu::pure]]  double relative_distance(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
     return relative_distance(sphere_1.get_relative_position(), sphere_2.get_relative_position());
@@ -52,9 +52,9 @@ namespace MCAC {
 [[gnu::pure]]  double distance_2(const array<double, 3> &point_1, const array<double, 3> &point_2,
                                  double box_size) noexcept {
     array<double, 3> diff = point_1 - point_2;
-    double dx(periodicDistance(diff[0], box_size));
-    double dy(periodicDistance(diff[1], box_size));
-    double dz(periodicDistance(diff[2], box_size));
+    double dx(periodic_distance(diff[0], box_size));
+    double dy(periodic_distance(diff[1], box_size));
+    double dz(periodic_distance(diff[2], box_size));
     return POW_2(dx) + POW_2(dy) + POW_2(dz);
 }
 [[gnu::pure]]  double relative_distance_2(const array<double, 3> &point_1,

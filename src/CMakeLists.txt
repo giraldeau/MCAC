@@ -49,6 +49,7 @@ message( STATUS "Flags:")
 target_link_libraries(${PROJECT_NAME} stdc++fs)
 target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/gsl/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/inipp/include)
 
 if (WITH_SBL)
     message( STATUS "    With SBL")

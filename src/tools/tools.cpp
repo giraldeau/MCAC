@@ -13,4 +13,16 @@ double Random() {
     v = v / RAND_MAX;
     return v;
 }
+MonomeresInitialisationMode resolveMonomeresInitialisationMode(std::string input) {
+    const std::map<std::string, MonomeresInitialisationMode> InitialisationModeStrings {
+        { "lognormal", LOG_NORMAL_INITIALISATION },
+        { "normal", NORMAL_INITIALISATION },
+    };
+
+    auto itr = InitialisationModeStrings.find(input);
+    if (itr != InitialisationModeStrings.end()) {
+        return itr->second;
+    }
+    return INVALID_INITIALISATION;
+}
 }  // namespace MCAC

@@ -80,7 +80,7 @@ void Aggregate::time_forward(double deltatemps) noexcept {
     *time += deltatemps;
 }
 void Aggregate::set_position(const array<double, 3> &position) noexcept {
-    array<double, 3> newposition{periodicPosition(position, physicalmodel->L)};
+    array<double, 3> newposition{periodic_position(position, physicalmodel->box_lenght)};
     *x = newposition[0];
     *y = newposition[1];
     *z = newposition[2];
@@ -94,7 +94,7 @@ void Aggregate::translate(array<double, 3> vector) noexcept {
     set_position(get_position() + vector);
 
     // move the first sphere taking care of the periodicity
-    array<double, 3> refpos{periodicPosition(myspheres[0].get_position() + vector, physicalmodel->L)};
+    array<double, 3> refpos{periodic_position(myspheres[0].get_position() + vector, physicalmodel->box_lenght)};
     myspheres[0].set_position(refpos);
 
     // move all the other sphere relatively to the first
@@ -143,16 +143,11 @@ void Aggregate::update() noexcept {
 
     //$ Determination of the friction coefficient
     *f_agg = physicalmodel->friction_coeff(n_spheres);
-    if (physicalmodel->ActiveModulephysique) {
-        double masse = physicalmodel->Rho * (*agregat_volume);
-        double relax_time = physicalmodel->relax_time(masse, *f_agg);
-        *time_step = 3.0 * relax_time;
-        double diffusivity = physicalmodel->diffusivity(*f_agg);
-        *lpm = sqrt(6.0 * diffusivity * (*time_step));
-    } else {
-        *lpm = physicalmodel->Dpm * 1E-9;
-        *time_step = 1E-6;
-    }
+    double masse = physicalmodel->density * (*agregat_volume);
+    double relax_time = physicalmodel->relax_time(masse, *f_agg);
+    *time_step = 3.0 * relax_time;
+    double diffusivity = physicalmodel->diffusivity(*f_agg);
+    *lpm = sqrt(6.0 * diffusivity * (*time_step));
     partialStatistics();
     if (static_cast<bool>(external_storage)) {
         if (*rmax > external_storage->maxradius) {
@@ -261,7 +256,7 @@ void Aggregate::merge(Aggregate &other) noexcept {
     //$ update of the labels of the spheres that were in the deleted aggregate
     //$ And their new relative position
     array<double, 3> refpos = myspheres[0].get_position();
-    array<double, 3> diffpos = periodicDistance(other.myspheres[0].get_position() - refpos, physicalmodel->L);
+    array<double, 3> diffpos = periodic_distance(other.myspheres[0].get_position() - refpos, physicalmodel->box_lenght);
 
     // For all the spheres that were in the deleted aggregate
     for (Sphere *othersphere : other.myspheres) {
@@ -312,7 +307,7 @@ void Aggregate::print() const noexcept {
     myspheres.print();
 }
 void Aggregate::update_verlet_index() noexcept {
-    double step = double(physicalmodel->GridDiv) / physicalmodel->L;
+    double step = double(physicalmodel->n_verlet_divisions) / physicalmodel->box_lenght;
     std::array<size_t, 3> new_verlet_index{size_t(floor((*x) * step)),
                                            size_t(floor((*y) * step)),
                                            size_t(floor((*z) * step))};

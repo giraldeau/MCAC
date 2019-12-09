@@ -3,7 +3,7 @@
 #include "spheres/sphere_list.hpp"
 #include "statistics/statistics.hpp"
 #include "elem_storage/elem_storage.hpp"
-#include "cst.hpp"
+#include "constants.hpp"
 #include <list>
 
 
@@ -95,7 +95,7 @@ private:
 public:
     /** Default constructor in local storage */
     Aggregate() noexcept;
-//    explicit Aggregate(PhysicalModel &);
+    //    explicit Aggregate(PhysicalModel &);
     /** Constructor with external storage */
     Aggregate(AggregatList &, size_t label) noexcept;
     /** Destructor */

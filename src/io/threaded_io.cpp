@@ -1,6 +1,6 @@
 #ifdef WITH_HDF5
 #include "io/threaded_io.hpp"
-#include "cst.hpp"
+#include "constants.hpp"
 #include <gsl/gsl>
 #include <iostream>
 
@@ -10,7 +10,7 @@ gsl::owner<std::thread *> ThreadedIO::writer = nullptr;
 ThreadedIO *ThreadedIO::writer_owner = nullptr;
 ThreadedIO::ThreadedIO(const PhysicalModel &physical_model, size_t size) noexcept :
     physicalmodel(&physical_model),
-    _n_time_per_file(physical_model.DeltaSauve),
+    _n_time_per_file(physical_model.n_time_per_file),
     _n(size),
     current_thread(false),
     status({WriterStatus::IDLE, WriterStatus::IDLE}),

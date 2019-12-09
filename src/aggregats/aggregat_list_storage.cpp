@@ -2,6 +2,7 @@
 #include "tools/tools.hpp"
 #include <iostream>
 
+
 using namespace std;
 namespace MCAC {
 void AggregatList::setpointers() {
@@ -26,12 +27,12 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     cumulative_time_steps(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    writer(new ThreadedIO(*physicalmodel, physicalmodel->N)),
+    writer(new ThreadedIO(*physicalmodel, physicalmodel->n_monomeres)),
     last_saved(0),
-    spheres(*the_physical_model, physicalmodel->N),
+    spheres(*the_physical_model, physicalmodel->n_monomeres),
     verlet() {
-    verlet.Init(the_physical_model->GridDiv, the_physical_model->L);
-    ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::init(physicalmodel->N, *this);
+    verlet.Init(the_physical_model->n_verlet_divisions, the_physical_model->box_lenght);
+    ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::init(physicalmodel->n_monomeres, *this);
     setpointers();
 
     //Initialize the aggregates
@@ -43,22 +44,26 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
         //random size
         double x = Random();
         double dp = 0;
-        if (physicalmodel->Mode == 1) {
-            dp = physicalmodel->Dpm + sqrt(2.0) * physicalmodel->sigmaDpm * inverf(2.0 * x - 1.0); //Loi normale
+        if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
+            dp = (physicalmodel->mean_diameter)
+                 + sqrt(2.0) * physicalmodel->dispersion_diameter * inverf(2.0 * x - 1.0);
+        } else if (physicalmodel->monomeres_initialisation_type
+                   == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
+            dp = pow(physicalmodel->mean_diameter,
+                     sqrt(2.0) * log(physicalmodel->dispersion_diameter) * inverf(2.0 * x - 1.0));
         } else {
-            dp = exp(log(physicalmodel->Dpm)
-                     + sqrt(2.0) * log(physicalmodel->sigmaDpm) * inverf(2.0 * x - 1.0)); //Loi log-normale
+            exit(ErrorCodes::UNKNOWN_ERROR);
         }
-        dp = dp / 1E9;
+        dp = dp * 1E-9;
         if (dp <= 0) {
-            dp = physicalmodel->Dpm * 1E-9;
+            dp = physicalmodel->mean_diameter * 1E-9;
         }
         bool placed = false;
         while (!placed) {
             //random position
-            array<double, 3> newpos{{Random() * physicalmodel->L,
-                                     Random() * physicalmodel->L,
-                                     Random() * physicalmodel->L}};
+            array<double, 3> newpos{{Random() * physicalmodel->box_lenght,
+                                     Random() * physicalmodel->box_lenght,
+                                     Random() * physicalmodel->box_lenght}};
 
             //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
             if (test_free_space(newpos, dp)) {

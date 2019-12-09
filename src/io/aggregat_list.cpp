@@ -19,10 +19,10 @@ auto AggregatList::get_data() const {
     aggregats_data->setTopology(the_topology());
 
     // Set time
-    shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->Time);
+    shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->time);
     aggregats_data->setTime(time);
-    aggregats_data->insert(attribute("Time", physicalmodel->Time));
-    aggregats_data->insert(attribute("BoxSize", physicalmodel->L));
+    aggregats_data->insert(attribute("Time", physicalmodel->time));
+    aggregats_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
 
     // Set Positions
     aggregats_data->setGeometry(the_positions(Format_Position()));
@@ -41,7 +41,7 @@ auto AggregatList::get_data() const {
 }
 void AggregatList::save(const bool _finish) {
     auto data = get_data();
-    writer->write(physicalmodel->CheminSauve / "Aggregats", data, _finish);
+    writer->write(physicalmodel->output_dir / "Aggregats", data, _finish);
 }
 DEF_FORMATER_POSITION(AggregatList);
 DEF_FORMATER_PTR(AggregatList, rg, double);

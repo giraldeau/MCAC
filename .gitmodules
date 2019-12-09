@@ -4,3 +4,6 @@
 [submodule "ext/GSL"]
 	path = ext/GSL
 	url = https://github.com/microsoft/GSL.git
+[submodule "ext/inipp"]
+	path = ext/inipp
+	url = https://github.com/mcmtroffaes/inipp

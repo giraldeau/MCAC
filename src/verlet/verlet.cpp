@@ -87,9 +87,9 @@ vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition , co
             for (int k=bornek1;k<=bornek2;k++)
             {
                 // periodic
-                auto ii = static_cast<size_t>(periodicPosition(i,static_cast<int>(GridDiv)));
-                auto jj = static_cast<size_t>(periodicPosition(j,static_cast<int>(GridDiv)));
-                auto kk = static_cast<size_t>(periodicPosition(k,static_cast<int>(GridDiv)));
+                auto ii = static_cast<size_t>(periodic_position(i, static_cast<int>(GridDiv)));
+                auto jj = static_cast<size_t>(periodic_position(j, static_cast<int>(GridDiv)));
+                auto kk = static_cast<size_t>(periodic_position(k, static_cast<int>(GridDiv)));
                 tmpSearchSpace.insert(tmpSearchSpace.end(),
                                       Cell[ii][jj][kk].begin(),
                                       Cell[ii][jj][kk].end());
@@ -150,9 +150,9 @@ vector<size_t> Verlet::GetSearchSpace(const array<double, 3> sourceposition,
             for (int k=bornek1;k<=bornek2;k++)
             {
                 // periodic
-                auto ii = static_cast<size_t>(periodicPosition(i,static_cast<int>(GridDiv)));
-                auto jj = static_cast<size_t>(periodicPosition(j,static_cast<int>(GridDiv)));
-                auto kk = static_cast<size_t>(periodicPosition(k,static_cast<int>(GridDiv)));
+                auto ii = static_cast<size_t>(periodic_position(i, static_cast<int>(GridDiv)));
+                auto jj = static_cast<size_t>(periodic_position(j, static_cast<int>(GridDiv)));
+                auto kk = static_cast<size_t>(periodic_position(k, static_cast<int>(GridDiv)));
                 tmpSearchSpace.insert(tmpSearchSpace.end(),
                                       Cell[ii][jj][kk].begin(),
                                       Cell[ii][jj][kk].end());

@@ -13,7 +13,7 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
     size_t multiply_threshold = Aggregates.size() / 8;
 
     //$ Loop on the N monomeres
-    while (!physicalmodel.Finished(Aggregates.size(), Aggregates.get_avg_npp())) {
+    while (!physicalmodel.finished(Aggregates.size(), Aggregates.get_avg_npp())) {
         if (contact) {
             Aggregates.refresh();
             Aggregates.spheres.save();
@@ -29,7 +29,7 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
         }
 
         // -- Generating a random direction --
-        double thetarandom = Random() * _pi * 2;
+        double thetarandom = Random() * 2 * _pi;
         double phirandom = acos(1 - 2 * Random());
         array<double, 3> Vectdir{{sin(phirandom) * cos(thetarandom),
                                   sin(phirandom) * sin(thetarandom),
@@ -38,24 +38,18 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
         size_t NumAgg(0);
-        if (physicalmodel.ActiveModulephysique) {
-            /*
-            //$ Choice of an aggregate according to his MFP
-            double max = Aggregates.get_max_time_step();
-            if (contact)
-            {
-                Aggregates.sort_time_steps(max);
-            }
-            NumAgg = Aggregates.pick_random();
-            deltatemps = Aggregates.get_time_step(max);
-            */
-            NumAgg = Aggregates.pick_last();
-            deltatemps = Aggregates[NumAgg].get_time_step();
-        } else {
-            //$ Random Choice of an aggregate
-            NumAgg = size_t(Random() * double(Aggregates.size()));
-            deltatemps = 1e-9;
+        /*
+        //$ Choice of an aggregate according to his MFP
+        double max = Aggregates.get_max_time_step();
+        if (contact)
+        {
+            Aggregates.sort_time_steps(max);
         }
+        NumAgg = Aggregates.pick_random();
+        deltatemps = Aggregates.get_time_step(max);
+        */
+        NumAgg = Aggregates.pick_last();
+        deltatemps = Aggregates[NumAgg].get_time_step();
         double lpm = Aggregates[NumAgg].get_lpm();
 
         //$ looking for potential contacts
@@ -75,7 +69,7 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
 
         //$ Time incrementation
         deltatemps = deltatemps / double(Aggregates.size());
-        physicalmodel.Time = physicalmodel.Time + deltatemps;
+        physicalmodel.time = physicalmodel.time + deltatemps;
         contact = (aggcontact >= 0);
         if (contact) {
             //$ Aggregates in contact are reunited;
@@ -83,37 +77,35 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
         }
 
         //$ update of the Aggregates/Spheres
-        if (physicalmodel.ActiveModulephysique) {
-            if (physicalmodel.Asurfgrowth > 0.) {
-                //$ Growth of all spheres
-                Aggregates.spheres.croissance_surface(deltatemps);
+        if (physicalmodel.a_surfgrowth > 0.) {
+            //$ Growth of all spheres
+            Aggregates.spheres.croissance_surface(deltatemps);
 
-                //$ Aggregates update
-                for (Aggregate *Agg : Aggregates) {
-                    Agg->update();
-                }
+            //$ Aggregates update
+            for (Aggregate *Agg : Aggregates) {
+                Agg->update();
             }
-            //            for (int i = 0; i < Aggregates.size(); i++) {
-            //                for (int j = i + 1; j < Aggregates.size(); j++) {
-            //                    if (Aggregates[i].contact(Aggregates[j])) {
-            //                        cout << "New contact !" << endl;
-            //                        Aggregates.merge(i, j);
-            //                    }
-            //                }
-            //            }
         }
+        //            for (int i = 0; i < Aggregates.size(); i++) {
+        //                for (int j = i + 1; j < Aggregates.size(); j++) {
+        //                    if (Aggregates[i].contact(Aggregates[j])) {
+        //                        cout << "New contact !" << endl;
+        //                        Aggregates.merge(i, j);
+        //                    }
+        //                }
+        //            }
 
         //$ Show progress
         if (contact) {
             clock_t now = clock();
-            double elapse = double(now - physicalmodel.CPUStart) / CLOCKS_PER_SEC;
+            double elapse = double(now - physicalmodel.cpu_start) / CLOCKS_PER_SEC;
             cout.precision(3);
             cout << scientific;
             cout << "  Npp_avg=" << setw(4) << Aggregates.get_avg_npp()
                  << "  NAgg=" << setw(4) << Aggregates.size()
-                 << "  Time=" << setw(4) << physicalmodel.Time << " s"
+                 << "  Time=" << setw(4) << physicalmodel.time << " s"
                  << "   CPU=" << setw(4) << elapse << " s"
-                 << " after " << setw(4) << physicalmodel.Wait << " it --- ";
+                 << " after " << setw(4) << physicalmodel.n_iter_without_contact << " it --- ";
             auto InstantaneousFractalLaw = Aggregates.get_instantaneous_fractal_law();
             if (get<0>(InstantaneousFractalLaw)) {
                 cout << "  "
@@ -129,9 +121,9 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
             } else {
                 cout << "1.000e+00 * x^ 1.000e+00  --- r= 0" << endl;
             }
-            physicalmodel.Wait = 0;
+            physicalmodel.n_iter_without_contact = 0;
         } else {
-            physicalmodel.Wait++;
+            physicalmodel.n_iter_without_contact++;
         }
     }
     Aggregates.spheres.save(true);

@@ -21,9 +21,9 @@ auto SphereList::get_data() const {
     spheres_data->setTopology(the_topology());
 
     // Set time
-    spheres_data->setTime(format_time(physicalmodel->Time));
-    spheres_data->insert(attribute("Time", physicalmodel->Time));
-    spheres_data->insert(attribute("BoxSize", physicalmodel->L));
+    spheres_data->setTime(format_time(physicalmodel->time));
+    spheres_data->insert(attribute("Time", physicalmodel->time));
+    spheres_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
 
     // Set Positions
     spheres_data->setGeometry(the_positions(Format_Position()));
@@ -36,7 +36,7 @@ auto SphereList::get_data() const {
 void SphereList::save(const bool finish) {
     //get everything
     auto data = get_data();
-    writer->write(physicalmodel->CheminSauve / "Spheres", data, finish);
+    writer->write(physicalmodel->output_dir / "Spheres", data, finish);
 }
 DEF_FORMATER_POSITION(SphereList);
 DEF_FORMATER(SphereList, agg_label, long);

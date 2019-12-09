@@ -57,7 +57,7 @@ namespace MCAC {
     double minval = 0.;
     bool collision = true;
     if (dist > dist_contact) {
-        double L = sphere_1.physicalmodel->L;
+        double L = sphere_1.physicalmodel->box_lenght;
         collision = false;
         minval = 10 * L;
         array<double, 3> oldpos1{sphere_1.get_position()};

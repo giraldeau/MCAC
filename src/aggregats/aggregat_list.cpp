@@ -73,9 +73,9 @@ void AggregatList::sort_time_steps(double factor) {
 }
 void AggregatList::duplication() {
     size_t oldNAgg = size();
-    double oldL = physicalmodel->L;
-    physicalmodel->L *= 2;
-    physicalmodel->N *= 8;
+    double oldL = physicalmodel->box_lenght;
+    physicalmodel->box_lenght *= 2;
+    physicalmodel->n_monomeres *= 8;
 
     // TODO Rework this in order not to to it aggregate by aggregate
 
@@ -106,7 +106,7 @@ void AggregatList::duplication() {
         }
     }
     //$ update Verlet
-    verlet.Init(physicalmodel->GridDiv, physicalmodel->L);
+    verlet.Init(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
     for (Aggregate *Agg : list) {
         Agg->update_verlet_index();
     }
@@ -118,7 +118,7 @@ size_t AggregatList::merge(size_t first, size_t second) {
     // compute proper time of the final aggregate
     // keeping global time constant
     double newtime = double(size() - 1) * (*list[keeped]->time + *list[removed]->time) / double(size())
-                     - physicalmodel->Time;
+                     - physicalmodel->time;
 
     // compute the new average of npp
     avg_npp = avg_npp * size() / (static_cast<double>(size()) - 1);
@@ -171,35 +171,26 @@ pair<size_t, double> AggregatList::distance_to_next_contact(size_t source, array
 }
 vector<size_t> AggregatList::get_search_space(size_t source, array<double, 3> direction) const {
     vector<size_t> SearchSpace;
-    if (physicalmodel->use_verlet) {
-        // Extract from verlet
 
-        double lpm(*list[source]->lpm);
-        double mindist(*list[source]->rmax + maxradius);
-        array<double, 3> sourceposition = list[source]->get_position();
-        array<double, 3> Vector{lpm * direction};
-        SearchSpace = verlet.GetSearchSpace(sourceposition, mindist, Vector);
+    // Extract from verlet
 
-        // Remove me
-        for (size_t i = 0; i < SearchSpace.size(); i++) {
-            if (SearchSpace[i] == source) {
-                SearchSpace.erase(SearchSpace.begin() + long(i));
-                return SearchSpace;
-            }
+    double lpm(*list[source]->lpm);
+    double mindist(*list[source]->rmax + maxradius);
+    array<double, 3> sourceposition = list[source]->get_position();
+    array<double, 3> Vector{lpm * direction};
+    SearchSpace = verlet.GetSearchSpace(sourceposition, mindist, Vector);
+
+    // Remove me
+    for (size_t i = 0; i < SearchSpace.size(); i++) {
+        if (SearchSpace[i] == source) {
+            SearchSpace.erase(SearchSpace.begin() + long(i));
+            return SearchSpace;
         }
-        cout << "I'm not on the verlet list ???" << endl;
-        cout << "This is an error" << endl;
-        exit(ErrorCodes::VERLET_ERROR);
-        //return SearchSpace;
     }
-
-    // The full aggregat list index
-    SearchSpace.resize(size());
-    iota(SearchSpace.begin(), SearchSpace.end(), 0);
-
-    // Except me
-    SearchSpace.erase(SearchSpace.begin() + long(source));
-    return SearchSpace;
+    cout << "I'm not on the verlet list ???" << endl;
+    cout << "This is an error" << endl;
+    exit(ErrorCodes::VERLET_ERROR);
+    //return SearchSpace;
 }
 //############################## Determination of the contacts between agrgates #######################################
 vector<pair<size_t, double> > AggregatList::sort_search_space(size_t moving_aggregate,
@@ -246,7 +237,7 @@ bool AggregatList::test_free_space(array<double, 3> pos, double diameter) const 
     {
         //$ Loop on all the spheres of the aggregate
         for (const Sphere *sphere : list[suspect]->myspheres) {
-            if (distance_2(sphere->get_position(), pos, sphere->physicalmodel->L) <= mindist2) {
+            if (distance_2(sphere->get_position(), pos, sphere->physicalmodel->box_lenght) <= mindist2) {
                 return false;
             }
         }
