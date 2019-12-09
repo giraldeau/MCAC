@@ -1,15 +1,15 @@
 #ifdef WITH_HDF5
-#include "io/writer.hpp"
-#include "io/threaded_io.hpp"
 #include "io/format.hpp"
+#include "io/threaded_io.hpp"
+#include "io/writer.hpp"
 #include "io/xmf_includes.hpp"
-#include <iostream>
-#include <gsl/gsl>
 #include <XdmfGridCollection.hpp>
+#include <gsl/gsl>
+#include <iostream>
 
 
 namespace fs = std::experimental::filesystem;
-namespace MCAC {
+namespace mcac {
 // Actual write functions
 shared_ptr<XdmfTopology> the_topology() {
     shared_ptr<XdmfTopology> particules = XdmfTopology::New();
@@ -17,20 +17,20 @@ shared_ptr<XdmfTopology> the_topology() {
     return particules;
 }
 shared_ptr<XdmfGeometry> the_positions(const std::vector<double> &formated_positions) {
-    const auto N = unsigned(int(formated_positions.size()));
+    const auto _n = unsigned(int(formated_positions.size()));
     shared_ptr<XdmfGeometry> positions = XdmfGeometry::New();
     positions->setType(XdmfGeometryType::XYZ());
-    positions->insert(0, formated_positions.data(), N, 1, 1);
+    positions->insert(0, formated_positions.data(), _n, 1, 1);
     return positions;
 }
 template<class T>
 shared_ptr<XdmfAttribute> scalar(const std::string &name, const std::vector<T> &formated_field) {
-    const auto N = unsigned(int(formated_field.size()));
+    const auto _n = unsigned(int(formated_field.size()));
     shared_ptr<XdmfAttribute> xdmf_field = XdmfAttribute::New();
     xdmf_field->setName(name);
     xdmf_field->setType(XdmfAttributeType::Scalar());
     xdmf_field->setCenter(XdmfAttributeCenter::Node());
-    xdmf_field->insert(0, formated_field.data(), N, 1, 1);
+    xdmf_field->insert(0, formated_field.data(), _n, 1, 1);
     return xdmf_field;
 }
 template<class T>
@@ -121,16 +121,16 @@ void ThreadedIO::write(const fs::path &prefix, const shared_ptr<XdmfUnstructured
     }
 }
 void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data) {
-    shared_ptr<XdmfHDF5Writer> hdf5_file = XdmfHDF5Writer::New(filename + ".h5", false);
-    shared_ptr<XdmfWriter> xmf_file = XdmfWriter::New(filename + ".xmf", hdf5_file);
-    hdf5_file->setUseDeflate(false); // do not use compression (too slow)
-    hdf5_file->setDeflateFactor(0);  // 0 to 6, 6 being the most compressed
+    shared_ptr<XdmfHDF5Writer> hdf_5_file = XdmfHDF5Writer::New(filename + ".h5", false);
+    shared_ptr<XdmfWriter> xmf_file = XdmfWriter::New(filename + ".xmf", hdf_5_file);
+    hdf_5_file->setUseDeflate(false); // do not use compression (too slow)
+    hdf_5_file->setDeflateFactor(0);  // 0 to 6, 6 being the most compressed
 
     xmf_file->setLightDataLimit(0); // everything go to the hdf5
 
     // Write data
     (*data)->accept(xmf_file);
 }
-}  // namespace MCAC
+}  // namespace mcac
 
 #endif

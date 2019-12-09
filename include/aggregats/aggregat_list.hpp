@@ -1,13 +1,13 @@
-#ifndef AGGREGATLIST_H
-#define AGGREGATLIST_H 1
-#include "spheres/sphere_list.hpp"
+#ifndef INCLUDE_AGGREGATS_AGGREGAT_LIST_HPP
+#define INCLUDE_AGGREGATS_AGGREGAT_LIST_HPP 1
 #include "aggregat.hpp"
-#include "physical_model/physical_model.hpp"
 #include "list_storage/list_storage.hpp"
+#include "physical_model/physical_model.hpp"
+#include "spheres/sphere_list.hpp"
 #include "verlet/verlet.hpp"
 
 
-namespace MCAC {
+namespace mcac {
 class AggregatList : public ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate> {
     friend class Aggregate;
 
@@ -38,7 +38,7 @@ public:
     size_t merge(size_t first, size_t second);
     /* other */
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;
-    std::pair<size_t, double> distance_to_next_contact(size_t source,
+    std::pair<int, double> distance_to_next_contact(size_t source,
                                                        std::array<double, 3> direction) const;
     std::vector<size_t> get_search_space(size_t source, std::array<double, 3> direction) const;
     std::vector<std::pair<size_t, double> > sort_search_space(size_t moving_aggregate,
@@ -51,16 +51,16 @@ public:
     };
     void save(bool);
     auto get_data() const;
-    std::vector<double> Format_Position() const;
-    std::vector<double> Format_rg() const;
-    std::vector<int> Format_n_spheres() const;
-    std::vector<double> Format_f_agg() const;
-    std::vector<double> Format_lpm() const;
-    std::vector<double> Format_time_step() const;
-    std::vector<double> Format_rmax() const;
-    std::vector<double> Format_agregat_volume() const;
-    std::vector<double> Format_agregat_surface() const;
-    std::vector<int> Format_label() const;
+    std::vector<double> format_position() const;
+    std::vector<double> format_rg() const;
+    std::vector<int> format_n_spheres() const;
+    std::vector<double> format_f_agg() const;
+    std::vector<double> format_lpm() const;
+    std::vector<double> format_time_step() const;
+    std::vector<double> format_rmax() const;
+    std::vector<double> format_agregat_volume() const;
+    std::vector<double> format_agregat_surface() const;
+    std::vector<int> format_label() const;
 
     /* Storage specific */
 private:
@@ -79,7 +79,7 @@ public:
     /** Move assignment operator */
     AggregatList &operator=(AggregatList &&other) noexcept = delete;
 };
-}// namespace MCAC
+}// namespace mcac
 
 
-#endif // AGGREGATLIST_H
+#endif //INCLUDE_AGGREGATS_AGGREGAT_LIST_HPP

@@ -1,7 +1,7 @@
 #include "calcul.hpp"
+#include "constants.hpp"
 #include "physical_model/physical_model.hpp"
 #include "tools/tools.hpp"
-#include "constants.hpp"
 #include <iostream>
 
 
@@ -11,9 +11,9 @@ int main(int argc, char *argv[]) {
         std::cout << "Missing argument : param file." << std::endl;
         return 1;
     }
-    MCAC::PhysicalModel physicalmodel(argv[1]);
-    MCAC::init_random();
-    MCAC::AggregatList aggregates(&physicalmodel);
-    MCAC::Calcul(physicalmodel, aggregates);
-    return MCAC::ErrorCodes::VERLET_ERROR;
+    mcac::PhysicalModel physicalmodel(argv[1]);
+    mcac::init_random();
+    mcac::AggregatList aggregates(&physicalmodel);
+    mcac::calcul(&physicalmodel, &aggregates);
+    return mcac::ErrorCodes::NO_ERROR;
 }

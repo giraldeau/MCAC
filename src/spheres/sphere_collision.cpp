@@ -26,15 +26,14 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <cmath>
 
 
-using namespace std;
-namespace MCAC {
-[[gnu::pure]]  pair<bool, double> collision(const Sphere &sphere_1, const Sphere &sphere_2,
-                                            const array<double, 3> &displacement) noexcept {
-    array<array<double, 3>, 3> rot_mat = get_rot_mat(displacement);
-    return collision_r(sphere_1, sphere_2, rot_mat);
+namespace mcac {
+[[gnu::pure]] std::pair<bool, double> sphere_collision(const Sphere &sphere_1, const Sphere &sphere_2,
+                                                       const std::array<double, 3> &displacement) noexcept {
+    std::array<std::array<double, 3>, 3> rot_mat = get_rot_mat(displacement);
+    return sphere_collision_r(sphere_1, sphere_2, rot_mat);
 }
-[[gnu::pure]]  pair<bool, double> collision_r(const Sphere &sphere_1, const Sphere &sphere_2,
-                                              const array<array<double, 3>, 3> &rot_mat) noexcept {
+[[gnu::pure]] std::pair<bool, double> sphere_collision_r(const Sphere &sphere_1, const Sphere &sphere_2,
+                                                         const std::array<std::array<double, 3>, 3> &rot_mat) noexcept {
     /*
      * We use a change of axis system
      * the center is placed on the mobil sphere
@@ -57,79 +56,79 @@ namespace MCAC {
     double minval = 0.;
     bool collision = true;
     if (dist > dist_contact) {
-        double L = sphere_1.physicalmodel->box_lenght;
+        double box_lenght = sphere_1.physicalmodel->box_lenght;
         collision = false;
-        minval = 10 * L;
-        array<double, 3> oldpos1{sphere_1.get_position()};
-        array<double, 3> oldpos2{sphere_2.get_position()};
-        array<double, 3> pos{};
+        minval = 10 * box_lenght;
+        std::array<double, 3> oldpos_1{sphere_1.get_position()};
+        std::array<double, 3> oldpos_2{sphere_2.get_position()};
+        std::array<double, 3> pos{};
         for (size_t l = 0; l < 3; ++l) {
-            pos[l] = sum(rot_mat[l] * (oldpos2 - oldpos1));
+            pos[l] = sum(rot_mat[l] * (oldpos_2 - oldpos_1));
         }
-        array<double, 3> perx{L * rot_mat[0][0],
-                              L * rot_mat[1][0],
-                              L * rot_mat[2][0],};
-        array<double, 3> pery{L * rot_mat[0][1],
-                              L * rot_mat[1][1],
-                              L * rot_mat[2][1],};
-        array<double, 3> perz{L * rot_mat[0][2],
-                              L * rot_mat[1][2],
-                              L * rot_mat[2][2],};
+        std::array<double, 3> perx{box_lenght * rot_mat[0][0],
+                                   box_lenght * rot_mat[1][0],
+                                   box_lenght * rot_mat[2][0],};
+        std::array<double, 3> pery{box_lenght * rot_mat[0][1],
+                                   box_lenght * rot_mat[1][1],
+                                   box_lenght * rot_mat[2][1],};
+        std::array<double, 3> perz{box_lenght * rot_mat[0][2],
+                                   box_lenght * rot_mat[1][2],
+                                   box_lenght * rot_mat[2][2],};
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 for (int k = -1; k <= 1; k++) {
-                    array<double, 3> tmp{pos + i * perx + j * pery + k * perz};
+                    std::array<double, 3> tmp{pos + i * perx + j * pery + k * perz};
 
                     // in the future
                     if (tmp[0] < 0.) {
                         continue;
                     }
-                    double dist1 = POW_2(tmp[1]) + POW_2(tmp[2]);
+                    double dist_1 = POW_2(tmp[1]) + POW_2(tmp[2]);
 
                     // collision is possible
-                    if (dist1 > dist_contact) {
+                    if (dist_1 > dist_contact) {
                         continue;
                     }
                     collision = true;
-                    double sol = dist_contact - dist1;
+                    double sol = dist_contact - dist_1;
                     sol = tmp[0] - sqrt(sol);
                     minval = MIN(minval, sol);
                 }
             }
         }
     }
-    pair<bool, double> result = {collision, minval};
+    std::pair<bool, double> result = {collision, minval};
     return result;
 }
-[[gnu::pure]]  vector<double> collisions(const Sphere &sphere_1,
-                                         const SphereList &list,
-                                         const array<double, 3> &displacement) noexcept {
-    array<array<double, 3>, 3> rot_mat{get_rot_mat(displacement)};
-    vector<double> dist_to_collision;
+[[gnu::pure]]  std::vector<double> sphere_collisions(const Sphere &sphere_1,
+                                                     const SphereList &list,
+                                                     const std::array<double, 3> &displacement) noexcept {
+    std::array<std::array<double, 3>, 3> rot_mat{get_rot_mat(displacement)};
+    std::vector<double> dist_to_collision;
     for (const Sphere *sphere_2 : list) {
-        pair<bool, double> suspect = collision_r(sphere_1, *sphere_2, rot_mat);
+        std::pair<bool, double> suspect = sphere_collision_r(sphere_1, *sphere_2, rot_mat);
         if (suspect.first) {
             dist_to_collision.push_back(suspect.second);
         }
     }
     return dist_to_collision;
 }
-[[gnu::pure]] array<array<double, 3>, 3> get_rot_mat(const array<double, 3> &displacement) noexcept {
+[[gnu::pure]] std::array<std::array<double, 3>, 3> get_rot_mat(const std::array<double, 3> &displacement) noexcept {
     double anglez = -atan2(displacement[1], displacement[0]);
-    array<array<double, 3>, 3> rotz{};
+    std::array<std::array<double, 3>, 3> rotz{};
     rotz[0] = {{cos(anglez), -sin(anglez), 0}};
     rotz[1] = {{sin(anglez), cos(anglez), 0}};
     rotz[2] = {{0, 0, 1}};
-    array<double, 3> tmp{};
-    for (size_t i = 0; i < 3; ++i) {
+    std::array<double, 3> tmp{};
+    for (size_t i = 0; i < tmp.size(); ++i) {
         tmp[i] = sum(rotz[i] * displacement);
     }
     double angley = atan2(tmp[2], tmp[0]);
-    array<array<double, 3>, 3> roty{};
+    std::array<std::array<double, 3>, 3> roty{};
     roty[0] = {{cos(angley), 0, sin(angley)}};
     roty[1] = {{0, 1, 0}};
     roty[2] = {{-sin(angley), 0, cos(angley)}};
-    array<array<double, 3>, 3> matrot{};
+    std::array<std::array<double, 3>, 3> matrot{};
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
             matrot[i][j] = 0;
@@ -140,5 +139,5 @@ namespace MCAC {
     }
     return matrot;
 }
-}  // namespace MCAC
+}  // namespace mcac
 

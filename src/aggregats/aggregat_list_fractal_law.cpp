@@ -2,18 +2,17 @@
 #include "tools/tools.hpp"
 
 
-using namespace std;
-namespace MCAC {
-tuple<bool, double, double, double> AggregatList::get_instantaneous_fractal_law() const {
-    vector<double> sizes;
-    vector<double> _dg_over_dps;
+namespace mcac {
+std::tuple<bool, double, double, double> AggregatList::get_instantaneous_fractal_law() const {
+    std::vector<double> sizes;
+    std::vector<double> dg_over_dps;
     sizes.reserve(size());
-    _dg_over_dps.reserve(size());
-    for (const Aggregate *Agg : list) {
-        sizes.push_back(double(Agg->size()));
-        _dg_over_dps.push_back(*Agg->dg_over_dp);
+    dg_over_dps.reserve(size());
+    for (const Aggregate *agg : list) {
+        sizes.push_back(double(agg->size()));
+        dg_over_dps.push_back(*agg->dg_over_dp);
     }
-    return linreg(_dg_over_dps, sizes);
+    return linreg(dg_over_dps, sizes);
 }
-}// namespace MCAC
+}// namespace mcac
 

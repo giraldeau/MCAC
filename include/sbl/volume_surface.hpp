@@ -1,5 +1,5 @@
-#ifndef SBLVOLUMESURFACE_H
-#define SBLVOLUMESURFACE_H 1
+#ifndef INCLUDE_SBL_VOLUME_SURFACE_HPP
+#define INCLUDE_SBL_VOLUME_SURFACE_HPP 1
 
 #ifdef WITH_SBL
 
@@ -8,11 +8,11 @@
 #include <vector>
 
 using namespace std;
-namespace MCAC{
+namespace mcac{
 
 pair<vector<double>, vector<double>> compute_volume_surface(const SphereList& spherelist);
 
 }
 
 #endif // WITH_SBL
-#endif // SBLVOLUMESURFACE_H
+#endif //INCLUDE_SBL_VOLUME_SURFACE_HPP

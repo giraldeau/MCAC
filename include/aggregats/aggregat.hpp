@@ -1,12 +1,12 @@
-#ifndef INCLUDE_AGGREGATS_AGGREGAT_HPP_
-#define INCLUDE_AGGREGATS_AGGREGAT_HPP_ 1
-#include "spheres/sphere_list.hpp"
-#include "elem_storage/elem_storage.hpp"
+#ifndef INCLUDE_AGGREGATS_AGGREGAT_HPP
+#define INCLUDE_AGGREGATS_AGGREGAT_HPP 1
 #include "constants.hpp"
+#include "elem_storage/elem_storage.hpp"
+#include "spheres/sphere_list.hpp"
 #include <list>
 
 
-namespace MCAC {
+namespace mcac {
 class AggregatList;
 
 class Verlet;
@@ -64,7 +64,7 @@ public:
     size_t get_label() const noexcept;
     /* modifiers */
     void decrease_label() noexcept;
-    void set_verlet(Verlet &) noexcept;
+    void set_verlet(Verlet *) noexcept;
     void unset_verlet() noexcept;
     void set_time(double newtime) noexcept;
     void time_forward(double deltatemps) noexcept;
@@ -72,10 +72,10 @@ public:
     void translate(std::array<double, 3> vector) noexcept;
     //    void init();
     void init(const PhysicalModel &,
-              Verlet &,
+              Verlet *,
               const std::array<double, 3> &position,
               size_t new_label,
-              SphereList &,
+              SphereList *,
               double sphere_diameter) noexcept;
     void update() noexcept;
     void compute_volume() noexcept;
@@ -83,7 +83,7 @@ public:
     void compute_max_radius() noexcept;
     void compute_giration_radius() noexcept;
     /* other */
-    void merge(Aggregate &) noexcept;
+    void merge(Aggregate *) noexcept;
     void print() const noexcept;
     /* Storage specific */
 private:
@@ -93,11 +93,11 @@ public:
     Aggregate() noexcept;
     //    explicit Aggregate(PhysicalModel &);
     /** Constructor with external storage */
-    Aggregate(AggregatList &, size_t label) noexcept;
+    Aggregate(AggregatList *, size_t newlabel) noexcept;
     /** Destructor */
     ~Aggregate() noexcept;
     /** Copy constructor */
-    Aggregate(const Aggregate &, AggregatList &) noexcept;
+    Aggregate(const Aggregate &, AggregatList *) noexcept;
     Aggregate(const Aggregate &) noexcept = delete;
     /** Move constructor */
     Aggregate(Aggregate &&) noexcept = delete;
@@ -106,7 +106,7 @@ public:
     /** Move assignment operator */
     Aggregate &operator=(Aggregate &&other) noexcept = delete;
 };
-}  // namespace MCAC
+}  // namespace mcac
 
 
-#endif //INCLUDE_AGGREGATS_AGGREGAT_HPP_
+#endif //INCLUDE_AGGREGATS_AGGREGAT_HPP

@@ -1,11 +1,11 @@
-#ifndef INCLUDE_VERLET_VERLET_HPP_
-#define INCLUDE_VERLET_VERLET_HPP_ 1
+#ifndef INCLUDE_VERLET_VERLET_HPP
+#define INCLUDE_VERLET_VERLET_HPP 1
 #include <array>
 #include <list>
 #include <vector>
 
 
-namespace MCAC {
+namespace mcac {
 class Verlet {
 public:
     std::vector<std::vector<std::vector<std::list<size_t> > > > grid;
@@ -23,6 +23,6 @@ public:
     Verlet(size_t new_n_div, double new_width);
 }; // class verlet
 
-}  // namespace MCAC
+}  // namespace mcac
 
-#endif //INCLUDE_VERLET_VERLET_HPP_
+#endif //INCLUDE_VERLET_VERLET_HPP

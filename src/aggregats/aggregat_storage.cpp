@@ -3,8 +3,7 @@
 #include "spheres/sphere.hpp"
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 void Aggregate::setpointers() noexcept {
     rg = &(*storage)[AggregatesFields::AGGREGAT_RG][index_in_storage];
     f_agg = &(*storage)[AggregatesFields::AGGREGAT_F_AGG][index_in_storage];
@@ -52,8 +51,8 @@ Aggregate::Aggregate() noexcept:
     index_verlet({{0, 0, 0}}),
     myspheres() {
 }
-Aggregate::Aggregate(AggregatList &_storage, const size_t newlabel) noexcept:
-    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(_storage, newlabel),
+Aggregate::Aggregate(AggregatList *aggregat_list, size_t newlabel) noexcept:
+    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(*aggregat_list, newlabel),
     rg(nullptr),
     f_agg(nullptr),
     lpm(nullptr),
@@ -76,10 +75,10 @@ Aggregate::Aggregate(AggregatList &_storage, const size_t newlabel) noexcept:
     distances_center(),
     volumes(),
     surfaces(),
-    physicalmodel(_storage.physicalmodel),
+    physicalmodel(aggregat_list->physicalmodel),
     verlet(nullptr),
     index_verlet({{0, 0, 0}}),
-    myspheres(*_storage.physicalmodel, 1) {
+    myspheres(*aggregat_list->physicalmodel, 1) {
 }
 Aggregate::~Aggregate() noexcept {
     if (static_cast<bool>(verlet)) {
@@ -87,8 +86,8 @@ Aggregate::~Aggregate() noexcept {
     }
 }
 /** Copy constructor */
-Aggregate::Aggregate(const Aggregate &other, AggregatList &_Storage) noexcept:
-    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(other, *this, _Storage),
+Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list) noexcept:
+    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(other, *this, *aggregat_list),
     rg(nullptr),
     f_agg(nullptr),
     lpm(nullptr),
@@ -114,7 +113,7 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList &_Storage) noexcept:
     physicalmodel(other.physicalmodel),
     verlet(nullptr),
     index_verlet({{0, 0, 0}}),
-    myspheres(other.myspheres, _Storage.spheres) {
+    myspheres(other.myspheres, &aggregat_list->spheres) {
     setpointers();
     for (Sphere *s : myspheres) {
         s->set_label(long(index_in_storage));
@@ -211,9 +210,11 @@ Aggregate& Aggregate::operator= (const Aggregate& other)
 //    swap(IndexVerlet, other.IndexVerlet);
 //    swap(Label, other.Label);
 //    swap(Np, other.Np);
-//    StatisicsData::operator=(static_cast<StatisicsData &>(other));
-//    storage_elem<AggregatesFields::AGGREGAT_NFIELDS, ListAggregat>::operator=(move(static_cast<storage_elem<AggregatesFields::AGGREGAT_NFIELDS, ListAggregat> &>(other)));
+//    StatisicsData::operator=(static_cast<StatisicsData>(other));
+//    storage_elem<AggregatesFields::AGGREGAT_NFIELDS,
+//                 ListAggregat>::operator=(move(static_cast<storage_elem<AggregatesFields::AGGREGAT_NFIELDS,
+//                                                                        ListAggregat> >(other)));
 //    setpointers();
 //    return *this;
 //}
-}  // namespace MCAC
+}  // namespace mcac

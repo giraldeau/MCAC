@@ -1,22 +1,22 @@
-#ifndef INCLUDE_LIST_STORAGE_LIST_STORAGE_METHODS_HPP_
-#define INCLUDE_LIST_STORAGE_LIST_STORAGE_METHODS_HPP_ 1
+#ifndef INCLUDE_LIST_STORAGE_LIST_STORAGE_METHODS_HPP
+#define INCLUDE_LIST_STORAGE_LIST_STORAGE_METHODS_HPP 1
 #include "list_storage/list_storage.hpp"
 #include "physical_model/physical_model.hpp"
 #include <array>
 #include <vector>
 
 
-namespace MCAC {
+namespace mcac {
 template<int N, class elem>
 [[gnu::pure]] size_t ListStorage<N, elem>::size() const noexcept {
     return list.size();
 }
 template<int N, class elem>
-[[gnu::pure]] elem &ListStorage<N, elem>::operator[](const size_t i) noexcept {
+[[gnu::pure]] elem &ListStorage<N, elem>::operator[](size_t i) noexcept {
     return *list[i];
 }
 template<int N, class elem>
-[[gnu::pure]] const elem &ListStorage<N, elem>::operator[](const size_t i) const noexcept {
+[[gnu::pure]] const elem &ListStorage<N, elem>::operator[](size_t i) const noexcept {
     return *list[i];
 }
 template<int N, class elem>
@@ -24,8 +24,8 @@ void ListStorage<N, elem>::destroy() noexcept {
     if (!external_storage) {
         if (storage) {
             if (size() > 0) {
-                for (size_t _N = size(); _N-- > 0;) {
-                    delete list[_N];
+                for (size_t n = size(); n-- > 0;) {
+                    delete list[n];
                 }
             }
             delete storage;
@@ -34,13 +34,13 @@ void ListStorage<N, elem>::destroy() noexcept {
         storage = nullptr;
     }
 }
-template<int N, class elem>
-void swap(ListStorage<N, elem> &first, ListStorage<N, elem> &second) noexcept {
-    using std::swap;
-    swap(first.list, second.list);
-    swap(first.storage, second.storage);
-    swap(first.external_storage, second.external_storage);
-}
+//template<int N, class elem>
+//void swap(ListStorage<N, elem> &first, ListStorage<N, elem> &second) noexcept {
+//    using std::swap;
+//    swap(first.list, second.list);
+//    swap(first.storage, second.storage);
+//    swap(first.external_storage, second.external_storage);
+//}
 template<int N, class elem>
 void ListStorage<N, elem>::merge(ListStorage<N, elem> &other) noexcept {
     if (!external_storage) {
@@ -85,7 +85,7 @@ typename std::vector<elem *>::const_iterator ListStorage<N, elem>::end() const n
 template<int N, class elem>
 template<class mylist>
 elem *ListStorage<N, elem>::add(const elem &other, mylist &owner) noexcept {
-    return new elem(other, owner);
+    return new elem(other, &owner);
 }
 /** Default constructor in local storage */
 //template<int N, class elem>
@@ -123,9 +123,9 @@ void ListStorage<N, elem>::init(size_t size, mylist &owner) noexcept {
     for (std::vector<double> &data : (*storage)) {
         data.assign(size, 0.);
     }
-    const size_t listSize = size;
-    for (size_t i = 0; i < listSize; i++) {
-        list.push_back(new elem(owner, i));
+    const size_t _list_size = size;
+    for (size_t i = 0; i < _list_size; i++) {
+        list.push_back(new elem(&owner, i));
     }
 }
 /** Constructor with external storage */
@@ -135,9 +135,9 @@ ListStorage<N, elem>::ListStorage(ListStorage<N, elem> &parent, const std::vecto
     storage(parent.storage),
     external_storage(&parent) {
     list.assign(index.size(), nullptr);
-    const size_t listSize = size();
+    const size_t _list_size = size();
 //    #pragma omp for simd
-        for (size_t i = 0; i < listSize; i++) {
+        for (size_t i = 0; i < _list_size; i++) {
             list[i] = external_storage->list[index[i]];
         }
 }
@@ -149,18 +149,18 @@ ListStorage<N, elem>::~ListStorage() noexcept {
 /** Copy constructor */
 template<int N, class elem>
 template<class mylist>
-ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &owner, mylist &_Storage) noexcept:
+ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &owner, mylist &ext_storage) noexcept:
     list(),
-    storage(_Storage.storage),
-    external_storage(&_Storage) {
-    const size_t start = (*storage)[0].size();
+    storage(ext_storage.storage),
+    external_storage(&ext_storage) {
+    const size_t _start = (*storage)[0].size();
     for (size_t i = 0; i < N; i++) {
-        (*storage)[i].reserve(other.size() + start);
+        (*storage)[i].reserve(other.size() + _start);
     }
-    list.reserve(other.size() + start);
-    const size_t listSize = other.size();
-    for (size_t _size = 0; _size < listSize; _size++) {
-        list.push_back(new elem(*other.list[_size], _Storage, _size + start));
+    list.reserve(other.size() + _start);
+    const size_t _list_size = other.size();
+    for (size_t size = 0; size < _list_size; size++) {
+        list.push_back(new elem(*other.list[size], &ext_storage, size + _start));
     }
 }
 /** Move constructor */
@@ -208,5 +208,5 @@ ListStorage<N, elem> &ListStorage<N, elem>::operator=(ListStorage<N, elem> &&oth
 //    *this = std::move(tmp);                  // re-use move-assignment
 //    return *this;
 //}
-}  // namespace MCAC
-#endif //INCLUDE_LIST_STORAGE_LIST_STORAGE_METHODS_HPP_
+}  // namespace mcac
+#endif //INCLUDE_LIST_STORAGE_LIST_STORAGE_METHODS_HPP

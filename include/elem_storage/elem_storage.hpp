@@ -1,15 +1,15 @@
-#ifndef INCLUDE_ELEM_STORAGE_ELEM_STORAGE_HPP_
-#define INCLUDE_ELEM_STORAGE_ELEM_STORAGE_HPP_ 1
+#ifndef INCLUDE_ELEM_STORAGE_ELEM_STORAGE_HPP
+#define INCLUDE_ELEM_STORAGE_ELEM_STORAGE_HPP 1
 #include <array>
 #include <vector>
 
 
-namespace MCAC {
+namespace mcac {
 template<int N, class mystorage>
 class ElemStorage {
     template<int, class>
     friend
-    class storage_list;
+    class StorageList;
 
 protected:
     std::array<std::vector<double>, N> *storage;
@@ -25,7 +25,7 @@ public:
     ~ElemStorage() noexcept;
     /** Copy constructor */
     template<class elem>
-    ElemStorage(const ElemStorage &other, elem &sphere, mystorage &_Storage) noexcept;
+    ElemStorage(const ElemStorage &other, elem &sphere, mystorage &storage) noexcept;
     explicit ElemStorage(const ElemStorage &other) noexcept = delete;
     /** Move constructor */
     explicit ElemStorage(ElemStorage &&other) noexcept = delete;
@@ -34,9 +34,9 @@ public:
     /** Move assignment operator */
     ElemStorage &operator=(ElemStorage &&other) noexcept = delete;
 };
-}  // namespace MCAC
+}  // namespace mcac
 
 #include "elem_storage/elem_storage_methods.hpp"
 
 
-#endif //INCLUDE_ELEM_STORAGE_ELEM_STORAGE_HPP_
+#endif //INCLUDE_ELEM_STORAGE_ELEM_STORAGE_HPP

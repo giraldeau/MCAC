@@ -1,8 +1,8 @@
-#ifndef INCLUDE_SPHERES_SPHERE_HPP_
-#define INCLUDE_SPHERES_SPHERE_HPP_
-#include "physical_model/physical_model.hpp"
-#include "elem_storage/elem_storage.hpp"
+#ifndef INCLUDE_SPHERES_SPHERE_HPP
+#define INCLUDE_SPHERES_SPHERE_HPP
 #include "constants.hpp"
+#include "elem_storage/elem_storage.hpp"
+#include "physical_model/physical_model.hpp"
 #include <array>
 #include <vector>
 /*
@@ -23,7 +23,7 @@ Sphere.h and Sphere.cpp defines the data storage.
  Data can be shared between multiple Aggregat
 
 */
-namespace MCAC {
+namespace mcac {
 class Aggregate;
 
 class SphereList;
@@ -80,12 +80,12 @@ public:
     /** Constructor in local storage with initialization */
     Sphere(const PhysicalModel &, const std::array<double, 3> &newposition, double newr) noexcept;
     /** Constructor with external storage */
-    Sphere(SphereList &aggregat, size_t id) noexcept;
+    Sphere(SphereList *aggregat, size_t id) noexcept;
     /** Destructor */
     ~Sphere() noexcept;
     /** Copy constructor */
     Sphere(const Sphere &) noexcept = delete;
-    Sphere(const Sphere &, SphereList &aggregat, size_t id) noexcept;
+    Sphere(const Sphere &, SphereList *aggregat, size_t id) noexcept;
     /** Move constructor */
     Sphere(Sphere &&) noexcept = delete;
     /** Copy assignment operator */
@@ -93,6 +93,6 @@ public:
     /** Move assignment operator */
     Sphere &operator=(Sphere &&other) noexcept = delete;
 };
-}  // namespace MCAC
+}  // namespace mcac
 
-#endif //INCLUDE_SPHERES_SPHERE_HPP_
+#endif //INCLUDE_SPHERES_SPHERE_HPP

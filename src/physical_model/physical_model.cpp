@@ -1,26 +1,27 @@
-#include "physical_model/physical_model.hpp"
 #include "constants.hpp"
+#include "physical_model/physical_model.hpp"
 #include "tools/tools.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
 #include <inipp.h>
+#include <iostream>
 
 
 namespace fs = std::experimental::filesystem;
-using namespace std;
-namespace MCAC {
-PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
+namespace mcac {
+PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     fractal_dimension(1.4),
     fractal_prefactor(1.8),
     x_surfgrowth(2),
+    coeff_b(1e-3),
     pressure(_pressure_ref),
     temperature(_temperature_ref),
     density(1800),
     mean_diameter(30),
     dispersion_diameter(1.25),
+    time(0.),
     volume_fraction(1e-3),
     n_verlet_divisions(10),
     n_monomeres(2500),
@@ -42,7 +43,7 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
     inipp::extract(ini.sections["monomeres"]["density"], density);
     inipp::extract(ini.sections["monomeres"]["dispersion_diameter"], dispersion_diameter);
     inipp::extract(ini.sections["monomeres"]["mean_diameter"], mean_diameter);
-    string default_mode = "normal";
+    std::string default_mode = "normal";
     inipp::extract(ini.sections["monomeres"]["initialisation_mode"], default_mode);
     monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_mode);
     // environment
@@ -73,12 +74,12 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
     output_dir = extract_path(fichier_param) / output_dir;
     if (!fs::exists(output_dir)) {
         if (!fs::create_directory(output_dir)) {
-            cout << "Error creating directory " << output_dir << endl;
+            std::cout << "Error creating directory " << output_dir << std::endl;
             exit(ErrorCodes::IO_ERROR);
         }
     } else {
         if (!fs::is_directory(output_dir)) {
-            cout << "Error not a directory " << output_dir << endl;
+            std::cout << "Error not a directory " << output_dir << std::endl;
             exit(ErrorCodes::INPUT_ERROR);
         }
     }
@@ -118,84 +119,85 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
 }
 [[gnu::pure]] bool PhysicalModel::finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const {
     if (number_of_aggregates <= number_of_aggregates_limit) {
-        cout << "We reach the AggMin condition" << endl << endl;
+        std::cout << "We reach the AggMin condition" << std::endl << std::endl;
         return true;
     }
     if (n_iter_without_contact_limit > 0
         && n_iter_without_contact >= n_iter_without_contact_limit) {
-        cout << "We reach the WaitLimit condition" << endl << endl;
+        std::cout << "We reach the WaitLimit condition" << std::endl << std::endl;
         return true;
     }
     if (cpu_limit > 0) {
         clock_t current_cpu = clock();
         double elapse = double(current_cpu - cpu_start) / CLOCKS_PER_SEC;
         if (elapse >= cpu_limit) {
-            cout << "We reach the CPULimit condition" << endl << endl;
+            std::cout << "We reach the CPULimit condition" << std::endl << std::endl;
             return true;
         }
     }
     if (physical_time_limit > 0
         && time >= physical_time_limit) {
-        cout << "We reach the Maximum physical time condition " << time << "/" << physical_time_limit << endl;
+        std::cout << "We reach the Maximum physical time condition " << time << "/" << physical_time_limit << std::endl;
         return true;
     }
     if (mean_monomere_per_aggregate_limit > 0
         && mean_monomere_per_aggregate >= mean_monomere_per_aggregate_limit) {
-        cout << "We reach the NPP_avg_limit condition " << mean_monomere_per_aggregate << "/"
-             << mean_monomere_per_aggregate_limit << endl;
+        std::cout << "We reach the NPP_avg_limit condition " << mean_monomere_per_aggregate << "/"
+                  << mean_monomere_per_aggregate_limit << std::endl;
         return true;
     }
     return false;
 }
 [[gnu::pure]] void PhysicalModel::print() const {
-    cout << "Physical parameters:" << endl
-         << " Initial Nagg : " << n_monomeres << endl
-         << " Box size     : " << box_lenght << endl
-         << " Pressure     : " << pressure << endl
-         << " Temperature  : " << temperature << endl
-         << " diffusivity  : " << viscosity << endl
-         << " FV           : " << volume_fraction << endl
-         << " density      : " << density << endl
-         << " Dpm          : " << mean_diameter << endl
-         << " sigmaDpm     : " << dispersion_diameter << endl
-         << " Asurfgrowth  : " << a_surfgrowth << endl
-         << " xsurfgrowth  : " << x_surfgrowth << endl
-         << " coeffB       : " << coeff_b << endl
-         << " dfe          : " << fractal_dimension << endl
-         << " kfe          : " << fractal_prefactor << endl
-         << " lambda       : " << gaz_mean_free_path << endl
-         << " rpeqmass     : " << mean_massic_radius << endl
-         << " gamma_       : " << friction_exponnant << endl
-         << endl
-         << "Options for Pysical model: " << endl
-         << " Mode : " << monomeres_initialisation_type << endl
-         << endl
-         << "Ending calcul when:" << endl
-         << " - There is " << number_of_aggregates_limit << " aggregats left or less" << endl;
+    std::cout << "Physical parameters:" << std::endl
+              << " Initial Nagg : " << n_monomeres << std::endl
+              << " Box size     : " << box_lenght << std::endl
+              << " Pressure     : " << pressure << std::endl
+              << " Temperature  : " << temperature << std::endl
+              << " diffusivity  : " << viscosity << std::endl
+              << " FV           : " << volume_fraction << std::endl
+              << " density      : " << density << std::endl
+              << " Dpm          : " << mean_diameter << std::endl
+              << " sigmaDpm     : " << dispersion_diameter << std::endl
+              << " Asurfgrowth  : " << a_surfgrowth << std::endl
+              << " xsurfgrowth  : " << x_surfgrowth << std::endl
+              << " coeffB       : " << coeff_b << std::endl
+              << " dfe          : " << fractal_dimension << std::endl
+              << " kfe          : " << fractal_prefactor << std::endl
+              << " lambda       : " << gaz_mean_free_path << std::endl
+              << " rpeqmass     : " << mean_massic_radius << std::endl
+              << " gamma_       : " << friction_exponnant << std::endl
+              << std::endl
+              << "Options for Pysical model: " << std::endl
+              << " Mode : " << monomeres_initialisation_type << std::endl
+              << std::endl
+              << "Ending calcul when:" << std::endl
+              << " - There is " << number_of_aggregates_limit << " aggregats left or less" << std::endl;
     if (n_iter_without_contact_limit > 0) {
-        cout << " - It has been " << n_iter_without_contact_limit << " iterations without collision" << endl;
+        std::cout << " - It has been " << n_iter_without_contact_limit << " iterations without collision" << std::endl;
     }
     if (cpu_limit > 0) {
-        cout << " - The simulations is running for more than " << cpu_limit << " seconds" << endl;
+        std::cout << " - The simulations is running for more than " << cpu_limit << " seconds" << std::endl;
     }
     if (physical_time_limit > 0) {
-        cout << " - The residence time is larger than " << physical_time_limit << " seconds" << endl;
+        std::cout << " - The residence time is larger than " << physical_time_limit << " seconds" << std::endl;
     }
     if (mean_monomere_per_aggregate_limit > 0) {
-        cout << " - The average Npp per aggregate reach " << mean_monomere_per_aggregate_limit << " monomers" << endl;
+        std::cout << " - The average Npp per aggregate reach " << mean_monomere_per_aggregate_limit << " monomers"
+                  << std::endl;
     }
-    cout << endl;
+    std::cout << std::endl;
 }
 
 
 //#####################################################################################################################
 
-[[gnu::pure]]  double PhysicalModel::cunningham(double _r) const {
-    double A = 1.142;
-    double B = 0.558;
-    double C = 0.999;
-    return 1.0 + A * gaz_mean_free_path / _r
-           + B * gaz_mean_free_path / _r * exp(-C * _r / gaz_mean_free_path);
+[[gnu::pure]]  double PhysicalModel::cunningham(double r) const {
+    double a = 1.142;
+    double b = 0.558;
+    double c = 0.999;
+    return 1.0 + a * gaz_mean_free_path / r
+           + b * gaz_mean_free_path / r * exp(-c * r / gaz_mean_free_path);
 }
 
 
@@ -212,24 +214,24 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
 [[gnu::pure]] double PhysicalModel::friction_coeff(size_t npp) const {
     //to be expressed in terms of V_agg/V_pp
     double cc = cunningham(mean_massic_radius);
-    return (6.0 * _pi * viscosity * mean_massic_radius / cc) * pow(npp, friction_exponnant / fractal_dimension);
+    return (6. * _pi * viscosity * mean_massic_radius / cc) * pow(npp, friction_exponnant / fractal_dimension);
 }
-[[gnu::pure]] double PhysicalModel::friction_coeff2(double rgg) const {
+[[gnu::pure]] double PhysicalModel::friction_coeff_2(double rgg) const {
     double rmm = rgg * 1.3;
     double cc = cunningham(rmm);
-    return (6.0 * _pi * viscosity * rmm / cc);
+    return (6. * _pi * viscosity * rmm / cc);
 }
 [[gnu::pure]] double PhysicalModel::diffusivity(double f_agg) const {
     return _boltzmann * temperature / f_agg;
 }
-[[gnu::pure]] double PhysicalModel::relax_time(double masse, double f_agg) const {
+[[gnu::pure]] double PhysicalModel::relax_time(double masse, double f_agg) {
     return masse / f_agg;
 }
 [[gnu::const]] double inverfc(double p) {
     double x;
     double t;
     double pp;
-    if (p >= 2.0) {
+    if (p >= 2.) {
         return -100.;
     }
     if (p <= 0.0) {
@@ -244,18 +246,18 @@ PhysicalModel::PhysicalModel(const string &fichier_param) noexcept:
     }
     return (p < 1.0 ? x : -x);
 }
-[[gnu::const]] double inverf(const double p) {
+[[gnu::const]] double inverf(double p) {
     return inverfc(1. - p);
 }
-[[gnu::const]] fs::path extract_path(const string &filename) {
+[[gnu::const]] fs::path extract_path(const std::string &filename) {
     fs::path path = filename;
     fs::path fullpath = fs::absolute(path);
     if (!fs::exists(fullpath)) {
-        cout << "File does not exist\n" << endl;
+        std::cout << "File does not exist\n" << std::endl;
         exit(1);
     }
     fs::path parentpath = fullpath.parent_path();
     return parentpath; //Cette variable ne retient que le chemin du fichier param
 }
-}  // namespace MCAC
+}  // namespace mcac
 

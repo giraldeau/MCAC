@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONSTANTS_HPP_
-#define INCLUDE_CONSTANTS_HPP_ 1
+#ifndef INCLUDE_CONSTANTS_HPP
+#define INCLUDE_CONSTANTS_HPP 1
 #include <cmath>
 #include <map>
 
@@ -8,7 +8,7 @@
 #else
 #define XMF_OUTPUT void
 #endif
-namespace MCAC {
+namespace mcac {
 enum class WriterStatus {
     IDLE, APPENDING, WRITING
 };
@@ -65,5 +65,5 @@ const double _temperature_ref = 293.15;
 const double _sutterland_interpolation_constant = 110;
 const double _pressure_ref = 101300;
 const double _viscosity_ref = 18.203E-6;
-}  //namespace MCAC
-#endif //INCLUDE_CONSTANTS_HPP_
+}  //namespace mcac
+#endif //INCLUDE_CONSTANTS_HPP

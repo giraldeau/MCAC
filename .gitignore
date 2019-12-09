@@ -2,8 +2,6 @@
 build-*
 *.autosave
 *venv*
-*.h5
-*.xmf
 .vscode
 
 

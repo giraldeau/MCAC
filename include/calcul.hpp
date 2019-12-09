@@ -1,11 +1,11 @@
-#ifndef CALCUL_H
-#define CALCUL_H 1
-#include "physical_model/physical_model.hpp"
+#ifndef INCLUDE_CALCUL_HPP
+#define INCLUDE_CALCUL_HPP 1
 #include "aggregats/aggregat_list.hpp"
+#include "physical_model/physical_model.hpp"
 
 
-namespace MCAC {
-void Calcul(PhysicalModel &, AggregatList &);
-}  // namespace MCAC
+namespace mcac {
+void calcul(PhysicalModel *, AggregatList *);
+}  // namespace mcac
 
-#endif // CALCUL_H
+#endif //INCLUDE_CALCUL_HPP

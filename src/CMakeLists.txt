@@ -4,8 +4,9 @@ project(MCAC CXX)
 option(WITH_SBL "Use SBL for aggregate volume measure" OFF)
 option(WITH_IO  "Write output" ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+SET (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ### definitions des dependences  ###
 

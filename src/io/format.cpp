@@ -1,12 +1,12 @@
 #ifdef WITH_HDF5
-#include "io/xmf_includes.hpp"
 #include "io/format.hpp"
+#include "io/xmf_includes.hpp"
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 
 
-namespace MCAC {
+namespace mcac {
 // Usefull tool
 std::string to_string(const double &value) {
     std::stringstream sstr;
@@ -36,12 +36,12 @@ shared_ptr<XdmfTime> format_time(const double &value) {
     return thetime;
 }
 // Format filename
-std::string filename(int step, size_t N) {
-    int witdh = int(ceil(log10(double(N)))) + 4;
+std::string filename(int step, size_t n) {
+    int witdh = int(std::ceil(std::log10(static_cast<float>(n)))) + 4;
     std::ostringstream filename_stream;
     filename_stream << "_" << std::setfill('0') << std::setw(witdh) << step;
     return filename_stream.str();
 }
-}  // namespace MCAC
+}  // namespace mcac
 
 #endif

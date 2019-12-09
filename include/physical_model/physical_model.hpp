@@ -1,13 +1,13 @@
-#ifndef INCLUDE_PHYSICAL_MODEL_PHYSICAL_MODEL_HPP_
-#define INCLUDE_PHYSICAL_MODEL_PHYSICAL_MODEL_HPP_ 1
+#ifndef INCLUDE_PHYSICAL_MODEL_PHYSICAL_MODEL_HPP
+#define INCLUDE_PHYSICAL_MODEL_PHYSICAL_MODEL_HPP 1
 #include "constants.hpp"
 #include "io/xmf_includes.hpp"
-#include <ctime>
 #include <array>
+#include <ctime>
 #include <experimental/filesystem>
 
 
-namespace MCAC {
+namespace mcac {
 class PhysicalModel {
 public:
     double fractal_dimension, fractal_prefactor;
@@ -24,7 +24,7 @@ public:
     int monomeres_initialisation_type, n_iter_without_contact;
     clock_t cpu_start;
     double cpu_limit, physical_time_limit;
-    size_t mean_monomere_per_aggregate_limit;
+    int mean_monomere_per_aggregate_limit;
     size_t number_of_aggregates_limit;
     int n_iter_without_contact_limit;
     std::experimental::filesystem::path output_dir;
@@ -33,9 +33,9 @@ public:
     [[gnu::pure]] double cunningham(double r) const;
     [[gnu::pure]] double grow(double r, double dt) const;
     [[gnu::pure]] double friction_coeff(size_t npp) const;
-    [[gnu::pure]] double friction_coeff2(double rgg) const;
+    [[gnu::pure]] double friction_coeff_2(double rgg) const;
     [[gnu::pure]] double diffusivity(double) const;
-    [[gnu::pure]] double relax_time(double masse, double) const;
+    [[gnu::pure]] static double relax_time(double masse, double) ;
     [[gnu::pure]] void print() const;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;
     XMF_OUTPUT xmf_write() const;
@@ -76,8 +76,8 @@ public:
             periodic_position(position[1], dim),
             periodic_position(position[2], dim)};
 }
-}  // namespace MCAC
+}  // namespace mcac
 
 
-#endif //INCLUDE_PHYSICAL_MODEL_PHYSICAL_MODEL_HPP_
+#endif //INCLUDE_PHYSICAL_MODEL_PHYSICAL_MODEL_HPP
 

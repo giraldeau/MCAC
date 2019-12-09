@@ -4,16 +4,15 @@
 #include <limits>
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 double distance(const Aggregate &aggregate_1,
                 const Aggregate &aggregate_2,
-                array<double, 3> direction) noexcept {
-    double mindist(numeric_limits<double>::infinity());
+                std::array<double, 3> direction) noexcept {
+    double mindist(std::numeric_limits<double>::infinity());
 
     //$ For every sphere in the aggregate :
     for (const auto& mysphere: aggregate_1.myspheres) {
-        vector<double> dists = collisions(*mysphere, aggregate_2.myspheres, direction);
+        std::vector<double> dists = sphere_collisions(*mysphere, aggregate_2.myspheres, direction);
         if (!dists.empty()) {
             double lmindist = *min_element(dists.begin(), dists.end());
             if (lmindist <= mindist) {
@@ -43,4 +42,4 @@ bool contact(const Aggregate &aggregate_1,
     }
     return false;
 }
-}  // namespace MCAC
+}  // namespace mcac

@@ -1,15 +1,14 @@
-#include "spheres/sphere_intersection.hpp"
 #include "spheres/sphere_distance.hpp"
+#include "spheres/sphere_intersection.hpp"
 #include "tools/tools.hpp"
 #include <cmath>
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 Intersection::Intersection(const Sphere &sphere_1,
                            const Sphere &sphere_2) noexcept : Intersection(sphere_1, sphere_2,
                                                                            distance(sphere_1, sphere_2)) {
-};
+}
 Intersection::Intersection(const Sphere &sphere_1, const Sphere &sphere_2,
                            double given_dist) noexcept :
     volume_1{0.},
@@ -47,5 +46,5 @@ Intersection::Intersection(const Sphere &sphere_1, const Sphere &sphere_2,
         }
     }
 }
-}  // namespace MCAC
+}  // namespace mcac
 

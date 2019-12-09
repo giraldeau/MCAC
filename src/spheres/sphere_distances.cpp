@@ -23,8 +23,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <cmath>
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 /* #############################################################################################################
  * ################################# distance between a sphere and a point #####################################
  * #############################################################################################################*/
@@ -40,26 +39,26 @@ namespace MCAC {
 [[gnu::pure]]  double relative_distance_2(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
     return relative_distance_2(sphere_1.get_relative_position(), sphere_2.get_relative_position());
 }
-[[gnu::pure]]  double distance(const array<double, 3> &point_1,
-                               const array<double, 3> &point_2,
+[[gnu::pure]]  double distance(const std::array<double, 3> &point_1,
+                               const std::array<double, 3> &point_2,
                                double box_size) noexcept {
     return sqrt(distance_2(point_1, point_2, box_size));
 }
-[[gnu::pure]]  double relative_distance(const array<double, 3> &point_1,
-                                        const array<double, 3> &point_2) noexcept {
+[[gnu::pure]]  double relative_distance(const std::array<double, 3> &point_1,
+                                        const std::array<double, 3> &point_2) noexcept {
     return sqrt(relative_distance_2(point_1, point_2));
 }
-[[gnu::pure]]  double distance_2(const array<double, 3> &point_1, const array<double, 3> &point_2,
+[[gnu::pure]]  double distance_2(const std::array<double, 3> &point_1, const std::array<double, 3> &point_2,
                                  double box_size) noexcept {
-    array<double, 3> diff = point_1 - point_2;
+    std::array<double, 3> diff = point_1 - point_2;
     double dx(periodic_distance(diff[0], box_size));
     double dy(periodic_distance(diff[1], box_size));
     double dz(periodic_distance(diff[2], box_size));
     return POW_2(dx) + POW_2(dy) + POW_2(dz);
 }
-[[gnu::pure]]  double relative_distance_2(const array<double, 3> &point_1,
-                                          const array<double, 3> &point_2) noexcept {
-    array<double, 3> diff = point_1 - point_2;
+[[gnu::pure]]  double relative_distance_2(const std::array<double, 3> &point_1,
+                                          const std::array<double, 3> &point_2) noexcept {
+    std::array<double, 3> diff = point_1 - point_2;
     return POW_2(diff[0]) + POW_2(diff[1]) + POW_2(diff[2]);
 }
 [[gnu::pure]]  bool contact(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
@@ -72,5 +71,5 @@ namespace MCAC {
     // 1e-28 is for rounding error (1e-14 ^ 2)
     return (distance - dist_contact <= 1e-28);
 }
-}  // namespace MCAC
+}  // namespace mcac
 

@@ -1,18 +1,18 @@
-#ifndef INCLUDE_IO_THREADED_IO_HPP_
-#define INCLUDE_IO_THREADED_IO_HPP_ 1
+#ifndef INCLUDE_IO_THREADED_IO_HPP
+#define INCLUDE_IO_THREADED_IO_HPP 1
 #include "physical_model/physical_model.hpp"
 
 
 #ifdef WITH_HDF5
 #include "io/xmf_includes.hpp"
 #include <array>
+#include <experimental/filesystem>
+#include <gsl/gsl>
 #include <string>
 #include <thread>
-#include <gsl/gsl>
-#include <experimental/filesystem>
 
 
-namespace MCAC {
+namespace mcac {
 class ThreadedIO {
 public:
     static void wait();
@@ -40,7 +40,7 @@ private:
     //    int padding;
 
 public:
-    ThreadedIO(const PhysicalModel &physicalmodel, size_t size) noexcept;
+    ThreadedIO(const PhysicalModel &new_physicalmodel, size_t size) noexcept;
     ~ThreadedIO() noexcept;
     /** Copy constructor */
     explicit ThreadedIO(ThreadedIO const &) = delete;
@@ -53,18 +53,18 @@ public:
 private:
     friend void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data);
 };
-}  // namespace MCAC
+}  // namespace mcac
 
 #else //WITHOUT_HDF5
 
-namespace MCAC{
+namespace mcac{
 
 class ThreadedIO{
 public:
     ThreadedIO(PhysicalModel& _physicalmodel, size_t size)  {}
 };
-}  // namespace MCAC
+}  // namespace mcac
 
 #endif
-#endif //INCLUDE_IO_THREADED_IO_HPP_
+#endif //INCLUDE_IO_THREADED_IO_HPP
 

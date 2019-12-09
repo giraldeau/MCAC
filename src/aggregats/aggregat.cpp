@@ -1,15 +1,14 @@
 #include "aggregats/aggregat.hpp"
 #include "aggregats/aggregat_list.hpp"
 #include "spheres/sphere.hpp"
-#include "spheres/sphere_intersection.hpp"
 #include "spheres/sphere_distance.hpp"
-#include "verlet/verlet.hpp"
+#include "spheres/sphere_intersection.hpp"
 #include "tools/tools.hpp"
+#include "verlet/verlet.hpp"
 #include <iostream>
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 /* getters */
 [[gnu::pure]] double Aggregate::get_rg() const noexcept {
     return *rg;
@@ -32,12 +31,12 @@ namespace MCAC {
 [[gnu::pure]] double Aggregate::get_agregat_surface() const noexcept {
     return *agregat_surface;
 }
-[[gnu::pure]] array<double, 3> Aggregate::get_position() const noexcept {
-    array<double, 3> mypos{{*x, *y, *z}};
+[[gnu::pure]] std::array<double, 3> Aggregate::get_position() const noexcept {
+    std::array<double, 3> mypos{{*x, *y, *z}};
     return mypos;
 }
-[[gnu::pure]] array<double, 3> Aggregate::get_relative_position() const noexcept {
-    array<double, 3> mypos{{*rx, *ry, *rz}};
+[[gnu::pure]] std::array<double, 3> Aggregate::get_relative_position() const noexcept {
+    std::array<double, 3> mypos{{*rx, *ry, *rz}};
     return mypos;
 }
 [[gnu::pure]] std::array<size_t, 3> Aggregate::get_verlet_index() const noexcept {
@@ -67,8 +66,8 @@ void Aggregate::decrease_label() noexcept {
         verlet->add(get_label(), index_verlet);
     }
 }
-void Aggregate::set_verlet(Verlet &newverlet) noexcept {
-    verlet = &newverlet;
+void Aggregate::set_verlet(Verlet *newverlet) noexcept {
+    verlet = newverlet;
 }
 void Aggregate::unset_verlet() noexcept {
     verlet = nullptr;
@@ -79,8 +78,8 @@ void Aggregate::set_time(double newtime) noexcept {
 void Aggregate::time_forward(double deltatemps) noexcept {
     *time += deltatemps;
 }
-void Aggregate::set_position(const array<double, 3> &position) noexcept {
-    array<double, 3> newposition{periodic_position(position, physicalmodel->box_lenght)};
+void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
+    std::array<double, 3> newposition{periodic_position(position, physicalmodel->box_lenght)};
     *x = newposition[0];
     *y = newposition[1];
     *z = newposition[2];
@@ -89,25 +88,25 @@ void Aggregate::set_position(const array<double, 3> &position) noexcept {
         update_verlet_index();
     }
 }
-void Aggregate::translate(array<double, 3> vector) noexcept {
+void Aggregate::translate(std::array<double, 3> vector) noexcept {
     // move the aggregate
     set_position(get_position() + vector);
 
     // move the first sphere taking care of the periodicity
-    array<double, 3> refpos{periodic_position(myspheres[0].get_position() + vector, physicalmodel->box_lenght)};
+    std::array<double, 3> refpos{periodic_position(myspheres[0].get_position() + vector, physicalmodel->box_lenght)};
     myspheres[0].set_position(refpos);
 
     // move all the other sphere relatively to the first
     for (Sphere *mysphere : myspheres) {
-        array<double, 3> relpos = mysphere->get_relative_position();
+        std::array<double, 3> relpos = mysphere->get_relative_position();
         mysphere->set_position(refpos + relpos);
     }
 }
 void Aggregate::init(const PhysicalModel &new_physicalmodel,
-                     Verlet &new_verlet,
-                     const array<double, 3> &position,
+                     Verlet *new_verlet,
+                     const std::array<double, 3> &position,
                      size_t new_label,
-                     SphereList &spheres,
+                     SphereList *spheres,
                      double sphere_diameter) noexcept {
     physicalmodel = &new_physicalmodel;
     if (static_cast<bool>(verlet)) {
@@ -120,10 +119,10 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     }
     setpointers();
     set_position(position);
-    verlet = &new_verlet;
+    verlet = new_verlet;
     update_verlet_index();
-    spheres[label].set_label(int(label));
-    spheres[label].init_val(position, sphere_diameter / 2);
+    (*spheres)[label].set_label(int(label));
+    (*spheres)[label].init_val(position, sphere_diameter / 2);
     myspheres = SphereList(spheres, {label});
     n_spheres = myspheres.size();
     update_distances();
@@ -143,10 +142,10 @@ void Aggregate::update() noexcept {
     //$ Determination of the friction coefficient
     *f_agg = physicalmodel->friction_coeff(n_spheres);
     double masse = physicalmodel->density * (*agregat_volume);
-    double relax_time = physicalmodel->relax_time(masse, *f_agg);
-    *time_step = 3.0 * relax_time;
+    double relax_time = mcac::PhysicalModel::relax_time(masse, *f_agg);
+    *time_step = 3. * relax_time;
     double diffusivity = physicalmodel->diffusivity(*f_agg);
-    *lpm = sqrt(6.0 * diffusivity * (*time_step));
+    *lpm = sqrt(6. * diffusivity * (*time_step));
     *dp = 0.;
     //$ For the Spheres i in Agg Id
     for (size_t i = 0; i < n_spheres; i++) {
@@ -209,23 +208,23 @@ void Aggregate::compute_volume() noexcept {
 #endif
 }
 void Aggregate::compute_mass_center() noexcept {
-    const size_t loopsize{n_spheres};
-    array<double, 3> _r{0., 0., 0.};
+    const size_t _loopsize{n_spheres};
+    std::array<double, 3> r{0., 0., 0.};
 
     //$ For the Spheres i in Agg Id
-    for (size_t i = 0; i < loopsize; i++) {
+    for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of the position of the center of mass
-        _r += myspheres[i].get_relative_position() * volumes[i];
+        r += myspheres[i].get_relative_position() * volumes[i];
     }
-    _r /= *agregat_volume;
-    for (size_t i = 0; i < loopsize; i++) {
-        array<double, 3> diff{myspheres[i].get_relative_position() - _r};
+    r /= *agregat_volume;
+    for (size_t i = 0; i < _loopsize; i++) {
+        std::array<double, 3> diff{myspheres[i].get_relative_position() - r};
         distances_center[i] = sqrt(POW_2(diff[0]) + POW_2(diff[1]) + POW_2(diff[2]));
     }
-    set_position(myspheres[0].get_position() + _r);
-    *rx = _r[0];
-    *ry = _r[1];
-    *rz = _r[2];
+    set_position(myspheres[0].get_position() + r);
+    *rx = r[0];
+    *ry = r[1];
+    *rz = r[2];
 }
 void Aggregate::compute_max_radius() noexcept {
     // Maximum radius of the aggregate,
@@ -234,8 +233,8 @@ void Aggregate::compute_max_radius() noexcept {
     //    and the edge of the furthest ball from said center.
     // It is used to assimilate the aggregate to a sphere when checking for intersections
     *rmax = 0.0;
-    const size_t loopsize(n_spheres);
-    for (size_t i = 0; i < loopsize; i++) {
+    const size_t _loopsize(n_spheres);
+    for (size_t i = 0; i < _loopsize; i++) {
         *rmax = MAX(*rmax, myspheres[i].get_radius() + sphere_distance_center(i));
     }
 }
@@ -244,27 +243,28 @@ void Aggregate::compute_giration_radius() noexcept {
 
     // These correspond to the sum of the volumes of each spheres multiplied by their respective coefficient,
     // they are used  used in the final formula of the Radius of Gyration
-    double Arg(0.);
-    double Brg(0.);
-    const size_t loopsize(n_spheres);
-    for (size_t i = 0; i < loopsize; i++) {
+    double arg(0.);
+    double brg(0.);
+    const size_t _loopsize(n_spheres);
+    for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of Rg
-        Arg = Arg + volumes[i] * POW_2(sphere_distance_center(i)); // distance to the gravity center
-        Brg = Brg + volumes[i] * POW_2(myspheres[i].get_radius());
+        arg = arg + volumes[i] * POW_2(sphere_distance_center(i)); // distance to the gravity center
+        brg = brg + volumes[i] * POW_2(myspheres[i].get_radius());
     }
-    *rg = sqrt(fabs((Arg + 3.0 / 5.0 * Brg) / (*agregat_volume)));
+    *rg = sqrt(fabs((arg + 3. / 5. * brg) / (*agregat_volume)));
     *agregat_volume = fabs(*agregat_volume);
 }
 //#####################################################################################################################
 
-void Aggregate::merge(Aggregate &other) noexcept {
+void Aggregate::merge(Aggregate *other) noexcept {
     //$ update of the labels of the spheres that were in the deleted aggregate
     //$ And their new relative position
-    array<double, 3> refpos = myspheres[0].get_position();
-    array<double, 3> diffpos = periodic_distance(other.myspheres[0].get_position() - refpos, physicalmodel->box_lenght);
+    std::array<double, 3> refpos = myspheres[0].get_position();
+    std::array<double, 3> diffpos = periodic_distance(other->myspheres[0].get_position() - refpos,
+                                                      physicalmodel->box_lenght);
 
     // For all the spheres that were in the deleted aggregate
-    for (Sphere *othersphere : other.myspheres) {
+    for (Sphere *othersphere : other->myspheres) {
         // change the Label to the new owner
         othersphere->set_label(long(get_label()));
 
@@ -272,42 +272,42 @@ void Aggregate::merge(Aggregate &other) noexcept {
         othersphere->relative_translate(diffpos);
 
         // Move them accordingly (periodicity)
-        array<double, 3> newpos = othersphere->get_relative_position();
+        std::array<double, 3> newpos = othersphere->get_relative_position();
         newpos += refpos;
         othersphere->set_position(newpos);
     }
 
     // merge the spheresLists
-    myspheres.merge(other.myspheres);
+    myspheres.merge(other->myspheres);
     n_spheres = myspheres.size();
     update_distances();
     update();
 }
 void Aggregate::print() const noexcept {
-    cout << "Printing details of Aggregat " << index_in_storage << " " << label << endl;
+    std::cout << "Printing details of Aggregat " << index_in_storage << " " << label << std::endl;
     if (static_cast<bool>(external_storage)) {
-        cout << "  With external Storage" << endl;
+        std::cout << "  With external Storage" << std::endl;
     } else {
-        cout << "  Without external Storage" << endl;
+        std::cout << "  Without external Storage" << std::endl;
     }
     if (static_cast<bool>(verlet)) {
-        cout << "  In Verlet list : "
-             << index_verlet[0] << " "
-             << index_verlet[1] << " "
-             << index_verlet[2] << endl;
+        std::cout << "  In Verlet list : "
+                  << index_verlet[0] << " "
+                  << index_verlet[1] << " "
+                  << index_verlet[2] << std::endl;
     } else {
-        cout << "  Not in Verlet list" << endl;
+        std::cout << "  Not in Verlet list" << std::endl;
     }
-    cout << "  Caracteristics" << endl;
-    cout << "    Gyration radius   : " << *rg << endl;
-    cout << "    Geometric radius  : " << *rmax << endl;
-    cout << "    Friction coeff.   : " << *f_agg << endl;
-    cout << "    Mean Free Path    : " << *lpm << endl;
-    cout << "    Delta t           : " << *time_step << endl;
-    cout << "    Volume            : " << *agregat_volume << endl;
-    cout << "    Surface           : " << *agregat_surface << endl;
-    cout << "    Position          : " << *x << " " << *y << " " << *z << endl;
-    cout << "    Proper time       : " << *time << endl;
+    std::cout << "  Caracteristics" << std::endl;
+    std::cout << "    Gyration radius   : " << *rg << std::endl;
+    std::cout << "    Geometric radius  : " << *rmax << std::endl;
+    std::cout << "    Friction coeff.   : " << *f_agg << std::endl;
+    std::cout << "    Mean Free Path    : " << *lpm << std::endl;
+    std::cout << "    Delta t           : " << *time_step << std::endl;
+    std::cout << "    Volume            : " << *agregat_volume << std::endl;
+    std::cout << "    Surface           : " << *agregat_surface << std::endl;
+    std::cout << "    Position          : " << *x << " " << *y << " " << *z << std::endl;
+    std::cout << "    Proper time       : " << *time << std::endl;
     myspheres.print();
 }
 void Aggregate::update_verlet_index() noexcept {
@@ -322,21 +322,21 @@ void Aggregate::update_verlet_index() noexcept {
 void Aggregate::update_distances() noexcept {
     distances.resize(n_spheres);
     distances_center.resize(n_spheres);
-    const size_t loopsize(n_spheres);
-    for (size_t i = 0; i < loopsize; i++) {
+    const size_t _loopsize(n_spheres);
+    for (size_t i = 0; i < _loopsize; i++) {
         // The last index is the distance to the mass center
         distances[i].clear();
     }
-    for (size_t i = 0; i < loopsize; i++) {
-        for (size_t j = i + 1; j < loopsize; j++) {
+    for (size_t i = 0; i < _loopsize; i++) {
+        for (size_t j = i + 1; j < _loopsize; j++) {
             // Compute the distance between sphere i and j without taking periodicity into account
             double dist = relative_distance(myspheres[i], myspheres[j]);
 
             // if in contact
             if (dist < myspheres[i].get_radius() + myspheres[j].get_radius()) {
-                distances[i].push_back(pair<size_t, double>(j, dist));
+                distances[i].push_back(std::pair<size_t, double>(j, dist));
                 // distances are symetric !
-                distances[j].push_back(pair<size_t, double>(i, dist));
+                distances[j].push_back(std::pair<size_t, double>(i, dist));
             }
         }
     }
@@ -348,16 +348,16 @@ double Aggregate::internal_sphere_distance(size_t i, size_t j) const noexcept {
         ii = j;
         jj = i;
     }
-    std::function<bool(pair<size_t, double>)> IsJJ = [jj](pair<size_t, double> e) {
+    std::function<bool(std::pair<size_t, double>)> is_jj = [jj](std::pair<size_t, double> e) {
         return e.first == jj;
     };
-    auto findIter = std::find_if(distances[ii].begin(), distances[ii].end(), IsJJ);
-    if (findIter != distances[ii].end()) {
-        return findIter->second;
+    auto find_iter = std::find_if(distances[ii].begin(), distances[ii].end(), is_jj);
+    if (find_iter != distances[ii].end()) {
+        return find_iter->second;
     }
     return -1;
 }
-__attribute__((pure)) double Aggregate::sphere_distance_center(size_t i) const noexcept {
+[[gnu::pure]] double Aggregate::sphere_distance_center(size_t i) const noexcept {
     return distances_center[i];
 }
-}  // namespace MCAC
+}  // namespace mcac

@@ -18,12 +18,11 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 */
 
-#include "spheres/sphere.hpp"
 #include "aggregats/aggregat.hpp"
+#include "spheres/sphere.hpp"
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 void Sphere::setpointers() {
     x = &(*storage)[SpheresFields::SPHERE_X][index_in_storage];
     y = &(*storage)[SpheresFields::SPHERE_Y][index_in_storage];
@@ -68,14 +67,14 @@ Sphere::Sphere(const PhysicalModel &physical_model) noexcept:
 }
 /** Constructor in local storage with initialization */
 Sphere::Sphere(const PhysicalModel &physical_model,
-               const array<double, 3> &newposition,
+               const std::array<double, 3> &newposition,
                double newr) noexcept:
     Sphere(physical_model) {
     init_val(newposition, newr);
 }
 /** Constructor with external storage */
-Sphere::Sphere(SphereList &aggregat, size_t id) noexcept:
-    ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList>(aggregat, id),
+Sphere::Sphere(SphereList *aggregat, size_t id) noexcept:
+    ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList>(*aggregat, id),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -86,7 +85,7 @@ Sphere::Sphere(SphereList &aggregat, size_t id) noexcept:
     volume(nullptr),
     surface(nullptr),
     agg_label(-1),
-    physicalmodel(aggregat.physicalmodel) {
+    physicalmodel(aggregat->physicalmodel) {
     init_val();
     external_storage->setpointers();
 }
@@ -98,8 +97,8 @@ Sphere::Sphere(const Aggregate &aggregate) noexcept : Sphere() {
 Sphere::~Sphere() noexcept {
 }
 /** Copy constructor */
-Sphere::Sphere(const Sphere &other, SphereList &aggregat, size_t id) noexcept:
-    ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList>(other, *this, aggregat),
+Sphere::Sphere(const Sphere &other, SphereList *aggregat, size_t id) noexcept:
+    ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList>(other, *this, *aggregat),
     x(nullptr),
     y(nullptr),
     z(nullptr),
@@ -173,5 +172,5 @@ Sphere::Sphere(const Sphere &other, SphereList &aggregat, size_t id) noexcept:
 //    setpointers();
 //    return *this;
 //}
-}  // namespace MCAC
+}  // namespace mcac
 

@@ -17,8 +17,8 @@ Sphere.h and Sphere.cpp defines the data storage.
  Data can be shared between multiple Aggregat
 
 */
-#include "spheres/sphere_list.hpp"
 #include "spheres/sphere.hpp"
+#include "spheres/sphere_list.hpp"
 #include <iostream>
 
 
@@ -28,8 +28,7 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #################################              AGREGATE                 #####################################
  * #################################                                       #####################################
  * #############################################################################################################*/
-using namespace std;
-namespace MCAC {
+namespace mcac {
 void SphereList::init(const PhysicalModel &physical_model, size_t size) {
     delete writer;
     physicalmodel = &physical_model;
@@ -43,11 +42,11 @@ void SphereList::decrease_label() noexcept {
     }
 }
 void SphereList::print() const {
-    cout << "Printing list of " << size() << " Sphere" << endl;
+    std::cout << "Printing list of " << size() << " Sphere" << std::endl;
     if (static_cast<bool>(external_storage)) {
-        cout << "  With external Storage" << endl;
+        std::cout << "  With external Storage" << std::endl;
     } else {
-        cout << "  Without external Storage" << endl;
+        std::cout << "  Without external Storage" << std::endl;
     }
     for (const Sphere *s : list) {
         s->print();
@@ -61,5 +60,5 @@ void SphereList::croissance_surface(double dt) noexcept {
         mysphere->croissance_surface(dt);
     }
 }
-}  // namespace MCAC
+}  // namespace mcac
 

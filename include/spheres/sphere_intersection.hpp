@@ -1,10 +1,10 @@
-#ifndef INCLUDE_SPHERES_SPHERE_INTERSECTION_HPP_
-#define INCLUDE_SPHERES_SPHERE_INTERSECTION_HPP_
+#ifndef INCLUDE_SPHERES_SPHERE_INTERSECTION_HPP
+#define INCLUDE_SPHERES_SPHERE_INTERSECTION_HPP
 #include "spheres/sphere.hpp"
 #include <array>
 
 
-namespace MCAC {
+namespace mcac {
 class Intersection {
 public:
     double volume_1;
@@ -15,5 +15,5 @@ public:
     Intersection(const Sphere &sphere_1, const Sphere &sphere_2, double dist) noexcept;
     Intersection(const Sphere &sphere_1, const Sphere &sphere_2) noexcept;
 };  // Intersection
-}  // namespace MCAC
-#endif //INCLUDE_SPHERES_SPHERE_INTERSECTION_HPP_
+}  // namespace mcac
+#endif //INCLUDE_SPHERES_SPHERE_INTERSECTION_HPP

@@ -4,40 +4,39 @@
 #include <iostream>
 
 
-using namespace std;
-namespace MCAC {
-void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du programme
+namespace mcac {
+void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du programme
 
     // contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool contact(true);
-    size_t multiply_threshold = Aggregates.size() / 8;
+    size_t multiply_threshold = aggregates->size() / 8;
 
     //$ Loop on the N monomeres
-    while (!physicalmodel.finished(Aggregates.size(), Aggregates.get_avg_npp())) {
+    while (!physicalmodel->finished(aggregates->size(), aggregates->get_avg_npp())) {
         if (contact) {
-            Aggregates.refresh();
-            Aggregates.spheres.save();
-            Aggregates.save();
-            if (Aggregates.size() <= multiply_threshold) {
-                cout << "Duplication : " << Aggregates.spheres.size()
-                     << " spheres in " << Aggregates.size() << " aggregates";
-                Aggregates.duplication();
-                multiply_threshold = Aggregates.size() / 8;
-                cout << " duplicated into " << Aggregates.spheres.size()
-                     << " spheres in " << Aggregates.size() << " aggregates" << endl;
+            aggregates->refresh();
+            aggregates->spheres.save();
+            aggregates->save();
+            if (aggregates->size() <= multiply_threshold) {
+                std::cout << "Duplication : " << aggregates->spheres.size()
+                          << " spheres in " << aggregates->size() << " aggregates";
+                aggregates->duplication();
+                multiply_threshold = aggregates->size() / 8;
+                std::cout << " duplicated into " << aggregates->spheres.size()
+                          << " spheres in " << aggregates->size() << " aggregates" << std::endl;
             }
         }
 
         // -- Generating a random direction --
         double thetarandom = random() * 2 * _pi;
         double phirandom = acos(1 - 2 * random());
-        array<double, 3> Vectdir{{sin(phirandom) * cos(thetarandom),
-                                  sin(phirandom) * sin(thetarandom),
-                                  cos(phirandom)}};
+        std::array<double, 3> vectdir{{sin(phirandom) * cos(thetarandom),
+                                       sin(phirandom) * sin(thetarandom),
+                                       cos(phirandom)}};
 
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
-        size_t NumAgg(0);
+        size_t num_agg(0);
         /*
         //$ Choice of an aggregate according to his MFP
         double max = Aggregates.get_max_time_step();
@@ -48,12 +47,12 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
         NumAgg = Aggregates.pick_random();
         deltatemps = Aggregates.get_time_step(max);
         */
-        NumAgg = Aggregates.pick_last();
-        deltatemps = Aggregates[NumAgg].get_time_step();
-        double lpm = Aggregates[NumAgg].get_lpm();
+        num_agg = aggregates->pick_last();
+        deltatemps = (*aggregates)[num_agg].get_time_step();
+        double lpm = (*aggregates)[num_agg].get_lpm();
 
         //$ looking for potential contacts
-        auto contact_distance = Aggregates.distance_to_next_contact(NumAgg, Vectdir);
+        auto contact_distance = aggregates->distance_to_next_contact(num_agg, vectdir);
         int aggcontact = contact_distance.first;
         double distmove = contact_distance.second;
 
@@ -62,28 +61,28 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
 
         //$ Translation of the aggregate
         for (size_t i = 0; i < 3; i++) {
-            Vectdir[i] = Vectdir[i] * distmove;
+            vectdir[i] = vectdir[i] * distmove;
         }
-        Aggregates[NumAgg].translate(Vectdir);
-        Aggregates[NumAgg].time_forward(deltatemps);
+        (*aggregates)[num_agg].translate(vectdir);
+        (*aggregates)[num_agg].time_forward(deltatemps);
 
         //$ Time incrementation
-        deltatemps = deltatemps / double(Aggregates.size());
-        physicalmodel.time = physicalmodel.time + deltatemps;
+        deltatemps = deltatemps / double(aggregates->size());
+        physicalmodel->time = physicalmodel->time + deltatemps;
         contact = (aggcontact >= 0);
         if (contact) {
             //$ Aggregates in contact are reunited;
-            NumAgg = Aggregates.merge(NumAgg, size_t(aggcontact));
+            num_agg = aggregates->merge(num_agg, size_t(aggcontact));
         }
 
         //$ update of the Aggregates/Spheres
-        if (physicalmodel.a_surfgrowth > 0.) {
+        if (physicalmodel->a_surfgrowth > 0.) {
             //$ Growth of all spheres
-            Aggregates.spheres.croissance_surface(deltatemps);
+            aggregates->spheres.croissance_surface(deltatemps);
 
             //$ Aggregates update
-            for (Aggregate *Agg : Aggregates) {
-                Agg->update();
+            for (Aggregate *agg : *aggregates) {
+                agg->update();
             }
         }
         //            for (int i = 0; i < Aggregates.size(); i++) {
@@ -98,40 +97,35 @@ void Calcul(PhysicalModel &physicalmodel, AggregatList &Aggregates) {//Coeur du 
         //$ Show progress
         if (contact) {
             clock_t now = clock();
-            double elapse = double(now - physicalmodel.cpu_start) / CLOCKS_PER_SEC;
-            cout.precision(3);
-            cout << scientific;
-            cout << "  Npp_avg=" << setw(4) << Aggregates.get_avg_npp()
-                 << "  NAgg=" << setw(4) << Aggregates.size()
-                 << "  Time=" << setw(4) << physicalmodel.time << " s"
-                 << "   CPU=" << setw(4) << elapse << " s"
-                 << " after " << setw(4) << physicalmodel.n_iter_without_contact << " it --- ";
-            auto InstantaneousFractalLaw = Aggregates.get_instantaneous_fractal_law();
-            if (get<0>(InstantaneousFractalLaw)) {
-                cout << "  "
-                     << exp(get<2>(InstantaneousFractalLaw))
-                     << " * x^ "
-                     << get<1>(InstantaneousFractalLaw)
-                     << "  --- r= "
-                     << get<3>(InstantaneousFractalLaw) << endl;
+            double elapse = double(now - physicalmodel->cpu_start) / CLOCKS_PER_SEC;
+            std::cout.precision(3);
+            std::cout << std::scientific;
+            std::cout << "  Npp_avg=" << std::setw(4) << aggregates->get_avg_npp()
+                      << "  NAgg=" << std::setw(4) << aggregates->size()
+                      << "  Time=" << std::setw(4) << physicalmodel->time << " s"
+                      << "   CPU=" << std::setw(4) << elapse << " s"
+                      << " after " << std::setw(4) << physicalmodel->n_iter_without_contact << " it --- ";
+            auto [success, dfe, kfe, error] = aggregates->get_instantaneous_fractal_law();
+            if (success) {
+                std::cout << "  " << kfe << " * x^ " << dfe << "  --- r= " << error << std::endl;
                 /*
-                physicalmodel.dfe = get<1>(InstantaneousFractalLaw);
-                physicalmodel.kfe = get<2>(InstantaneousFractalLaw);
+                physicalmodel.dfe = dfe;
+                physicalmodel.kfe = kfe;
                 */
             } else {
-                cout << "1.000e+00 * x^ 1.000e+00  --- r= 0" << endl;
+                std::cout << "1.000e+00 * x^ 1.000e+00  --- r= 0" << std::endl;
             }
-            physicalmodel.n_iter_without_contact = 0;
+            physicalmodel->n_iter_without_contact = 0;
         } else {
-            physicalmodel.n_iter_without_contact++;
+            physicalmodel->n_iter_without_contact++;
         }
     }
-    Aggregates.spheres.save(true);
-    Aggregates.save(true);
-    cout << "Final number of aggregates : " << Aggregates.size() << endl;
-    cout << endl;
-    cout << "\nThe End\n" << endl;
+    aggregates->spheres.save(true);
+    aggregates->save(true);
+    std::cout << "Final number of aggregates : " << aggregates->size() << std::endl;
+    std::cout << std::endl;
+    std::cout << "\nThe End\n" << std::endl;
 }
-}  // namespace MCAC
+}  // namespace mcac
 
 

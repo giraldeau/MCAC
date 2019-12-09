@@ -1,10 +1,10 @@
-#ifndef INCLUDE_LIST_STORAGE_LIST_STORAGE_HPP_
-#define INCLUDE_LIST_STORAGE_LIST_STORAGE_HPP_ 1
+#ifndef INCLUDE_LIST_STORAGE_LIST_STORAGE_HPP
+#define INCLUDE_LIST_STORAGE_LIST_STORAGE_HPP 1
 #include <array>
 #include <vector>
 
 
-namespace MCAC {
+namespace mcac {
 template<int N, class elem>
 class ListStorage {
     template<int, class>
@@ -40,7 +40,7 @@ public:
     ~ListStorage() noexcept;
     /** Copy constructor with external storage */
     template<class mylist>
-    ListStorage(const ListStorage &other, mylist &owner, mylist &_Storage) noexcept;
+    ListStorage(const ListStorage &other, mylist &owner, mylist &storage) noexcept;
     /** Move constructor */
     ListStorage(ListStorage &&other) noexcept;
     /** Move assignment operator */
@@ -50,8 +50,8 @@ public:
     /** Copy assignment operator */
     ListStorage &operator=(const ListStorage &other) noexcept = delete;
 };
-}  // namespace MCAC
+}  // namespace mcac
 #include "list_storage/list_storage_methods.hpp"
 
 
-#endif //INCLUDE_LIST_STORAGE_LIST_STORAGE_HPP_
+#endif //INCLUDE_LIST_STORAGE_LIST_STORAGE_HPP

@@ -1,5 +1,5 @@
-#include "spheres/sphere_list.hpp"
 #include "spheres/sphere.hpp"
+#include "spheres/sphere_list.hpp"
 
 
 #ifdef WITH_HDF5
@@ -7,7 +7,7 @@
 #include "io/writer.hpp"
 
 
-namespace MCAC {
+namespace mcac {
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                  const std::vector<double> &formated_field);
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
@@ -26,22 +26,22 @@ auto SphereList::get_data() const {
     spheres_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
 
     // Set Positions
-    spheres_data->setGeometry(the_positions(Format_Position()));
+    spheres_data->setGeometry(the_positions(format_position()));
 
     // Set Radius
-    spheres_data->insert(scalar("Radius", Format_get_radius()));
-    spheres_data->insert(scalar("Label", Format_agg_label()));
+    spheres_data->insert(scalar("Radius", format_get_radius()));
+    spheres_data->insert(scalar("Label", format_agg_label()));
     return spheres_data;
 }
-void SphereList::save(const bool finish) {
+void SphereList::save(const bool _finish) {
     //get everything
     auto data = get_data();
-    writer->write(physicalmodel->output_dir / "Spheres", data, finish);
+    writer->write(physicalmodel->output_dir / "Spheres", data, _finish);
 }
-DEF_FORMATER_POSITION(SphereList);
-DEF_FORMATER(SphereList, agg_label, long);
-DEF_FORMATER_FUNC(SphereList, get_radius, double);
-}  // namespace MCAC
+DEF_FORMATER_POSITION(SphereList)
+DEF_FORMATER(SphereList, agg_label, long)
+DEF_FORMATER_FUNC(SphereList, get_radius, double)
+}  // namespace mcac
 
 
 #else
@@ -50,7 +50,7 @@ namespace MCAC{
 
 void SphereList::save(const bool finish){}
 
-}  // namespace MCAC
+}  // namespace mcac
 
 
 #endif

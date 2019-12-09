@@ -3,8 +3,7 @@
 #include <iostream>
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 void AggregatList::setpointers() {
     auto newdeb((*storage)[0].begin());
     auto newfin((*storage)[0].end());
@@ -45,11 +44,11 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
         double dp = 0;
         if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
             dp = (physicalmodel->mean_diameter)
-                 + sqrt(2.0) * physicalmodel->dispersion_diameter * inverf(2.0 * x - 1.0);
+                 + sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * x - 1.0);
         } else if (physicalmodel->monomeres_initialisation_type
                    == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
             dp = pow(physicalmodel->mean_diameter,
-                     sqrt(2.0) * log(physicalmodel->dispersion_diameter) * inverf(2.0 * x - 1.0));
+                     sqrt(2.) * log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
         } else {
             exit(ErrorCodes::UNKNOWN_ERROR);
         }
@@ -60,21 +59,21 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
         bool placed = false;
         while (!placed) {
             //random position
-            array<double, 3> newpos{{random() * physicalmodel->box_lenght,
+            std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
                                      random() * physicalmodel->box_lenght,
                                      random() * physicalmodel->box_lenght}};
 
             //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
             if (test_free_space(newpos, dp)) {
-                list[i]->init(*physicalmodel, verlet, newpos, i, spheres, dp);
+                list[i]->init(*physicalmodel, &verlet, newpos, i, &spheres, dp);
                 placed = true;
             } else {
                 i--;
                 testmem++;
             }
             if (testmem > size()) {
-                cout << "Impossible de générer tous les monomères sans superposition." << endl;
-                cout << "La fraction volumique doit être diminuée." << endl;
+                std::cout << "Impossible de générer tous les monomères sans superposition." << std::endl;
+                std::cout << "La fraction volumique doit être diminuée." << std::endl;
                 exit(0);
             }
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -89,5 +88,5 @@ AggregatList::~AggregatList() noexcept {
         aggregate->unset_verlet();
     }
 }
-}// namespace MCAC
+}// namespace mcac
 

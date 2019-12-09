@@ -5,7 +5,7 @@
 #include <vector>
 
 
-namespace MCAC {
+namespace mcac {
 template<int N, class mystorage>
 void ElemStorage<N, mystorage>::decrease_index() noexcept {
     index_in_storage--;
@@ -22,7 +22,7 @@ ElemStorage<N, mystorage>::ElemStorage() noexcept:
 }
 /** Constructor with external storage */
 template<int N, class mystorage>
-ElemStorage<N, mystorage>::ElemStorage(mystorage &ext_storage, const size_t id) noexcept:
+ElemStorage<N, mystorage>::ElemStorage(mystorage &ext_storage, size_t id) noexcept:
     storage(ext_storage.storage),
     external_storage(&ext_storage),
     index_in_storage(id) {
@@ -42,9 +42,9 @@ template<int N, class mystorage>
 template<class elem>
 ElemStorage<N, mystorage>::ElemStorage(const ElemStorage<N, mystorage> &other,
                                        elem &sphere,
-                                       mystorage &_Storage) noexcept:
-    storage(_Storage.storage),
-    external_storage(&_Storage),
+                                       mystorage &ext_storage) noexcept:
+    storage(ext_storage.storage),
+    external_storage(&ext_storage),
     index_in_storage(external_storage->size()) {
     for (size_t j = 0; j < N; j++) {
         (*storage)[j].push_back((*other.storage)[j][other.index_in_storage]);
@@ -95,5 +95,5 @@ ElemStorage<N, mystorage>::ElemStorage(const ElemStorage<N, mystorage> &other,
 //    other.index_in_storage = 0;
 //    return *this;
 //}
-}  // namespace MCAC
-#endif // INCLUDE_ELEM_STORAGE_ELEM_STORAGE_METHODS_HPP_
+}  // namespace mcac
+#endif //INCLUDE_ELEM_STORAGE_ELEM_STORAGE_METHODS_HPP

@@ -5,7 +5,7 @@
 #include "io/format.hpp"
 
 
-namespace MCAC {
+namespace mcac {
 shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
     shared_ptr<XdmfInformation> info = XdmfInformation::New("Physics", "Physical properties of the simulation");
     info->insert(xmf_format_double("Asurfgrowth", a_surfgrowth));
@@ -27,7 +27,7 @@ shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
     info->insert(xmf_format_integer("N []", n_monomeres));
     return info;
 }
-} // namespace MCAC
+} // namespace mcac
 
 #else
 

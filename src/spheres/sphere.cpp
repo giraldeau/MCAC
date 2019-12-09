@@ -19,8 +19,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 #include <iostream>
 
 
-using namespace std;
-namespace MCAC {
+namespace mcac {
 /* Getters */
 
 [[gnu::pure]] double Sphere::get_volume() const noexcept {
@@ -32,10 +31,10 @@ namespace MCAC {
 [[gnu::pure]] double Sphere::get_radius() const noexcept {
     return *r;
 }
-[[gnu::pure]] array<double, 3> Sphere::get_position() const noexcept {
+[[gnu::pure]] std::array<double, 3> Sphere::get_position() const noexcept {
     return {*x, *y, *z};
 }
-[[gnu::pure]] array<double, 3> Sphere::get_relative_position() const noexcept {
+[[gnu::pure]] std::array<double, 3> Sphere::get_relative_position() const noexcept {
     return {*rx, *ry, *rz};
 }
 /* Modifiers */
@@ -45,17 +44,17 @@ void Sphere::set_label(long value) noexcept {
 void Sphere::decrease_label() noexcept {
     agg_label--;
 }
-void Sphere::translate(const array<double, 3> &trans) noexcept {
+void Sphere::translate(const std::array<double, 3> &trans) noexcept {
     *x += trans[0];
     *y += trans[1];
     *z += trans[2];
 }
-void Sphere::relative_translate(array<double, 3> trans) noexcept {
+void Sphere::relative_translate(std::array<double, 3> trans) noexcept {
     *rx += trans[0];
     *ry += trans[1];
     *rz += trans[2];
 }
-void Sphere::set_position(array<double, 3> newposition) noexcept {
+void Sphere::set_position(std::array<double, 3> newposition) noexcept {
 
 //    *x = periodic_position(_newx,physicalmodel->box_lenght);
 //    *y = periodic_position(_newy,physicalmodel->box_lenght);
@@ -68,7 +67,7 @@ void Sphere::set_position(array<double, 3> newposition) noexcept {
 void Sphere::init_val() noexcept {
     init_val({0, 0, 0}, 0.);
 }
-void Sphere::init_val(array<double, 3> newposition, double newr) noexcept {
+void Sphere::init_val(std::array<double, 3> newposition, double newr) noexcept {
     setpointers();
     set_position(newposition);
     *r = newr;
@@ -89,21 +88,21 @@ void Sphere::croissance_surface(double dt) noexcept {
     *surface = _surface_factor * new_r_2;
 }
 void Sphere::print() const noexcept {
-    cout << "Printing Sphere " << (index_in_storage) << endl;
+    std::cout << "Printing Sphere " << (index_in_storage) << std::endl;
     if (!static_cast<bool>(external_storage)) {
-        cout << "  With external Storage" << endl;
+        std::cout << "  With external Storage" << std::endl;
     } else {
-        cout << "  Without external Storage" << endl;
+        std::cout << "  Without external Storage" << std::endl;
     }
     if (agg_label < 0) {
-        cout << "  This is a virtual Sphere" << endl;
+        std::cout << "  This is a virtual Sphere" << std::endl;
     } else {
-        cout << "  This Sphere is own by the aggregate " << agg_label << endl;
+        std::cout << "  This Sphere is own by the aggregate " << agg_label << std::endl;
     }
-    cout << "    Position : " << *x << " " << *y << " " << *z << endl;
-    cout << "    Radius   : " << *r << endl;
-    cout << "    Volume   : " << *volume << endl;
-    cout << "    Surface  : " << *surface << endl;
+    std::cout << "    Position : " << *x << " " << *y << " " << *z << std::endl;
+    std::cout << "    Radius   : " << *r << std::endl;
+    std::cout << "    Volume   : " << *volume << std::endl;
+    std::cout << "    Surface  : " << *surface << std::endl;
     /*
     double* rx;
     double* ry;
@@ -121,5 +120,5 @@ void Sphere::update_vol_and_surf() noexcept {
         *surface = _surface_factor * POW_2(*r);
     }
 }
-}  // namespace MCAC
+}  // namespace mcac
 
