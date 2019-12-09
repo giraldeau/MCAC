@@ -44,8 +44,6 @@ public:
 [[gnu::const]] double inverfc(double p);
 [[gnu::const]] double inverf(double p);
 [[gnu::const]] std::experimental::filesystem::path extract_path(const std::string &file);
-[[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
-                                                               const std::vector<double> &y);
 [[gnu::const]] inline double periodic_distance(double dist, double dim) {
     double periodic_distance(dist);
     double half_dim(0.5 * dim);

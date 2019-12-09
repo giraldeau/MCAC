@@ -39,6 +39,8 @@ enum AggregatesFields {
     AGGREGAT_RY,
     AGGREGAT_RZ,
     AGGREGAT_TIME,
+    AGGREGAT_DP,
+    AGGREGAT_DG_OVER_DP,
     AGGREGAT_NFIELDS
 };
 enum ErrorCodes {

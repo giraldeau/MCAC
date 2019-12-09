@@ -2,6 +2,7 @@
 #define INCLUDE_TOOLS_TOOLS_HPP_ 1
 #include "constants.hpp"
 #include <array>
+#include <vector>
 
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -50,5 +51,7 @@ std::array<T, 3> &operator/=(std::array<T, 3> &a, const T &rhs) {
 void init_random();
 double random();
 MonomeresInitialisationMode resolve_monomeres_initialisation_mode(std::string input);
+[[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
+                                                               const std::vector<double> &y);
 }  //namespace MCAC
 #endif //INCLUDE_TOOLS_TOOLS_HPP_

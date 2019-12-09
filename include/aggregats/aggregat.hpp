@@ -1,7 +1,6 @@
 #ifndef INCLUDE_AGGREGATS_AGGREGAT_HPP_
 #define INCLUDE_AGGREGATS_AGGREGAT_HPP_ 1
 #include "spheres/sphere_list.hpp"
-#include "statistics/statistics.hpp"
 #include "elem_storage/elem_storage.hpp"
 #include "constants.hpp"
 #include <list>
@@ -13,8 +12,7 @@ class AggregatList;
 class Verlet;
 
 class Aggregate :
-    public ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>,
-    public StatisicsData {
+    public ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList> {
     friend class AggregatList;
 
 private:
@@ -28,7 +26,8 @@ private:
     double *x, *y, *z;              // position of the gravity center
     double *rx, *ry, *rz;           // position of the gravity center
     double *time;                   // Proper time of the aggregate
-
+    double *dp;
+    double *dg_over_dp;
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
 
@@ -86,9 +85,6 @@ public:
     /* other */
     void merge(Aggregate &) noexcept;
     void print() const noexcept;
-    /* statistics */
-    void partialStatistics();
-    void fullStatistics();
     /* Storage specific */
 private:
     void setpointers() noexcept;

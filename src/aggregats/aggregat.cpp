@@ -128,7 +128,6 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     n_spheres = myspheres.size();
     update_distances();
     update();
-    fullStatistics();
 }
 
 //###################################################################################################################
@@ -148,7 +147,13 @@ void Aggregate::update() noexcept {
     *time_step = 3.0 * relax_time;
     double diffusivity = physicalmodel->diffusivity(*f_agg);
     *lpm = sqrt(6.0 * diffusivity * (*time_step));
-    partialStatistics();
+    *dp = 0.;
+    //$ For the Spheres i in Agg Id
+    for (size_t i = 0; i < n_spheres; i++) {
+        *dp += myspheres[i].get_radius();
+    }
+    *dp = 2 * (*dp) / double(n_spheres);
+    *dg_over_dp = 2 * (*rg) / (*dp);
     if (static_cast<bool>(external_storage)) {
         if (*rmax > external_storage->maxradius) {
             external_storage->maxradius = *rmax;
@@ -277,7 +282,6 @@ void Aggregate::merge(Aggregate &other) noexcept {
     n_spheres = myspheres.size();
     update_distances();
     update();
-    fullStatistics();
 }
 void Aggregate::print() const noexcept {
     cout << "Printing details of Aggregat " << index_in_storage << " " << label << endl;
