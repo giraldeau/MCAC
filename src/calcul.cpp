@@ -37,18 +37,18 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
         size_t num_agg(0);
-        /*
-        //$ Choice of an aggregate according to his MFP
-        double max = Aggregates.get_max_time_step();
-        if (contact)
-        {
-            Aggregates.sort_time_steps(max);
+        if (physicalmodel->pick_method == PickMethods::PICK_RANDOM) {
+            //$ Choice of an aggregate according to his MFP
+            double max = aggregates->get_max_time_step();
+            if (contact) {
+                aggregates->sort_time_steps(max);
+            }
+            num_agg = aggregates->pick_random();
+            deltatemps = aggregates->get_time_step(max);
+        } else if (physicalmodel->pick_method == PickMethods::PICK_LAST) {
+            num_agg = aggregates->pick_last();
+            deltatemps = (*aggregates)[num_agg].get_time_step();
         }
-        NumAgg = Aggregates.pick_random();
-        deltatemps = Aggregates.get_time_step(max);
-        */
-        num_agg = aggregates->pick_last();
-        deltatemps = (*aggregates)[num_agg].get_time_step();
         double lpm = (*aggregates)[num_agg].get_lpm();
 
         //$ looking for potential contacts
@@ -67,7 +67,9 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         (*aggregates)[num_agg].time_forward(deltatemps);
 
         //$ Time incrementation
-        deltatemps = deltatemps / double(aggregates->size());
+        if (physicalmodel->pick_method == PickMethods::PICK_LAST) {
+            deltatemps = deltatemps / double(aggregates->size());
+        }
         physicalmodel->time = physicalmodel->time + deltatemps;
         contact = (aggcontact >= 0);
         if (contact) {
@@ -85,15 +87,22 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
                 agg->update();
             }
         }
-        //            for (int i = 0; i < Aggregates.size(); i++) {
-        //                for (int j = i + 1; j < Aggregates.size(); j++) {
-        //                    if (Aggregates[i].contact(Aggregates[j])) {
-        //                        cout << "New contact !" << endl;
-        //                        Aggregates.merge(i, j);
-        //                    }
+        //        for (int i = 0; i < Aggregates.size(); i++) {
+        //            for (int j = i + 1; j < Aggregates.size(); j++) {
+        //                if (Aggregates[i].contact(Aggregates[j])) {
+        //                    cout << "New contact !" << endl;
+        //                    Aggregates.merge(i, j);
         //                }
         //            }
-
+        //        }
+        auto[success, fractal_dimension, fractal_prefactor, error] = aggregates->get_instantaneous_fractal_law();
+        if (success) {
+//            physicalmodel->fractal_dimension = fractal_dimension;
+//            physicalmodel->fractal_prefactor = fractal_prefactor;
+        } else {
+            fractal_dimension = physicalmodel->fractal_dimension;
+            fractal_prefactor = physicalmodel->fractal_prefactor;
+        }
         //$ Show progress
         if (contact) {
             clock_t now = clock();
@@ -104,17 +113,9 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
                       << "  NAgg=" << std::setw(4) << aggregates->size()
                       << "  Time=" << std::setw(4) << physicalmodel->time << " s"
                       << "   CPU=" << std::setw(4) << elapse << " s"
-                      << " after " << std::setw(4) << physicalmodel->n_iter_without_contact << " it --- ";
-            auto [success, dfe, kfe, error] = aggregates->get_instantaneous_fractal_law();
-            if (success) {
-                std::cout << "  " << kfe << " * x^ " << dfe << "  --- r= " << error << std::endl;
-                /*
-                physicalmodel.dfe = dfe;
-                physicalmodel.kfe = kfe;
-                */
-            } else {
-                std::cout << "1.000e+00 * x^ 1.000e+00  --- r= 0" << std::endl;
-            }
+                      << " after " << std::setw(4) << physicalmodel->n_iter_without_contact << " it"
+                      << " --- " << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
+                      << std::endl;
             physicalmodel->n_iter_without_contact = 0;
         } else {
             physicalmodel->n_iter_without_contact++;

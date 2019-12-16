@@ -53,10 +53,11 @@
 }
 namespace mcac {
 std::string filename(int step, size_t n);
-std::string to_string(const double &value);
-shared_ptr<XdmfInformation> xmf_format_double(const std::string &name, const double &number);
-shared_ptr<XdmfInformation> xmf_format_integer(const std::string &name, const long &number);
-shared_ptr<XdmfInformation> xmf_format_bool(const std::string &name, const bool &active);
+template<class T>
+std::string to_string(const T &value);
+template<class T>
+shared_ptr<XdmfInformation> xmf_format(const std::string &name, const T &number);
+shared_ptr<XdmfInformation> xmf_format(const std::string &name, const bool &active);
 shared_ptr<XdmfTime> format_time(const double &value);
 }  // namespace mcac
 

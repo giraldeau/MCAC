@@ -44,7 +44,7 @@ public:
     void print() const;
     void save() {
         save(false);
-    };
+    }
     void save(bool finish);
     auto get_data() const;
     std::vector<double> format_position() const;

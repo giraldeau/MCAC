@@ -12,11 +12,11 @@ void Verlet::add(size_t id, std::array<size_t, 3> index) {
     grid[index[0]][index[1]][index[2]].push_front(id);
 }
 /* Default constructor */
-Verlet::Verlet(size_t new_n_div, double new_width) {
-    grid.clear();
+Verlet::Verlet(size_t new_n_div, double new_width) :
+    grid(new_n_div)
+    {
     n_div = new_n_div;
     width = new_width;
-    grid.resize(n_div);
     for (std::vector<std::vector<std::list<size_t> > > &x_plane : grid) {
         x_plane.resize(n_div);
         for (std::vector<std::list<size_t> > &y_line : x_plane) {

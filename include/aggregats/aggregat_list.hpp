@@ -48,7 +48,7 @@ public:
     /* I/O */
     void save() {
         save(false);
-    };
+    }
     void save(bool);
     auto get_data() const;
     std::vector<double> format_position() const;

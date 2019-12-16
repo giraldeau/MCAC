@@ -19,9 +19,11 @@ public:
     double time;
     double volume_fraction, box_lenght;
     size_t n_verlet_divisions;
+    PickMethods pick_method;
     size_t n_monomeres;
     size_t n_time_per_file;
-    int monomeres_initialisation_type, n_iter_without_contact;
+    MonomeresInitialisationMode monomeres_initialisation_type;
+    size_t n_iter_without_contact;
     clock_t cpu_start;
     double cpu_limit, physical_time_limit;
     int mean_monomere_per_aggregate_limit;
@@ -36,7 +38,7 @@ public:
     [[gnu::pure]] double friction_coeff_2(double rgg) const;
     [[gnu::pure]] double diffusivity(double) const;
     [[gnu::pure]] static double relax_time(double masse, double) ;
-    [[gnu::pure]] void print() const;
+    void print() const;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;
     XMF_OUTPUT xmf_write() const;
 };

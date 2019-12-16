@@ -8,21 +8,19 @@
 
 namespace mcac {
 // Usefull tool
-std::string to_string(const double &value) {
+template<class T>
+std::string to_string(const T &value) {
     std::stringstream sstr;
     sstr << value;
     return sstr.str();
 }
 // Format for Physical Model
-shared_ptr<XdmfInformation> xmf_format_double(const std::string &name, const double &number) {
+template<class T>
+shared_ptr<XdmfInformation> xmf_format(const std::string &name, const T &number) {
     shared_ptr<XdmfInformation> info = XdmfInformation::New(name, to_string(number));
     return info;
 }
-shared_ptr<XdmfInformation> xmf_format_integer(const std::string &name, const long &number) {
-    shared_ptr<XdmfInformation> info = XdmfInformation::New(name, std::to_string(number));
-    return info;
-}
-shared_ptr<XdmfInformation> xmf_format_bool(const std::string &name, const bool &active) {
+shared_ptr<XdmfInformation> xmf_format(const std::string &name, const bool &active) {
     shared_ptr<XdmfInformation> info;
     if (active) {
         info = XdmfInformation::New(name, "True");
@@ -31,6 +29,12 @@ shared_ptr<XdmfInformation> xmf_format_bool(const std::string &name, const bool 
     }
     return info;
 }
+template shared_ptr<XdmfInformation> xmf_format(const std::string &name,
+                                                const double &number);
+template shared_ptr<XdmfInformation> xmf_format(const std::string &name,
+                                                const int &number);
+template shared_ptr<XdmfInformation> xmf_format(const std::string &name,
+                                                const size_t &number);
 shared_ptr<XdmfTime> format_time(const double &value) {
     shared_ptr<XdmfTime> thetime = XdmfTime::New(value);
     return thetime;

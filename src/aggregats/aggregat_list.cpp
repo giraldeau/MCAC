@@ -121,7 +121,7 @@ size_t AggregatList::merge(size_t first, size_t second) {
                      - physicalmodel->time;
 
     // compute the new average of npp
-    avg_npp = avg_npp * size() / (static_cast<double>(size()) - 1);
+    avg_npp = avg_npp * static_cast<double>(size()) / (static_cast<double>(size()) - 1);
 
     // merge the two aggregate but do not remove the deleted one
     list[_keeped]->merge(list[_removed]);

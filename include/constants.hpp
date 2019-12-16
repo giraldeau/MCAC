@@ -3,6 +3,7 @@
 #include <cmath>
 #include <map>
 
+
 #ifdef WITH_HDF5
 #define XMF_OUTPUT shared_ptr<XdmfInformation>
 #else
@@ -50,12 +51,18 @@ enum ErrorCodes {
     VERLET_ERROR,
     INPUT_ERROR
 };
+enum PickMethods {
+    PICK_RANDOM,
+    PICK_LAST,
+    INVALID_PICK_METHOD
+};
+static const std::array<const std::string, 2> PICK_METHODS_STR{{"random", "last"}};
 enum MonomeresInitialisationMode {
     LOG_NORMAL_INITIALISATION,
     NORMAL_INITIALISATION,
     INVALID_INITIALISATION,
 };
-
+static const std::array<const std::string, 2> MONOMERES_INITIALISATION_MODE_STR{{"lognormal", "normal"}};
 const double _pi = atan(1.0) * 4;
 const double _volume_factor = 4 * _pi / 3;
 const double _surface_factor = 4 * _pi;

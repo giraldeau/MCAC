@@ -14,25 +14,35 @@ namespace mcac {
 PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     fractal_dimension(1.4),
     fractal_prefactor(1.8),
-    x_surfgrowth(2),
+    x_surfgrowth(2.),
     coeff_b(1e-3),
+    a_surfgrowth(0.),
     pressure(_pressure_ref),
     temperature(_temperature_ref),
-    density(1800),
-    mean_diameter(30),
+    gaz_mean_free_path(0.),
+    viscosity(0.),
+    density(1800.),
+    mean_diameter(30.),
     dispersion_diameter(1.25),
+    mean_massic_radius(0.),
+    friction_exponnant(0.),
     time(0.),
     volume_fraction(1e-3),
+    box_lenght(0.),
     n_verlet_divisions(10),
+    pick_method(PickMethods::PICK_RANDOM),
     n_monomeres(2500),
     n_time_per_file(10),
     monomeres_initialisation_type(MonomeresInitialisationMode::NORMAL_INITIALISATION),
     n_iter_without_contact(0),
+    cpu_start(),
     cpu_limit(-1),
     physical_time_limit(-1),
     mean_monomere_per_aggregate_limit(-1),
     number_of_aggregates_limit(1),
-    n_iter_without_contact_limit(-1) {
+    n_iter_without_contact_limit(-1),
+    output_dir("MCAC_output") {
+    std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
     std::ifstream is(fichier_param);
@@ -43,9 +53,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     inipp::extract(ini.sections["monomeres"]["density"], density);
     inipp::extract(ini.sections["monomeres"]["dispersion_diameter"], dispersion_diameter);
     inipp::extract(ini.sections["monomeres"]["mean_diameter"], mean_diameter);
-    std::string default_mode = "normal";
-    inipp::extract(ini.sections["monomeres"]["initialisation_mode"], default_mode);
-    monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_mode);
+    default_str = resolve_monomeres_initialisation_mode(monomeres_initialisation_type);
+    inipp::extract(ini.sections["monomeres"]["initialisation_mode"], default_str);
+    monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_str);
     // environment
     inipp::extract(ini.sections["environment"]["volume_fraction"], volume_fraction);
     inipp::extract(ini.sections["environment"]["temperature"], temperature);
@@ -63,6 +73,10 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
+    default_str = resolve_pick_method(pick_method);
+    inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
+    pick_method = resolve_pick_method(default_str);
+
     // output
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
@@ -123,7 +137,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
         return true;
     }
     if (n_iter_without_contact_limit > 0
-        && n_iter_without_contact >= n_iter_without_contact_limit) {
+        && n_iter_without_contact >= static_cast<size_t>(n_iter_without_contact_limit)) {
         std::cout << "We reach the WaitLimit condition" << std::endl << std::endl;
         return true;
     }
@@ -148,7 +162,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     }
     return false;
 }
-[[gnu::pure]] void PhysicalModel::print() const {
+void PhysicalModel::print() const {
     std::cout << "Physical parameters:" << std::endl
               << " Initial Nagg : " << n_monomeres << std::endl
               << " Box size     : " << box_lenght << std::endl
@@ -169,7 +183,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
               << " gamma_       : " << friction_exponnant << std::endl
               << std::endl
               << "Options for Pysical model: " << std::endl
-              << " Mode : " << monomeres_initialisation_type << std::endl
+              << " Initialisation mode : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
+              << std::endl
+              << " Pick method : " << resolve_pick_method(pick_method) << std::endl
               << std::endl
               << "Ending calcul when:" << std::endl
               << " - There is " << number_of_aggregates_limit << " aggregats left or less" << std::endl;
@@ -214,7 +230,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
 [[gnu::pure]] double PhysicalModel::friction_coeff(size_t npp) const {
     //to be expressed in terms of V_agg/V_pp
     double cc = cunningham(mean_massic_radius);
-    return (6. * _pi * viscosity * mean_massic_radius / cc) * pow(npp, friction_exponnant / fractal_dimension);
+    return (6. * _pi * viscosity * mean_massic_radius / cc)
+           * pow(static_cast<double>(npp), friction_exponnant / fractal_dimension);
 }
 [[gnu::pure]] double PhysicalModel::friction_coeff_2(double rgg) const {
     double rmm = rgg * 1.3;

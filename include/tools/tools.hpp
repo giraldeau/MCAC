@@ -50,7 +50,11 @@ std::array<T, 3> &operator/=(std::array<T, 3> &a, const T &rhs) {
 }
 void init_random();
 double random();
-MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string& input);
+
+MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string &input);
+std::string resolve_monomeres_initialisation_mode(MonomeresInitialisationMode mode);
+PickMethods resolve_pick_method(const std::string &input);
+std::string resolve_pick_method(PickMethods method);
 [[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
                                                                const std::vector<double> &y);
 }  //namespace mcac

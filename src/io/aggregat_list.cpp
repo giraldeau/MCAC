@@ -10,6 +10,8 @@ extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                  const std::vector<double> &formated_field);
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                  const std::vector<int> &formated_field);
+extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
+                                                 const std::vector<size_t> &formated_field);
 extern template shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                                     const double &value);
 auto AggregatList::get_data() const {

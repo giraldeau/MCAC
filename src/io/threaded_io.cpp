@@ -20,8 +20,8 @@ ThreadedIO::ThreadedIO(const PhysicalModel &new_physicalmodel, size_t size) noex
     num_file(0) {
 }
 ThreadedIO::~ThreadedIO() noexcept {
-    if (gsl::at(status, static_cast<size_t>(current_thread)) == WriterStatus::APPENDING
-        || gsl::at(status, static_cast<size_t>(!current_thread)) == WriterStatus::APPENDING) {
+    if (gsl::at(status, static_cast<long>(current_thread)) == WriterStatus::APPENDING
+        || gsl::at(status, static_cast<long>(!current_thread)) == WriterStatus::APPENDING) {
         std::cout << "And what should happen to the data ?" << std::endl;
         exit(ErrorCodes::IO_ERROR);
     }

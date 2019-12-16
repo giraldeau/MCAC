@@ -1,5 +1,8 @@
 #include "tools/tools.hpp"
 #include <vector>
+#include <tuple>
+#include <cmath>
+#include <algorithm>
 
 
 namespace mcac {
@@ -14,16 +17,29 @@ double random() {
     v = v / RAND_MAX;
     return v;
 }
-MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string& input) {
-    const std::map<std::string, MonomeresInitialisationMode> _initialisation_mode_strings{
-        {"lognormal", LOG_NORMAL_INITIALISATION},
-        {"normal", NORMAL_INITIALISATION},
-    };
-    auto itr = _initialisation_mode_strings.find(input);
-    if (itr != _initialisation_mode_strings.end()) {
-        return itr->second;
+MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string &input) {
+    auto itr = std::find(MONOMERES_INITIALISATION_MODE_STR.begin(),
+                         MONOMERES_INITIALISATION_MODE_STR.end(),
+                         input);
+    if (itr != MONOMERES_INITIALISATION_MODE_STR.end()) {
+        return MonomeresInitialisationMode(std::distance(MONOMERES_INITIALISATION_MODE_STR.begin(), itr));
     }
     return INVALID_INITIALISATION;
+}
+std::string resolve_monomeres_initialisation_mode(MonomeresInitialisationMode mode) {
+    return MONOMERES_INITIALISATION_MODE_STR[mode];
+}
+PickMethods resolve_pick_method(const std::string &input) {
+    auto itr = std::find(PICK_METHODS_STR.begin(),
+                         PICK_METHODS_STR.end(),
+                         input);
+    if (itr != PICK_METHODS_STR.end()) {
+        return PickMethods(std::distance(PICK_METHODS_STR.begin(), itr));
+    }
+    return INVALID_PICK_METHOD;
+}
+std::string resolve_pick_method(PickMethods method) {
+    return PICK_METHODS_STR[method];
 }
 [[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
                                                                const std::vector<double> &y) {
@@ -35,8 +51,8 @@ MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::str
 
     auto n = static_cast<double>(x.size());
     for (size_t i = 0; i < static_cast<size_t>(n); i++) {
-        double log_x(log(x[i]));
-        double log_y(log(y[i]));
+        double log_x(std::log(x[i]));
+        double log_y(std::log(y[i]));
         sumx += log_x;
         sumx_2 += POW_2(log_x);
         sumxy += log_x * log_y;
@@ -44,7 +60,7 @@ MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::str
         sumy_2 += POW_2(log_y);
     }
     double denom = (n * sumx_2 - POW_2(sumx));
-    if (static_cast<size_t>(n) == 0 || fabs(denom) < 1e-9) {
+    if (static_cast<size_t>(n) == 0 || std::fabs(denom) < 1e-9) {
         // singular matrix. can't solve the problem.
         return {false, 0., 0., 0.};
     }

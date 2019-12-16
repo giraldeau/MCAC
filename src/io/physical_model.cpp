@@ -6,25 +6,29 @@
 
 
 namespace mcac {
+extern template shared_ptr<XdmfInformation> xmf_format(const std::string &name,
+                                                       const double &number);
+extern template shared_ptr<XdmfInformation> xmf_format(const std::string &name,
+                                                       const int &number);
 shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
     shared_ptr<XdmfInformation> info = XdmfInformation::New("Physics", "Physical properties of the simulation");
-    info->insert(xmf_format_double("Asurfgrowth", a_surfgrowth));
-    info->insert(xmf_format_double("dfe", fractal_dimension));
-    info->insert(xmf_format_double("kfe", fractal_prefactor));
-    info->insert(xmf_format_double("xsurfgrowth", x_surfgrowth));
-    info->insert(xmf_format_double("coeffB", coeff_b));
-    info->insert(xmf_format_double("lambda", gaz_mean_free_path));
-    info->insert(xmf_format_double("rpeqmass", mean_massic_radius));
-    info->insert(xmf_format_double("gamma_", friction_exponnant));
-    info->insert(xmf_format_double("P [Pa]", pressure));
-    info->insert(xmf_format_double("T [K]", temperature));
-    info->insert(xmf_format_double("Mu", viscosity));
-    info->insert(xmf_format_double("Rho [kg/m3]", density));
-    info->insert(xmf_format_double("Dpm [nm]", mean_diameter));
-    info->insert(xmf_format_double("sigmaDpm [nm]", dispersion_diameter));
-    info->insert(xmf_format_double("FV [ppt]", volume_fraction));
-    info->insert(xmf_format_double("L", box_lenght));
-    info->insert(xmf_format_integer("N []", n_monomeres));
+    info->insert(xmf_format("Asurfgrowth", a_surfgrowth));
+    info->insert(xmf_format("dfe", fractal_dimension));
+    info->insert(xmf_format("kfe", fractal_prefactor));
+    info->insert(xmf_format("xsurfgrowth", x_surfgrowth));
+    info->insert(xmf_format("coeffB", coeff_b));
+    info->insert(xmf_format("lambda", gaz_mean_free_path));
+    info->insert(xmf_format("rpeqmass", mean_massic_radius));
+    info->insert(xmf_format("gamma_", friction_exponnant));
+    info->insert(xmf_format("P [Pa]", pressure));
+    info->insert(xmf_format("T [K]", temperature));
+    info->insert(xmf_format("Mu", viscosity));
+    info->insert(xmf_format("Rho [kg/m3]", density));
+    info->insert(xmf_format("Dpm [nm]", mean_diameter));
+    info->insert(xmf_format("sigmaDpm [nm]", dispersion_diameter));
+    info->insert(xmf_format("FV [ppt]", volume_fraction));
+    info->insert(xmf_format("L", box_lenght));
+    info->insert(xmf_format("N []", static_cast<int>(n_monomeres)));
     return info;
 }
 } // namespace mcac
