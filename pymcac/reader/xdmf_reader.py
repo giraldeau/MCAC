@@ -91,6 +91,27 @@ class XdmfReader:
                 h5_groups[time][key] = attrib.getchildren()[0].text.split(":")[-1]
         return h5_groups
 
+    def extract_sizes(self) -> Dict[float, int]:
+        """
+        Extract which h5_group will correspond to which data
+        """
+        if self.xml is None:
+            self.parse_xml()
+
+        sizes = {}
+        for step in self.xml.iter("Grid"):
+            if step.get("Name") == "Collection":
+                continue
+            time = float(step.find('Time').get("Value"))
+
+            for attrib in step.findall("Attribute"):
+                if attrib.get("Name") in ("BoxSize", "Time"):
+                    continue
+                size = attrib.getchildren()[0].get("Dimensions")
+                sizes[time] = int(size)
+                break
+        return sizes
+
     def read(self) -> Tuple[Dict[str, Union[bool, float]],
                             Dict[float, Dict[str, str]]]:
         """

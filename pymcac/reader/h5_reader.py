@@ -2,16 +2,19 @@
 # coding: utf-8
 """
 Read the hdf5 part of MCAC output files
-
-TODO use dask
 """
 
 from pathlib import Path
-from typing import Union, Dict, Optional
+from typing import Dict
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 import pandas as pd
 from dask import dataframe as dd
+from dask import delayed
 from h5py import File as h5File
 
 from .xdmf_reader import XdmfReader
@@ -21,7 +24,7 @@ class H5Reader:
     """
     Object containing all functions necessary to read an h5 file
     """
-    __slots__ = ("filename", )
+    __slots__ = ("filename",)
 
     def __init__(self, filename: Union[str, Path]) -> None:
         self.filename = Path(filename).with_suffix(".h5")
@@ -29,46 +32,94 @@ class H5Reader:
     @classmethod
     def read_file(cls,
                   filename: Union[str, Path],
-                  index: Optional[str] = None) -> Dict[float, pd.DataFrame]:
+                  index: Optional[str] = None) -> Tuple[np.ndarray, dd.DataFrame]:
         """
-        Read the h5 file
+        Read the h5 file into a dask dataframe (lazy)
 
         We need info from the xmf file, so this file is also read
         """
         return cls(filename).read(index=index)
 
-    def read(self, index: Optional[str] = None) -> Dict[float, pd.DataFrame]:
+    def read(self, index: str = "Num") -> Tuple[np.ndarray, dd.DataFrame]:
         """
-        Read the h5 file
+        Read the h5 file into a dask dataframe (lazy)
 
         We need info from the xmf file, so this file is also read
         """
 
         h5_groups = XdmfReader(self.filename).extract_h5_groups()
+        sizes = XdmfReader(self.filename).extract_sizes()
 
         data: Dict[float, pd.DataFrame] = {}
-        with h5File(str(self.filename), 'r') as file_h5:
-            for time, step in h5_groups.items():
-                datat = {}
-                for attrib, group in step.items():
-                    npdata = np.asarray(file_h5[group])
-                    if attrib == "Positions":
-                        pos = npdata.reshape((-1, 3))
-                        datat['Posx'] = pos[:, 0]
-                        datat['Posy'] = pos[:, 1]
-                        datat['Posz'] = pos[:, 2]
-                    else:
-                        datat[attrib] = npdata
-#                datat["Aggkey"] = list(map(lambda x: hash((time,x)),datat["Label"]))
+        for time, step in h5_groups.items():
+            datas = [self.read_one(time, group, attrib, index, sizes)
+                     for attrib, group in step.items()
+                     if attrib not in ("BoxSize", "Time", index)]
+            from functools import reduce
+            data[time] = reduce(lambda x, y: x.join(y), datas)
 
-                n = datat['Posx'].size
-                datat["Time"] = np.repeat(datat["Time"], n)
-                datat["BoxSize"] = np.repeat(datat["BoxSize"], n)
+            if "BoxSize" in step:
+                with h5File(str(self.filename), 'r') as file_h5:
+                    npdata = np.asarray(file_h5[step["BoxSize"]])[0]
+                data[time]["BoxSize"] = npdata
 
-                del datat["Time"]
+        times = np.sort(np.fromiter(data.keys(), dtype=float))
 
-                data[time] = pd.DataFrame.from_dict(datat)
+        for time in times:
+            data[time]["Time"] = time
 
-                if index is not None:
-                    data[time].set_index(index, inplace=True)
-        return data
+        meta = {index: np.int64, **data[times[0]].dtypes.to_dict()}
+        del meta["Time"]
+
+        all_data = dd.from_delayed([set_index(data[time]) for time in times],
+                                   meta=meta, divisions=(*times, times[-1]))
+
+        return times, all_data
+
+    def read_one(self,
+                 time: float,
+                 group: str,
+                 attrib: str,
+                 index: str,
+                 sizes: Dict[float, int]) -> dd.DataFrame:
+        """
+        Read one block of the h5 file into a dask dataframe (lazy)
+        """
+
+        if attrib == "Positions":
+            meta = {"Posx": np.float64,
+                    "Posy": np.float64,
+                    "Posz": np.float64}
+            shape = (-1, 3)
+        elif attrib in ("Label", "Np"):
+            meta = {attrib: np.int64}
+            shape = (-1,)
+        else:
+            meta = {attrib: np.float64}
+            shape = (-1,)
+        h5data = read_h5_frame(self.filename, group, list(meta.keys()), shape=shape, index_name=index)
+        return dd.from_delayed([h5data], meta=meta, divisions=(0, sizes[time] - 1))
+
+
+@delayed
+def read_h5_frame(filename: Path,
+                  dataset: str,
+                  columns: Sequence[str],
+                  shape: Tuple[int] = (-1,),
+                  index_name: str = "Num") -> pd.DataFrame:
+    """Read one block of data"""
+
+    # print("reading", dataset, "in", filename)
+
+    df = pd.DataFrame(np.asarray(h5File(filename, 'r')[dataset]).reshape(shape),
+                      columns=columns)
+    df.index.name = index_name
+    return df
+
+
+@delayed
+def set_index(data: pd.DataFrame) -> pd.DataFrame:
+    """set time as index"""
+
+    res = data.reset_index().set_index("Time")
+    return res
