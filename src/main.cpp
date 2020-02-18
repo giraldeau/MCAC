@@ -23,7 +23,10 @@
 
 
 int main(int argc, char *argv[]) {
-    std::cout << "    MCAC  Copyright (C) 2019 CORIA" << std::endl;
+    std::cout << std::endl;
+    std::cout << "MCAC  Copyright (C) 2020 CORIA" << std::endl;
+    std::cout << "This program comes with ABSOLUTELY NO WARRANTY" << std::endl;
+    std::cout << std::endl;
     if (argc <= 1) {
         std::cout << "Missing argument : param file." << std::endl;
         return 1;
