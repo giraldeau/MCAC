@@ -16,6 +16,11 @@ The process goes as follow :
 
 Developers are invited to read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
 
+WARNING the documentation is outdated and is being rewriting  
+WARNING the the code installation process is under refactoring, and may not work currently
+
+Scientific papers are on their way, based on the [JCIS2020](https://gitlab.coria-cfd.fr/MCAC/MCAC/tree/JCIS2020) version
+
 ## Dependencies
 
 We need
