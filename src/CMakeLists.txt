@@ -9,10 +9,11 @@ SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ### definitions des dependences  ###
+include_directories(../include)
 
 FILE(GLOB_RECURSE SRC_FILES *.cpp)
 add_executable(${PROJECT_NAME} ${SRC_FILES})
-
+    
 ### Definition des options de compilation ###
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -49,12 +50,15 @@ message(STATUS "Flags:")
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)
 target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
-target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/gsl/include)
+add_dependencies(${PROJECT_NAME} GSL_project)
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/GSL/include)
+add_dependencies(${PROJECT_NAME} inipp_project)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/inipp/include)
 
 if (WITH_SBL)
     message(STATUS "    With SBL")
     add_definitions(-DWITH_SBL)
+    add_dependencies(${PROJECT_NAME} sbl_project)
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/sbl/include)
     target_link_libraries(${PROJECT_NAME} CGAL ${MPFR_LIBRARIES} ${GMP_LIBRARIES})
 else ()
@@ -98,7 +102,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     # g++ compiler (LINUX)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "-g -march=native -frounding-math")
-    set(CMAKE_CXX_FLAGS_RELEASE " -Ofast") #
+    set(CMAKE_CXX_FLAGS_RELEASE " -O2")  # O3 and Ofast does not work with sbl
     set(CMAKE_CXX_FLAGS_DEBUG "-fcheck-new -ggdb3 -gpubnames -g3  -O0 \
       -Wpedantic -Wall -Wextra -Wformat=2 -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wstrict-overflow=5 \
       -Warray-bounds -Wtrampolines -Wfloat-equal -Wundef -Wshadow -Wunsafe-loop-optimizations -Wcast-qual -Wcast-align -Wconversion \
