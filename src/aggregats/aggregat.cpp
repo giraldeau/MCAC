@@ -191,7 +191,7 @@ void Aggregate::compute_volume() noexcept {
         surfaces[i] = myspheres[i].get_surface();    //Calculation of the surface of i
     }
 #ifdef WITH_SBL
-    pair<vector<double>, vector<double>> volume_surface(compute_volume_surface(myspheres));
+    std::pair<std::vector<double>, std::vector<double>> volume_surface(compute_volume_surface(myspheres));
 
     volumes = volume_surface.first;
     surfaces = volume_surface.second;

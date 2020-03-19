@@ -22,13 +22,13 @@
 
 
 namespace mcac {
-void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data);
-shared_ptr<XdmfTopology> the_topology();
-shared_ptr<XdmfGeometry> the_positions(const std::vector<double> &formated_positions);
+void write_task(const std::string &filename, const boost::shared_ptr<XdmfDomain> *data);
+boost::shared_ptr<XdmfTopology> the_topology();
+boost::shared_ptr<XdmfGeometry> the_positions(const std::vector<double> &formated_positions);
 template<class T>
-shared_ptr<XdmfAttribute> scalar(const std::string &name, const std::vector<T> &formated_field);
+boost::shared_ptr<XdmfAttribute> scalar(const std::string &name, const std::vector<T> &formated_field);
 template<class T>
-shared_ptr<XdmfAttribute> attribute(const std::string &name, const T &value);
+boost::shared_ptr<XdmfAttribute> attribute(const std::string &name, const T &value);
 }  // namespace mcac
 
 #endif // WITH_HDF5

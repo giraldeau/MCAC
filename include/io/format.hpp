@@ -73,9 +73,9 @@ std::string filename(int step, size_t n);
 template<class T>
 std::string to_string(const T &value);
 template<class T>
-shared_ptr<XdmfInformation> xmf_format(const std::string &name, const T &number);
-shared_ptr<XdmfInformation> xmf_format(const std::string &name, const bool &active);
-shared_ptr<XdmfTime> format_time(const double &value);
+boost::shared_ptr<XdmfInformation> xmf_format(const std::string &name, const T &number);
+boost::shared_ptr<XdmfInformation> xmf_format(const std::string &name, const bool &active);
+boost::shared_ptr<XdmfTime> format_time(const double &value);
 }  // namespace mcac
 
 #endif // WITH_HDF5

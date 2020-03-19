@@ -20,6 +20,7 @@
 #include "constants.hpp"
 #include "elem_storage/elem_storage.hpp"
 #include "spheres/sphere_list.hpp"
+#include "sbl/volume_surface.hpp"
 #include <list>
 
 

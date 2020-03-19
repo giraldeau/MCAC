@@ -23,22 +23,22 @@
 
 namespace mcac {
 #ifdef WITH_HDF5
-extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                 const std::vector<double> &formated_field);
-extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                 const std::vector<int> &formated_field);
-extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                 const std::vector<size_t> &formated_field);
-extern template shared_ptr<XdmfAttribute> attribute(const std::string &name,
+extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
+                                                        const std::vector<double> &formated_field);
+extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
+                                                        const std::vector<int> &formated_field);
+extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
+                                                        const std::vector<size_t> &formated_field);
+extern template boost::shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                                     const double &value);
 auto AggregatList::get_data() const {
     // Set geometry
-    shared_ptr<XdmfUnstructuredGrid> aggregats_data = XdmfUnstructuredGrid::New();
+    boost::shared_ptr<XdmfUnstructuredGrid> aggregats_data = XdmfUnstructuredGrid::New();
     aggregats_data->setName("Aggregats");
     aggregats_data->setTopology(the_topology());
 
     // Set time
-    shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->time);
+    boost::shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->time);
     aggregats_data->setTime(time);
     aggregats_data->insert(attribute("Time", physicalmodel->time));
     aggregats_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
