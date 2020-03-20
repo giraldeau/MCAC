@@ -30,7 +30,8 @@ We need
 
 The other dependencies that may be needed will be compiled with the code
  * `libxdmf` for writing our results, but this will need `boost`
- * `CGAL` and `sbl` for accurate computation of sphere overlapping (Optionnal)
+ * `CGAL` and `SBL` for accurate computation of sphere overlapping (Optionnal)  
+    (`SBL` being a large repository, you can clone it separatly and give the path to cmake with `-DSBL_GIT_REP=path`)
 
 Finally two other libraries will be compiled with the code:
  * `inipp` for reading input files

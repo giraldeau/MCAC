@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.13)
 project(MCAC CXX)
 
 option(WITH_SBL "Use SBL for aggregate volume measure" OFF)
@@ -22,9 +22,6 @@ endif ()
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../bin/${CMAKE_BUILD_TYPE}/)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake)
-if (CMAKE_VERSION VERSION_LESS 3.14)
-    list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake/libxml)
-endif ()
 if (WITH_IO)
     find_package(LibXml2 REQUIRED)
     find_package(HDF5 REQUIRED CXX)

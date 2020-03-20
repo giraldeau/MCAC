@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.13)
 
 project(MCAC-FULL)
 
@@ -16,7 +16,8 @@ ExternalProject_Add(GSL_project
 ExternalProject_Add(inipp_project
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/inipp
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/inipp
-    GIT_REPOSITORY https://github.com/mcmtroffaes/inipp
+    GIT_REPOSITORY https://gitlab.coria-cfd.fr/MCAC/inipp.git
+    GIT_TAG no_tests
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/inipp
     EXCLUDE_FROM_ALL ON)
 
