@@ -26,12 +26,12 @@ Scientific papers are on their way, based on the [JCIS2020](https://gitlab.coria
 We need
  * `libhdf5` for writing our results
  * `mpfr` and `gmp` for accurate computation of sphere overlapping (Optionnal)
- * `numpy`, `pandas`, `dask`, `h5py`, `scipy`, `matplotlib`, `scikit-image` and `cython` for python post-processing
 
 The other dependencies that may be needed will be compiled with the code
  * `libxdmf` for writing our results, but this will need `boost`
  * `CGAL` and `SBL` for accurate computation of sphere overlapping (Optionnal)  
     (`SBL` being a large repository, you can clone it separatly and give the path to cmake with `-DSBL_GIT_REP=path`)
+ * `numpy`, `pandas`, `dask`, `h5py`, `scipy`, `matplotlib`, `scikit-image` and `cython` for python post-processing (Optionnal)
 
 Finally two other libraries will be compiled with the code:
  * `inipp` for reading input files
@@ -55,21 +55,6 @@ If you want the SBL part, replace the `cmake` line with
 
     cmake -DWITH_SBL=ON ..
 
-If you will use the python post processing tools, you have to install them as well
-
-    pip install -e .
-
-The "-e" part allows you to modify this library without the need to reinstall it
-(except for the compiled part)
-
-### Computer specific instructions
-
-#### Newton
-
-You will have to enable the correct compilation environment before the cmake part
-
-    scl enable devtoolset-9 bash
-
 ## Update
 
 Just go to the MCAC folder and use git to obtain the last version
@@ -84,13 +69,13 @@ And recompile the compiled part that may have change
 
 If you experience troubles, you can alway destroy the `build` dir and restart the compilation from scratch 
 
-And optionnaly recompile the python post-processing tools
-
-    pip install -e .
+If you have updated your python version, you may have to remove the folder venv
 
 ## Usage
 
-The binaries are produced in the bin folder (release and debug).
+### MCAC
+
+The binaries are produced in the bin folder (Release or Debug).
 The code need an input file containing:
 
     1000        N           []                  Initial number of spheres
@@ -121,11 +106,15 @@ The third column is the unit if the parameter.
 You then juste have to use the executable with this parameters file
 
     bin/release/MCAC params.txt
+
+### Python
+
+A library is available in the pymcac folder.  
+It is prepared when you compile the code in a virtual environment  
+In order to use `pymcac` you need to activate the virtual environment
+
+    source venv/bin/activate
     
-Again, on Newton you have to activate the correct environment before
-
-    scl enable devtoolset-9 bash
-
 ## Output
 ### Terminal
 
@@ -150,9 +139,20 @@ To see the spheres:
 6. apply
 7. reset camera (in order to auto scale)
 
-### Python
+## Computer specific instructions
 
-A library is available in the pymcac folder
-It is installable with (in the root folder of MCAC)
+### Newton
 
-    pip install -e .
+You need the correct compilation environment for the compilation and execution of MCAC  
+You can activate it with
+
+    scl enable devtoolset-9 bash
+
+### Myria
+
+Right now MCAC doesn't run on Myria
+ * cmake is too old
+ * hdf5 is not available for g++
+ * it does not compile with intel 
+
+
