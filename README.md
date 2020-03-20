@@ -24,20 +24,26 @@ Scientific papers are on their way, based on the [JCIS2020](https://gitlab.coria
 ## Dependencies
 
 We need
- * `lbxdmf` and `libhdf5` for writing our results
- * `CGAL`, `mpfr` and `gmp` for accurate computation of sphere overlapping
+ * `libhdf5` for writing our results
+ * `mpfr` and `gmp` for accurate computation of sphere overlapping (Optionnal)
  * `numpy`, `pandas`, `dask`, `h5py`, `scipy`, `matplotlib`, `scikit-image` and `cython` for python post-processing
- 
-## Installation
 
-on Newton, you have to enable the correct compilation environment
-    scl enable devtoolset-7 bash
+The other dependencies that may be needed will be compiled with the code
+ * `libxdmf` for writing our results, but this will need `boost`
+ * `CGAL` and `sbl` for accurate computation of sphere overlapping (Optionnal)
+
+Finally two other libraries will be compiled with the code:
+ * `inipp` for reading input files
+ * `gsl` for internal use
+
+## Installation
 
 Download the current version of the code
 
     git clone git@gitlab.coria-cfd.fr:MCAC/MCAC.git
     
 Compile the code (It will automatically download and compile some other dependencies)
+
     mkdir build
     cd build
     cmake ..
@@ -45,14 +51,23 @@ Compile the code (It will automatically download and compile some other dependen
     cd ..
 
 If you want the SBL part, replace the `cmake` line with
-    cmake -DWITH_SBL ..
+
+    cmake -DWITH_SBL=ON ..
 
 If you will use the python post processing tools, you have to install them as well
+
     pip install -e .
 
 The "-e" part allows you to modify this library without the need to reinstall it
 (except for the compiled part)
 
+### Computer specific instructions
+
+#### Newton
+
+You will have to enable the correct compilation environment before the cmake part
+
+    scl enable devtoolset-9 bash
 
 ## Update
 
@@ -69,6 +84,7 @@ And recompile the compiled part that may have change
 If you experience troubles, you can alway destroy the `build` dir and restart the compilation from scratch 
 
 And optionnaly recompile the python post-processing tools
+
     pip install -e .
 
 ## Usage
@@ -107,7 +123,7 @@ You then juste have to use the executable with this parameters file
     
 Again, on Newton you have to activate the correct environment before
 
-    scl enable devtoolset-7 bash
+    scl enable devtoolset-9 bash
 
 ## Output
 ### Terminal
@@ -134,6 +150,8 @@ To see the spheres:
 7. reset camera (in order to auto scale)
 
 ### Python
+
 A library is available in the pymcac folder
 It is installable with (in the root folder of MCAC)
+
     pip install -e .
