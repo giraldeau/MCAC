@@ -36,14 +36,18 @@ on Newton, you have to enable the correct compilation environment
 Download the current version of the code
 
     git clone git@gitlab.coria-cfd.fr:MCAC/MCAC.git
+    
+Compile the code (It will automatically download and compile some other dependencies)
+    mkdir build
+    cd build
+    cmake ..
+    make -j4
+    cd ..
 
-Compile the code
-    cd MCAC/src
-    qmake MCAC.pro
-    make
+If you want the SBL part, replace the `cmake` line with
+    cmake -DWITH_SBL ..
 
 If you will use the python post processing tools, you have to install them as well
-    cd ..
     pip install -e .
 
 The "-e" part allows you to modify this library without the need to reinstall it
@@ -54,15 +58,17 @@ The "-e" part allows you to modify this library without the need to reinstall it
 
 Just go to the MCAC folder and use git to obtain the last version
 
-    git pull 
+    git pull
     
 And recompile the compiled part that may have change
 
-    make distclean
-    qmake MCAC.pro
-    make
+    cd build
+    make -j4
+    cd ..
 
-And optionnaly 
+If you experience troubles, you can alway destroy the `build` dir and restart the compilation from scratch 
+
+And optionnaly recompile the python post-processing tools
     pip install -e .
 
 ## Usage
