@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.14)
 
 project(MCAC-FULL)
 
@@ -24,6 +24,22 @@ ExternalProject_Add(sbl_project
     GIT_REPOSITORY https://gitlab.coria-cfd.fr/MCAC/sbl.git
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/sbl
     EXCLUDE_FROM_ALL ON)
+
+ExternalProject_Add(xdmf_project
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/xdmf
+    INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/xdmf
+    GIT_REPOSITORY https://gitlab.kitware.com/xdmf/xdmf.git
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/xdmf
+    EXCLUDE_FROM_ALL ON)
+
+ExternalProject_Add(cgal_project
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/cgal
+    INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/cgal
+    GIT_TAG releases/CGAL-4.9-branch-tip
+    GIT_REPOSITORY https://github.com/CGAL/cgal.git
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/cgal -DWITH_CGAL_Qt5=OFF -DWITH_CGAL_ImageIO=OFF
+    EXCLUDE_FROM_ALL ON)
+
 
 add_subdirectory(src)
 
