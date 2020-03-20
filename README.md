@@ -26,12 +26,13 @@ Scientific papers are on their way, based on the [JCIS2020](https://gitlab.coria
 We need
  * `libhdf5` for writing our results
  * `mpfr` and `gmp` for accurate computation of sphere overlapping (Optionnal)
+ * `python3.6+` for python post-processing (Optionnal)
 
 The other dependencies that may be needed will be compiled with the code
- * `libxdmf` for writing our results, but this will need `boost`
+ * `libxdmf` for writing our results, if not found it will be compiled this will need `boost`
  * `CGAL` and `SBL` for accurate computation of sphere overlapping (Optionnal)  
     (`SBL` being a large repository, you can clone it separatly and give the path to cmake with `-DSBL_GIT_REP=path`)
- * `numpy`, `pandas`, `dask`, `h5py`, `scipy`, `matplotlib`, `scikit-image` and `cython` for python post-processing (Optionnal)
+ * multiple python packages for python post-processing (Optionnal)
 
 Finally two other libraries will be compiled with the code:
  * `inipp` for reading input files
