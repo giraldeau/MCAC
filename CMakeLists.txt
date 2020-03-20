@@ -4,7 +4,9 @@ project(MCAC-FULL)
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
-option(SBL_GIT_REP "SBL GIT REPOSITORY" https://gitlab.coria-cfd.fr/MCAC/sbl.git)
+if (NOT SBL_GIT_REP)
+    set(SBL_GIT_REP https://gitlab.coria-cfd.fr/MCAC/sbl.git)
+endif ()
 
 ExternalProject_Add(GSL_project
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/GSL
