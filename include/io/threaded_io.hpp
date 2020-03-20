@@ -23,7 +23,7 @@
 #ifdef WITH_HDF5
 #include "io/xmf_includes.hpp"
 #include <array>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <gsl/gsl>
 #include <string>
 #include <thread>
@@ -34,7 +34,7 @@ class ThreadedIO {
 public:
     static void wait();
     void create_file();
-    void write(const std::experimental::filesystem::path &prefix,
+    void write(const std::filesystem::path &prefix,
                const shared_ptr<XdmfUnstructuredGrid> &data,
                bool all);
 private:
