@@ -22,6 +22,7 @@
 #include "physical_model/physical_model.hpp"
 #include "spheres/sphere_list.hpp"
 #include "verlet/verlet.hpp"
+#include <gsl/gsl>
 
 
 namespace mcac {

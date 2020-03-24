@@ -63,7 +63,7 @@ DEF_FORMATER_FUNC(SphereList, get_radius, double)
 
 #else
 
-namespace MCAC{
+namespace mcac{
 
 void SphereList::save(const bool finish){}
 

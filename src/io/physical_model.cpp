@@ -52,9 +52,11 @@ shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
 
 #else
 
-auto PhysicalModel::xmfWrite() const
+namespace mcac {
+XMF_OUTPUT PhysicalModel::xmf_write() const
 {
-    return false;
+    return ;
 }
+} // namespace mcac
 
 #endif

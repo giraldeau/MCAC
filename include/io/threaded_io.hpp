@@ -78,7 +78,7 @@ namespace mcac{
 
 class ThreadedIO{
 public:
-    ThreadedIO(PhysicalModel& _physicalmodel, size_t size)  {}
+    ThreadedIO(const PhysicalModel& _physicalmodel, size_t size)  {}
 };
 }  // namespace mcac
 
