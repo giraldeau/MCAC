@@ -1,14 +1,18 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.10)
 
 project(MCAC-FULL)
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
+# Create a list with an alternate separator
+string(REPLACE ";" "|" CMAKE_PREFIX_PATH_ALT_SEP "${CMAKE_PREFIX_PATH}")
+
 ExternalProject_Add(GSL_project
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/GSL
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL
     GIT_REPOSITORY https://github.com/microsoft/GSL.git
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL -DGSL_TEST=OFF
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL
+               -DGSL_TEST=OFF
     EXCLUDE_FROM_ALL ON)
 
 ExternalProject_Add(inipp_project
@@ -30,7 +34,10 @@ ExternalProject_Add(xdmf_project
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/xdmf
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/xdmf
     GIT_REPOSITORY https://gitlab.kitware.com/xdmf/xdmf.git
+    LIST_SEPARATOR | # Use the alternate list separator
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/xdmf
+               -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_ALT_SEP}
+               -DBUILD_SHARED_LIBS=ON
     EXCLUDE_FROM_ALL ON)
 
 ExternalProject_Add(cgal_project
@@ -38,7 +45,9 @@ ExternalProject_Add(cgal_project
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/cgal
     GIT_TAG releases/CGAL-4.9-branch-tip
     GIT_REPOSITORY https://github.com/CGAL/cgal.git
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/cgal -DWITH_CGAL_Qt5=OFF -DWITH_CGAL_ImageIO=OFF
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/cgal
+               -DWITH_CGAL_Qt5=OFF
+               -DWITH_CGAL_ImageIO=OFF
     EXCLUDE_FROM_ALL ON)
 
 
