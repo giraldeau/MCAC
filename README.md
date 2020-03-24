@@ -151,9 +151,16 @@ You can activate it with
 
 ### Myria
 
-Right now MCAC doesn't run on Myria
- * cmake is too old
- * hdf5 is not available for g++
- * it does not compile with intel 
+You'll need the following module
 
+    module load cmake python3/3.6.1 libxml2 compilers/gnu/7.3.0 
+    
+You'll need to export the use of gcc
+
+    export CC=gcc
+    export CXX=g++
+    
+You'll need to add the following option to cmake
+
+     cmake .. -DCMAKE_PREFIX_PATH="${LIBXML2_ROOT};/soft/library/hdf5-1.8.18-gnu-serial/" 
 
