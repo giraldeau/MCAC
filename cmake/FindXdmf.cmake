@@ -13,18 +13,26 @@ find_path(Xdmf_INCLUDE_DIR NAMES XdmfDomain.hpp
         HINTS
         ${PC_Xdmf_INCLUDEDIR}
         ${PC_Xdmf_INCLUDE_DIRS}
+        PATHS
+        /usr/include
         )
 
 find_library(Xdmf_LIBRARY NAMES Xdmf
         HINTS
         ${PC_Xdmf_LIBDIR}
         ${PC_Xdmf_LIBRARY_DIRS}
+        PATHS
+        /usr/lib/x86_64-linux-gnu/xdmf/serial/
+        /usr/lib/x86_64-linux-gnu/xdmf/openmpi/
         )
 
 find_library(XdmfCore_LIBRARY NAMES XdmfCore
         HINT
         ${PC_Xdmf_LIBDIR}
         ${PC_Xdmf_LIBRARY_DIRS}
+        PATHS
+        /usr/lib/x86_64-linux-gnu/xdmf/serial/
+        /usr/lib/x86_64-linux-gnu/xdmf/openmpi/
         )
 
 set(Xdmf_INCLUDE_DIRS ${Xdmf_INCLUDE_DIR} ${PC_Xdmf_INCLUDE_DIRS})
