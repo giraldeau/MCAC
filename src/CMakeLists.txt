@@ -12,6 +12,10 @@ SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(../include)
 
 FILE(GLOB_RECURSE SRC_FILES *.cpp)
+# TODO temporary fix for old cmake 
+link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib)
+link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib64)
+# TODO end temporary fix for old cmake 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
     
 ### Definition des options de compilation ###
@@ -90,8 +94,8 @@ if (WITH_IO)
         target_link_libraries(${PROJECT_NAME} Xdmf::Xdmf Xdmf::XdmfCore)
     else ()
         target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/include)
-        link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib)
-        link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib64)
+        #target_link_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib)
+        #target_link_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib64)
         target_link_libraries(${PROJECT_NAME} XdmfCore Xdmf)
     endif ()
 
