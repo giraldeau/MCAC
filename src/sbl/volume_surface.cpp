@@ -47,7 +47,7 @@ typedef SBL::GT::T_Union_of_balls_surface_volume_3<Alpha_complex, SK> Union_of_b
 
 
 namespace mcac {
-pair<std::vector<double>, std::vector<double>> compute_volume_surface(const SphereList &spherelist) {
+pair<std::vector<double>, std::vector<double>> compute_volume_surface_sbl(const SphereList &spherelist) {
     // convert data for SBL
     std::vector<K::Sphere_3> spheres;
     for (const Sphere *sphere :spherelist) {
