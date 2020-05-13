@@ -19,6 +19,7 @@
 #define INCLUDE_CONSTANTS_HPP 1
 #include <cmath>
 #include <map>
+#include <string>
 
 
 #ifdef WITH_HDF5
