@@ -365,7 +365,7 @@ double Aggregate::internal_sphere_distance(size_t i, size_t j) const noexcept {
         ii = j;
         jj = i;
     }
-    std::function<bool(std::pair<size_t, double>)> is_jj = [jj](std::pair<size_t, double> e) {
+    std::function<bool(std::pair<size_t, double>)> is_jj = [jj](std::pair<size_t, double> e) noexcept {
         return e.first == jj;
     };
     auto find_iter = std::find_if(distances[ii].begin(), distances[ii].end(), is_jj);
