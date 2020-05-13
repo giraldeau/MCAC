@@ -66,12 +66,12 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     ini.parse(is);
     ini.interpolate();
     // monomeres
-    inipp::extract(ini.sections["monomeres"]["number"], n_monomeres);
-    inipp::extract(ini.sections["monomeres"]["density"], density);
-    inipp::extract(ini.sections["monomeres"]["dispersion_diameter"], dispersion_diameter);
-    inipp::extract(ini.sections["monomeres"]["mean_diameter"], mean_diameter);
+    inipp::extract(ini.sections["monomers"]["number"], n_monomeres);
+    inipp::extract(ini.sections["monomers"]["density"], density);
+    inipp::extract(ini.sections["monomers"]["dispersion_diameter"], dispersion_diameter);
+    inipp::extract(ini.sections["monomers"]["mean_diameter"], mean_diameter);
     default_str = resolve_monomeres_initialisation_mode(monomeres_initialisation_type);
-    inipp::extract(ini.sections["monomeres"]["initialisation_mode"], default_str);
+    inipp::extract(ini.sections["monomers"]["initialisation_mode"], default_str);
     monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_str);
     // environment
     inipp::extract(ini.sections["environment"]["volume_fraction"], volume_fraction);
