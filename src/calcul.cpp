@@ -141,6 +141,7 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
     aggregates->spheres.save(true);
     aggregates->save(true);
     std::cout << "Final number of aggregates : " << aggregates->size() << std::endl;
+    std::cout << "Output files saved on: " << physicalmodel->output_dir << std::endl;
     std::cout << std::endl;
     std::cout << "\nThe End\n" << std::endl;
 }
