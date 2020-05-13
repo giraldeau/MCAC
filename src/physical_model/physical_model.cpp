@@ -100,6 +100,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     // checks
     number_of_aggregates_limit = MAX(number_of_aggregates_limit, 1);
     if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
+        std::cout << "Error initialization: INPUT_ERROR " << std::endl;
         exit(ErrorCodes::INPUT_ERROR);
     }
     output_dir = extract_path(fichier_param) / output_dir;
