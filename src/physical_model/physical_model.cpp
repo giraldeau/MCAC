@@ -93,7 +93,6 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     default_str = resolve_pick_method(pick_method);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
     pick_method = resolve_pick_method(default_str);
-
     // output
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
@@ -181,32 +180,36 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     return false;
 }
 void PhysicalModel::print() const {
-    std::cout << "Physical parameters:" << std::endl
-              << " Initial Nagg : " << n_monomeres << std::endl
-              << " Box size     : " << box_lenght << std::endl
-              << " Pressure     : " << pressure << std::endl
-              << " Temperature  : " << temperature << std::endl
-              << " diffusivity  : " << viscosity << std::endl
-              << " FV           : " << volume_fraction << std::endl
-              << " density      : " << density << std::endl
-              << " Dpm          : " << mean_diameter << std::endl
-              << " sigmaDpm     : " << dispersion_diameter << std::endl
-              << " Asurfgrowth  : " << a_surfgrowth << std::endl
-              << " xsurfgrowth  : " << x_surfgrowth << std::endl
-              << " coeffB       : " << coeff_b << std::endl
-              << " dfe          : " << fractal_dimension << std::endl
-              << " kfe          : " << fractal_prefactor << std::endl
-              << " lambda       : " << gaz_mean_free_path << std::endl
-              << " rpeqmass     : " << mean_massic_radius << std::endl
-              << " gamma_       : " << friction_exponnant << std::endl
+    std::cout << "PARTICLES PROPERTIES:" << std::endl
+              << " density          : " << density             << " (kg/m^3)" << std::endl
+              << " Dpm              : " << mean_diameter       << " (nm)"     << std::endl
+              << " sigmaDpm         : " << dispersion_diameter << " (- Lognormal, nm Normal)"  << std::endl
+              << " dfe              : " << fractal_dimension   << " (-)"      << std::endl
+              << " kfe              : " << fractal_prefactor   << " (-)"      << std::endl
+              << " rpeqmass         : " << mean_massic_radius  << " (m)"      << std::endl
+              << " gamma_           : " << friction_exponnant  << " (-)"      << std::endl
+              << std::endl
+              << "FLUID PROPERTIES:" << std::endl
+              << " Pressure         : " << pressure            << " (Pa)"     << std::endl
+              << " Temperature      : " << temperature         << " (K)"      << std::endl
+              << " viscosity        : " << viscosity           << " (kg/m*s)" << std::endl
+              << " lambda           : " << gaz_mean_free_path  << " (m)"      << std::endl
+              << std::endl
+              << "SIMULATION OPTIONS:" << std::endl
+              << " Initial Nagg     : " << n_monomeres     << " (-)"  << std::endl
+              << " Box size         : " << box_lenght      << " (m)"  << std::endl
+              << " FV               : " << volume_fraction << " (-)"  << std::endl
+              << " Asurfgrowth      : " << a_surfgrowth    << std::endl
+              << " xsurfgrowth      : " << x_surfgrowth    << std::endl
+              << " coeffB           : " << coeff_b         << std::endl
               << std::endl
               << "Options for Pysical model: " << std::endl
               << " Initialisation mode : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
               << std::endl
               << " Pick method : " << resolve_pick_method(pick_method) << std::endl
               << std::endl
-              << "Ending calcul when:" << std::endl
-              << " - There is " << number_of_aggregates_limit << " aggregats left or less" << std::endl;
+              << "Ending simulation when:" << std::endl
+              << " - There are " << number_of_aggregates_limit << " aggregats left or less" << std::endl;
     if (n_iter_without_contact_limit > 0) {
         std::cout << " - It has been " << n_iter_without_contact_limit << " iterations without collision" << std::endl;
     }
