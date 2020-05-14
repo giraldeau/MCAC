@@ -3,6 +3,7 @@ project(MCAC CXX)
 
 option(WITH_SBL "Use SBL for aggregate volume measure" OFF)
 option(WITH_IO "Write output" ON)
+option(DEBUG_MCAC "Usefull for debugging MCAC" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -67,6 +68,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_
 add_dependencies(${PROJECT_NAME} inipp_project)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/inipp/include)
 
+if (DEBUG_MCAC)
+    add_definitions(-DDEBUG_MCAC)
+endif()
 if (WITH_SBL)
     message(STATUS "    With SBL")
     add_definitions(-DWITH_SBL)

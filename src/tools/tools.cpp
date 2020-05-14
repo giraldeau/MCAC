@@ -24,10 +24,13 @@
 
 namespace mcac {
 void init_random() {
+#ifdef DEBUG_MCAC
+    srand(0);
+#else
     time_t t;
     time(&t);
-    //srand(uint(t));
-    srand(0);
+    srand(uint(t));
+#endif
 }
 double random() {
     double v = rand();
