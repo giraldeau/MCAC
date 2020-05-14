@@ -25,15 +25,17 @@ namespace mcac {
 void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du programme
 
     // contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
-    bool contact(true);
+    bool event(true);
     size_t multiply_threshold = aggregates->size() / 8;
 
     //$ Loop on the N monomeres
     while (!physicalmodel->finished(aggregates->size(), aggregates->get_avg_npp())) {
-        if (contact) {
-            aggregates->refresh();
+        if (physicalmodel->n_iter_without_event % 10 == 0) {
             aggregates->spheres.save();
             aggregates->save();
+        }
+        if (event) {
+            aggregates->refresh();
             if (aggregates->size() <= multiply_threshold) {
                 std::cout << "Duplication : " << aggregates->spheres.size()
                           << " spheres in " << aggregates->size() << " aggregates";
@@ -57,7 +59,7 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         if (physicalmodel->pick_method == PickMethods::PICK_RANDOM) {
             //$ Choice of an aggregate according to his MFP
             double max = aggregates->get_max_time_step();
-            if (contact) {
+            if (event) {
                 aggregates->sort_time_steps(max);
             }
             num_agg = aggregates->pick_random();
@@ -88,13 +90,17 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             deltatemps = deltatemps / double(aggregates->size());
         }
         physicalmodel->time = physicalmodel->time + deltatemps;
-        contact = (aggcontact >= 0);
+
+        event = false;
+        bool contact = (aggcontact >= 0);
         if (contact) {
             //$ Aggregates in contact are reunited;
             num_agg = aggregates->merge(num_agg, size_t(aggcontact));
+            event = true;
         }
 
         //$ update of the Aggregates/Spheres
+        bool split = false;
         if (physicalmodel->a_surfgrowth > 0.) {
             //$ Growth of all spheres
             aggregates->spheres.croissance_surface(deltatemps);
@@ -121,21 +127,23 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             fractal_prefactor = physicalmodel->fractal_prefactor;
         }
         //$ Show progress
-        if (contact) {
+        if (event) {
             clock_t now = clock();
             double elapse = double(now - physicalmodel->cpu_start) / CLOCKS_PER_SEC;
             std::cout.precision(3);
-            std::cout << std::scientific;
-            std::cout << "  Npp_avg=" << std::setw(4) << aggregates->get_avg_npp()
-                      << "  NAgg=" << std::setw(4) << aggregates->size()
-                      << "  Time=" << std::setw(4) << physicalmodel->time << " s"
-                      << "   CPU=" << std::setw(4) << elapse << " s"
-                      << " after " << std::setw(4) << physicalmodel->n_iter_without_contact << " it"
-                      << " --- " << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
+            std::cout << std::scientific << std::boolalpha;
+            std::cout << " Npp_avg=" << std::setw(4) << aggregates->get_avg_npp()
+                      << " NAgg="    << std::setw(4) << aggregates->size()
+                      << " Time="    << std::setw(4) << physicalmodel->time << "s"
+                      << " CPU="     << std::setw(4) << elapse << "s"
+                      << " contact=" << std::setw(4) << contact
+                      << " split="   << std::setw(4) << split
+                      << " after "   << std::setw(4) << physicalmodel->n_iter_without_event << " it"
+                      << " --- "     << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
                       << std::endl;
-            physicalmodel->n_iter_without_contact = 0;
+            physicalmodel->n_iter_without_event = 0;
         } else {
-            physicalmodel->n_iter_without_contact++;
+            physicalmodel->n_iter_without_event++;
         }
     }
     aggregates->spheres.save(true);
