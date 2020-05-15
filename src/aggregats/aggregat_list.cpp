@@ -106,12 +106,7 @@ void AggregatList::duplication() {
                         new_agg->label = size() - 1;
                         new_agg->set_verlet(&verlet);
                         setpointers();
-                        for (Aggregate *agg : list) {
-                            agg->setpointers();
-                            for (Sphere *sph : agg->myspheres) {
-                                sph->setpointers();
-                            }
-                        }
+                        spheres.setpointers();
                         new_agg->set_verlet(&verlet); // TODO(pouxa): remove?
                         std::array<double, 3> vec_move = {i * old_l,
                                                           j * old_l,
@@ -146,6 +141,27 @@ size_t AggregatList::merge(size_t first, size_t second) {
     setpointers();
     *list[_keeped]->time = newtime;
     return _keeped;
+}
+bool AggregatList::split() {
+    bool has_splitted = false;
+    auto suspect = list.begin();
+    while (suspect != list.end()) {
+        auto index = std::distance(list.begin(), suspect);
+        // the split function will create the new aggregates
+        if ((*suspect)->split()) {
+            has_splitted = true;
+            // but we still have to destroy the current one
+            remove(size_t(index));
+            setpointers();
+
+            // compute the new average of npp
+            avg_npp = avg_npp * static_cast<double>(size() - 1) / (static_cast<double>(size()));
+            suspect = list.begin() + index;
+        } else {
+            suspect = list.begin() + index + 1;
+        }
+    }
+    return has_splitted;
 }
 //################################# Determination of the contacts between agrgates ####################################
 std::pair<int, double> AggregatList::distance_to_next_contact(size_t source, std::array<double, 3> direction) const {

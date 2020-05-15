@@ -53,6 +53,7 @@ public:
     void refresh();
     void sort_time_steps(double factor);
     void duplication();
+    bool split();
     size_t merge(size_t first, size_t second);
     /* other */
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;

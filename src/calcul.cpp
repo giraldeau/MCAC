@@ -104,6 +104,10 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         if (physicalmodel->a_surfgrowth > 0.) {
             //$ Growth of all spheres
             aggregates->spheres.croissance_surface(deltatemps);
+            split = aggregates->split();
+            if (split){
+                event=true;
+            }
 
             //$ Aggregates update
             for (Aggregate *agg : *aggregates) {

@@ -50,6 +50,7 @@ class AggregatList;
 class Sphere : public ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList> {
     friend class SphereList; // TODO remove (pointers)
     friend class AggregatList; // TODO remove (pointers)
+    friend class Aggregate; // TODO remove (pointers)
 
     /* Generic */
 

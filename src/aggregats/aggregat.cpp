@@ -300,6 +300,70 @@ void Aggregate::merge(Aggregate *other) noexcept {
     update_distances();
     update();
 }
+bool Aggregate::split() {
+    bool have_splitted = false;
+    // first identify what to split
+    std::vector<std::vector<size_t>> independant_components;
+    // all spheres are unvisited
+    std::vector<size_t> unvisisted;
+    for (size_t i = 0; i < n_spheres; ++i) {
+        unvisisted.insert(unvisisted.end(), i);
+    }
+    while (!unvisisted.empty()) {
+        // the first unvisited sphere is the start of a new component
+        std::vector<size_t> component({*unvisisted.begin()});
+        unvisisted.erase(unvisisted.begin());
+        // discovered are spheres of which we need to explore the neighborhood
+        std::vector<size_t> discovered = component;
+        while (!discovered.empty()) {
+            size_t agg_1 = discovered.back();
+            discovered.pop_back();
+            auto suspect = unvisisted.begin();
+            while (suspect != unvisisted.end()) {
+                auto index = std::distance(unvisisted.begin(), suspect);
+                if (false && contact(myspheres[agg_1], myspheres[*suspect])) {
+                    // discovered are spheres of which we need to explore the neighborhood
+                    component.push_back(*suspect);
+                    discovered.push_back(*suspect);
+                    unvisisted.erase(suspect);
+                    suspect = unvisisted.begin() + index;
+                } else {
+                    suspect = unvisisted.begin() + index + 1;
+                }
+            }
+        }
+        independant_components.push_back(component);
+    }
+    if (independant_components.size() > 1) {
+        // splitting occurs when we have at least 2 independant componnents
+        have_splitted = true;
+        auto initial_number_of_spheres = external_storage->spheres.size();
+        for (auto &split: independant_components) {
+            // duplicate the current aggregate
+            auto *agg = external_storage->add(*this, *external_storage);
+            agg->label = external_storage->size() - 1;
+            external_storage->setpointers();
+            // destroy the spheres of the duplication
+            for (size_t i = 0; i < agg->n_spheres; i++) {
+                external_storage->spheres.remove(initial_number_of_spheres);
+            }
+            // copy reference of the selection into the duplication
+            agg->myspheres = SphereList(&myspheres, split);
+            agg->n_spheres = agg->myspheres.size();
+            for (Sphere *sph : agg->myspheres) {
+                sph->set_label(long(agg->get_label()));
+            }
+            // by creating and destroying spheres, this is important
+            external_storage->spheres.setpointers();
+            // the verlet reference is not conserved by the duplication
+            agg->set_verlet(verlet);
+            // we have to recompute all the caracteristic of this new aggregate
+            agg->update_distances();
+            agg->update();
+        }
+    }
+    return have_splitted;
+}
 void Aggregate::print() const noexcept {
     std::cout << "Printing details of Aggregat " << index_in_storage << " " << label << std::endl;
     if (static_cast<bool>(external_storage)) {

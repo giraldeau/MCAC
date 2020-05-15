@@ -102,6 +102,7 @@ public:
     void compute_giration_radius() noexcept;
     /* other */
     void merge(Aggregate *) noexcept;
+    bool split();
     void print() const noexcept;
     /* Storage specific */
 private:
