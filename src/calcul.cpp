@@ -30,7 +30,7 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
 
     //$ Loop on the N monomeres
     while (!physicalmodel->finished(aggregates->size(), aggregates->get_avg_npp())) {
-        if (physicalmodel->n_iter_without_event % 10 == 0) {
+        if (physicalmodel->n_iter_without_event % physicalmodel->write_between_event_every == 0) {
             aggregates->spheres.save();
             aggregates->save();
         }
