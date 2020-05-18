@@ -321,6 +321,7 @@ bool Aggregate::split() {
             auto suspect = unvisisted.begin();
             while (suspect != unvisisted.end()) {
                 auto index = std::distance(unvisisted.begin(), suspect);
+                // TODO replace with the distance array ?
                 if (false && contact(myspheres[agg_1], myspheres[*suspect])) {
                     // discovered are spheres of which we need to explore the neighborhood
                     component.push_back(*suspect);
@@ -350,8 +351,18 @@ bool Aggregate::split() {
             // copy reference of the selection into the duplication
             agg->myspheres = SphereList(&myspheres, split);
             agg->n_spheres = agg->myspheres.size();
+
+            std::array<double, 3> refpos = agg->myspheres[0].get_position();
+            std::array<double, 3> diffpos = periodic_distance(myspheres[0].get_position() - refpos,
+                                                              physicalmodel->box_lenght);
             for (Sphere *sph : agg->myspheres) {
                 sph->set_label(long(agg->get_label()));
+                // change the relative position to the new aggregate
+                sph->relative_translate(diffpos);
+                // Move them accordingly (periodicity)
+                std::array<double, 3> newpos = sph->get_relative_position();
+                newpos += refpos;
+                sph->set_position(newpos);
             }
             // by creating and destroying spheres, this is important
             external_storage->spheres.setpointers();
@@ -359,7 +370,8 @@ bool Aggregate::split() {
             agg->set_verlet(verlet);
             // we have to recompute all the caracteristic of this new aggregate
             agg->update_distances();
-            agg->update();
+            // this will be done in calcul anyway
+//            agg->update();
         }
     }
     return have_splitted;
