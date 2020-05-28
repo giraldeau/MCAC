@@ -106,7 +106,7 @@ void Sphere::croissance_surface(double dt) noexcept {
 }
 void Sphere::print() const noexcept {
     std::cout << "Printing Sphere " << (index_in_storage) << std::endl;
-    if (!static_cast<bool>(external_storage)) {
+    if (static_cast<bool>(external_storage)) {
         std::cout << "  With external Storage" << std::endl;
     } else {
         std::cout << "  Without external Storage" << std::endl;
