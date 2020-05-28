@@ -59,6 +59,8 @@ void AggregatList::refresh() {
     for (const Aggregate *agg : list) {
         max_time_step = MAX(*agg->time_step, max_time_step);
     }
+
+    avg_npp = static_cast<double>(spheres.size()) / static_cast<double>(size());
 }
 template<typename T>
 std::vector<size_t> sort_indexes(const std::vector<T> &v) {
@@ -132,9 +134,6 @@ size_t AggregatList::merge(size_t first, size_t second) {
     double newtime = double(size() - 1) * (*list[_keeped]->time + *list[_removed]->time) / double(size())
                      - physicalmodel->time;
 
-    // compute the new average of npp
-    avg_npp = avg_npp * static_cast<double>(size()) / (static_cast<double>(size()) - 1);
-
     // merge the two aggregate but do not remove the deleted one
     list[_keeped]->merge(list[_removed]);
     remove(_removed);
@@ -153,9 +152,6 @@ bool AggregatList::split() {
             // but we still have to destroy the current one
             remove(size_t(index));
             setpointers();
-
-            // compute the new average of npp
-            avg_npp = avg_npp * static_cast<double>(size() - 1) / (static_cast<double>(size()));
             suspect = list.begin() + index;
         } else {
             suspect = list.begin() + index + 1;

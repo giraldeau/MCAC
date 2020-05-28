@@ -96,6 +96,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         }
     }
+    refresh();
 }
 AggregatList::~AggregatList() noexcept {
     delete writer;

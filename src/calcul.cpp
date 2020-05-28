@@ -35,7 +35,6 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             aggregates->save();
         }
         if (event) {
-            aggregates->refresh();
             if (aggregates->size() <= multiply_threshold) {
                 std::cout << "Duplication : " << aggregates->spheres.size()
                           << " spheres in " << aggregates->size() << " aggregates";
@@ -132,6 +131,7 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         }
         //$ Show progress
         if (event) {
+            aggregates->refresh();
             clock_t now = clock();
             double elapse = double(now - physicalmodel->cpu_start) / CLOCKS_PER_SEC;
             std::cout.precision(3);
