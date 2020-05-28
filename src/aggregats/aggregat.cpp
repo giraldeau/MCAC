@@ -110,7 +110,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
     set_position(get_position() + vector);
 
     // move the first sphere taking care of the periodicity
-    std::array<double, 3> refpos{periodic_position(myspheres[0].get_position() + vector, physicalmodel->box_lenght)};
+    std::array<double, 3> refpos{get_position() - get_relative_position()};
     myspheres[0].set_position(refpos);
 
     // move all the other sphere relatively to the first
@@ -321,8 +321,7 @@ bool Aggregate::split() {
             auto suspect = unvisisted.begin();
             while (suspect != unvisisted.end()) {
                 auto index = std::distance(unvisisted.begin(), suspect);
-                // TODO replace with the distance array ?
-                if (false && contact(myspheres[agg_1], myspheres[*suspect])) {
+                if (contact(myspheres[agg_1], myspheres[*suspect])) {
                     // discovered are spheres of which we need to explore the neighborhood
                     component.push_back(*suspect);
                     discovered.push_back(*suspect);
@@ -344,6 +343,8 @@ bool Aggregate::split() {
             auto *agg = external_storage->add(*this, *external_storage);
             agg->label = external_storage->size() - 1;
             external_storage->setpointers();
+            // the verlet reference is not conserved by the duplication
+            agg->set_verlet(verlet);
             // destroy the spheres of the duplication
             for (size_t i = 0; i < agg->n_spheres; i++) {
                 external_storage->spheres.remove(initial_number_of_spheres);
@@ -351,27 +352,24 @@ bool Aggregate::split() {
             // copy reference of the selection into the duplication
             agg->myspheres = SphereList(&myspheres, split);
             agg->n_spheres = agg->myspheres.size();
-
-            std::array<double, 3> refpos = agg->myspheres[0].get_position();
-            std::array<double, 3> diffpos = periodic_distance(myspheres[0].get_position() - refpos,
-                                                              physicalmodel->box_lenght);
             for (Sphere *sph : agg->myspheres) {
                 sph->set_label(long(agg->get_label()));
-                // change the relative position to the new aggregate
-                sph->relative_translate(diffpos);
-                // Move them accordingly (periodicity)
-                std::array<double, 3> newpos = sph->get_relative_position();
-                newpos += refpos;
-                sph->set_position(newpos);
             }
             // by creating and destroying spheres, this is important
             external_storage->spheres.setpointers();
-            // the verlet reference is not conserved by the duplication
-            agg->set_verlet(verlet);
+            std::array<double, 3> refpos = agg->myspheres[0].get_position();
+            for (Sphere *sph : agg->myspheres) {
+                // change the relative position of the new aggregate
+                sph->set_relative_position(sph->get_position() - refpos);
+            }
             // we have to recompute all the caracteristic of this new aggregate
             agg->update_distances();
-            // this will be done in calcul anyway
-//            agg->update();
+            agg->update();
+            // we have to move all the spheres (periodicity)
+            refpos = agg->get_position() - agg->get_relative_position();
+            for (Sphere *sph : agg->myspheres) {
+                sph->set_position(refpos + sph->get_relative_position());
+            }
         }
     }
     return have_splitted;

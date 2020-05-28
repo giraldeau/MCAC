@@ -190,7 +190,7 @@ std::pair<int, double> AggregatList::distance_to_next_contact(size_t source, std
             mindistagg = distagg;
 
             // If two aggragates are already in contact (due to surface growing)
-            if (distmin <= 1e-15) {
+            if (distmin <= 1e-28) {
                 break;
             }
         }

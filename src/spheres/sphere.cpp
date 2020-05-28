@@ -81,6 +81,11 @@ void Sphere::set_position(std::array<double, 3> newposition) noexcept {
     *y = newposition[1];
     *z = newposition[2];
 }
+void Sphere::set_relative_position(std::array<double, 3> newposition) noexcept {
+    *rx = newposition[0];
+    *ry = newposition[1];
+    *rz = newposition[2];
+}
 void Sphere::init_val() noexcept {
     init_val({0, 0, 0}, 0.);
 }

@@ -78,6 +78,7 @@ public:
     void set_label(long value) noexcept;
     void decrease_label() noexcept;
     void set_position(std::array<double, 3> newposition) noexcept;
+    void set_relative_position(std::array<double, 3> newposition) noexcept;
     void translate(const std::array<double, 3>& trans) noexcept;
 
     void relative_translate(std::array<double, 3> trans) noexcept;
