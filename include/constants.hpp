@@ -67,7 +67,8 @@ enum ErrorCodes {
     UNKNOWN_ERROR,
     IO_ERROR,
     VERLET_ERROR,
-    INPUT_ERROR
+    INPUT_ERROR,
+    ABANDON_ERROR
 };
 enum PickMethods {
     PICK_RANDOM,
