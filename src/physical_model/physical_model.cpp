@@ -103,6 +103,23 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
         exit(ErrorCodes::INPUT_ERROR);
     }
     output_dir = extract_path(fichier_param) / output_dir;
+    if (fs::exists(output_dir) && fs::is_directory(output_dir)) {
+        std::string answer;
+        std::string valid_answer = "rRIiAa";
+        do{
+            std::cout << "folder " << output_dir << " already exists."<< std::endl;
+            std::cout << " (R)emove, (I)gnore, (A)bandon "<< std::endl;
+            std::cin >> answer;
+        } while (std::find(std::begin(valid_answer), std::end(valid_answer), answer[0]) == std::end(valid_answer)) ;
+
+        if (answer == "r" || answer == "R"){
+            fs::remove_all(output_dir);
+        }
+        if (answer == "a" || answer == "A"){
+            exit(ErrorCodes::ABANDON_ERROR);
+        }
+    }
+
     if (!fs::exists(output_dir)) {
         if (!fs::create_directory(output_dir)) {
             std::cout << "Error creating directory " << output_dir << std::endl;
