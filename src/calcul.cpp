@@ -104,8 +104,8 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             //$ Growth of all spheres
             aggregates->spheres.croissance_surface(deltatemps);
             split = aggregates->split();
-            if (split){
-                event=true;
+            if (split) {
+                event = true;
             }
 
             //$ Aggregates update
@@ -148,6 +148,9 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             physicalmodel->n_iter_without_event = 0;
         } else {
             physicalmodel->n_iter_without_event++;
+        }
+        if (contact && !aggregates->add(1)) {
+            break;
         }
     }
     aggregates->spheres.save(true);

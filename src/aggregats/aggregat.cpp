@@ -124,6 +124,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
                      const std::array<double, 3> &position,
                      size_t new_label,
                      SphereList *spheres,
+                     size_t sphere_index,
                      double sphere_diameter) noexcept {
     physicalmodel = &new_physicalmodel;
     if (static_cast<bool>(verlet)) {
@@ -138,9 +139,9 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     set_position(position);
     verlet = new_verlet;
     update_verlet_index();
-    (*spheres)[label].set_label(int(label));
-    (*spheres)[label].init_val(position, sphere_diameter / 2);
-    myspheres = SphereList(spheres, {label});
+    (*spheres)[sphere_index].set_label(int(label));
+    (*spheres)[sphere_index].init_val(position, sphere_diameter / 2);
+    myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
     update_distances();
     update();

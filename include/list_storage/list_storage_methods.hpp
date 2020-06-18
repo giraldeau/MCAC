@@ -101,6 +101,24 @@ typename std::vector<elem *>::const_iterator ListStorage<N, elem>::end() const n
 }
 template<int N, class elem>
 template<class mylist>
+void ListStorage<N, elem>::add(size_t n, mylist &owner) noexcept {
+    size_t initial_size = size();
+    size_t final_size = initial_size + n;
+
+    //preallocation
+    list.reserve(final_size);
+
+    //initialize data
+    for (std::vector<double> &data : (*storage)) {
+        data.insert(data.end(), n, 0.);
+    }
+    size_t testmem = 0;
+    for (size_t i = initial_size; i < final_size; i++) {
+        list.push_back(new elem(&owner, i));
+    }
+}
+template<int N, class elem>
+template<class mylist>
 elem *ListStorage<N, elem>::add(const elem &other, mylist &owner) noexcept {
     return new elem(other, &owner);
 }

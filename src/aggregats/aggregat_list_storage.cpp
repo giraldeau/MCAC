@@ -53,7 +53,6 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     //Initialize the aggregates
 
     size_t testmem = 0;
-    setpointers();
     for (size_t i = 0; i < size(); i++) {
 
         //random size
@@ -82,7 +81,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
 
             //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
             if (test_free_space(newpos, dp)) {
-                list[i]->init(*physicalmodel, &verlet, newpos, i, &spheres, dp);
+                list[i]->init(*physicalmodel, &verlet, newpos, i, &spheres, i, dp);
                 placed = true;
             } else {
                 i--;

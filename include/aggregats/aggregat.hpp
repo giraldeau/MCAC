@@ -94,6 +94,7 @@ public:
               const std::array<double, 3> &position,
               size_t new_label,
               SphereList *,
+              size_t sphere_index,
               double sphere_diameter) noexcept;
     void update() noexcept;
     void compute_volume() noexcept;
