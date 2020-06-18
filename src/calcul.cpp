@@ -100,7 +100,7 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
 
         //$ update of the Aggregates/Spheres
         bool split = false;
-        if (physicalmodel->a_surfgrowth > 0.) {
+        if (abs(physicalmodel->a_surfgrowth) > 0.) {
             //$ Growth of all spheres
             aggregates->spheres.croissance_surface(deltatemps);
             split = aggregates->split();
