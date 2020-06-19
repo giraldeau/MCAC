@@ -40,7 +40,6 @@ ThreadedIO::ThreadedIO(const PhysicalModel &new_physicalmodel, size_t size) noex
 ThreadedIO::~ThreadedIO() noexcept {
     if (gsl::at(status, static_cast<long>(current_thread)) == WriterStatus::APPENDING
         || gsl::at(status, static_cast<long>(!current_thread)) == WriterStatus::APPENDING) {
-
         IOError error = IOError("Closing unfinished file");
         std::cout << error.what() << std::endl;
     }
