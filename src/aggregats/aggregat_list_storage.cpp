@@ -17,6 +17,7 @@
  */
 #include "aggregats/aggregat_list.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 
 
@@ -89,9 +90,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
                 testmem++;
             }
             if (testmem > size()) {
-                std::cout << "Impossible de générer tous les monomères sans superposition." << std::endl;
-                std::cout << "La fraction volumique doit être diminuée." << std::endl;
-                exit(0);
+                throw TooDenseError();
             }
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         }
@@ -99,6 +98,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
 }
 AggregatList::~AggregatList() noexcept {
     delete writer;
+    writer = nullptr;
 
     //#pragma omp simd
     for (Aggregate *aggregate : list) {

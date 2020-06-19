@@ -17,6 +17,7 @@
  */
 #include "calcul.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <iomanip>
 #include <iostream>
 

@@ -20,6 +20,7 @@
 #include "io/threaded_io.hpp"
 #include "io/writer.hpp"
 #include "io/xmf_includes.hpp"
+#include "exceptions.hpp"
 #include <XdmfGridCollection.hpp>
 #include <gsl/gsl>
 #include <iostream>
@@ -72,6 +73,7 @@ void ThreadedIO::wait() {
     if (static_cast<bool>(writer)) {
         writer->join();
         delete writer;
+        writer = nullptr;
         writer_owner = nullptr;
     }
 }
@@ -83,8 +85,7 @@ void ThreadedIO::create_file() {
         gsl::at(status, static_cast<long>(current_thread)) = WriterStatus::IDLE;
     }
     if (gsl::at(status, static_cast<long>(current_thread)) == WriterStatus::APPENDING) {
-        std::cout << "And what should happen to the old file ?" << std::endl;
-        exit(ErrorCodes::IO_ERROR);
+        throw IOError("File is already created");
     }
     // Prepare Xmf file
     gsl::at(xmf_file, static_cast<long>(current_thread)) = XdmfDomain::New();
@@ -102,8 +103,7 @@ void ThreadedIO::write(const fs::path &prefix, const shared_ptr<XdmfUnstructured
         create_file();
     }
     if (gsl::at(status, static_cast<long>(current_thread)) != WriterStatus::APPENDING) {
-        std::cout << "File is not ready..." << std::endl;
-        exit(ErrorCodes::IO_ERROR);
+        throw IOError("File is not ready...");
     }
     gsl::at(time_collection, static_cast<long>(current_thread))->insert(data);
     step++;

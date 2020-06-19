@@ -68,7 +68,8 @@ enum ErrorCodes {
     IO_ERROR,
     VERLET_ERROR,
     INPUT_ERROR,
-    ABANDON_ERROR
+    ABANDON_ERROR,
+    TOO_DENSE_ERROR
 };
 enum PickMethods {
     PICK_RANDOM,

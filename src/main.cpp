@@ -19,6 +19,7 @@
 #include "constants.hpp"
 #include "physical_model/physical_model.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 
 
@@ -29,11 +30,21 @@ int main(int argc, char *argv[]) {
     std::cout << std::endl;
     if (argc <= 1) {
         std::cout << "Missing argument : param file." << std::endl;
-        return 1;
+        return mcac::ErrorCodes::INPUT_ERROR;
     }
-    mcac::PhysicalModel physicalmodel(argv[1]);
-    mcac::init_random();
-    mcac::AggregatList aggregates(&physicalmodel);
-    mcac::calcul(&physicalmodel, &aggregates);
+    try {
+        mcac::PhysicalModel physicalmodel(argv[1]);
+        mcac::init_random();
+        mcac::AggregatList aggregates(&physicalmodel);
+        mcac::calcul(&physicalmodel, &aggregates);
+    }
+    catch (const mcac::BaseException &e) {
+        std::cout << e.what() << std::endl;
+        return e.code;
+    }
+    catch (const std::exception &e) {
+        std::cout << e.what() << std::endl;
+        return mcac::ErrorCodes::UNKNOWN_ERROR;
+    }
     return mcac::ErrorCodes::NO_ERROR;
 }

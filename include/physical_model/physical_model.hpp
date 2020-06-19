@@ -48,7 +48,7 @@ public:
     int n_iter_without_contact_limit;
     std::experimental::filesystem::path output_dir;
 public:
-    explicit PhysicalModel(const std::string &fichier_param) noexcept;
+    explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
     [[gnu::pure]] double grow(double r, double dt) const;
     [[gnu::pure]] double friction_coeff(size_t npp) const;
