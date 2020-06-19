@@ -18,6 +18,7 @@
 #ifdef WITH_HDF5
 #include "constants.hpp"
 #include "io/threaded_io.hpp"
+#include "exceptions.hpp"
 #include <gsl/gsl>
 #include <iostream>
 
@@ -39,8 +40,9 @@ ThreadedIO::ThreadedIO(const PhysicalModel &new_physicalmodel, size_t size) noex
 ThreadedIO::~ThreadedIO() noexcept {
     if (gsl::at(status, static_cast<long>(current_thread)) == WriterStatus::APPENDING
         || gsl::at(status, static_cast<long>(!current_thread)) == WriterStatus::APPENDING) {
-        std::cout << "And what should happen to the data ?" << std::endl;
-        exit(ErrorCodes::IO_ERROR);
+
+        IOError error = IOError("Closing unfinished file");
+        std::cout << error.what() << std::endl;
     }
     if (ThreadedIO::writer_owner == this) {
         wait();

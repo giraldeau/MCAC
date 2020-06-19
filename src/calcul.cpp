@@ -17,6 +17,7 @@
  */
 #include "calcul.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <iomanip>
 #include <iostream>
 
@@ -149,8 +150,14 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         } else {
             physicalmodel->n_iter_without_event++;
         }
-        if (contact && !aggregates->add(1)) {
-            break;
+        if (contact) {
+            try{
+                aggregates->add(1);
+            }
+            catch (TooDenseError const &e) {
+                std::cout << e.what() << std::endl;
+                break;
+            }
         }
     }
     aggregates->spheres.save(true);

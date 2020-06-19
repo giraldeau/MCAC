@@ -136,8 +136,8 @@ SphereList::~SphereList() noexcept {
 
 /** Move assignment operator */
 SphereList &SphereList::operator=(SphereList &&other) noexcept {
-    delete writer;
     physicalmodel = other.physicalmodel;
+    delete writer;
     writer = other.writer;
     last_saved = other.last_saved;
     other.physicalmodel = nullptr;

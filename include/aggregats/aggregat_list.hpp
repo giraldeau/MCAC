@@ -51,7 +51,7 @@ public:
     size_t pick_last() const;
     /* modifiers */
     using ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add;
-    bool add(size_t);
+    void add(size_t);
     void refresh();
     void sort_time_steps(double factor);
     void duplication();

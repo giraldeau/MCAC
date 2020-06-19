@@ -20,6 +20,7 @@
 #include "spheres/sphere_collision.hpp"
 #include "spheres/sphere_distance.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 
 
@@ -54,7 +55,7 @@ namespace mcac {
     }
     return latest;
 }
-bool AggregatList::add(size_t n) {
+void AggregatList::add(size_t n) {
 
     size_t initial_n_agg = size();
     size_t initial_n_sph = spheres.size();
@@ -105,15 +106,12 @@ bool AggregatList::add(size_t n) {
                 testmem++;
             }
             if (testmem > initial_n_sph) {
-                std::cout << "Impossible de générer tous les monomères sans superposition." << std::endl;
-                std::cout << "La fraction volumique doit être diminuée." << std::endl;
-                return false;
+                throw TooDenseError();
             }
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         }
     }
     refresh();
-    return true;
 }
 void AggregatList::refresh() {
     max_time_step = *list[0]->time_step;
@@ -275,9 +273,7 @@ std::vector<size_t> AggregatList::get_search_space(size_t source, std::array<dou
             return search_space;
         }
     }
-    std::cout << "I'm not on the verlet list ???" << std::endl;
-    std::cout << "This is an error" << std::endl;
-    exit(ErrorCodes::VERLET_ERROR);
+    throw VerletError("Aggregate not on the verlet list ???");
     //return SearchSpace;
 }
 //############################## Determination of the contacts between agrgates #######################################
