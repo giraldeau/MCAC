@@ -18,6 +18,7 @@
 #include "constants.hpp"
 #include "physical_model/physical_model.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -28,7 +29,7 @@
 
 namespace fs = std::experimental::filesystem;
 namespace mcac {
-PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
+PhysicalModel::PhysicalModel(const std::string &fichier_param):
     fractal_dimension(1.4),
     fractal_prefactor(1.8),
     x_surfgrowth(2.),
@@ -101,8 +102,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
     // checks
     number_of_aggregates_limit = MAX(number_of_aggregates_limit, 1);
     if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
-        std::cout << "Error initialization: INPUT_ERROR " << std::endl;
-        exit(ErrorCodes::INPUT_ERROR);
+        throw InputError("Monomere initialisation mode unknown");
     }
     output_dir = extract_path(fichier_param) / output_dir;
     if (fs::exists(output_dir) && fs::is_directory(output_dir)) {
@@ -118,19 +118,17 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
             fs::remove_all(output_dir);
         }
         if (answer == "a" || answer == "A"){
-            exit(ErrorCodes::ABANDON_ERROR);
+            throw AbandonError();
         }
     }
 
     if (!fs::exists(output_dir)) {
         if (!fs::create_directory(output_dir)) {
-            std::cout << "Error creating directory " << output_dir << std::endl;
-            exit(ErrorCodes::IO_ERROR);
+            throw IOError("Error creating directory " + output_dir.string());
         }
     } else {
         if (!fs::is_directory(output_dir)) {
-            std::cout << "Error not a directory " << output_dir << std::endl;
-            exit(ErrorCodes::INPUT_ERROR);
+            throw InputError("Error not a directory " + output_dir.string());
         }
     }
     // secondary variables
@@ -159,7 +157,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) noexcept:
                          * exp(9. / 2. * POW_2(log(dispersion_diameter))),
                          1. / 3.);
     } else {
-        exit(ErrorCodes::INPUT_ERROR);
+        throw InputError("Monomere initialisation mode unknown");
     }
     a_surfgrowth = coeff_b * 1E-3;
     print();
@@ -310,11 +308,10 @@ void PhysicalModel::print() const {
     fs::path path = filename;
     fs::path fullpath = fs::absolute(path);
     if (!fs::exists(fullpath)) {
-        std::cout << "File does not exist\n" << std::endl;
-        exit(1);
+        throw InputError("File does not exist");
     }
     fs::path parentpath = fullpath.parent_path();
-    return parentpath; //Cette variable ne retient que le chemin du fichier param
+    return parentpath;
 }
 }  // namespace mcac
 

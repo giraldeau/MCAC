@@ -215,9 +215,7 @@ std::vector<size_t> AggregatList::get_search_space(size_t source, std::array<dou
             return search_space;
         }
     }
-    std::cout << "I'm not on the verlet list ???" << std::endl;
-    std::cout << "This is an error" << std::endl;
-    exit(ErrorCodes::VERLET_ERROR);
+    throw VerletError("Aggregate not on the verlet list ???");
     //return SearchSpace;
 }
 //############################## Determination of the contacts between agrgates #######################################
