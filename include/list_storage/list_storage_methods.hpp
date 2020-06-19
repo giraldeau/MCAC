@@ -112,7 +112,6 @@ void ListStorage<N, elem>::add(size_t n, mylist &owner) noexcept {
     for (std::vector<double> &data : (*storage)) {
         data.insert(data.end(), n, 0.);
     }
-    size_t testmem = 0;
     for (size_t i = initial_size; i < final_size; i++) {
         list.push_back(new elem(&owner, i));
     }

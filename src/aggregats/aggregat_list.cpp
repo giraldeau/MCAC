@@ -66,50 +66,11 @@ void AggregatList::add(size_t n) {
     setpointers();
 
     //initialize data
-    size_t testmem = 0;
     for (size_t i = 0; i < n; i++) {
         size_t i_agg = initial_n_agg + i;
         size_t i_sph = initial_n_sph + i;
 
-        //random size
-        double x = random();
-        double dp = 0;
-        if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-            dp = (physicalmodel->mean_diameter)
-                 + sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * x - 1.0);
-        } else if (physicalmodel->monomeres_initialisation_type
-                   == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-            dp = pow(physicalmodel->mean_diameter,
-                     sqrt(2.) * log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
-        } else {
-            exit(ErrorCodes::UNKNOWN_ERROR);
-        }
-        dp = dp * 1E-9;
-        if (dp <= 0) {
-            dp = physicalmodel->mean_diameter * 1E-9;
-        }
-        bool placed = false;
-        while (!placed) {
-            //random position
-            std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
-                                          random() * physicalmodel->box_lenght,
-                                          random() * physicalmodel->box_lenght}};
-
-            //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
-            if (test_free_space(newpos, dp)) {
-                list[i_agg]->init(*physicalmodel, &verlet, newpos, i_agg, &spheres, i_sph, dp);
-                *list[i_agg]->time = physicalmodel->time;
-
-                placed = true;
-            } else {
-                i--;
-                testmem++;
-            }
-            if (testmem > initial_n_sph) {
-                throw TooDenseError();
-            }
-            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        }
+        list[i_agg]->init(i_agg, i_sph);
     }
     refresh();
 }

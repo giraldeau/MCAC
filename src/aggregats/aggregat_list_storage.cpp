@@ -17,7 +17,6 @@
  */
 #include "aggregats/aggregat_list.hpp"
 #include "tools/tools.hpp"
-#include "exceptions.hpp"
 #include <iostream>
 
 
@@ -52,47 +51,8 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     setpointers();
 
     //Initialize the aggregates
-
-    size_t testmem = 0;
     for (size_t i = 0; i < size(); i++) {
-
-        //random size
-        double x = random();
-        double dp = 0;
-        if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-            dp = (physicalmodel->mean_diameter)
-                 + sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * x - 1.0);
-        } else if (physicalmodel->monomeres_initialisation_type
-                   == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-            dp = pow(physicalmodel->mean_diameter,
-                     sqrt(2.) * log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
-        } else {
-            exit(ErrorCodes::UNKNOWN_ERROR);
-        }
-        dp = dp * 1E-9;
-        if (dp <= 0) {
-            dp = physicalmodel->mean_diameter * 1E-9;
-        }
-        bool placed = false;
-        while (!placed) {
-            //random position
-            std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
-                                     random() * physicalmodel->box_lenght,
-                                     random() * physicalmodel->box_lenght}};
-
-            //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
-            if (test_free_space(newpos, dp)) {
-                list[i]->init(*physicalmodel, &verlet, newpos, i, &spheres, i, dp);
-                placed = true;
-            } else {
-                i--;
-                testmem++;
-            }
-            if (testmem > size()) {
-                throw TooDenseError();
-            }
-            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        }
+        list[i]->init(i, i);
     }
     refresh();
 }
