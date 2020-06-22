@@ -289,5 +289,12 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double diameter) c
     }
     return true;
 }
+void AggregatList::croissance_surface(double dt) {
+    spheres.croissance_surface(dt);
+    for (Sphere *sphere : spheres) {
+        if (sphere->get_radius() <= 0) {
+            remove_sphere(sphere->get_index());
+        }
+    }
+}
 }// namespace mcac
-

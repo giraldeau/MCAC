@@ -58,6 +58,7 @@ public:
     bool split();
     size_t merge(size_t first, size_t second);
     /* other */
+    void croissance_surface(double dt);
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;
     std::pair<int, double> distance_to_next_contact(size_t source,
                                                        std::array<double, 3> direction) const;

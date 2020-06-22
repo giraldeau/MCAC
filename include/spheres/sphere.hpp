@@ -69,6 +69,7 @@ public:
     long agg_label;
     const PhysicalModel *physicalmodel;
     /* getters */
+    size_t get_index() const noexcept;
     double get_volume() const noexcept;
     double get_surface() const noexcept;
     double get_radius() const noexcept;
