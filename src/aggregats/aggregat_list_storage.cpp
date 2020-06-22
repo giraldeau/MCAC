@@ -17,6 +17,7 @@
  */
 #include "aggregats/aggregat_list.hpp"
 #include "tools/tools.hpp"
+#include "spheres/sphere.hpp"
 #include <iostream>
 
 
@@ -32,6 +33,21 @@ void AggregatList::setpointers() {
     }
     ptr_deb = newdeb;
     ptr_fin = newfin;
+}
+void AggregatList::remove(const size_t &id) noexcept {
+    ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::remove(id);
+    // keep index and label in sync
+    for (size_t i = id; i < list.size(); i++) {
+        list[i]->decrease_label();
+    }
+    setpointers();
+}
+void AggregatList::remove_sphere(const size_t &id) noexcept {
+    auto agg_num = size_t(spheres[id].agg_label);
+    list[agg_num]->remove(id);
+    if (list[agg_num]->size() == 0) {
+        remove(agg_num);
+    }
 }
 AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
     ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),

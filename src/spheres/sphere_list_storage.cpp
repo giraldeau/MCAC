@@ -53,6 +53,11 @@ void SphereList::setpointers() {
     ptr_deb = newdeb;
     ptr_fin = newfin;
 }
+void SphereList::remove(const size_t &id) noexcept {
+    ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>::remove(id);
+    setpointers();
+}
+
 /** Default constructor in local storage */
 SphereList::SphereList() noexcept :
     ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(),

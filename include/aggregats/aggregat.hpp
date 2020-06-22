@@ -107,6 +107,7 @@ public:
     /* other */
     void merge(Aggregate *) noexcept;
     bool split();
+    void remove(const size_t &id) noexcept ;
     void print() const noexcept;
     /* Storage specific */
 private:

@@ -74,8 +74,7 @@ void Aggregate::decrease_label() noexcept {
     if (static_cast<bool>(verlet)) {
         verlet->remove(get_label(), index_verlet);
     }
-    // Keep index and label in sync
-    decrease_index();
+
     label--;
 
     // Keep aggLabel of myspheres in sync
@@ -415,6 +414,31 @@ bool Aggregate::split() {
         }
     }
     return have_splitted;
+}
+void Aggregate::remove(const size_t &id) noexcept {
+
+    for (size_t local_id=0; local_id < n_spheres; local_id++) {
+        if (myspheres[local_id].index_in_storage == id){
+            myspheres.list.erase(myspheres.list.begin() + long(local_id));
+        }
+    }
+    external_storage->spheres.remove(id);
+    n_spheres = myspheres.size();
+    if (n_spheres > 0) {
+        std::array<double, 3> refpos = myspheres[0].get_position();
+        for (Sphere *sph : myspheres) {
+            // change the relative position of the new aggregate
+            sph->set_relative_position(sph->get_position() - refpos);
+        }
+        // we have to recompute all the caracteristic of this new aggregate
+        update_distances();
+        update();
+        // we have to move all the spheres (periodicity)
+        refpos = get_position() - get_relative_position();
+        for (Sphere *sph : myspheres) {
+            sph->set_position(refpos + sph->get_relative_position());
+        }
+    } // else it should be deleted ASAP
 }
 void Aggregate::print() const noexcept {
     std::cout << "Printing details of Aggregat " << index_in_storage << " " << label << std::endl;

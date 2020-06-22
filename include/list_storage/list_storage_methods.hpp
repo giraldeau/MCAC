@@ -80,7 +80,7 @@ void ListStorage<N, elem>::remove(const size_t &id) noexcept {
         (*storage)[i].erase((*storage)[i].begin() + long(id));
     }
     for (size_t i = id; i < list.size(); i++) {
-        list[i]->decrease_label();
+        list[i]->decrease_index();
     }
 }
 template<int N, class elem>

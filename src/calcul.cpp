@@ -151,6 +151,12 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             physicalmodel->n_iter_without_event++;
         }
         if (contact) {
+            aggregates->remove_sphere(0);
+            if(aggregates->split()) {
+                for (Aggregate *agg : *aggregates) {
+                    agg->update();
+                }
+            }
             try{
                 aggregates->add(1);
             }

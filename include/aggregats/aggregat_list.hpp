@@ -83,6 +83,8 @@ public:
     std::vector<double> format_agregat_surface() const;
     std::vector<int> format_label() const;
 
+    void remove(const size_t &id) noexcept;
+    void remove_sphere(const size_t &id) noexcept;
     /* Storage specific */
 private:
     void setpointers();
