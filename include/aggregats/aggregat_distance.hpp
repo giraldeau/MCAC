@@ -24,6 +24,7 @@
 namespace mcac {
 double distance(const Aggregate &aggregate_1, const Aggregate &aggregate_2, std::array<double, 3> direction) noexcept;
 bool contact(const Aggregate &aggregate_1, const Aggregate &aggregate_2) noexcept;
+bool contact(const Sphere &sphere, const Aggregate &aggregate) noexcept;
 }  // namespace mcac
 
 

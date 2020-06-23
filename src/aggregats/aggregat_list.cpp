@@ -56,10 +56,8 @@ namespace mcac {
     return latest;
 }
 void AggregatList::add(size_t n) {
-
     size_t initial_n_agg = size();
     size_t initial_n_sph = spheres.size();
-
     spheres.add(n, spheres);
     spheres.setpointers();
     add(n, *this);
@@ -69,7 +67,6 @@ void AggregatList::add(size_t n) {
     for (size_t i = 0; i < n; i++) {
         size_t i_agg = initial_n_agg + i;
         size_t i_sph = initial_n_sph + i;
-
         list[i_agg]->init(i_agg, i_sph);
     }
     refresh();
@@ -250,41 +247,33 @@ std::vector<std::pair<size_t, double>> AggregatList::sort_search_space(size_t mo
         sphere_other.init_val(list[agg_other]->get_position(),
                               *list[agg_other]->rmax);
         auto pos = sorted_search_space.begin();
-        double dist = 0.;
-        bool iscollision = contact(sphere_me, sphere_other);
-        if (!iscollision) {
-            std::pair<bool, double> collision = sphere_collision(sphere_me, sphere_other, direction);
-            if (collision.first && collision.second <= *list[moving_aggregate]->lpm) {
-                iscollision = collision.first;
-                dist = collision.second;
-                pos = lower_bound(sorted_search_space.begin(), sorted_search_space.end(), dist,
-                                  [](std::pair<size_t, double> i_1, double d) {
-                                      return i_1.second < d;
-                                  });
+        AggregateCollisionInfo collision;
+        if (contact(sphere_me, sphere_other)) {
+            collision = AggregateCollisionInfo(moving_aggregate, agg_other, 0.);
+            pos = sorted_search_space.begin();
+        } else {
+            SphereCollisionInfo potential_collision = sphere_collision(sphere_me, sphere_other, direction);
+            if (potential_collision.is_collision && potential_collision.distance <= *list[moving_aggregate]->lpm) {
+                collision = AggregateCollisionInfo(moving_aggregate, agg_other, potential_collision.distance);
+                pos = lower_bound(sorted_search_space.begin(), sorted_search_space.end(), potential_collision);
             }
         }
-        if (iscollision) {
-            std::pair<size_t, double> suspect = {agg_other, dist};
-            sorted_search_space.insert(pos, suspect);
+        if (collision.is_collision) {
+            sorted_search_space.insert(pos, collision);
         }
     }
     return sorted_search_space;
 }
 //################################### Determination of the contacts between agrgates ###################################
-bool AggregatList::test_free_space(std::array<double, 3> pos, double diameter) const {
+bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) const {
     // Use Verlet to reduce search
-    double mindist(diameter * 0.5 + maxradius);
-    std::vector<size_t> search_space = verlet.get_search_space(pos, mindist);
-    double mindist_2 = POW_2(mindist);
-
+    std::vector<size_t> search_space = verlet.get_search_space(pos, radius + maxradius);
+    Sphere sphere(*physicalmodel, pos, radius);
     //$ loop on the agregates potentially in contact
     for (const size_t &suspect : search_space) //For every aggregate that could be in contact
     {
-        //$ Loop on all the spheres of the aggregate
-        for (const Sphere *sphere : list[suspect]->myspheres) {
-            if (distance_2(sphere->get_position(), pos, sphere->physicalmodel->box_lenght) <= mindist_2) {
-                return false;
-            }
+        if (contact(sphere, *list[suspect])) {
+            return false;
         }
     }
     return true;

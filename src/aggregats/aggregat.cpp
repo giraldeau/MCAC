@@ -74,7 +74,6 @@ void Aggregate::decrease_label() noexcept {
     if (static_cast<bool>(verlet)) {
         verlet->remove(get_label(), index_verlet);
     }
-
     label--;
 
     // Keep aggLabel of myspheres in sync
@@ -127,11 +126,11 @@ void Aggregate::init(size_t new_label,
     double diameter = 0;
     if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
         diameter = (physicalmodel->mean_diameter)
-                    + sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * random() - 1.0);
+                   + sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * random() - 1.0);
     } else if (physicalmodel->monomeres_initialisation_type
                == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         diameter = pow(physicalmodel->mean_diameter,
-                 sqrt(2.) * log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
+                       sqrt(2.) * log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
@@ -139,14 +138,12 @@ void Aggregate::init(size_t new_label,
         diameter = physicalmodel->mean_diameter;
     }
     diameter *= 1E-9;
-
-    for (size_t n_try=0; n_try < external_storage->spheres.size(); n_try++) {
+    for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
         //random position
         std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
                                       random() * physicalmodel->box_lenght,
                                       random() * physicalmodel->box_lenght}};
-
-        if (external_storage->test_free_space(newpos, diameter)) {
+        if (external_storage->test_free_space(newpos, diameter * 0.5)) {
             init(*external_storage->physicalmodel,
                  &external_storage->spheres,
                  &external_storage->verlet,
@@ -416,9 +413,8 @@ bool Aggregate::split() {
     return have_splitted;
 }
 void Aggregate::remove(const size_t &id) noexcept {
-
-    for (size_t local_id=0; local_id < n_spheres; local_id++) {
-        if (myspheres[local_id].index_in_storage == id){
+    for (size_t local_id = 0; local_id < n_spheres; local_id++) {
+        if (myspheres[local_id].index_in_storage == id) {
             myspheres.list.erase(myspheres.list.begin() + long(local_id));
         }
     }
