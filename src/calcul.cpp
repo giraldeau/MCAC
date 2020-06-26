@@ -18,6 +18,7 @@
 #include "calcul.hpp"
 #include "tools/tools.hpp"
 #include "exceptions.hpp"
+#include "tools/contact_info.hpp"
 #include <iomanip>
 #include <iostream>
 
@@ -67,21 +68,20 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             num_agg = aggregates->pick_last();
             deltatemps = (*aggregates)[num_agg].get_time_step();
         }
-        double lpm = (*aggregates)[num_agg].get_lpm();
+        double full_distance = (*aggregates)[num_agg].get_lpm();
+        double move_distance = full_distance;
 
         //$ looking for potential contacts
-        auto contact_distance = aggregates->distance_to_next_contact(num_agg, vectdir);
-        int aggcontact = contact_distance.first;
-        double distmove = contact_distance.second;
+        AggregateContactInfo next_contact = aggregates->distance_to_next_contact(num_agg, vectdir, full_distance);
 
-        // adjust time step
-        deltatemps = deltatemps * distmove / lpm;
+        bool contact = next_contact <= full_distance;
+        if (contact){
+            move_distance = next_contact.distance;
+            deltatemps = deltatemps * move_distance / full_distance;
+        }
 
         //$ Translation of the aggregate
-        for (size_t i = 0; i < 3; i++) {
-            vectdir[i] = vectdir[i] * distmove;
-        }
-        (*aggregates)[num_agg].translate(vectdir);
+        (*aggregates)[num_agg].translate(vectdir * move_distance);
         (*aggregates)[num_agg].time_forward(deltatemps);
 
         //$ Time incrementation
@@ -89,10 +89,9 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             deltatemps = deltatemps / double(aggregates->size());
         }
         physicalmodel->time = physicalmodel->time + deltatemps;
-        contact = (aggcontact >= 0);
         if (contact) {
             //$ Aggregates in contact are reunited;
-            num_agg = aggregates->merge(num_agg, size_t(aggcontact));
+            num_agg = aggregates->merge(next_contact);
         }
 
         //$ update of the Aggregates/Spheres
@@ -105,19 +104,8 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
                 agg->update();
             }
         }
-        //        for (int i = 0; i < Aggregates.size(); i++) {
-        //            for (int j = i + 1; j < Aggregates.size(); j++) {
-        //                if (Aggregates[i].contact(Aggregates[j])) {
-        //                    cout << "New contact !" << endl;
-        //                    Aggregates.merge(i, j);
-        //                }
-        //            }
-        //        }
         auto[success, fractal_dimension, fractal_prefactor, error] = aggregates->get_instantaneous_fractal_law();
-        if (success) {
-//            physicalmodel->fractal_dimension = fractal_dimension;
-//            physicalmodel->fractal_prefactor = fractal_prefactor;
-        } else {
+        if (!success) {
             fractal_dimension = physicalmodel->fractal_dimension;
             fractal_prefactor = physicalmodel->fractal_prefactor;
         }
