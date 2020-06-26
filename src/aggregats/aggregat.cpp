@@ -312,11 +312,26 @@ void Aggregate::compute_giration_radius() noexcept {
 //#####################################################################################################################
 
 void Aggregate::merge(Aggregate *other, AggregateContactInfo contact_info) noexcept {
+    size_t i_mysphere, i_othersphere;
+    if (contact_info.moving_aggregate == get_label()) {
+        i_mysphere = contact_info.moving_sphere;
+        i_othersphere = contact_info.other_sphere;
+    } else {
+        i_mysphere = contact_info.other_sphere;
+        i_othersphere = contact_info.moving_sphere;
+    }
+
     //$ update of the labels of the spheres that were in the deleted aggregate
     //$ And their new relative position
     std::array<double, 3> refpos = myspheres[0].get_position();
-    std::array<double, 3> diffpos = periodic_distance(other->myspheres[0].get_position() - refpos,
-                                                      physicalmodel->box_lenght);
+
+    //use periodic_distance at contact point
+    std::array<double, 3> ref_root_to_contact = myspheres[i_mysphere].get_relative_position();
+    std::array<double, 3> diffcontact =
+        periodic_distance(other->myspheres[i_othersphere].get_position() - myspheres[i_mysphere].get_position(),
+                          physicalmodel->box_lenght);
+    std::array<double, 3> other_root_to_contact = other->myspheres[i_othersphere].get_relative_position();
+    std::array<double, 3> diffpos = ref_root_to_contact + diffcontact - other_root_to_contact;
 
     // For all the spheres that were in the deleted aggregate
     for (Sphere *othersphere : other->myspheres) {
