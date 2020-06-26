@@ -20,6 +20,7 @@
 #include "spheres/sphere_collision.hpp"
 #include "spheres/sphere_distance.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 
 
