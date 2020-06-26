@@ -17,7 +17,7 @@
  */
 #include "aggregats/aggregat_distance.hpp"
 #include "aggregats/aggregat_list.hpp"
-#include "spheres/sphere_collision.hpp"
+#include "spheres/sphere_contact.hpp"
 #include "spheres/sphere_distance.hpp"
 #include "tools/tools.hpp"
 #include "exceptions.hpp"
@@ -141,9 +141,11 @@ void AggregatList::duplication() {
         agg->update_verlet_index();
     }
 }
-size_t AggregatList::merge(size_t first, size_t second) {
-    const size_t _keeped(MIN(first, second));
-    const size_t _removed(MAX(first, second));
+size_t AggregatList::merge(AggregateContactInfo contact_info) {
+    const size_t _keeped(MIN(contact_info.moving_aggregate,
+                             contact_info.other_aggregate));
+    const size_t _removed(MAX(contact_info.moving_aggregate,
+                              contact_info.other_aggregate));
 
     // compute proper time of the final aggregate
     // keeping global time constant
@@ -151,7 +153,7 @@ size_t AggregatList::merge(size_t first, size_t second) {
                      - physicalmodel->time;
 
     // merge the two aggregate but do not remove the deleted one
-    list[_keeped]->merge(list[_removed]);
+    list[_keeped]->merge(list[_removed], contact_info);
     remove(_removed);
     setpointers();
     *list[_keeped]->time = newtime;
@@ -175,102 +177,81 @@ bool AggregatList::split() {
     }
     return has_splitted;
 }
-//################################# Determination of the contacts between agrgates ####################################
-std::pair<int, double> AggregatList::distance_to_next_contact(size_t source, std::array<double, 3> direction) const {
+//################################# Determination of the contacts between agregates ####################################
+AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
+                                                            const std::array<double, 3> &direction,
+                                                            const double distance) const {
     // Use Verlet to reduce search
-    std::vector<size_t> search_space(get_search_space(source, direction));
+    std::vector<size_t> neighborhood(get_neighborhood(source, direction, distance));
 
     // Assimilate Aggregate as sphere to drasticly speed-up search
-    std::vector<std::pair<size_t, double>> potential(sort_search_space(source, direction, search_space));
-    int aggcontact(-1);
-    double distmin = list[source]->get_lpm();
-    double mindistagg(0.);
+    std::multimap<double, size_t> sorted_neighborhood(sort_neighborhood(source, direction, neighborhood, distance));
+    AggregateContactInfo closest_contact; //infinity by default
 
     //$ loop on the agregates potentially in contact
-    for (const std::pair<size_t, double> &suspect : potential) //For every aggregate that could be in contact
-    {
-        size_t agg = suspect.first;
-        double distagg = suspect.second;
+    for (auto suspect : sorted_neighborhood) { //For every aggregate that could be in contact
+        auto[suspect_distance, id] = suspect;
 
-        // We already found the closest one
-        if (aggcontact >= 0) {
-            double secu = 2 * (*list[size_t(aggcontact)]->rmax + *list[source]->rmax);
-            if (distagg - mindistagg > secu) {
-                break;
-            }
+        if ( closest_contact.distance < suspect_distance) {
+            // We already found the closests one
+            break;
         }
-        double dist = distance(*list[source], *list[agg], direction);
-        if (dist >= 0 && dist <= distmin) {
-            distmin = dist;
-            aggcontact = int(agg);
-            mindistagg = distagg;
-
-            // If two aggragates are already in contact (due to surface growing)
-            if (distmin <= 1e-28) {
-                break;
-            }
+        AggregateContactInfo potential_contact = distance_to_contact(*list[source],
+                                                                     *list[id],
+                                                                     direction,
+                                                                     distance);
+        if (potential_contact < closest_contact) {
+            closest_contact = potential_contact;
         }
     }
-    return {aggcontact, distmin};
+    return closest_contact;
 }
-std::vector<size_t> AggregatList::get_search_space(size_t source, std::array<double, 3> direction) const {
-    std::vector<size_t> search_space;
+std::vector<size_t> AggregatList::get_neighborhood(const size_t source,
+                                                   const std::array<double, 3>& direction,
+                                                   const double distance) const {
+    std::vector<size_t> neighborhood;
 
     // Extract from verlet
-
-    double lpm(*list[source]->lpm);
     double mindist(*list[source]->rmax + maxradius);
     std::array<double, 3> sourceposition = list[source]->get_position();
-    std::array<double, 3> vector{lpm * direction};
-    search_space = verlet.get_search_space(sourceposition, mindist, vector);
+    std::array<double, 3> vector{distance * direction};
+    neighborhood = verlet.get_neighborhood(sourceposition, vector, mindist);
 
     // Remove me
-    for (size_t i = 0; i < search_space.size(); i++) {
-        if (search_space[i] == source) {
-            search_space.erase(search_space.begin() + long(i));
-            return search_space;
+    for (size_t i = 0; i < neighborhood.size(); i++) {
+        if (neighborhood[i] == source) {
+            neighborhood.erase(neighborhood.begin() + long(i));
+            return neighborhood;
         }
     }
     throw VerletError("Aggregate not on the verlet list ???");
-    //return SearchSpace;
+    //return neighborhood;
 }
 //############################## Determination of the contacts between agrgates #######################################
-std::vector<std::pair<size_t, double>> AggregatList::sort_search_space(size_t moving_aggregate,
-                                                                       std::array<double, 3> direction,
-                                                                       const std::vector<size_t> &search_space) const {
-    std::vector<std::pair<size_t, double>> sorted_search_space;
+std::multimap<double, size_t> AggregatList::sort_neighborhood(const size_t moving_aggregate,
+                                                              const std::array<double, 3>& direction,
+                                                              const std::vector<size_t> &neighborhood,
+                                                              const double distance) const {
+    std::multimap<double, size_t> sorted_neighborhood;
     Sphere sphere_me(*list[moving_aggregate]);
     Sphere sphere_other(*list[moving_aggregate]);
 
     //$ [For all other agregate]
-    for (const size_t &agg_other : search_space) {
+    for (const size_t &agg_other : neighborhood) {
         sphere_other.init_val(list[agg_other]->get_position(),
                               *list[agg_other]->rmax);
-        auto pos = sorted_search_space.begin();
-        AggregateCollisionInfo collision;
-        if (contact(sphere_me, sphere_other)) {
-            collision = AggregateCollisionInfo(moving_aggregate, agg_other, 0.);
-            pos = sorted_search_space.begin();
-        } else {
-            SphereCollisionInfo potential_collision = sphere_collision(sphere_me, sphere_other, direction);
-            if (potential_collision.is_collision && potential_collision.distance <= *list[moving_aggregate]->lpm) {
-                collision = AggregateCollisionInfo(moving_aggregate, agg_other, potential_collision.distance);
-                pos = lower_bound(sorted_search_space.begin(), sorted_search_space.end(), potential_collision);
-            }
-        }
-        if (collision.is_collision) {
-            sorted_search_space.insert(pos, collision);
-        }
+        SphereContactInfo potential_contact = distance_to_contact(sphere_me, sphere_other, direction, distance);
+        sorted_neighborhood.insert(std::pair<double, size_t>(potential_contact, agg_other));
     }
-    return sorted_search_space;
+    return sorted_neighborhood;
 }
 //################################### Determination of the contacts between agrgates ###################################
 bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) const {
     // Use Verlet to reduce search
-    std::vector<size_t> search_space = verlet.get_search_space(pos, radius + maxradius);
+    std::vector<size_t> neighborhood = verlet.get_neighborhood(pos, radius + maxradius);
     Sphere sphere(*physicalmodel, pos, radius);
     //$ loop on the agregates potentially in contact
-    for (const size_t &suspect : search_space) //For every aggregate that could be in contact
+    for (const size_t &suspect : neighborhood) //For every aggregate that could be in contact
     {
         if (contact(sphere, *list[suspect])) {
             return false;

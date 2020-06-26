@@ -15,21 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef INCLUDE_AGGREGATS_AGGREGAT_DISTANCE_HPP
-#define INCLUDE_AGGREGATS_AGGREGAT_DISTANCE_HPP 1
-#include "aggregat.hpp"
+#ifndef INCLUDE_SPHERES_SPHERE_CONTACT_HPP
+#define INCLUDE_SPHERES_SPHERE_CONTACT_HPP
+#include "spheres/sphere.hpp"
+#include "spheres/sphere_list.hpp"
 #include "tools/contact_info.hpp"
 #include <array>
 
 
 namespace mcac {
-AggregateContactInfo distance_to_contact(const Aggregate &aggregate_1,
-                                         const Aggregate &aggregate_2,
-                                         const std::array<double, 3> &direction,
-                                         const double distance) noexcept;
-bool contact(const Aggregate &aggregate_1, const Aggregate &aggregate_2) noexcept;
-bool contact(const Sphere &sphere, const Aggregate &aggregate) noexcept;
+SphereContactInfo distance_to_contact(const Sphere &sphere_1,
+                                      const Sphere &sphere_2,
+                                      const std::array<double, 3> &direction,
+                                      const double distance) noexcept;
+HalfSphereListContactInfo distance_to_contact(const Sphere &sphere,
+                                              const SphereList &list,
+                                              const std::array<double, 3> &direction,
+                                              double distance) noexcept;
 }  // namespace mcac
-
-
-#endif //INCLUDE_AGGREGATS_AGGREGAT_DISTANCE_HPP
+#endif //INCLUDE_SPHERES_SPHERE_CONTACT_HPP

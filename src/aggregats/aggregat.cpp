@@ -311,7 +311,7 @@ void Aggregate::compute_giration_radius() noexcept {
 }
 //#####################################################################################################################
 
-void Aggregate::merge(Aggregate *other) noexcept {
+void Aggregate::merge(Aggregate *other, AggregateContactInfo contact_info) noexcept {
     //$ update of the labels of the spheres that were in the deleted aggregate
     //$ And their new relative position
     std::array<double, 3> refpos = myspheres[0].get_position();

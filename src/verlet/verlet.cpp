@@ -30,8 +30,7 @@ void Verlet::add(size_t id, std::array<size_t, 3> index) {
 }
 /* Default constructor */
 Verlet::Verlet(size_t new_n_div, double new_width) :
-    grid(new_n_div)
-    {
+    grid(new_n_div) {
     n_div = new_n_div;
     width = new_width;
     for (std::vector<std::vector<std::list<size_t> > > &x_plane : grid) {
@@ -41,12 +40,12 @@ Verlet::Verlet(size_t new_n_div, double new_width) :
         }
     }
 }
-std::vector<size_t> Verlet::get_search_space(std::array<double, 3> sourceposition, double distance) const {
-    return get_search_space(sourceposition, distance, {0, 0, 0});
+std::vector<size_t> Verlet::get_neighborhood(const std::array<double, 3>& sourceposition, double distance) const {
+    return get_neighborhood(sourceposition, {0, 0, 0}, distance);
 }
-std::vector<size_t> Verlet::get_search_space(std::array<double, 3> sourceposition,
-                                             double distance,
-                                             std::array<double, 3> direction) const {
+std::vector<size_t> Verlet::get_neighborhood(const std::array<double, 3>& sourceposition,
+                                             const std::array<double, 3>& direction,
+                                             const double distance) const {
     double xp{sourceposition[0] + distance + MAX(direction[0], 0)};
     double xm{sourceposition[0] - distance + MIN(direction[0], 0)};
     double yp{sourceposition[1] + distance + MAX(direction[1], 0)};
@@ -71,7 +70,7 @@ std::vector<size_t> Verlet::get_search_space(std::array<double, 3> sourcepositio
         bornek_1 = 0;
         bornek_2 = static_cast<int>(n_div) - 1;
     }
-    std::list<size_t> tmp_search_space;
+    std::list<size_t> tmp_neighborhood;
 
     // ///////
     for (int i = bornei_1; i <= bornei_2; i++) {
@@ -81,14 +80,14 @@ std::vector<size_t> Verlet::get_search_space(std::array<double, 3> sourcepositio
                 auto ii = static_cast<size_t>(periodic_position(i, static_cast<int>(n_div)));
                 auto jj = static_cast<size_t>(periodic_position(j, static_cast<int>(n_div)));
                 auto kk = static_cast<size_t>(periodic_position(k, static_cast<int>(n_div)));
-                tmp_search_space.insert(tmp_search_space.end(),
+                tmp_neighborhood.insert(tmp_neighborhood.end(),
                                         grid[ii][jj][kk].begin(),
                                         grid[ii][jj][kk].end());
             }
         }
     }
-    std::vector<size_t> search_space{make_move_iterator(tmp_search_space.begin()),
-                                make_move_iterator(tmp_search_space.end())};
-    return search_space;
+    std::vector<size_t> neighborhood{make_move_iterator(tmp_neighborhood.begin()),
+                                     make_move_iterator(tmp_neighborhood.end())};
+    return neighborhood;
 }
 }  // namespace mcac

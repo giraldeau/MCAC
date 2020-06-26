@@ -16,28 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "aggregats/aggregat_distance.hpp"
-#include "spheres/sphere_collision.hpp"
+#include "spheres/sphere_contact.hpp"
 #include "spheres/sphere_distance.hpp"
-#include <limits>
 
 
 namespace mcac {
-double distance(const Aggregate &aggregate_1,
-                const Aggregate &aggregate_2,
-                std::array<double, 3> direction) noexcept {
-    double mindist(std::numeric_limits<double>::infinity());
-
+AggregateContactInfo distance_to_contact(const Aggregate &aggregate_1,
+                                         const Aggregate &aggregate_2,
+                                         const std::array<double, 3>& direction,
+                                         const double distance) noexcept {
+    AggregateContactInfo closest_contact; //infinity by default
     //$ For every sphere in the aggregate :
-    for (const auto& mysphere: aggregate_1.myspheres) {
-        std::vector<double> dists = sphere_collisions(*mysphere, aggregate_2.myspheres, direction);
-        if (!dists.empty()) {
-            double lmindist = *min_element(dists.begin(), dists.end());
-            if (lmindist <= mindist) {
-                mindist = lmindist;
-            }
+    for (size_t i_sphere = 0; i_sphere < aggregate_1.myspheres.size(); i_sphere++) {
+        HalfSphereListContactInfo potential_contact = distance_to_contact(aggregate_1.myspheres[i_sphere],
+                                                                          aggregate_2.myspheres,
+                                                                          direction,
+                                                                          distance);
+        if (potential_contact < closest_contact) {
+            closest_contact.moving_sphere = i_sphere;
+            closest_contact.moving_aggregate = aggregate_1.get_label();
+            closest_contact.other_aggregate = aggregate_2.get_label();
+            closest_contact.distance = potential_contact.distance;
         }
     }
-    return mindist;
+    return closest_contact;
 }
 bool contact(const Sphere &sphere,
              const Aggregate &aggregate) noexcept {
