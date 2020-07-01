@@ -49,7 +49,11 @@ private:
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
 
-    std::vector<std::list<std::pair<size_t, double> > > distances;
+#ifdef FULL_INTERNAL_DISTANCES
+    std::vector<std::vector<double> > distances;
+#else
+    std::vector<std::unordered_map<size_t, double> > distances;
+#endif
     std::vector<double> distances_center;
     std::vector<double> volumes;
     std::vector<double> surfaces;

@@ -14,8 +14,8 @@ include_directories(../include)
 
 FILE(GLOB_RECURSE SRC_FILES *.cpp)
 # TODO temporary fix for old cmake 
-link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib)
-link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib64)
+#link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib)
+#link_directories(${PROJECT_SOURCE_DIR}/../ext_bin/xdmf/lib64)
 # TODO end temporary fix for old cmake 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
     

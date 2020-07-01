@@ -203,12 +203,20 @@ void Aggregate::compute_volume() noexcept {
     }
 #else
     for (size_t i = 0; i < n_spheres; i++) {
+#ifdef FULL_INTERNAL_DISTANCES
         for (size_t j = i + 1; j < n_spheres; j++) //for the j spheres composing Aggregate n°id
         {
+            double dist = internal_sphere_distance(i, j);
+#else
+        for (const auto &[j, dist] : distances[i]){
+            if (j <= i) {
+                continue;
+            }
+#endif
             //$ Calculation of the intersection between the spheres i and j if in contact
             Intersection intersection(myspheres[i],
                                       myspheres[j],
-                                      internal_sphere_distance(i, j));
+                                      dist);
 
             //$ The volume and surface covered by j is substracted from those of i
             volumes[i] = volumes[i] - intersection.volume_1;
@@ -342,37 +350,51 @@ void Aggregate::update_distances() noexcept {
     const size_t _loopsize(n_spheres);
     for (size_t i = 0; i < _loopsize; i++) {
         // The last index is the distance to the mass center
+#ifdef FULL_INTERNAL_DISTANCES
+        distances[i].resize(n_spheres);
+#else
+        size_t old_size = distances[i].size();
         distances[i].clear();
+        distances[i].reserve(old_size);
+#endif
     }
     for (size_t i = 0; i < _loopsize; i++) {
         for (size_t j = i + 1; j < _loopsize; j++) {
             // Compute the distance between sphere i and j without taking periodicity into account
             double dist = relative_distance(myspheres[i], myspheres[j]);
 
-            // if in contact
-            if (dist < myspheres[i].get_radius() + myspheres[j].get_radius()) {
-                distances[i].push_back(std::pair<size_t, double>(j, dist));
+#ifdef FULL_INTERNAL_DISTANCES
+            distances[i][j] = dist;
+            // distances are symetric !
+            distances[j][i] = dist;
+#else
+            // if in contact (with some tolerence)
+            if (dist <= (1. + 1e-10)*(myspheres[i].get_radius() + myspheres[j].get_radius())) {
+                distances[i][j] = dist;
                 // distances are symetric !
-                distances[j].push_back(std::pair<size_t, double>(i, dist));
+                distances[j][i] = dist;
             }
+#endif
         }
     }
 }
 double Aggregate::internal_sphere_distance(size_t i, size_t j) const noexcept {
+#ifdef FULL_INTERNAL_DISTANCES
+    return distances[i][j];
+#else
     size_t ii = i;
     size_t jj = j;
     if (distances[i].size() > distances[j].size()) {
         ii = j;
         jj = i;
     }
-    std::function<bool(std::pair<size_t, double>)> is_jj = [jj](std::pair<size_t, double> e) noexcept {
-        return e.first == jj;
-    };
-    auto find_iter = std::find_if(distances[ii].begin(), distances[ii].end(), is_jj);
-    if (find_iter != distances[ii].end()) {
-        return find_iter->second;
+    auto it = distances[ii].find(jj);
+    if (it != distances[ii].end()) {
+        return it->second;
     }
-    return -1;
+
+    return std::numeric_limits<double>::infinity();
+#endif
 }
 [[gnu::pure]] double Aggregate::sphere_distance_center(size_t i) const noexcept {
     return distances_center[i];
