@@ -22,10 +22,6 @@
 #include <vector>
 
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define POW_2(a) ((a)*(a))
-#define POW_3(a) ((a)*(a)*(a))
 namespace mcac {
 template<class T>
 std::array<T, 3> operator+(const std::array<T, 3> &a_1, const std::array<T, 3> &a_2) {
@@ -67,7 +63,6 @@ std::array<T, 3> &operator/=(std::array<T, 3> &a, const T &rhs) {
 }
 void init_random();
 double random();
-
 MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string &input);
 std::string resolve_monomeres_initialisation_mode(MonomeresInitialisationMode mode);
 PickMethods resolve_pick_method(const std::string &input);

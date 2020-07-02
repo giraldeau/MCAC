@@ -34,7 +34,7 @@ void AggregatList::setpointers() {
     ptr_deb = newdeb;
     ptr_fin = newfin;
 }
-AggregatList::AggregatList(PhysicalModel *the_physical_model):
+AggregatList::AggregatList(PhysicalModel *the_physical_model) :
     ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),
     physicalmodel(the_physical_model),
     maxradius(0.),
@@ -62,11 +62,11 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
         double dp = 0;
         if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
             dp = (physicalmodel->mean_diameter)
-                 + sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * x - 1.0);
+                 + std::sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * x - 1.0);
         } else if (physicalmodel->monomeres_initialisation_type
                    == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-            dp = pow(physicalmodel->mean_diameter,
-                     sqrt(2.) * log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
+            dp = std::pow(physicalmodel->mean_diameter,
+                          std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
         } else {
             exit(ErrorCodes::UNKNOWN_ERROR);
         }
@@ -78,8 +78,8 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
         while (!placed) {
             //random position
             std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
-                                     random() * physicalmodel->box_lenght,
-                                     random() * physicalmodel->box_lenght}};
+                                          random() * physicalmodel->box_lenght,
+                                          random() * physicalmodel->box_lenght}};
 
             //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
             if (test_free_space(newpos, dp)) {

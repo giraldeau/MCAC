@@ -89,6 +89,9 @@ void Aggregate::set_verlet(Verlet *newverlet) noexcept {
     verlet->add(get_label(), index_verlet);
 }
 void Aggregate::unset_verlet() noexcept {
+    if (static_cast<bool>(verlet)) {
+        verlet->remove(label, index_verlet);
+    }
     verlet = nullptr;
 }
 void Aggregate::set_time(double newtime) noexcept {
@@ -139,7 +142,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
         set_verlet(new_verlet);
     }
     (*spheres)[label].set_label(int(label));
-    (*spheres)[label].init_val(position, sphere_diameter / 2);
+    (*spheres)[label].init_val(position, sphere_diameter * 0.5);
     myspheres = SphereList(spheres, {label});
     n_spheres = myspheres.size();
     update_distances();
@@ -162,7 +165,7 @@ void Aggregate::update() noexcept {
     double relax_time = mcac::PhysicalModel::relax_time(masse, *f_agg);
     *time_step = 3. * relax_time;
     double diffusivity = physicalmodel->diffusivity(*f_agg);
-    *lpm = sqrt(6. * diffusivity * (*time_step));
+    *lpm = std::sqrt(6. * diffusivity * (*time_step));
     *dp = 0.;
     //$ For the Spheres i in Agg Id
     for (size_t i = 0; i < n_spheres; i++) {
@@ -244,7 +247,7 @@ void Aggregate::compute_mass_center() noexcept {
     r /= *agregat_volume;
     for (size_t i = 0; i < _loopsize; i++) {
         std::array<double, 3> diff{myspheres[i].get_relative_position() - r};
-        distances_center[i] = sqrt(POW_2(diff[0]) + POW_2(diff[1]) + POW_2(diff[2]));
+        distances_center[i] = std::sqrt(std::pow(diff[0], 2) + std::pow(diff[1], 2) + std::pow(diff[2], 2));
     }
     set_position(myspheres[0].get_position() + r);
     *rx = r[0];
@@ -260,7 +263,7 @@ void Aggregate::compute_max_radius() noexcept {
     *rmax = 0.0;
     const size_t _loopsize(n_spheres);
     for (size_t i = 0; i < _loopsize; i++) {
-        *rmax = MAX(*rmax, myspheres[i].get_radius() + sphere_distance_center(i));
+        *rmax = std::max(*rmax, myspheres[i].get_radius() + sphere_distance_center(i));
     }
 }
 void Aggregate::compute_giration_radius() noexcept {
@@ -273,11 +276,11 @@ void Aggregate::compute_giration_radius() noexcept {
     const size_t _loopsize(n_spheres);
     for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of Rg
-        arg = arg + volumes[i] * POW_2(sphere_distance_center(i)); // distance to the gravity center
-        brg = brg + volumes[i] * POW_2(myspheres[i].get_radius());
+        arg = arg + volumes[i] * std::pow(sphere_distance_center(i), 2); // distance to the gravity center
+        brg = brg + volumes[i] * std::pow(myspheres[i].get_radius(), 2);
     }
-    *rg = sqrt(fabs((arg + 3. / 5. * brg) / (*agregat_volume)));
-    *agregat_volume = fabs(*agregat_volume);
+    *rg = std::sqrt(std::abs((arg + 3. / 5. * brg) / (*agregat_volume)));
+    *agregat_volume = std::abs(*agregat_volume);
 }
 //#####################################################################################################################
 
@@ -352,9 +355,9 @@ void Aggregate::print() const noexcept {
 }
 std::array<size_t, 3> Aggregate::compute_index_verlet() noexcept {
     double step = double(physicalmodel->n_verlet_divisions) / physicalmodel->box_lenght;
-    std::array<size_t, 3> new_verlet_index{size_t(floor((*x) * step)),
-                                           size_t(floor((*y) * step)),
-                                           size_t(floor((*z) * step))};
+    std::array<size_t, 3> new_verlet_index{size_t(std::floor((*x) * step)),
+                                           size_t(std::floor((*y) * step)),
+                                           size_t(std::floor((*z) * step))};
     return new_verlet_index;
 }
 void Aggregate::update_verlet() noexcept {

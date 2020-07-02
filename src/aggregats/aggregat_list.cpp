@@ -38,7 +38,7 @@ namespace mcac {
 [[gnu::pure]] size_t AggregatList::pick_random() const {
     //$ Pick a random sphere
     double val_alea = random() * cumulative_time_steps[size() - 1];
-    long n = lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), val_alea)
+    long n = std::lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), val_alea)
              - cumulative_time_steps.begin();
     size_t num_agg = index_sorted_time_steps[static_cast<size_t >(n)];
     return num_agg;
@@ -58,20 +58,20 @@ namespace mcac {
 void AggregatList::refresh() {
     max_time_step = *list[0]->time_step;
     for (const Aggregate *agg : list) {
-        max_time_step = MAX(*agg->time_step, max_time_step);
+        max_time_step = std::max(*agg->time_step, max_time_step);
     }
 }
 template<typename T>
 std::vector<size_t> sort_indexes(const std::vector<T> &v) {
     // initialize original index locations
     std::vector<size_t> idx(v.size());
-    iota(idx.begin(), idx.end(), 0);
+    std::iota(idx.begin(), idx.end(), 0);
 
     // sort indexes based on comparing values in v
-    sort(idx.begin(), idx.end(),
-         [&v](size_t i_1, size_t i_2) {
-             return v[i_1] < v[i_2];
-         });
+    std::sort(idx.begin(), idx.end(),
+              [&v](size_t i_1, size_t i_2) {
+                  return v[i_1] < v[i_2];
+              });
     return idx;
 }
 void AggregatList::sort_time_steps(double factor) {
@@ -94,7 +94,6 @@ void AggregatList::duplication() {
     double old_l = physicalmodel->box_lenght;
     physicalmodel->box_lenght *= 2;
     physicalmodel->n_monomeres *= 8;
-
     for (Aggregate *agg : list) {
         agg->unset_verlet();
     }
@@ -131,9 +130,9 @@ void AggregatList::duplication() {
     }
 }
 size_t AggregatList::merge(AggregateContactInfo contact_info) {
-    const size_t _keeped(MIN(contact_info.moving_aggregate,
+    const size_t _keeped(std::min(contact_info.moving_aggregate,
                              contact_info.other_aggregate));
-    const size_t _removed(MAX(contact_info.moving_aggregate,
+    const size_t _removed(std::max(contact_info.moving_aggregate,
                               contact_info.other_aggregate));
 
     // compute proper time of the final aggregate
@@ -232,7 +231,7 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double diameter) c
     // Use Verlet to reduce search
     double mindist(diameter * 0.5 + maxradius);
     std::vector<size_t> neighborhood = verlet.get_neighborhood(pos, mindist);
-    double mindist_2 = POW_2(mindist);
+    double mindist_2 = std::pow(mindist, 2);
 
     //$ loop on the agregates potentially in contact
     for (const size_t &suspect : neighborhood) //For every aggregate that could be in contact

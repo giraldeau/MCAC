@@ -58,20 +58,20 @@ namespace mcac {
 
     // apply periodicity to sphere_2
     for (size_t l = 0; l < 3; ++l) {
-        double base = fmin(pos1[l], pos1[l] + total_displacement[l]) - dist_contact;
-        double end = fmax(pos1[l], pos1[l] + total_displacement[l]) + dist_contact;
+        double base = std::min(pos1[l], pos1[l] + total_displacement[l]) - dist_contact;
+        double end = std::max(pos1[l], pos1[l] + total_displacement[l]) + dist_contact;
         zone_dimension[l] = end - base;
-        pos2[l] = fmod((pos2[l] - base), box_lenght);
+        pos2[l] = std::fmod((pos2[l] - base), box_lenght);
         if (pos2[l] < 0) {
             pos2[l] += box_lenght;
         }
         pos2[l] += base;
 
         // we may need to check for multiple periodicity anyway
-        nper[l] = static_cast<int>(floor(zone_dimension[l] / box_lenght));
+        nper[l] = static_cast<int>(std::floor(zone_dimension[l] / box_lenght));
     }
     double res = std::numeric_limits<double>::infinity(); // infinity is too far to care
-    double dist_contact_2 = POW_2(dist_contact);
+    double dist_contact_2 = std::pow(dist_contact, 2);
     for (int i = 0; i <= nper[0]; i++) {
         for (int j = 0; j <= nper[1]; j++) {
             for (int k = 0; k <= nper[2]; k++) {
@@ -81,13 +81,13 @@ namespace mcac {
                 std::array<double, 3> diff = pos3 - pos1;
 
                 // shortcut
-                if (fabs(diff[0]) > zone_dimension[0]) {
+                if (std::abs(diff[0]) > zone_dimension[0]) {
                     continue;
                 }
-                if (fabs(diff[1]) > zone_dimension[1]) {
+                if (std::abs(diff[1]) > zone_dimension[1]) {
                     continue;
                 }
-                if (fabs(diff[2]) > zone_dimension[2]) {
+                if (std::abs(diff[2]) > zone_dimension[2]) {
                     continue;
                 }
                 if (relative_distance_2(pos1, pos3) <= dist_contact_2) {
@@ -110,12 +110,12 @@ namespace mcac {
                 std::array<double, 3> cross{diff[1] * displacement_vector[2] - diff[2] * displacement_vector[1],
                                             diff[2] * displacement_vector[0] - diff[0] * displacement_vector[2],
                                             diff[0] * displacement_vector[1] - diff[1] * displacement_vector[0]};
-                double dist_to_axis = POW_2(cross[0]) + POW_2(cross[1]) + POW_2(cross[2]);
+                double dist_to_axis = std::pow(cross[0], 2) + std::pow(cross[1], 2) + std::pow(cross[2], 2);
                 if (dist_to_axis > dist_contact_2) {
                     // too far
                     continue;
                 }
-                res = fmin(res, proj - sqrt(dist_contact_2 - dist_to_axis));
+                res = std::min(res, proj - std::sqrt(dist_contact_2 - dist_to_axis));
             }
         }
     }

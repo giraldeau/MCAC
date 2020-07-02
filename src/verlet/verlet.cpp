@@ -24,14 +24,14 @@
 
 namespace mcac {
 void Verlet::remove(size_t id, std::array<size_t, 3> index) {
-    auto cell = &grid[index[0]][index[1]][index[2]];
+    auto *cell = &grid[index[0]][index[1]][index[2]];
     auto it = cell->find(id);
     if (it != cell->end()) {
         cell->erase(it);
     }
 }
 void Verlet::add(size_t id, std::array<size_t, 3> index) {
-    auto cell = &grid[index[0]][index[1]][index[2]];
+    auto *cell = &grid[index[0]][index[1]][index[2]];
     cell->insert(id);
 }
 /* Default constructor */
@@ -52,18 +52,18 @@ std::vector<size_t> Verlet::get_neighborhood(const std::array<double, 3>& source
 std::vector<size_t> Verlet::get_neighborhood(const std::array<double, 3>& sourceposition,
                                              const std::array<double, 3>& direction,
                                              const double distance) const {
-    double xp{sourceposition[0] + distance + MAX(direction[0], 0)};
-    double xm{sourceposition[0] - distance + MIN(direction[0], 0)};
-    double yp{sourceposition[1] + distance + MAX(direction[1], 0)};
-    double ym{sourceposition[1] - distance + MIN(direction[1], 0)};
-    double zp{sourceposition[2] + distance + MAX(direction[2], 0)};
-    double zm{sourceposition[2] - distance + MIN(direction[2], 0)};
-    auto bornei_1{static_cast<int>(floor(static_cast<double>(n_div) * xm / width))};
-    auto bornei_2{static_cast<int>(floor(static_cast<double>(n_div) * xp / width) + 1)};
-    auto bornej_1{static_cast<int>(floor(static_cast<double>(n_div) * ym / width))};
-    auto bornej_2{static_cast<int>(floor(static_cast<double>(n_div) * yp / width) + 1)};
-    auto bornek_1{static_cast<int>(floor(static_cast<double>(n_div) * zm / width))};
-    auto bornek_2{static_cast<int>(floor(static_cast<double>(n_div) * zp / width) + 1)};
+    double xp{sourceposition[0] + distance + std::max(direction[0], 0.)};
+    double xm{sourceposition[0] - distance + std::min(direction[0], 0.)};
+    double yp{sourceposition[1] + distance + std::max(direction[1], 0.)};
+    double ym{sourceposition[1] - distance + std::min(direction[1], 0.)};
+    double zp{sourceposition[2] + distance + std::max(direction[2], 0.)};
+    double zm{sourceposition[2] - distance + std::min(direction[2], 0.)};
+    auto bornei_1{static_cast<int>(std::floor(static_cast<double>(n_div) * xm / width))};
+    auto bornei_2{static_cast<int>(std::floor(static_cast<double>(n_div) * xp / width) + 1)};
+    auto bornej_1{static_cast<int>(std::floor(static_cast<double>(n_div) * ym / width))};
+    auto bornej_2{static_cast<int>(std::floor(static_cast<double>(n_div) * yp / width) + 1)};
+    auto bornek_1{static_cast<int>(std::floor(static_cast<double>(n_div) * zm / width))};
+    auto bornek_2{static_cast<int>(std::floor(static_cast<double>(n_div) * zp / width) + 1)};
     if (bornei_2 - bornei_1 >= static_cast<int>(n_div)) {
         bornei_1 = 0;
         bornei_2 = static_cast<int>(n_div) - 1;
@@ -92,8 +92,8 @@ std::vector<size_t> Verlet::get_neighborhood(const std::array<double, 3>& source
             }
         }
     }
-    std::vector<size_t> neighborhood{make_move_iterator(tmp_neighborhood.begin()),
-                                     make_move_iterator(tmp_neighborhood.end())};
+    std::vector<size_t> neighborhood{std::make_move_iterator(tmp_neighborhood.begin()),
+                                     std::make_move_iterator(tmp_neighborhood.end())};
     return neighborhood;
 }
 }  // namespace mcac
