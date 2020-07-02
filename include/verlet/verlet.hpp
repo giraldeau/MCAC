@@ -18,8 +18,8 @@
 #ifndef INCLUDE_VERLET_VERLET_HPP
 #define INCLUDE_VERLET_VERLET_HPP 1
 #include <array>
-#include <list>
 #include <vector>
+#include <set>
 
 
 namespace mcac {
