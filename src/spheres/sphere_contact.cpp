@@ -44,117 +44,10 @@ Sphere.h and Sphere.cpp defines the data storage.
 
 
 namespace mcac {
-[[gnu::pure]] SphereContactInfo distance_to_contact_old(const Sphere &sphere_1,
-                                                        const Sphere &sphere_2,
-                                                        const std::array<double, 3> &displacement,
-                                                        const double distance) noexcept {
-    std::array<std::array<double, 3>, 3> rot_mat = get_rot_mat(displacement);
-    return distance_to_contact_old_r(sphere_1, sphere_2, rot_mat, distance);
-}
-[[gnu::pure]] SphereContactInfo distance_to_contact_old_r(const Sphere &sphere_1,
-                                                          const Sphere &sphere_2,
-                                                          const std::array<std::array<double, 3>, 3> &rot_mat,
-                                                          const double distance) noexcept {
-    /*
-     * We use a change of axis system
-     * the center is placed on the mobil sphere
-     * the x axis is chosen to be the movement vector
-     *
-     * Thus we have two rotation to perform : one around z and one around y
-     *
-     * Then a collision is easy to detect :
-     * The distance to the x axis must be less than the sum of the radius
-     *
-     * Moreover we are only interested in collision that can happend in the future,
-     * wich is also easy to detect (x coordinate must be positive)
-     *
-     * Finally we consider 27 possible version of the other sphere in order to take into account
-     * any periodicity effect.
-    */
-
-    double dist_contact = POW_2(sphere_1.get_radius() + sphere_2.get_radius());
-    double dist = distance_2(sphere_1, sphere_2);
-    double minval = std::numeric_limits<double>::infinity(); // infinity is too far to care
-    if (dist <= dist_contact) {
-        // already in contact
-        minval = 0;
-    } else {
-        double box_lenght = sphere_1.physicalmodel->box_lenght;
-        std::array<double, 3> oldpos_1{sphere_1.get_position()};
-        std::array<double, 3> oldpos_2{sphere_2.get_position()};
-        std::array<double, 3> pos{};
-        for (size_t l = 0; l < 3; ++l) {
-            pos[l] = sum(rot_mat[l] * (oldpos_2 - oldpos_1));
-        }
-        std::array<double, 3> perx{box_lenght * rot_mat[0][0],
-                                   box_lenght * rot_mat[1][0],
-                                   box_lenght * rot_mat[2][0],};
-        std::array<double, 3> pery{box_lenght * rot_mat[0][1],
-                                   box_lenght * rot_mat[1][1],
-                                   box_lenght * rot_mat[2][1],};
-        std::array<double, 3> perz{box_lenght * rot_mat[0][2],
-                                   box_lenght * rot_mat[1][2],
-                                   box_lenght * rot_mat[2][2],};
-        for (int i = -1; i <= 1; i++) {
-            for (int j = -1; j <= 1; j++) {
-                for (int k = -1; k <= 1; k++) {
-                    std::array<double, 3> tmp{pos + i * perx + j * pery + k * perz};
-
-                    // in the future
-                    if (tmp[0] < 0.) {
-                        continue;
-                    }
-                    double dist_1 = POW_2(tmp[1]) + POW_2(tmp[2]);
-                    bool end_contact = POW_2(tmp[0] - distance) + dist_1 <= dist_contact;
-                    if ((!end_contact) && distance < tmp[0]) {
-//                         too much distance to travel
-                        continue;
-                    }
-
-                    // collision is possible
-                    if (dist_1 > dist_contact) {
-                        continue;
-                    }
-                    double sol = dist_contact - dist_1;
-                    sol = tmp[0] - sqrt(sol);
-                    minval = MIN(minval, sol);
-                }
-            }
-        }
-    }
-    return SphereContactInfo(minval);
-}
-[[gnu::pure]] std::array<std::array<double, 3>, 3> get_rot_mat(const std::array<double, 3> &displacement) noexcept {
-    double anglez = -atan2(displacement[1], displacement[0]);
-    std::array<std::array<double, 3>, 3> rotz{};
-    rotz[0] = {{cos(anglez), -sin(anglez), 0}};
-    rotz[1] = {{sin(anglez), cos(anglez), 0}};
-    rotz[2] = {{0, 0, 1}};
-    std::array<double, 3> tmp{};
-    for (size_t i = 0; i < tmp.size(); ++i) {
-        tmp[i] = sum(rotz[i] * displacement);
-    }
-    double angley = atan2(tmp[2], tmp[0]);
-    std::array<std::array<double, 3>, 3> roty{};
-    roty[0] = {{cos(angley), 0, sin(angley)}};
-    roty[1] = {{0, 1, 0}};
-    roty[2] = {{-sin(angley), 0, cos(angley)}};
-    std::array<std::array<double, 3>, 3> matrot{};
-    for (size_t i = 0; i < 3; ++i) {
-        for (size_t j = 0; j < 3; ++j) {
-            matrot[i][j] = 0;
-            for (size_t k = 0; k < 3; ++k) {
-                matrot[i][j] += roty[i][k] * rotz[k][j];
-            }
-        }
-    }
-    return matrot;
-}
 [[gnu::pure]] SphereContactInfo distance_to_contact(const Sphere &sphere_1,
                                                     const Sphere &sphere_2,
                                                     const std::array<double, 3> &displacement_vector,
                                                     const double displacement_distance) noexcept {
-    //return distance_to_contact_old(sphere_1, sphere_2, displacement_vector, displacement_distance);
     double dist_contact = sphere_1.get_radius() + sphere_2.get_radius();
     double box_lenght = sphere_1.physicalmodel->box_lenght;
     std::array<double, 3> total_displacement = displacement_vector * displacement_distance;
@@ -233,10 +126,8 @@ namespace mcac {
                                                             const std::array<double, 3> &displacement,
                                                             const double distance) noexcept {
     HalfSphereListContactInfo closest_contact; //infinity by default
-    //std::array<std::array<double, 3>, 3> rot_mat{get_rot_mat(displacement)};
     for (size_t i_sphere_2 = 0; i_sphere_2 < list.size(); i_sphere_2++) {
         SphereContactInfo potential_contact = distance_to_contact(sphere_1, list[i_sphere_2], displacement, distance);
-        //SphereContactInfo potential_contact = distance_to_contact_old_r(sphere_1, list[i_sphere_2], rot_mat, distance);
         if (potential_contact < closest_contact) {
             closest_contact.other_sphere = i_sphere_2;
             closest_contact.distance = potential_contact.distance;
