@@ -66,10 +66,10 @@ public:
     std::vector<size_t> get_neighborhood(const size_t source,
                                          const std::array<double, 3> &direction,
                                          const double distance) const;
-    std::multimap<double, size_t> sort_neighborhood(const size_t moving_aggregate,
-                                                    const std::array<double, 3> &direction,
-                                                    const std::vector<size_t> &neighborhood,
-                                                    const double distance) const;
+    std::multimap<double, size_t> filter_neighborhood(const size_t moving_aggregate,
+                                                      const std::array<double, 3> &direction,
+                                                      const std::vector<size_t> &neighborhood,
+                                                      const double distance) const;
     bool test_free_space(std::array<double, 3> pos, double diameter) const;
     /* I/O */
     void save() {
@@ -94,7 +94,7 @@ private:
     void setpointers();
 public:
     /** Default constructor in local storage */
-    explicit AggregatList(PhysicalModel *) noexcept;
+    explicit AggregatList(PhysicalModel *);
     /** Destructor */
     ~AggregatList() noexcept;
     /** Copy constructor */

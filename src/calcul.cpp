@@ -49,10 +49,10 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
 
         // -- Generating a random direction --
         double thetarandom = random() * 2 * _pi;
-        double phirandom = acos(1 - 2 * random());
-        std::array<double, 3> vectdir{{sin(phirandom) * cos(thetarandom),
-                                       sin(phirandom) * sin(thetarandom),
-                                       cos(phirandom)}};
+        double phirandom = std::acos(1 - 2 * random());
+        std::array<double, 3> vectdir{{std::sin(phirandom) * std::cos(thetarandom),
+                                       std::sin(phirandom) * std::sin(thetarandom),
+                                       std::cos(phirandom)}};
 
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
@@ -98,7 +98,7 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
 
         //$ update of the Aggregates/Spheres
         bool split = false;
-        if (abs(physicalmodel->a_surfgrowth) > 0.) {
+        if (std::abs(physicalmodel->a_surfgrowth) > 0.) {
             //$ Growth of all spheres
             aggregates->croissance_surface(deltatemps);
             split = aggregates->split();

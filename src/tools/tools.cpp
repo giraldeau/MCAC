@@ -74,13 +74,13 @@ std::string resolve_pick_method(PickMethods method) {
         double log_x(std::log(x[i]));
         double log_y(std::log(y[i]));
         sumx += log_x;
-        sumx_2 += POW_2(log_x);
+        sumx_2 += std::pow(log_x, 2);
         sumxy += log_x * log_y;
         sumy += log_y;
-        sumy_2 += POW_2(log_y);
+        sumy_2 += std::pow(log_y, 2);
     }
-    double denom = (n * sumx_2 - POW_2(sumx));
-    if (static_cast<size_t>(n) == 0 || std::fabs(denom) < 1e-9) {
+    double denom = (n * sumx_2 - std::pow(sumx, 2));
+    if (static_cast<size_t>(n) == 0 || std::abs(denom) < 1e-9) {
         // singular matrix. can't solve the problem.
         return {false, 0., 0., 0.};
     }
@@ -89,8 +89,8 @@ std::string resolve_pick_method(PickMethods method) {
 
     /* compute correlation coeff     */
     double r = (sumxy - sumx * sumy / n) /
-               POW_2((sumx_2 - POW_2(sumx) / n) *
-                     (sumy_2 - POW_2(sumy) / n));
+               std::pow((sumx_2 - std::pow(sumx, 2) / n) *
+                        (sumy_2 - std::pow(sumy, 2) / n), 2);
     return {true, a, b, r};
 }
 }  // namespace mcac

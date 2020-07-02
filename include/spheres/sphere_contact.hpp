@@ -27,7 +27,7 @@ namespace mcac {
 SphereContactInfo distance_to_contact(const Sphere &sphere_1,
                                       const Sphere &sphere_2,
                                       const std::array<double, 3> &direction,
-                                      const double distance) noexcept;
+                                      double distance) noexcept;
 HalfSphereListContactInfo distance_to_contact(const Sphere &sphere,
                                               const SphereList &list,
                                               const std::array<double, 3> &direction,

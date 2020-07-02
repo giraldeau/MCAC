@@ -18,15 +18,14 @@
 #ifndef INCLUDE_VERLET_VERLET_HPP
 #define INCLUDE_VERLET_VERLET_HPP 1
 #include <array>
-#include <list>
 #include <vector>
+#include <set>
 
 
 namespace mcac {
 class Verlet {
-public:
-    std::vector<std::vector<std::vector<std::list<size_t> > > > grid;
 private:
+    std::vector<std::vector<std::vector<std::set<size_t> > > > grid;
     size_t n_div{0};
     double width{0};
 public:

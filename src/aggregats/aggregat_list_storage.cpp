@@ -49,7 +49,7 @@ void AggregatList::remove_sphere(const size_t &id) noexcept {
         remove(agg_num);
     }
 }
-AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
+AggregatList::AggregatList(PhysicalModel *the_physical_model):
     ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),
     physicalmodel(the_physical_model),
     maxradius(0.),

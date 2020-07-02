@@ -39,16 +39,16 @@ Sphere.h and Sphere.cpp defines the data storage.
 namespace mcac {
 /* Getters */
 
-[[gnu::pure]] size_t Sphere::get_index() const noexcept {
+[[gnu::pure]]const size_t& Sphere::get_index() const noexcept {
     return index_in_storage;
 }
-[[gnu::pure]] double Sphere::get_volume() const noexcept {
+[[gnu::pure]] const double& Sphere::get_volume() const noexcept {
     return *volume;
 }
-[[gnu::pure]] double Sphere::get_surface() const noexcept {
+[[gnu::pure]] const double& Sphere::get_surface() const noexcept {
     return *surface;
 }
-[[gnu::pure]] double Sphere::get_radius() const noexcept {
+[[gnu::pure]] const double& Sphere::get_radius() const noexcept {
     return *r;
 }
 [[gnu::pure]] std::array<double, 3> Sphere::get_position() const noexcept {
@@ -69,12 +69,12 @@ void Sphere::translate(const std::array<double, 3> &trans) noexcept {
     *y += trans[1];
     *z += trans[2];
 }
-void Sphere::relative_translate(std::array<double, 3> trans) noexcept {
+void Sphere::relative_translate(const std::array<double, 3>& trans) noexcept {
     *rx += trans[0];
     *ry += trans[1];
     *rz += trans[2];
 }
-void Sphere::set_position(std::array<double, 3> newposition) noexcept {
+void Sphere::set_position(const std::array<double, 3>& newposition) noexcept {
 
 //    *x = periodic_position(_newx,physicalmodel->box_lenght);
 //    *y = periodic_position(_newy,physicalmodel->box_lenght);
@@ -84,7 +84,7 @@ void Sphere::set_position(std::array<double, 3> newposition) noexcept {
     *y = newposition[1];
     *z = newposition[2];
 }
-void Sphere::set_relative_position(std::array<double, 3> newposition) noexcept {
+void Sphere::set_relative_position(const std::array<double, 3>& newposition) noexcept {
     *rx = newposition[0];
     *ry = newposition[1];
     *rz = newposition[2];
@@ -141,8 +141,8 @@ void Sphere::print() const noexcept {
 
 void Sphere::update_vol_and_surf() noexcept {
     if (agg_label > -1) {
-        *volume = _volume_factor * POW_3(*r);
-        *surface = _surface_factor * POW_2(*r);
+        *volume = _volume_factor * std::pow(*r, 3);
+        *surface = _surface_factor * std::pow(*r, 2);
     }
 }
 }  // namespace mcac

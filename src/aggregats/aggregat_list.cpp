@@ -38,7 +38,7 @@ namespace mcac {
 [[gnu::pure]] size_t AggregatList::pick_random() const {
     //$ Pick a random sphere
     double val_alea = random() * cumulative_time_steps[size() - 1];
-    long n = lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), val_alea)
+    long n = std::lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), val_alea)
              - cumulative_time_steps.begin();
     size_t num_agg = index_sorted_time_steps[static_cast<size_t >(n)];
     return num_agg;
@@ -74,7 +74,7 @@ void AggregatList::add(size_t n) {
 void AggregatList::refresh() {
     max_time_step = *list[0]->time_step;
     for (const Aggregate *agg : list) {
-        max_time_step = MAX(*agg->time_step, max_time_step);
+        max_time_step = std::max(*agg->time_step, max_time_step);
     }
     avg_npp = static_cast<double>(spheres.size()) / static_cast<double>(size());
 }
@@ -82,13 +82,13 @@ template<typename T>
 std::vector<size_t> sort_indexes(const std::vector<T> &v) {
     // initialize original index locations
     std::vector<size_t> idx(v.size());
-    iota(idx.begin(), idx.end(), 0);
+    std::iota(idx.begin(), idx.end(), 0);
 
     // sort indexes based on comparing values in v
-    sort(idx.begin(), idx.end(),
-         [&v](size_t i_1, size_t i_2) {
-             return v[i_1] < v[i_2];
-         });
+    std::sort(idx.begin(), idx.end(),
+              [&v](size_t i_1, size_t i_2) {
+                  return v[i_1] < v[i_2];
+              });
     return idx;
 }
 void AggregatList::sort_time_steps(double factor) {
@@ -111,7 +111,9 @@ void AggregatList::duplication() {
     double old_l = physicalmodel->box_lenght;
     physicalmodel->box_lenght *= 2;
     physicalmodel->n_monomeres *= 8;
-
+    for (Aggregate *agg : list) {
+        agg->unset_verlet();
+    }
     // TODO(pouxa): Rework this in order not to to it aggregate by aggregate
 
     for (size_t iagg = 0; iagg < old_n_agg; iagg++) {
@@ -122,10 +124,8 @@ void AggregatList::duplication() {
                         Aggregate *new_agg =
                             ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
                         new_agg->label = size() - 1;
-                        new_agg->set_verlet(&verlet);
                         setpointers();
                         spheres.setpointers();
-                        new_agg->set_verlet(&verlet); // TODO(pouxa): remove?
                         std::array<double, 3> vec_move = {i * old_l,
                                                           j * old_l,
                                                           k * old_l};
@@ -138,13 +138,13 @@ void AggregatList::duplication() {
     //$ update Verlet
     verlet = Verlet(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
     for (Aggregate *agg : list) {
-        agg->update_verlet_index();
+        agg->set_verlet(&verlet);
     }
 }
 size_t AggregatList::merge(AggregateContactInfo contact_info) {
-    const size_t _keeped(MIN(contact_info.moving_aggregate,
+    const size_t _keeped(std::min(contact_info.moving_aggregate,
                              contact_info.other_aggregate));
-    const size_t _removed(MAX(contact_info.moving_aggregate,
+    const size_t _removed(std::max(contact_info.moving_aggregate,
                               contact_info.other_aggregate));
 
     // compute proper time of the final aggregate
@@ -185,12 +185,17 @@ AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
     std::vector<size_t> neighborhood(get_neighborhood(source, direction, distance));
 
     // Assimilate Aggregate as sphere to drasticly speed-up search
-    std::multimap<double, size_t> sorted_neighborhood(sort_neighborhood(source, direction, neighborhood, distance));
+    std::multimap<double, size_t> filtered_neighborhood(filter_neighborhood(source, direction, neighborhood, distance));
     AggregateContactInfo closest_contact; //infinity by default
 
     //$ loop on the agregates potentially in contact
-    for (auto suspect : sorted_neighborhood) { //For every aggregate that could be in contact
+    for (auto suspect : filtered_neighborhood) { //For every aggregate that could be in contact
         auto[suspect_distance, id] = suspect;
+
+        if ( closest_contact.distance <= 1e-15) {
+            // cannot be closest than that
+            break;
+        }
 
         if ( closest_contact.distance < suspect_distance) {
             // We already found the closests one
@@ -228,10 +233,10 @@ std::vector<size_t> AggregatList::get_neighborhood(const size_t source,
     //return neighborhood;
 }
 //############################## Determination of the contacts between agrgates #######################################
-std::multimap<double, size_t> AggregatList::sort_neighborhood(const size_t moving_aggregate,
-                                                              const std::array<double, 3>& direction,
-                                                              const std::vector<size_t> &neighborhood,
-                                                              const double distance) const {
+std::multimap<double, size_t> AggregatList::filter_neighborhood(const size_t moving_aggregate,
+                                                                const std::array<double, 3>& direction,
+                                                                const std::vector<size_t> &neighborhood,
+                                                                const double distance) const {
     std::multimap<double, size_t> sorted_neighborhood;
     Sphere sphere_me(*list[moving_aggregate]);
     Sphere sphere_other(*list[moving_aggregate]);
@@ -241,7 +246,10 @@ std::multimap<double, size_t> AggregatList::sort_neighborhood(const size_t movin
         sphere_other.init_val(list[agg_other]->get_position(),
                               *list[agg_other]->rmax);
         SphereContactInfo potential_contact = distance_to_contact(sphere_me, sphere_other, direction, distance);
-        sorted_neighborhood.insert(std::pair<double, size_t>(potential_contact, agg_other));
+        if ( potential_contact.distance < distance) {
+            // not too far
+            sorted_neighborhood.insert(std::pair<double, size_t>(potential_contact.distance, agg_other));
+        }
     }
     return sorted_neighborhood;
 }
