@@ -82,13 +82,13 @@ namespace mcac {
                 std::array<double, 3> diff = pos3 - pos1;
 
                 // shortcut
-                if (abs(diff[0]) > zone_dimension[0]) {
+                if (fabs(diff[0]) > zone_dimension[0]) {
                     continue;
                 }
-                if (abs(diff[1]) > zone_dimension[1]) {
+                if (fabs(diff[1]) > zone_dimension[1]) {
                     continue;
                 }
-                if (abs(diff[2]) > zone_dimension[2]) {
+                if (fabs(diff[2]) > zone_dimension[2]) {
                     continue;
                 }
                 if (relative_distance_2(pos1, pos3) <= dist_contact_2) {
