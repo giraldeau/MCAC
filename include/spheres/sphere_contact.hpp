@@ -24,10 +24,19 @@
 
 
 namespace mcac {
+SphereContactInfo distance_to_contact_old_r(const Sphere &sphere_1,
+                                            const Sphere &sphere_2,
+                                            const std::array<std::array<double, 3>, 3> &rot_mat,
+                                            double distance) noexcept;
+std::pair<bool, double> sphere_collision_old(const Sphere &sphere_1,
+                                             const Sphere &sphere_2,
+                                             const std::array<double, 3> &displacement,
+                                             double distance) noexcept;
+std::array<std::array<double, 3>, 3> get_rot_mat(const std::array<double, 3> &displacement) noexcept;
 SphereContactInfo distance_to_contact(const Sphere &sphere_1,
                                       const Sphere &sphere_2,
                                       const std::array<double, 3> &direction,
-                                      const double distance) noexcept;
+                                      double distance) noexcept;
 HalfSphereListContactInfo distance_to_contact(const Sphere &sphere,
                                               const SphereList &list,
                                               const std::array<double, 3> &direction,

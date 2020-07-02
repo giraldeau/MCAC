@@ -166,6 +166,11 @@ AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
     for (auto suspect : sorted_neighborhood) { //For every aggregate that could be in contact
         auto[suspect_distance, id] = suspect;
 
+        if ( closest_contact.distance <= 1e-15) {
+            // cannot be closest than that
+            break;
+        }
+
         if ( closest_contact.distance < suspect_distance) {
             // We already found the closests one
             break;
@@ -215,7 +220,7 @@ std::multimap<double, size_t> AggregatList::sort_neighborhood(const size_t movin
         sphere_other.init_val(list[agg_other]->get_position(),
                               *list[agg_other]->rmax);
         SphereContactInfo potential_contact = distance_to_contact(sphere_me, sphere_other, direction, distance);
-        sorted_neighborhood.insert(std::pair<double, size_t>(potential_contact, agg_other));
+        sorted_neighborhood.insert(std::pair<double, size_t>(potential_contact.distance, agg_other));
     }
     return sorted_neighborhood;
 }
