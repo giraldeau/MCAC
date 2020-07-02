@@ -21,6 +21,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 #include "constants.hpp"
 
 
