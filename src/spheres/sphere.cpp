@@ -133,8 +133,8 @@ void Sphere::print() const noexcept {
 
 void Sphere::update_vol_and_surf() noexcept {
     if (agg_label > -1) {
-        *volume = _volume_factor * POW_3(*r);
-        *surface = _surface_factor * POW_2(*r);
+        *volume = _volume_factor * std::pow(*r, 3);
+        *surface = _surface_factor * std::pow(*r, 2);
     }
 }
 }  // namespace mcac

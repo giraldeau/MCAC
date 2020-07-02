@@ -41,12 +41,12 @@ Intersection::Intersection(const Sphere &sphere_1, const Sphere &sphere_2,
 
     //$ Check if they are in contact
     if (dist < radius_1 + radius_2) {
-        if (dist >= fabs(radius_1 - radius_2)) {
+        if (dist >= std::fdim(radius_1, radius_2)) {
             //$ get_volume of the intersection is returned
-            double h_1 = (POW_2(radius_2) - POW_2((radius_1 - dist))) / (2. * dist);
-            double h_2 = (POW_2(radius_1) - POW_2((radius_2 - dist))) / (2. * dist);
-            volume_1 = _pi * POW_2(h_1) * (3 * radius_1 - h_1) / 3.;
-            volume_2 = _pi * POW_2(h_2) * (3 * radius_2 - h_2) / 3.;
+            double h_1 = (std::pow(radius_2, 2) - std::pow((radius_1 - dist), 2)) / (2. * dist);
+            double h_2 = (std::pow(radius_1, 2) - std::pow((radius_2 - dist), 2)) / (2. * dist);
+            volume_1 = _pi * std::pow(h_1, 2) * (3 * radius_1 - h_1) / 3.;
+            volume_2 = _pi * std::pow(h_2, 2) * (3 * radius_2 - h_2) / 3.;
             surface_1 = 2 * _pi * radius_1 * h_1;
             surface_2 = 2 * _pi * radius_2 * h_2;
         }

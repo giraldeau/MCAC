@@ -98,9 +98,7 @@ Aggregate::Aggregate(AggregatList *aggregat_list, size_t newlabel) noexcept:
     myspheres(*aggregat_list->physicalmodel, 1) {
 }
 Aggregate::~Aggregate() noexcept {
-    if (static_cast<bool>(verlet)) {
-        verlet->remove(get_label(), index_verlet);
-    }
+    unset_verlet();
 }
 /** Copy constructor */
 Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list) noexcept:
