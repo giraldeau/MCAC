@@ -85,6 +85,8 @@ void Aggregate::decrease_label() noexcept {
 }
 void Aggregate::set_verlet(Verlet *newverlet) noexcept {
     verlet = newverlet;
+    index_verlet = compute_index_verlet();
+    verlet->add(get_label(), index_verlet);
 }
 void Aggregate::unset_verlet() noexcept {
     verlet = nullptr;
@@ -102,7 +104,7 @@ void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
     *z = newposition[2];
     if (static_cast<bool>(verlet)) {
         //$ update Verlet
-        update_verlet_index();
+        update_verlet();
     }
 }
 void Aggregate::translate(std::array<double, 3> vector) noexcept {
@@ -126,9 +128,6 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
                      SphereList *spheres,
                      double sphere_diameter) noexcept {
     physicalmodel = &new_physicalmodel;
-    if (static_cast<bool>(verlet)) {
-        verlet->remove(label, index_verlet);
-    }
     label = new_label;
     index_in_storage = new_label;
     if (static_cast<bool>(external_storage)) {
@@ -136,8 +135,9 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     }
     setpointers();
     set_position(position);
-    verlet = new_verlet;
-    update_verlet_index();
+    if (static_cast<bool>(new_verlet)) {
+        set_verlet(new_verlet);
+    }
     (*spheres)[label].set_label(int(label));
     (*spheres)[label].init_val(position, sphere_diameter / 2);
     myspheres = SphereList(spheres, {label});
@@ -335,14 +335,24 @@ void Aggregate::print() const noexcept {
     std::cout << "    Proper time       : " << *time << std::endl;
     myspheres.print();
 }
-void Aggregate::update_verlet_index() noexcept {
+std::array<size_t, 3>  Aggregate::compute_index_verlet() noexcept {
     double step = double(physicalmodel->n_verlet_divisions) / physicalmodel->box_lenght;
     std::array<size_t, 3> new_verlet_index{size_t(floor((*x) * step)),
                                            size_t(floor((*y) * step)),
                                            size_t(floor((*z) * step))};
-    verlet->remove(get_label(), index_verlet);
-    index_verlet = new_verlet_index;
-    verlet->add(get_label(), index_verlet);
+    return new_verlet_index;
+}
+void Aggregate::update_verlet() noexcept {
+    std::array<size_t, 3> new_verlet_index = compute_index_verlet();
+    auto[a, b, c] = new_verlet_index;
+    auto[i, j, k] = index_verlet;
+    if (a != i ||
+        b != j ||
+        c != k ) {
+        verlet->remove(get_label(), index_verlet);
+        index_verlet = new_verlet_index;
+        verlet->add(get_label(), new_verlet_index);
+    }
 }
 void Aggregate::update_distances() noexcept {
     distances.resize(n_spheres);

@@ -24,9 +24,8 @@
 
 namespace mcac {
 class Verlet {
-public:
-    std::vector<std::vector<std::vector<std::list<size_t> > > > grid;
 private:
+    std::vector<std::vector<std::vector<std::set<size_t> > > > grid;
     size_t n_div{0};
     double width{0};
 public:

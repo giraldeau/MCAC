@@ -61,7 +61,8 @@ private:
     bool padding2,padding3,padding4;
     int padding1;
     */
-    void update_verlet_index() noexcept;
+    std::array<size_t, 3>  compute_index_verlet() noexcept;
+    void update_verlet() noexcept;
     void update_distances() noexcept;
     double internal_sphere_distance(size_t i, size_t j) const noexcept;
     double sphere_distance_center(size_t i) const noexcept;

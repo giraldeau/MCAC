@@ -95,6 +95,9 @@ void AggregatList::duplication() {
     physicalmodel->box_lenght *= 2;
     physicalmodel->n_monomeres *= 8;
 
+    for (Aggregate *agg : list) {
+        agg->unset_verlet();
+    }
     // TODO(pouxa): Rework this in order not to to it aggregate by aggregate
 
     for (size_t iagg = 0; iagg < old_n_agg; iagg++) {
@@ -105,7 +108,6 @@ void AggregatList::duplication() {
                         Aggregate *new_agg =
                             ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
                         new_agg->label = size() - 1;
-                        new_agg->set_verlet(&verlet);
                         setpointers();
                         for (Aggregate *agg : list) {
                             agg->setpointers();
@@ -113,7 +115,6 @@ void AggregatList::duplication() {
                                 sph->setpointers();
                             }
                         }
-                        new_agg->set_verlet(&verlet); // TODO(pouxa): remove?
                         std::array<double, 3> vec_move = {i * old_l,
                                                           j * old_l,
                                                           k * old_l};
@@ -126,7 +127,7 @@ void AggregatList::duplication() {
     //$ update Verlet
     verlet = Verlet(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
     for (Aggregate *agg : list) {
-        agg->update_verlet_index();
+        agg->set_verlet(&verlet);
     }
 }
 size_t AggregatList::merge(size_t first, size_t second) {
