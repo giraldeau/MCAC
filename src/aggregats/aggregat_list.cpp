@@ -159,11 +159,11 @@ AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
     std::vector<size_t> neighborhood(get_neighborhood(source, direction, distance));
 
     // Assimilate Aggregate as sphere to drasticly speed-up search
-    std::multimap<double, size_t> sorted_neighborhood(sort_neighborhood(source, direction, neighborhood, distance));
+    std::multimap<double, size_t> filtered_neighborhood(filter_neighborhood(source, direction, neighborhood, distance));
     AggregateContactInfo closest_contact; //infinity by default
 
     //$ loop on the agregates potentially in contact
-    for (auto suspect : sorted_neighborhood) { //For every aggregate that could be in contact
+    for (auto suspect : filtered_neighborhood) { //For every aggregate that could be in contact
         auto[suspect_distance, id] = suspect;
 
         if ( closest_contact.distance <= 1e-15) {
@@ -207,10 +207,10 @@ std::vector<size_t> AggregatList::get_neighborhood(const size_t source,
     //return neighborhood;
 }
 //############################## Determination of the contacts between agrgates #######################################
-std::multimap<double, size_t> AggregatList::sort_neighborhood(const size_t moving_aggregate,
-                                                              const std::array<double, 3>& direction,
-                                                              const std::vector<size_t> &neighborhood,
-                                                              const double distance) const {
+std::multimap<double, size_t> AggregatList::filter_neighborhood(const size_t moving_aggregate,
+                                                                const std::array<double, 3>& direction,
+                                                                const std::vector<size_t> &neighborhood,
+                                                                const double distance) const {
     std::multimap<double, size_t> sorted_neighborhood;
     Sphere sphere_me(*list[moving_aggregate]);
     Sphere sphere_other(*list[moving_aggregate]);
@@ -220,7 +220,10 @@ std::multimap<double, size_t> AggregatList::sort_neighborhood(const size_t movin
         sphere_other.init_val(list[agg_other]->get_position(),
                               *list[agg_other]->rmax);
         SphereContactInfo potential_contact = distance_to_contact(sphere_me, sphere_other, direction, distance);
-        sorted_neighborhood.insert(std::pair<double, size_t>(potential_contact.distance, agg_other));
+        if ( potential_contact.distance < distance) {
+            // not too far
+            sorted_neighborhood.insert(std::pair<double, size_t>(potential_contact.distance, agg_other));
+        }
     }
     return sorted_neighborhood;
 }

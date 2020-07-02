@@ -154,7 +154,7 @@ namespace mcac {
                                                     const Sphere &sphere_2,
                                                     const std::array<double, 3> &displacement_vector,
                                                     const double displacement_distance) noexcept {
-    return distance_to_contact_old(sphere_1, sphere_2, displacement_vector, displacement_distance);
+    //return distance_to_contact_old(sphere_1, sphere_2, displacement_vector, displacement_distance);
     double dist_contact = sphere_1.get_radius() + sphere_2.get_radius();
     double box_lenght = sphere_1.physicalmodel->box_lenght;
     std::array<double, 3> total_displacement = displacement_vector * displacement_distance;
@@ -233,10 +233,10 @@ namespace mcac {
                                                             const std::array<double, 3> &displacement,
                                                             const double distance) noexcept {
     HalfSphereListContactInfo closest_contact; //infinity by default
-    std::array<std::array<double, 3>, 3> rot_mat{get_rot_mat(displacement)};
+    //std::array<std::array<double, 3>, 3> rot_mat{get_rot_mat(displacement)};
     for (size_t i_sphere_2 = 0; i_sphere_2 < list.size(); i_sphere_2++) {
-        //SphereContactInfo potential_contact = distance_to_contact(sphere_1, list[i_sphere_2], displacement, distance);
-        SphereContactInfo potential_contact = distance_to_contact_old_r(sphere_1, list[i_sphere_2], rot_mat, distance);
+        SphereContactInfo potential_contact = distance_to_contact(sphere_1, list[i_sphere_2], displacement, distance);
+        //SphereContactInfo potential_contact = distance_to_contact_old_r(sphere_1, list[i_sphere_2], rot_mat, distance);
         if (potential_contact < closest_contact) {
             closest_contact.other_sphere = i_sphere_2;
             closest_contact.distance = potential_contact.distance;
