@@ -71,19 +71,19 @@ public:
     std::array<size_t, 3> index_verlet;
     SphereList myspheres;
     /* getters */
-    double get_rg() const noexcept;
-    double get_f_agg() const noexcept;
-    double get_lpm() const noexcept;
-    double get_time_step() const noexcept;
-    double get_rmax() const noexcept;
-    double get_agregat_volume() const noexcept;
-    double get_agregat_surface() const noexcept;
+    const double &get_rg() const noexcept;
+    const double &get_f_agg() const noexcept;
+    const double &get_lpm() const noexcept;
+    const double &get_time_step() const noexcept;
+    const double &get_rmax() const noexcept;
+    const double &get_agregat_volume() const noexcept;
+    const double &get_agregat_surface() const noexcept;
     std::array<double, 3> get_position() const noexcept;
     std::array<double, 3> get_relative_position() const noexcept;
     std::array<size_t, 3> get_verlet_index() const noexcept;
-    double get_time() const noexcept;
-    size_t size() const noexcept;
-    size_t get_label() const noexcept;
+    const double &get_time() const noexcept;
+    const size_t &size() const noexcept;
+    const size_t &get_label() const noexcept;
     /* modifiers */
     void decrease_label() noexcept;
     void set_verlet(Verlet *) noexcept;

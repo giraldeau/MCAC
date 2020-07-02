@@ -27,25 +27,25 @@
 
 namespace mcac {
 /* getters */
-[[gnu::pure]] double Aggregate::get_rg() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_rg() const noexcept {
     return *rg;
 }
-[[gnu::pure]] double Aggregate::get_f_agg() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_f_agg() const noexcept {
     return *f_agg;
 }
-[[gnu::pure]] double Aggregate::get_lpm() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_lpm() const noexcept {
     return *lpm;
 }
-[[gnu::pure]] double Aggregate::get_time_step() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_time_step() const noexcept {
     return *time_step;
 }
-[[gnu::pure]] double Aggregate::get_rmax() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_rmax() const noexcept {
     return *rmax;
 }
-[[gnu::pure]] double Aggregate::get_agregat_volume() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_agregat_volume() const noexcept {
     return *agregat_volume;
 }
-[[gnu::pure]] double Aggregate::get_agregat_surface() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_agregat_surface() const noexcept {
     return *agregat_surface;
 }
 [[gnu::pure]] std::array<double, 3> Aggregate::get_position() const noexcept {
@@ -59,13 +59,13 @@ namespace mcac {
 [[gnu::pure]] std::array<size_t, 3> Aggregate::get_verlet_index() const noexcept {
     return index_verlet;
 }
-[[gnu::pure]] double Aggregate::get_time() const noexcept {
+[[gnu::pure]] const double &Aggregate::get_time() const noexcept {
     return *time;
 }
-[[gnu::pure]] size_t Aggregate::size() const noexcept {
+[[gnu::pure]] const size_t &Aggregate::size() const noexcept {
     return n_spheres;
 }
-[[gnu::pure]] size_t Aggregate::get_label() const noexcept {
+[[gnu::pure]] const size_t &Aggregate::get_label() const noexcept {
     return label;
 }
 /* modifiers */
@@ -208,7 +208,7 @@ void Aggregate::compute_volume() noexcept {
         {
             double dist = internal_sphere_distance(i, j);
 #else
-        for (const auto &[j, dist] : distances[i]){
+        for (const auto &[j, dist] : distances[i]) {
             if (j <= i) {
                 continue;
             }
@@ -362,14 +362,13 @@ void Aggregate::update_distances() noexcept {
         for (size_t j = i + 1; j < _loopsize; j++) {
             // Compute the distance between sphere i and j without taking periodicity into account
             double dist = relative_distance(myspheres[i], myspheres[j]);
-
 #ifdef FULL_INTERNAL_DISTANCES
             distances[i][j] = dist;
             // distances are symetric !
             distances[j][i] = dist;
 #else
             // if in contact (with some tolerence)
-            if (dist <= (1. + 1e-10)*(myspheres[i].get_radius() + myspheres[j].get_radius())) {
+            if (dist <= (1. + 1e-10) * (myspheres[i].get_radius() + myspheres[j].get_radius())) {
                 distances[i][j] = dist;
                 // distances are symetric !
                 distances[j][i] = dist;
@@ -392,7 +391,6 @@ double Aggregate::internal_sphere_distance(size_t i, size_t j) const noexcept {
     if (it != distances[ii].end()) {
         return it->second;
     }
-
     return std::numeric_limits<double>::infinity();
 #endif
 }
