@@ -50,7 +50,11 @@ private:
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
 
-    std::vector<std::list<std::pair<size_t, double> > > distances;
+#ifdef FULL_INTERNAL_DISTANCES
+    std::vector<std::vector<double> > distances;
+#else
+    std::vector<std::unordered_map<size_t, double> > distances;
+#endif
     std::vector<double> distances_center;
     std::vector<double> volumes;
     std::vector<double> surfaces;
@@ -58,7 +62,8 @@ private:
     bool padding2,padding3,padding4;
     int padding1;
     */
-    void update_verlet_index() noexcept;
+    std::array<size_t, 3>  compute_index_verlet() noexcept;
+    void update_verlet() noexcept;
     void update_distances() noexcept;
     double internal_sphere_distance(size_t i, size_t j) const noexcept;
     double sphere_distance_center(size_t i) const noexcept;
@@ -68,19 +73,19 @@ public:
     std::array<size_t, 3> index_verlet;
     SphereList myspheres;
     /* getters */
-    double get_rg() const noexcept;
-    double get_f_agg() const noexcept;
-    double get_lpm() const noexcept;
-    double get_time_step() const noexcept;
-    double get_rmax() const noexcept;
-    double get_agregat_volume() const noexcept;
-    double get_agregat_surface() const noexcept;
+    const double &get_rg() const noexcept;
+    const double &get_f_agg() const noexcept;
+    const double &get_lpm() const noexcept;
+    const double &get_time_step() const noexcept;
+    const double &get_rmax() const noexcept;
+    const double &get_agregat_volume() const noexcept;
+    const double &get_agregat_surface() const noexcept;
     std::array<double, 3> get_position() const noexcept;
     std::array<double, 3> get_relative_position() const noexcept;
     std::array<size_t, 3> get_verlet_index() const noexcept;
-    double get_time() const noexcept;
-    size_t size() const noexcept;
-    size_t get_label() const noexcept;
+    const double &get_time() const noexcept;
+    const size_t &size() const noexcept;
+    const size_t &get_label() const noexcept;
     /* modifiers */
     void decrease_label() noexcept;
     void set_verlet(Verlet *) noexcept;

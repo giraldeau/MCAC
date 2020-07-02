@@ -23,19 +23,24 @@
 
 namespace mcac {
 void Verlet::remove(size_t id, std::array<size_t, 3> index) {
-    grid[index[0]][index[1]][index[2]].remove(id);
+    auto cell = &grid[index[0]][index[1]][index[2]];
+    auto it = cell->find(id);
+    if (it != cell->end()) {
+        cell->erase(it);
+    }
 }
 void Verlet::add(size_t id, std::array<size_t, 3> index) {
-    grid[index[0]][index[1]][index[2]].push_front(id);
+    auto cell = &grid[index[0]][index[1]][index[2]];
+    cell->insert(id);
 }
 /* Default constructor */
 Verlet::Verlet(size_t new_n_div, double new_width) :
     grid(new_n_div) {
     n_div = new_n_div;
     width = new_width;
-    for (std::vector<std::vector<std::list<size_t> > > &x_plane : grid) {
+    for (auto &x_plane : grid) {
         x_plane.resize(n_div);
-        for (std::vector<std::list<size_t> > &y_line : x_plane) {
+        for (auto &y_line : x_plane) {
             y_line.resize(n_div);
         }
     }

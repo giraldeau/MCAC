@@ -34,7 +34,7 @@ void AggregatList::setpointers() {
     ptr_deb = newdeb;
     ptr_fin = newfin;
 }
-AggregatList::AggregatList(PhysicalModel *the_physical_model) noexcept:
+AggregatList::AggregatList(PhysicalModel *the_physical_model):
     ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),
     physicalmodel(the_physical_model),
     maxradius(0.),
