@@ -62,6 +62,7 @@ message(STATUS "")
 message(STATUS "Flags:")
 
 target_link_libraries(${PROJECT_NAME} stdc++fs)
+target_link_libraries(${PROJECT_NAME} unwind)
 target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
 add_dependencies(${PROJECT_NAME} GSL_project)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../ext_bin/GSL/include)
@@ -148,7 +149,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 #                                -Wno-switch-enum -Wno-type-limits -Wno-unused-but-set-variable -Wno-pedantic")
 
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "-g -march=native ")
+    set(CMAKE_CXX_FLAGS "-g -march=native")
     set(CMAKE_CXX_FLAGS_RELEASE " -Ofast") #
     set(CMAKE_CXX_FLAGS_DEBUG "-fcheck-new -ggdb3 -gpubnames -g3  -O0  -ftrapv \
                                 -Wall -Wextra -Wpedantic -Weverything \
