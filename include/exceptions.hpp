@@ -24,6 +24,7 @@
 #include <cstring>
 #include "constants.hpp"
 
+std::string Backtrace(int skip = 2);
 
 namespace mcac {
 class BaseException : public std::exception {
@@ -33,10 +34,9 @@ public:
     std::string message{""};
     ErrorCodes code{ErrorCodes::UNKNOWN_ERROR};
     void write_message() {
-        if (detail.empty()) {
-            message = name;
-        } else {
-            message = name + ": " + detail;
+        message = Backtrace() + "\n" + name;
+        if (!detail.empty()) {
+            message += ": " + detail;
         }
     }
     BaseException() {
