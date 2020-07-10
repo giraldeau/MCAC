@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
         mcac::PhysicalModel physicalmodel(argv[1]);
         mcac::init_random();
         mcac::AggregatList aggregates(&physicalmodel);
-        mcac::calcul(&physicalmodel, &aggregates);
+        mcac::calcul(physicalmodel, aggregates);
     }
     catch (const mcac::BaseException &e) {
         std::cout << e.what() << std::endl;

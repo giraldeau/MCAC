@@ -22,7 +22,7 @@
 
 
 namespace mcac {
-void calcul(PhysicalModel *, AggregatList *);
+void calcul(PhysicalModel &, AggregatList &);
 }  // namespace mcac
 
 #endif //INCLUDE_CALCUL_HPP
