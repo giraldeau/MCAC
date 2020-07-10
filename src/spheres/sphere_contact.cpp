@@ -49,10 +49,18 @@ namespace mcac {
                                                     const std::array<double, 3> &displacement_vector,
                                                     const double displacement_distance) noexcept {
     double dist_contact = sphere_1.get_radius() + sphere_2.get_radius();
+    double dist_contact_2 = std::pow(dist_contact, 2);
     double box_lenght = sphere_1.physicalmodel->box_lenght;
-    std::array<double, 3> total_displacement = displacement_vector * displacement_distance;
     std::array<double, 3> pos1 = sphere_1.get_position();
     std::array<double, 3> pos2 = sphere_2.get_position();
+
+    if (distance_2(pos1, pos2, box_lenght) <= dist_contact_2) {
+        // already in contact
+        return SphereContactInfo(0.);
+    }
+
+    std::array<double, 3> total_displacement = displacement_vector * displacement_distance;
+
     std::array<int, 3> nper{0, 0, 0};
     std::array<double, 3> zone_dimension{0., 0., 0.};
 
@@ -71,7 +79,6 @@ namespace mcac {
         nper[l] = static_cast<int>(std::floor(zone_dimension[l] / box_lenght));
     }
     double res = std::numeric_limits<double>::infinity(); // infinity is too far to care
-    double dist_contact_2 = std::pow(dist_contact, 2);
     for (int i = 0; i <= nper[0]; i++) {
         for (int j = 0; j <= nper[1]; j++) {
             for (int k = 0; k <= nper[2]; k++) {
@@ -88,11 +95,6 @@ namespace mcac {
                     continue;
                 }
                 if (std::abs(diff[2]) > zone_dimension[2]) {
-                    continue;
-                }
-                if (relative_distance_2(pos1, pos3) <= dist_contact_2) {
-                    // already in contact
-                    res = 0.;
                     continue;
                 }
                 double proj = diff[0] * displacement_vector[0] +
