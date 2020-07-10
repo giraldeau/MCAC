@@ -47,7 +47,7 @@ void SphereList::setpointers() {
     if ((newdeb == ptr_deb) && (newfin == ptr_fin)) {
         return;
     }
-    for (Sphere *mysphere : list) {
+    for (const auto& mysphere : list) {
         mysphere->setpointers();
     }
     ptr_deb = newdeb;
@@ -109,7 +109,7 @@ SphereList::SphereList(const SphereList &other, SphereList *sphere_list) noexcep
     writer(new ThreadedIO(*other.physicalmodel, size())),
     last_saved(other.last_saved),
     physicalmodel(other.physicalmodel) {
-    for (Sphere *s: list) {
+    for (const auto& s: list) {
         s->physicalmodel = physicalmodel;
     }
     setpointers();

@@ -54,7 +54,7 @@ void SphereList::init(const PhysicalModel &physical_model, size_t size) {
     setpointers();
 }
 void SphereList::decrease_label() noexcept {
-    for (Sphere *mysphere : list) {
+    for (const auto& mysphere : list) {
         mysphere->decrease_label();
     }
 }
@@ -65,7 +65,7 @@ void SphereList::print() const {
     } else {
         std::cout << "  Without external Storage" << std::endl;
     }
-    for (const Sphere *s : list) {
+    for (const auto& s : list) {
         s->print();
     }
 }
@@ -73,7 +73,7 @@ void SphereList::print() const {
  * ########################################### grow all spheres ################################################
  * #############################################################################################################*/
 void SphereList::croissance_surface(double dt) noexcept {
-    for (Sphere *mysphere : list) {
+    for (const auto& mysphere : list) {
         mysphere->croissance_surface(dt);
     }
 }

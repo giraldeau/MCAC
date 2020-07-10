@@ -130,7 +130,7 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list) noexce
     index_verlet({{0, 0, 0}}),
     myspheres(other.myspheres, &aggregat_list->spheres) {
     setpointers();
-    for (Sphere *s : myspheres) {
+    for (const auto& s : myspheres) {
         s->set_label(long(index_in_storage));
     }
 }

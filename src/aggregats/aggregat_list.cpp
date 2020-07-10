@@ -47,7 +47,7 @@ namespace mcac {
     // TODO(pouxa): cache result
     double time = *list[0]->time;
     size_t latest = 0;
-    for (const Aggregate *agg : list) {
+    for (const auto& agg : list) {
         if (*agg->time < time) {
             time = *agg->time;
             latest = agg->label;
@@ -73,7 +73,7 @@ void AggregatList::add(size_t n) {
 }
 void AggregatList::refresh() {
     max_time_step = *list[0]->time_step;
-    for (const Aggregate *agg : list) {
+    for (const auto& agg : list) {
         max_time_step = std::max(*agg->time_step, max_time_step);
     }
     avg_npp = static_cast<double>(spheres.size()) / static_cast<double>(size());
@@ -111,7 +111,7 @@ void AggregatList::duplication() {
     double old_l = physicalmodel->box_lenght;
     physicalmodel->box_lenght *= 2;
     physicalmodel->n_monomeres *= 8;
-    for (Aggregate *agg : list) {
+    for (const auto& agg : list) {
         agg->unset_verlet();
     }
     // TODO(pouxa): Rework this in order not to to it aggregate by aggregate
@@ -121,7 +121,7 @@ void AggregatList::duplication() {
             for (int j = 0; j <= 1; j++) {
                 for (int k = 0; k <= 1; k++) {
                     if (i != 0 or j != 0 or k != 0) {
-                        Aggregate *new_agg =
+                        auto* new_agg =
                             ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
                         new_agg->label = size() - 1;
                         setpointers();
@@ -137,7 +137,7 @@ void AggregatList::duplication() {
     }
     //$ update Verlet
     verlet = Verlet(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
-    for (Aggregate *agg : list) {
+    for (const auto& agg : list) {
         agg->set_verlet(&verlet);
     }
 }
@@ -269,7 +269,7 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) con
 }
 void AggregatList::croissance_surface(double dt) {
     spheres.croissance_surface(dt);
-    for (Sphere *sphere : spheres) {
+    for (const auto& sphere : spheres) {
         if (sphere->get_radius() <= 0) {
             remove_sphere(sphere->get_index());
         }

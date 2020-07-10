@@ -28,7 +28,7 @@ void AggregatList::setpointers() {
     if ((newdeb == ptr_deb) && (newfin == ptr_fin)) {
         return;
     }
-    for (Aggregate *aggregate : list) {
+    for (const auto& aggregate : list) {
         aggregate->setpointers();
     }
     ptr_deb = newdeb;
@@ -77,7 +77,7 @@ AggregatList::~AggregatList() noexcept {
     writer = nullptr;
 
     //#pragma omp simd
-    for (Aggregate *aggregate : list) {
+    for (const auto& aggregate : list) {
         aggregate->unset_verlet();
     }
 }

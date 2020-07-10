@@ -118,7 +118,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
     myspheres[0].set_position(refpos);
 
     // move all the other sphere relatively to the first
-    for (Sphere *mysphere : myspheres) {
+    for (const auto& mysphere : myspheres) {
         std::array<double, 3> relpos = mysphere->get_relative_position();
         mysphere->set_position(refpos + relpos);
     }
@@ -135,7 +135,7 @@ void Aggregate::init(size_t new_label,
     } else if (physicalmodel->monomeres_initialisation_type
                == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         diameter = std::pow(physicalmodel->mean_diameter,
-                       std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
+                            std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
@@ -345,7 +345,7 @@ void Aggregate::merge(Aggregate *other, AggregateContactInfo contact_info) noexc
     std::array<double, 3> diffpos = ref_root_to_contact + diffcontact - other_root_to_contact;
 
     // For all the spheres that were in the deleted aggregate
-    for (Sphere *othersphere : other->myspheres) {
+    for (const auto& othersphere : other->myspheres) {
         // change the Label to the new owner
         othersphere->set_label(long(get_label()));
 
@@ -416,13 +416,13 @@ bool Aggregate::split() {
             // copy reference of the selection into the duplication
             agg->myspheres = SphereList(&myspheres, split);
             agg->n_spheres = agg->myspheres.size();
-            for (Sphere *sph : agg->myspheres) {
+            for (const auto& sph : agg->myspheres) {
                 sph->set_label(long(agg->get_label()));
             }
             // by creating and destroying spheres, this is important
             external_storage->spheres.setpointers();
             std::array<double, 3> refpos = agg->myspheres[0].get_position();
-            for (Sphere *sph : agg->myspheres) {
+            for (const auto& sph : agg->myspheres) {
                 // change the relative position of the new aggregate
                 sph->set_relative_position(sph->get_position() - refpos);
             }
@@ -431,7 +431,7 @@ bool Aggregate::split() {
             agg->update();
             // we have to move all the spheres (periodicity)
             refpos = agg->get_position() - agg->get_relative_position();
-            for (Sphere *sph : agg->myspheres) {
+            for (const auto& sph : agg->myspheres) {
                 sph->set_position(refpos + sph->get_relative_position());
             }
         }
@@ -448,7 +448,7 @@ void Aggregate::remove(const size_t &id) noexcept {
     n_spheres = myspheres.size();
     if (n_spheres > 0) {
         std::array<double, 3> refpos = myspheres[0].get_position();
-        for (Sphere *sph : myspheres) {
+        for (const auto& sph : myspheres) {
             // change the relative position of the new aggregate
             sph->set_relative_position(sph->get_position() - refpos);
         }
@@ -457,7 +457,7 @@ void Aggregate::remove(const size_t &id) noexcept {
         update();
         // we have to move all the spheres (periodicity)
         refpos = get_position() - get_relative_position();
-        for (Sphere *sph : myspheres) {
+        for (const auto& sph : myspheres) {
             sph->set_position(refpos + sph->get_relative_position());
         }
     } // else it should be deleted ASAP
