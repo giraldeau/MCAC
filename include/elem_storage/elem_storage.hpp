@@ -26,7 +26,7 @@ template<int N, class mystorage>
 class ElemStorage {
     template<int, class>
     friend
-    class StorageList;
+    class ListStorage;
 
 protected:
     std::array<std::vector<double>, N> *storage;

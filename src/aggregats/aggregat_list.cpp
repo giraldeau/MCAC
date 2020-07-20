@@ -121,8 +121,7 @@ void AggregatList::duplication() {
             for (int j = 0; j <= 1; j++) {
                 for (int k = 0; k <= 1; k++) {
                     if (i != 0 or j != 0 or k != 0) {
-                        auto* new_agg =
-                            ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
+                        auto* new_agg = add(*list[iagg], *this);
                         new_agg->label = size() - 1;
                         setpointers();
                         spheres.setpointers();

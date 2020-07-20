@@ -127,7 +127,7 @@ public:
     /** Destructor */
     ~Aggregate() noexcept;
     /** Copy constructor */
-    Aggregate(const Aggregate &, AggregatList *) noexcept;
+    Aggregate(const Aggregate &, AggregatList *, size_t newlabel) noexcept;
     Aggregate(const Aggregate &) noexcept = delete;
     /** Move constructor */
     Aggregate(Aggregate &&) noexcept = delete;

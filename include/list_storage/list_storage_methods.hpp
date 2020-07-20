@@ -119,7 +119,13 @@ void ListStorage<N, elem>::add(size_t n, mylist &owner) noexcept {
 template<int N, class elem>
 template<class mylist>
 elem *ListStorage<N, elem>::add(const elem &other, mylist &owner) noexcept {
-    return new elem(other, &owner);
+    //copy data
+    for (size_t j = 0; j < N; j++) {
+        (*storage)[j].push_back((*other.storage)[j][other.index_in_storage]);
+    }
+    size_t id = list.size();
+    list.push_back(new elem(other, &owner, id));
+    return list[id];
 }
 /** Default constructor in local storage */
 //template<int N, class elem>
@@ -170,10 +176,10 @@ ListStorage<N, elem>::ListStorage(ListStorage<N, elem> &parent, const std::vecto
     external_storage(&parent) {
     list.assign(index.size(), nullptr);
     const size_t _list_size = size();
-//    #pragma omp for simd
-        for (size_t i = 0; i < _list_size; i++) {
-            list[i] = external_storage->list[index[i]];
-        }
+    //    #pragma omp for simd
+    for (size_t i = 0; i < _list_size; i++) {
+        list[i] = external_storage->list[index[i]];
+    }
 }
 /** Destructor */
 template<int N, class elem>
@@ -189,7 +195,7 @@ ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &own
     external_storage(&ext_storage) {
     const size_t _start = (*storage)[0].size();
     for (size_t i = 0; i < N; i++) {
-        (*storage)[i].reserve(other.size() + _start);
+        (*storage)[i].insert((*storage)[i].end(), (*other.storage)[i].begin(), (*other.storage)[i].end());
     }
     list.reserve(other.size() + _start);
     const size_t _list_size = other.size();

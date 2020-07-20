@@ -101,8 +101,8 @@ Aggregate::~Aggregate() noexcept {
     unset_verlet();
 }
 /** Copy constructor */
-Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list) noexcept:
-    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(other, *this, *aggregat_list),
+Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list, size_t newlabel) noexcept:
+    ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(*aggregat_list, newlabel),
     rg(nullptr),
     f_agg(nullptr),
     lpm(nullptr),
@@ -128,7 +128,10 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list) noexce
     physicalmodel(other.physicalmodel),
     verlet(nullptr),
     index_verlet({{0, 0, 0}}),
-    myspheres(other.myspheres, &aggregat_list->spheres) {
+    myspheres(&aggregat_list->spheres, {}) {
+    for (const auto& sphere : other.myspheres) {
+        myspheres.list.push_back(aggregat_list->spheres.add(*sphere, aggregat_list->spheres));
+    }
     setpointers();
     for (const auto& s : myspheres) {
         s->set_label(long(index_in_storage));

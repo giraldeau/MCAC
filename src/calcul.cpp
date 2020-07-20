@@ -142,12 +142,14 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {//Coeur du 
                     agg->update();
                 }
             }
-            try{
-                aggregates.add(1);
-            }
-            catch (TooDenseError const &e) {
-                std::cout << e.what() << std::endl;
-                break;
+            if (aggregates.spheres.size() >= 101) {
+                try {
+                    aggregates.add(1);
+                }
+                catch (TooDenseError const &e) {
+                    std::cout << e.what() << std::endl;
+                    break;
+                }
             }
         }
     }
