@@ -138,7 +138,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {//Coeur du 
         if (contact) {
             aggregates.remove_sphere(0);
             if(aggregates.split()) {
-                for (Aggregate *agg : aggregates) {
+                for (auto &agg : aggregates) {
                     agg->update();
                 }
             }

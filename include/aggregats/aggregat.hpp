@@ -111,7 +111,7 @@ public:
     void compute_max_radius() noexcept;
     void compute_giration_radius() noexcept;
     /* other */
-    void merge(Aggregate *other, AggregateContactInfo contact_info) noexcept;
+    void merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept;
     bool split();
     void remove(const size_t &id) noexcept;
     void print() const noexcept;

@@ -322,7 +322,7 @@ void Aggregate::compute_giration_radius() noexcept {
 }
 //#####################################################################################################################
 
-void Aggregate::merge(Aggregate *other, AggregateContactInfo contact_info) noexcept {
+void Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept {
     size_t i_mysphere, i_othersphere;
     if (contact_info.moving_aggregate == get_label()) {
         i_mysphere = contact_info.moving_sphere;
@@ -404,7 +404,7 @@ bool Aggregate::split() {
         auto initial_number_of_spheres = external_storage->spheres.size();
         for (auto &split: independant_components) {
             // duplicate the current aggregate
-            auto *agg = external_storage->add(*this, *external_storage);
+            auto agg = external_storage->add(*this, *external_storage);
             agg->label = external_storage->size() - 1;
             external_storage->setpointers();
             // the verlet reference is not conserved by the duplication
