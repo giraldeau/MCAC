@@ -442,6 +442,7 @@ void Aggregate::remove(const size_t &id) noexcept {
     for (size_t local_id = 0; local_id < n_spheres; local_id++) {
         if (myspheres[local_id].index_in_storage == id) {
             myspheres.list.erase(myspheres.list.begin() + long(local_id));
+            break;
         }
     }
     external_storage->spheres.remove(id);
