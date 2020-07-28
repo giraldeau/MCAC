@@ -38,6 +38,9 @@ int main(int argc, char *argv[]) {
         mcac::AggregatList aggregates(&physicalmodel);
         mcac::calcul(&physicalmodel, &aggregates);
     }
+    catch (const mcac::AbandonError &e) {
+        return e.code;
+    }
     catch (const mcac::BaseException &e) {
         std::cout << e.what() << std::endl;
         return e.code;
