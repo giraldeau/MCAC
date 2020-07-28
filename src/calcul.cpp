@@ -75,7 +75,7 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         //$ looking for potential contacts
         AggregateContactInfo next_contact = aggregates->distance_to_next_contact(num_agg, vectdir, full_distance);
 
-        bool contact = next_contact <= full_distance;
+        contact = next_contact <= full_distance;
         if (contact){
             move_distance = next_contact.distance;
             deltatemps = deltatemps * move_distance / full_distance;
