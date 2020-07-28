@@ -50,10 +50,10 @@ auto SphereList::get_data() const {
     spheres_data->insert(scalar("Label", format_agg_label()));
     return spheres_data;
 }
-void SphereList::save(const bool _finish) {
+void SphereList::save() {
     //get everything
     auto data = get_data();
-    writer->write(physicalmodel->output_dir / "Spheres", data, _finish);
+    writer->write(data);
 }
 DEF_FORMATER_POSITION(SphereList)
 DEF_FORMATER(SphereList, agg_label, long)
@@ -65,7 +65,7 @@ DEF_FORMATER_FUNC(SphereList, get_radius, double)
 
 namespace mcac{
 
-void SphereList::save(const bool finish){}
+void SphereList::save(){}
 
 }  // namespace mcac
 

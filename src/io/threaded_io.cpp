@@ -18,15 +18,16 @@
 #ifdef WITH_HDF5
 #include "constants.hpp"
 #include "io/threaded_io.hpp"
-#include "exceptions.hpp"
 #include <gsl/gsl>
 #include <iostream>
 
 
 namespace mcac {
-gsl::owner<std::thread *> ThreadedIO::writer = nullptr;
+std::unique_ptr<std::thread> ThreadedIO::writer{};
 ThreadedIO *ThreadedIO::writer_owner = nullptr;
-ThreadedIO::ThreadedIO(const PhysicalModel &new_physicalmodel, size_t size) noexcept :
+ThreadedIO::ThreadedIO(const std::experimental::filesystem::path &new_prefix,
+                       const PhysicalModel &new_physicalmodel, size_t size) noexcept:
+    prefix(new_prefix),
     physicalmodel(&new_physicalmodel),
     _n_time_per_file(new_physicalmodel.n_time_per_file),
     _n(size),
@@ -38,10 +39,8 @@ ThreadedIO::ThreadedIO(const PhysicalModel &new_physicalmodel, size_t size) noex
     num_file(0) {
 }
 ThreadedIO::~ThreadedIO() noexcept {
-    if (gsl::at(status, static_cast<long>(current_thread)) == WriterStatus::APPENDING
-        || gsl::at(status, static_cast<long>(!current_thread)) == WriterStatus::APPENDING) {
-        IOError error = IOError("Closing unfinished file");
-        std::cout << error.what() << std::endl;
+    if (gsl::at(status, static_cast<long>(current_thread)) == WriterStatus::APPENDING) {
+        _write();
     }
     if (ThreadedIO::writer_owner == this) {
         wait();

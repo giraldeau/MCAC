@@ -47,9 +47,8 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #############################################################################################################*/
 namespace mcac {
 void SphereList::init(const PhysicalModel &physical_model, size_t size) {
-    delete writer;
     physicalmodel = &physical_model;
-    writer = new ThreadedIO(physical_model, size);
+    writer = std::make_unique<ThreadedIO>(physical_model.output_dir / "Spheres", physical_model, size);
     ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>::init(size, *this);
     setpointers();
 }

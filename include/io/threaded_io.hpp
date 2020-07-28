@@ -29,21 +29,21 @@
 #include <thread>
 
 
+namespace fs = std::experimental::filesystem;
 namespace mcac {
 class ThreadedIO {
 public:
+    const fs::path prefix;
     static void wait();
     void create_file();
-    void write(const std::experimental::filesystem::path &prefix,
-               const shared_ptr<XdmfUnstructuredGrid> &data,
-               bool all);
+    void write(const shared_ptr<XdmfUnstructuredGrid> &data);
 private:
     const PhysicalModel *physicalmodel;
     // Number of time steps per file
     const size_t _n_time_per_file;
     // estimate data size
     const size_t _n;
-    static gsl::owner<std::thread *> writer;
+    static std::unique_ptr<std::thread> writer;
     static ThreadedIO *writer_owner;
     bool current_thread;
     std::array<WriterStatus, 2> status;
@@ -57,7 +57,8 @@ private:
     //    int padding;
 
 public:
-    ThreadedIO(const PhysicalModel &new_physicalmodel, size_t size) noexcept;
+    ThreadedIO(const std::experimental::filesystem::path &prefix,
+               const PhysicalModel &new_physicalmodel, size_t size) noexcept;
     ~ThreadedIO() noexcept;
     /** Copy constructor */
     explicit ThreadedIO(ThreadedIO const &) = delete;
@@ -68,6 +69,7 @@ public:
     /** Move assignment operator */
     ThreadedIO &operator=(ThreadedIO &&other) = delete;
 private:
+    void _write();
     friend void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data);
 };
 }  // namespace mcac
@@ -78,7 +80,8 @@ namespace mcac{
 
 class ThreadedIO{
 public:
-    ThreadedIO(const PhysicalModel& _physicalmodel, size_t size)  {}
+    ThreadedIO(const std::experimental::filesystem::path &prefix,
+               const PhysicalModel& _physicalmodel, size_t size)  {}
 };
 }  // namespace mcac
 
