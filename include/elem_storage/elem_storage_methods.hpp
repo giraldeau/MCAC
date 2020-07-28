@@ -30,7 +30,7 @@ void ElemStorage<N, mystorage>::decrease_index() noexcept {
 /** Default constructor in local storage */
 template<int N, class mystorage>
 ElemStorage<N, mystorage>::ElemStorage() noexcept:
-    storage(new std::array<std::vector<double>, N>),
+    storage(std::make_shared<std::array<std::vector<double>, N>>()),
     external_storage(nullptr),
     index_in_storage(0) {
     for (size_t j = 0; j < N; j++) {
@@ -47,12 +47,12 @@ ElemStorage<N, mystorage>::ElemStorage(mystorage &ext_storage, size_t id) noexce
 /** Destructor */
 template<int N, class mystorage>
 ElemStorage<N, mystorage>::~ElemStorage() noexcept {
-    if (!external_storage && storage) {
-        for (size_t j = 0; j < N; j++) {
-            (*storage)[j].erase((*storage)[j].begin() + long(index_in_storage));
-        }
-        delete storage;
-    }
+//    if (!external_storage && storage) {
+//        for (size_t j = 0; j < N; j++) {
+//            (*storage)[j].erase((*storage)[j].begin() + long(index_in_storage));
+//        }
+//        delete storage;
+//    }
 }
 /** Copy constructor */
 template<int N, class mystorage>

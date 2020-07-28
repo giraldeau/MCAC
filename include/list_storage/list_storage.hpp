@@ -30,7 +30,7 @@ class ListStorage {
 
 protected:
     std::vector<std::shared_ptr<elem>> list;
-    std::array<std::vector<double>, N> *storage;
+    std::shared_ptr<std::array<std::vector<double>, N>> storage;
     const ListStorage *external_storage;
 public:
     elem &operator[](size_t i) noexcept;

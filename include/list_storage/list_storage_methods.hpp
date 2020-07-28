@@ -38,13 +38,13 @@ template<int N, class elem>
 }
 template<int N, class elem>
 void ListStorage<N, elem>::destroy() noexcept {
-    if (!external_storage) {
-        if (storage) {
-            delete storage;
-        }
-    } else {
-        storage = nullptr;
-    }
+//    if (!external_storage) {
+//        if (storage) {
+//            delete storage;
+//        }
+//    } else {
+//        storage = nullptr;
+//    }
 }
 //template<int N, class elem>
 //void swap(ListStorage<N, elem> &first, ListStorage<N, elem> &second) noexcept {
@@ -147,7 +147,7 @@ template<int N, class elem>
 template<class mylist>
 void ListStorage<N, elem>::init(size_t size, mylist &owner) noexcept {
     destroy();
-    storage = new std::array<std::vector<double>, N>;
+    storage = std::make_shared<std::array<std::vector<double>, N>>();
     external_storage = nullptr;
 
     //preallocation
