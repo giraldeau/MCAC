@@ -20,6 +20,7 @@
 #include "spheres/sphere_collision.hpp"
 #include "spheres/sphere_distance.hpp"
 #include "tools/tools.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 
 
@@ -37,7 +38,7 @@ namespace mcac {
 [[gnu::pure]] size_t AggregatList::pick_random() const {
     //$ Pick a random sphere
     double val_alea = random() * cumulative_time_steps[size() - 1];
-    long n = lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), val_alea)
+    long n = std::lower_bound(cumulative_time_steps.begin(), cumulative_time_steps.end(), val_alea)
              - cumulative_time_steps.begin();
     size_t num_agg = index_sorted_time_steps[static_cast<size_t >(n)];
     return num_agg;
@@ -57,7 +58,7 @@ namespace mcac {
 void AggregatList::refresh() {
     max_time_step = *list[0]->time_step;
     for (const Aggregate *agg : list) {
-        max_time_step = MAX(*agg->time_step, max_time_step);
+        max_time_step = std::max(*agg->time_step, max_time_step);
     }
 
     avg_npp = static_cast<double>(spheres.size()) / static_cast<double>(size());
@@ -66,13 +67,13 @@ template<typename T>
 std::vector<size_t> sort_indexes(const std::vector<T> &v) {
     // initialize original index locations
     std::vector<size_t> idx(v.size());
-    iota(idx.begin(), idx.end(), 0);
+    std::iota(idx.begin(), idx.end(), 0);
 
     // sort indexes based on comparing values in v
-    sort(idx.begin(), idx.end(),
-         [&v](size_t i_1, size_t i_2) {
-             return v[i_1] < v[i_2];
-         });
+    std::sort(idx.begin(), idx.end(),
+              [&v](size_t i_1, size_t i_2) {
+                  return v[i_1] < v[i_2];
+              });
     return idx;
 }
 void AggregatList::sort_time_steps(double factor) {
@@ -95,7 +96,9 @@ void AggregatList::duplication() {
     double old_l = physicalmodel->box_lenght;
     physicalmodel->box_lenght *= 2;
     physicalmodel->n_monomeres *= 8;
-
+    for (Aggregate *agg : list) {
+        agg->unset_verlet();
+    }
     // TODO(pouxa): Rework this in order not to to it aggregate by aggregate
 
     for (size_t iagg = 0; iagg < old_n_agg; iagg++) {
@@ -106,10 +109,8 @@ void AggregatList::duplication() {
                         Aggregate *new_agg =
                             ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
                         new_agg->label = size() - 1;
-                        new_agg->set_verlet(&verlet);
                         setpointers();
                         spheres.setpointers();
-                        new_agg->set_verlet(&verlet); // TODO(pouxa): remove?
                         std::array<double, 3> vec_move = {i * old_l,
                                                           j * old_l,
                                                           k * old_l};
@@ -122,12 +123,12 @@ void AggregatList::duplication() {
     //$ update Verlet
     verlet = Verlet(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
     for (Aggregate *agg : list) {
-        agg->update_verlet_index();
+        agg->set_verlet(&verlet);
     }
 }
 size_t AggregatList::merge(size_t first, size_t second) {
-    const size_t _keeped(MIN(first, second));
-    const size_t _removed(MAX(first, second));
+    const size_t _keeped(std::min(first, second));
+    const size_t _removed(std::max(first, second));
 
     // compute proper time of the final aggregate
     // keeping global time constant
@@ -238,10 +239,10 @@ std::vector<std::pair<size_t, double>> AggregatList::sort_search_space(size_t mo
             if (collision.first && collision.second <= *list[moving_aggregate]->lpm) {
                 iscollision = collision.first;
                 dist = collision.second;
-                pos = lower_bound(sorted_search_space.begin(), sorted_search_space.end(), dist,
-                                  [](std::pair<size_t, double> i_1, double d) {
-                                      return i_1.second < d;
-                                  });
+                pos = std::lower_bound(sorted_search_space.begin(), sorted_search_space.end(), dist,
+                                       [](std::pair<size_t, double> i_1, double d) {
+                                           return i_1.second < d;
+                                       });
             }
         }
         if (iscollision) {
@@ -256,7 +257,7 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double diameter) c
     // Use Verlet to reduce search
     double mindist(diameter * 0.5 + maxradius);
     std::vector<size_t> search_space = verlet.get_search_space(pos, mindist);
-    double mindist_2 = POW_2(mindist);
+    double mindist_2 = std::pow(mindist, 2);
 
     //$ loop on the agregates potentially in contact
     for (const size_t &suspect : search_space) //For every aggregate that could be in contact

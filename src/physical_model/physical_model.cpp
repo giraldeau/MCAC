@@ -29,7 +29,7 @@
 
 namespace fs = std::experimental::filesystem;
 namespace mcac {
-PhysicalModel::PhysicalModel(const std::string &fichier_param):
+PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     fractal_dimension(1.4),
     fractal_prefactor(1.8),
     x_surfgrowth(2.),
@@ -100,7 +100,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param):
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
     inipp::extract(ini.sections["output"]["write_between_event_every"], write_between_event_every);
     // checks
-    number_of_aggregates_limit = MAX(number_of_aggregates_limit, 1);
+    number_of_aggregates_limit = std::max(number_of_aggregates_limit, size_t(1));
     if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
         throw InputError("Monomere initialisation mode unknown");
     }
@@ -108,20 +108,18 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param):
     if (fs::exists(output_dir) && fs::is_directory(output_dir)) {
         std::string answer;
         std::string valid_answer = "rRIiAa";
-        do{
-            std::cout << "folder " << output_dir << " already exists."<< std::endl;
-            std::cout << " (R)emove, (I)gnore, (A)bandon "<< std::endl;
+        do {
+            std::cout << "folder " << output_dir << " already exists." << std::endl;
+            std::cout << " (R)emove, (I)gnore, (A)bandon " << std::endl;
             std::cin >> answer;
-        } while (std::find(std::begin(valid_answer), std::end(valid_answer), answer[0]) == std::end(valid_answer)) ;
-
-        if (answer == "r" || answer == "R"){
+        } while (std::find(std::begin(valid_answer), std::end(valid_answer), answer[0]) == std::end(valid_answer));
+        if (answer == "r" || answer == "R") {
             fs::remove_all(output_dir);
         }
-        if (answer == "a" || answer == "A"){
+        if (answer == "a" || answer == "A") {
             throw AbandonError();
         }
     }
-
     if (!fs::exists(output_dir)) {
         if (!fs::create_directory(output_dir)) {
             throw IOError("Error creating directory " + output_dir.string());
@@ -135,27 +133,27 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param):
     viscosity = _viscosity_ref
                 * (_sutterland_interpolation_constant + _temperature_ref)
                 / (_sutterland_interpolation_constant + temperature)
-                * pow(temperature / _temperature_ref, 1.5); // Schlichting 1979
+                * std::pow(temperature / _temperature_ref, 1.5); // Schlichting 1979
     gaz_mean_free_path = _mean_free_path_ref
                          * (_pressure_ref / pressure)
                          * (temperature / _temperature_ref)
                          * (1. + _sutterland_interpolation_constant / _temperature_ref)
                          / (1. + _sutterland_interpolation_constant / temperature); // Willeke 1976
     mean_massic_radius = 0.5 * mean_diameter * 1E-9
-                         * exp(1.5 * POW_2(log(dispersion_diameter)));  // Hatch-Choate
+                         * std::exp(1.5 * std::pow(std::log(dispersion_diameter), 2));  // Hatch-Choate
     friction_exponnant = 0.689 * (1.
-                                  + erf(((gaz_mean_free_path / mean_massic_radius) + 4.454)
-                                        / 10.628)); // Yon et al. Journal of Aerosol Science vol.87 2015 p.2837 eq.7
+                                  + std::erf(((gaz_mean_free_path / mean_massic_radius) + 4.454)
+                                             / 10.628)); // Yon et al. Journal of Aerosol Science vol.87 2015 p.2837 eq.7
     if (monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
-                     pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
-                         * (1. + 3. * POW_2(dispersion_diameter / mean_diameter)),
-                         1. / 3.);
+                     std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
+                              * (1. + 3. * std::pow(dispersion_diameter / mean_diameter, 2)),
+                              1. / 3.);
     } else if (monomeres_initialisation_type == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
-                     pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
-                         * exp(9. / 2. * POW_2(log(dispersion_diameter))),
-                         1. / 3.);
+                     std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
+                              * std::exp(9. / 2. * std::pow(std::log(dispersion_diameter), 2)),
+                              1. / 3.);
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
@@ -198,27 +196,27 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param):
 }
 void PhysicalModel::print() const {
     std::cout << "PARTICLES PROPERTIES:" << std::endl
-              << " density          : " << density             << " (kg/m^3)" << std::endl
-              << " Dpm              : " << mean_diameter       << " (nm)"     << std::endl
-              << " sigmaDpm         : " << dispersion_diameter << " (- Lognormal, nm Normal)"  << std::endl
-              << " dfe              : " << fractal_dimension   << " (-)"      << std::endl
-              << " kfe              : " << fractal_prefactor   << " (-)"      << std::endl
-              << " rpeqmass         : " << mean_massic_radius  << " (m)"      << std::endl
-              << " gamma_           : " << friction_exponnant  << " (-)"      << std::endl
+              << " density          : " << density << " (kg/m^3)" << std::endl
+              << " Dpm              : " << mean_diameter << " (nm)" << std::endl
+              << " sigmaDpm         : " << dispersion_diameter << " (- Lognormal, nm Normal)" << std::endl
+              << " dfe              : " << fractal_dimension << " (-)" << std::endl
+              << " kfe              : " << fractal_prefactor << " (-)" << std::endl
+              << " rpeqmass         : " << mean_massic_radius << " (m)" << std::endl
+              << " gamma_           : " << friction_exponnant << " (-)" << std::endl
               << std::endl
               << "FLUID PROPERTIES:" << std::endl
-              << " Pressure         : " << pressure            << " (Pa)"     << std::endl
-              << " Temperature      : " << temperature         << " (K)"      << std::endl
-              << " viscosity        : " << viscosity           << " (kg/m*s)" << std::endl
-              << " lambda           : " << gaz_mean_free_path  << " (m)"      << std::endl
+              << " Pressure         : " << pressure << " (Pa)" << std::endl
+              << " Temperature      : " << temperature << " (K)" << std::endl
+              << " viscosity        : " << viscosity << " (kg/m*s)" << std::endl
+              << " lambda           : " << gaz_mean_free_path << " (m)" << std::endl
               << std::endl
               << "SIMULATION OPTIONS:" << std::endl
-              << " Initial Nagg     : " << n_monomeres     << " (-)"  << std::endl
-              << " Box size         : " << box_lenght      << " (m)"  << std::endl
-              << " FV               : " << volume_fraction << " (-)"  << std::endl
-              << " Asurfgrowth      : " << a_surfgrowth    << std::endl
-              << " xsurfgrowth      : " << x_surfgrowth    << std::endl
-              << " coeffB           : " << coeff_b         << std::endl
+              << " Initial Nagg     : " << n_monomeres << " (-)" << std::endl
+              << " Box size         : " << box_lenght << " (m)" << std::endl
+              << " FV               : " << volume_fraction << " (-)" << std::endl
+              << " Asurfgrowth      : " << a_surfgrowth << std::endl
+              << " xsurfgrowth      : " << x_surfgrowth << std::endl
+              << " coeffB           : " << coeff_b << std::endl
               << std::endl
               << "Options for Pysical model: " << std::endl
               << " Initialisation mode : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
@@ -251,7 +249,7 @@ void PhysicalModel::print() const {
     double b = 0.558;
     double c = 0.999;
     return 1.0 + a * gaz_mean_free_path / r
-           + b * gaz_mean_free_path / r * exp(-c * r / gaz_mean_free_path);
+           + b * gaz_mean_free_path / r * std::exp(-c * r / gaz_mean_free_path);
 }
 
 
@@ -263,13 +261,13 @@ void PhysicalModel::print() const {
 */
 
 [[gnu::pure]]  double PhysicalModel::grow(double r, double dt) const {
-    return r + a_surfgrowth * pow(r, x_surfgrowth - 2) * dt;
+    return r + a_surfgrowth * std::pow(r, x_surfgrowth - 2) * dt;
 }
 [[gnu::pure]] double PhysicalModel::friction_coeff(size_t npp) const {
     //to be expressed in terms of V_agg/V_pp
     double cc = cunningham(mean_massic_radius);
     return (6. * _pi * viscosity * mean_massic_radius / cc)
-           * pow(static_cast<double>(npp), friction_exponnant / fractal_dimension);
+           * std::pow(npp, friction_exponnant / fractal_dimension);
 }
 [[gnu::pure]] double PhysicalModel::friction_coeff_2(double rgg) const {
     double rmm = rgg * 1.3;
@@ -293,11 +291,11 @@ void PhysicalModel::print() const {
         return 100.;
     }
     pp = (p < 1.0) ? p : 2. - p;
-    t = sqrt(-2. * log(pp / 2.));
+    t = std::sqrt(-2. * std::log(pp / 2.));
     x = -0.70711 * ((2.30753 + t * 0.27061) / (1. + t * (0.99229 + t * 0.04481)) - t);
     for (int j = 0; j < 2; j++) {
-        double err = erfc(x) - pp;
-        x += err / (1.12837916709551257 * exp(-(x * x)) - x * err);
+        double err = std::erfc(x) - pp;
+        x += err / (1.12837916709551257 * std::exp(-(x * x)) - x * err);
     }
     return (p < 1.0 ? x : -x);
 }

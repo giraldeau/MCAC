@@ -86,7 +86,7 @@ private:
     void setpointers();
 public:
     /** Default constructor in local storage */
-    explicit AggregatList(PhysicalModel *) noexcept;
+    explicit AggregatList(PhysicalModel *);
     /** Destructor */
     ~AggregatList() noexcept;
     /** Copy constructor */

@@ -39,13 +39,13 @@ Sphere.h and Sphere.cpp defines the data storage.
 namespace mcac {
 /* Getters */
 
-[[gnu::pure]] double Sphere::get_volume() const noexcept {
+[[gnu::pure]] const double& Sphere::get_volume() const noexcept {
     return *volume;
 }
-[[gnu::pure]] double Sphere::get_surface() const noexcept {
+[[gnu::pure]] const double& Sphere::get_surface() const noexcept {
     return *surface;
 }
-[[gnu::pure]] double Sphere::get_radius() const noexcept {
+[[gnu::pure]] const double& Sphere::get_radius() const noexcept {
     return *r;
 }
 [[gnu::pure]] std::array<double, 3> Sphere::get_position() const noexcept {
@@ -138,8 +138,8 @@ void Sphere::print() const noexcept {
 
 void Sphere::update_vol_and_surf() noexcept {
     if (agg_label > -1) {
-        *volume = _volume_factor * POW_3(*r);
-        *surface = _surface_factor * POW_2(*r);
+        *volume = _volume_factor * std::pow(*r, 3);
+        *surface = _surface_factor * std::pow(*r, 2);
     }
 }
 }  // namespace mcac

@@ -68,7 +68,7 @@ namespace mcac {
      * any periodicity effect.
     */
 
-    double dist_contact = POW_2(sphere_1.get_radius() + sphere_2.get_radius());
+    double dist_contact = std::pow(sphere_1.get_radius() + sphere_2.get_radius(), 2);
     double dist = distance_2(sphere_1, sphere_2);
     double minval = 0.;
     bool collision = true;
@@ -100,7 +100,7 @@ namespace mcac {
                     if (tmp[0] < 0.) {
                         continue;
                     }
-                    double dist_1 = POW_2(tmp[1]) + POW_2(tmp[2]);
+                    double dist_1 = std::pow(tmp[1], 2) + std::pow(tmp[2], 2);
 
                     // collision is possible
                     if (dist_1 > dist_contact) {
@@ -108,8 +108,8 @@ namespace mcac {
                     }
                     collision = true;
                     double sol = dist_contact - dist_1;
-                    sol = tmp[0] - sqrt(sol);
-                    minval = MIN(minval, sol);
+                    sol = tmp[0] - std::sqrt(sol);
+                    minval = std::min(minval, sol);
                 }
             }
         }
@@ -131,20 +131,20 @@ namespace mcac {
     return dist_to_collision;
 }
 [[gnu::pure]] std::array<std::array<double, 3>, 3> get_rot_mat(const std::array<double, 3> &displacement) noexcept {
-    double anglez = -atan2(displacement[1], displacement[0]);
+    double anglez = -std::atan2(displacement[1], displacement[0]);
     std::array<std::array<double, 3>, 3> rotz{};
-    rotz[0] = {{cos(anglez), -sin(anglez), 0}};
-    rotz[1] = {{sin(anglez), cos(anglez), 0}};
+    rotz[0] = {{std::cos(anglez), -std::sin(anglez), 0}};
+    rotz[1] = {{std::sin(anglez), std::cos(anglez), 0}};
     rotz[2] = {{0, 0, 1}};
     std::array<double, 3> tmp{};
     for (size_t i = 0; i < tmp.size(); ++i) {
         tmp[i] = sum(rotz[i] * displacement);
     }
-    double angley = atan2(tmp[2], tmp[0]);
+    double angley = std::atan2(tmp[2], tmp[0]);
     std::array<std::array<double, 3>, 3> roty{};
-    roty[0] = {{cos(angley), 0, sin(angley)}};
+    roty[0] = {{std::cos(angley), 0, std::sin(angley)}};
     roty[1] = {{0, 1, 0}};
-    roty[2] = {{-sin(angley), 0, cos(angley)}};
+    roty[2] = {{-std::sin(angley), 0, std::cos(angley)}};
     std::array<std::array<double, 3>, 3> matrot{};
     for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {

@@ -22,9 +22,8 @@
 #include <vector>
 
 
-using namespace std;
 namespace mcac {
-pair<vector<double>, vector<double>> compute_volume_surface_sbl(const SphereList &spherelist);
+std::pair<std::vector<double>, std::vector<double>> compute_volume_surface_sbl(const SphereList &spherelist);
 }
 #endif // WITH_SBL
 #endif //INCLUDE_SBL_VOLUME_SURFACE_HPP

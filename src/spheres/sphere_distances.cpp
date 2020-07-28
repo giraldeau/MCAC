@@ -59,11 +59,11 @@ namespace mcac {
 [[gnu::pure]]  double distance(const std::array<double, 3> &point_1,
                                const std::array<double, 3> &point_2,
                                double box_size) noexcept {
-    return sqrt(distance_2(point_1, point_2, box_size));
+    return std::sqrt(distance_2(point_1, point_2, box_size));
 }
 [[gnu::pure]]  double relative_distance(const std::array<double, 3> &point_1,
                                         const std::array<double, 3> &point_2) noexcept {
-    return sqrt(relative_distance_2(point_1, point_2));
+    return std::sqrt(relative_distance_2(point_1, point_2));
 }
 [[gnu::pure]]  double distance_2(const std::array<double, 3> &point_1, const std::array<double, 3> &point_2,
                                  double box_size) noexcept {
@@ -71,19 +71,19 @@ namespace mcac {
     double dx(periodic_distance(diff[0], box_size));
     double dy(periodic_distance(diff[1], box_size));
     double dz(periodic_distance(diff[2], box_size));
-    return POW_2(dx) + POW_2(dy) + POW_2(dz);
+    return std::pow(dx, 2) + std::pow(dy, 2) + std::pow(dz, 2);
 }
 [[gnu::pure]]  double relative_distance_2(const std::array<double, 3> &point_1,
                                           const std::array<double, 3> &point_2) noexcept {
     std::array<double, 3> diff = point_1 - point_2;
-    return POW_2(diff[0]) + POW_2(diff[1]) + POW_2(diff[2]);
+    return std::pow(diff[0], 2) + std::pow(diff[1], 2) + std::pow(diff[2], 2);
 }
 [[gnu::pure]]  bool contact(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
     //$ Compute signed distance for contact between two spheres
     double distance = distance_2(sphere_1, sphere_2);
 
     //$ Compute minimum distance for contact
-    double dist_contact = POW_2(sphere_1.get_radius() + sphere_2.get_radius());
+    double dist_contact = std::pow(sphere_1.get_radius() + sphere_2.get_radius(), 2);
 
     // 1e-28 is for rounding error (1e-14 ^ 2)
     return (distance - dist_contact <= 1e-28);
