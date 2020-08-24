@@ -60,6 +60,8 @@ void AggregatList::refresh() {
     for (const Aggregate *agg : list) {
         max_time_step = std::max(*agg->time_step, max_time_step);
     }
+
+    avg_npp = static_cast<double>(spheres.size()) / static_cast<double>(size());
 }
 template<typename T>
 std::vector<size_t> sort_indexes(const std::vector<T> &v) {
@@ -108,12 +110,7 @@ void AggregatList::duplication() {
                             ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add(*list[iagg], *this);
                         new_agg->label = size() - 1;
                         setpointers();
-                        for (Aggregate *agg : list) {
-                            agg->setpointers();
-                            for (Sphere *sph : agg->myspheres) {
-                                sph->setpointers();
-                            }
-                        }
+                        spheres.setpointers();
                         std::array<double, 3> vec_move = {i * old_l,
                                                           j * old_l,
                                                           k * old_l};
@@ -138,15 +135,30 @@ size_t AggregatList::merge(size_t first, size_t second) {
     double newtime = double(size() - 1) * (*list[_keeped]->time + *list[_removed]->time) / double(size())
                      - physicalmodel->time;
 
-    // compute the new average of npp
-    avg_npp = avg_npp * static_cast<double>(size()) / (static_cast<double>(size()) - 1);
-
     // merge the two aggregate but do not remove the deleted one
     list[_keeped]->merge(list[_removed]);
     remove(_removed);
     setpointers();
     *list[_keeped]->time = newtime;
     return _keeped;
+}
+bool AggregatList::split() {
+    bool has_splitted = false;
+    auto suspect = list.begin();
+    while (suspect != list.end()) {
+        auto index = std::distance(list.begin(), suspect);
+        // the split function will create the new aggregates
+        if ((*suspect)->split()) {
+            has_splitted = true;
+            // but we still have to destroy the current one
+            remove(size_t(index));
+            setpointers();
+            suspect = list.begin() + index;
+        } else {
+            suspect = list.begin() + index + 1;
+        }
+    }
+    return has_splitted;
 }
 //################################# Determination of the contacts between agrgates ####################################
 std::pair<int, double> AggregatList::distance_to_next_contact(size_t source, std::array<double, 3> direction) const {
@@ -179,7 +191,7 @@ std::pair<int, double> AggregatList::distance_to_next_contact(size_t source, std
             mindistagg = distagg;
 
             // If two aggragates are already in contact (due to surface growing)
-            if (distmin <= 1e-15) {
+            if (distmin <= 1e-28) {
                 break;
             }
         }

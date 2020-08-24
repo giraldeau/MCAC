@@ -44,8 +44,14 @@ Sphere.h and Sphere.cpp defines the data storage.
 namespace mcac {
 class Sphere;
 
+class AggregatList;
+
+class Aggregate;
+
 class SphereList : public ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere> {
     friend class Sphere;
+    friend class AggregatList;
+    friend class Aggregate;
 
     /* Generic */
 

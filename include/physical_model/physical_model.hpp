@@ -40,12 +40,13 @@ public:
     size_t n_monomeres;
     size_t n_time_per_file;
     MonomeresInitialisationMode monomeres_initialisation_type;
-    size_t n_iter_without_contact;
+    size_t n_iter_without_event;
     clock_t cpu_start;
     double cpu_limit, physical_time_limit;
     int mean_monomere_per_aggregate_limit;
     size_t number_of_aggregates_limit;
-    int n_iter_without_contact_limit;
+    int n_iter_without_event_limit;
+    size_t write_between_event_every;
     std::experimental::filesystem::path output_dir;
 public:
     explicit PhysicalModel(const std::string &fichier_param);

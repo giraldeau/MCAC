@@ -52,13 +52,14 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     n_monomeres(2500),
     n_time_per_file(10),
     monomeres_initialisation_type(MonomeresInitialisationMode::NORMAL_INITIALISATION),
-    n_iter_without_contact(0),
+    n_iter_without_event(0),
     cpu_start(),
     cpu_limit(-1),
     physical_time_limit(-1),
     mean_monomere_per_aggregate_limit(-1),
     number_of_aggregates_limit(1),
-    n_iter_without_contact_limit(-1),
+    n_iter_without_event_limit(-1),
+    write_between_event_every(100),
     output_dir("MCAC_output") {
     std::string default_str;
     // read the config file
@@ -85,7 +86,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["surface_growth"]["x_surfgrowth"], x_surfgrowth);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
-    inipp::extract(ini.sections["limits"]["n_iter_without_contact"], n_iter_without_contact_limit);
+    inipp::extract(ini.sections["limits"]["n_iter_without_event"], n_iter_without_event_limit);
     inipp::extract(ini.sections["limits"]["cpu"], cpu_limit);
     inipp::extract(ini.sections["limits"]["physical_time"], physical_time_limit);
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
@@ -97,6 +98,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     // output
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
+    inipp::extract(ini.sections["output"]["write_between_event_every"], write_between_event_every);
     // checks
     number_of_aggregates_limit = std::max(number_of_aggregates_limit, size_t(1));
     if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
@@ -166,8 +168,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         std::cout << "We reach the AggMin condition" << std::endl << std::endl;
         return true;
     }
-    if (n_iter_without_contact_limit > 0
-        && n_iter_without_contact >= static_cast<size_t>(n_iter_without_contact_limit)) {
+    if (n_iter_without_event_limit > 0
+        && n_iter_without_event >= static_cast<size_t>(n_iter_without_event_limit)) {
         std::cout << "We reach the WaitLimit condition" << std::endl << std::endl;
         return true;
     }
@@ -223,8 +225,8 @@ void PhysicalModel::print() const {
               << std::endl
               << "Ending simulation when:" << std::endl
               << " - There are " << number_of_aggregates_limit << " aggregats left or less" << std::endl;
-    if (n_iter_without_contact_limit > 0) {
-        std::cout << " - It has been " << n_iter_without_contact_limit << " iterations without collision" << std::endl;
+    if (n_iter_without_event_limit > 0) {
+        std::cout << " - It has been " << n_iter_without_event_limit << " iterations without collision" << std::endl;
     }
     if (cpu_limit > 0) {
         std::cout << " - The simulations is running for more than " << cpu_limit << " seconds" << std::endl;
