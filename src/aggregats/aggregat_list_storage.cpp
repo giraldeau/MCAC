@@ -65,8 +65,11 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) :
                  + std::sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * x - 1.0);
         } else if (physicalmodel->monomeres_initialisation_type
                    == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-            dp = std::pow(physicalmodel->mean_diameter,
-                          std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
+            // TODO: CHECK WICH ONE TO KEEP
+//            dp = std::pow(physicalmodel->mean_diameter,
+//                          std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
+            dp = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
+                          std::sqrt(2.) * inverf(2. * x - 1.0));
         } else {
             exit(ErrorCodes::UNKNOWN_ERROR);
         }
