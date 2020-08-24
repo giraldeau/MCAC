@@ -53,7 +53,7 @@ auto AggregatList::get_data() const {
     aggregats_data->insert(scalar("lpm", format_lpm()));
     aggregats_data->insert(scalar("Deltat", format_time_step()));
     aggregats_data->insert(scalar("Rmax", format_rmax()));
-    aggregats_data->insert(scalar("compute_volume", format_agregat_volume()));
+    aggregats_data->insert(scalar("Volume", format_agregat_volume()));
     aggregats_data->insert(scalar("Surface", format_agregat_surface()));
     aggregats_data->insert(scalar("Label", format_label()));
     return aggregats_data;
