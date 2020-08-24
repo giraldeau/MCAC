@@ -53,6 +53,7 @@ public:
     void refresh();
     void sort_time_steps(double factor);
     void duplication();
+    bool split();
     size_t merge(AggregateContactInfo contact_info);
     /* other */
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;

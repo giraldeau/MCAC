@@ -50,6 +50,7 @@ class AggregatList;
 class Sphere : public ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList> {
     friend class SphereList; // TODO remove (pointers)
     friend class AggregatList; // TODO remove (pointers)
+    friend class Aggregate; // TODO remove (pointers)
 
     /* Generic */
 
@@ -77,6 +78,7 @@ public:
     void set_label(long value) noexcept;
     void decrease_label() noexcept;
     void set_position(std::array<double, 3> newposition) noexcept;
+    void set_relative_position(std::array<double, 3> newposition) noexcept;
     void translate(const std::array<double, 3> &trans) noexcept;
     void relative_translate(std::array<double, 3> trans) noexcept;
     void init_val() noexcept;

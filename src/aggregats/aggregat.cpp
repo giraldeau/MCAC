@@ -115,7 +115,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
     set_position(get_position() + vector);
 
     // move the first sphere taking care of the periodicity
-    std::array<double, 3> refpos{periodic_position(myspheres[0].get_position() + vector, physicalmodel->box_lenght)};
+    std::array<double, 3> refpos{get_position() - get_relative_position()};
     myspheres[0].set_position(refpos);
 
     // move all the other sphere relatively to the first
@@ -325,6 +325,80 @@ void Aggregate::merge(Aggregate *other, AggregateContactInfo contact_info) noexc
     n_spheres = myspheres.size();
     update_distances();
     update();
+}
+bool Aggregate::split() {
+    bool have_splitted = false;
+    // first identify what to split
+    std::vector<std::vector<size_t>> independant_components;
+    // all spheres are unvisited
+    std::vector<size_t> unvisisted;
+    for (size_t i = 0; i < n_spheres; ++i) {
+        unvisisted.insert(unvisisted.end(), i);
+    }
+    while (!unvisisted.empty()) {
+        // the first unvisited sphere is the start of a new component
+        std::vector<size_t> component({*unvisisted.begin()});
+        unvisisted.erase(unvisisted.begin());
+        // discovered are spheres of which we need to explore the neighborhood
+        std::vector<size_t> discovered = component;
+        while (!discovered.empty()) {
+            size_t agg_1 = discovered.back();
+            discovered.pop_back();
+            auto suspect = unvisisted.begin();
+            while (suspect != unvisisted.end()) {
+                auto index = std::distance(unvisisted.begin(), suspect);
+                if (contact(myspheres[agg_1], myspheres[*suspect])) {
+                    // discovered are spheres of which we need to explore the neighborhood
+                    component.push_back(*suspect);
+                    discovered.push_back(*suspect);
+                    unvisisted.erase(suspect);
+                    suspect = unvisisted.begin() + index;
+                } else {
+                    suspect = unvisisted.begin() + index + 1;
+                }
+            }
+        }
+        independant_components.push_back(component);
+    }
+    if (independant_components.size() > 1) {
+        // splitting occurs when we have at least 2 independant componnents
+        have_splitted = true;
+        auto initial_number_of_spheres = external_storage->spheres.size();
+        for (auto &split: independant_components) {
+            // duplicate the current aggregate
+            auto *agg = external_storage->add(*this, *external_storage);
+            agg->label = external_storage->size() - 1;
+            external_storage->setpointers();
+            // the verlet reference is not conserved by the duplication
+            agg->set_verlet(verlet);
+            // destroy the spheres of the duplication
+            for (size_t i = 0; i < agg->n_spheres; i++) {
+                external_storage->spheres.remove(initial_number_of_spheres);
+            }
+            // copy reference of the selection into the duplication
+            agg->myspheres = SphereList(&myspheres, split);
+            agg->n_spheres = agg->myspheres.size();
+            for (Sphere *sph : agg->myspheres) {
+                sph->set_label(long(agg->get_label()));
+            }
+            // by creating and destroying spheres, this is important
+            external_storage->spheres.setpointers();
+            std::array<double, 3> refpos = agg->myspheres[0].get_position();
+            for (Sphere *sph : agg->myspheres) {
+                // change the relative position of the new aggregate
+                sph->set_relative_position(sph->get_position() - refpos);
+            }
+            // we have to recompute all the caracteristic of this new aggregate
+            agg->update_distances();
+            agg->update();
+            // we have to move all the spheres (periodicity)
+            refpos = agg->get_position() - agg->get_relative_position();
+            for (Sphere *sph : agg->myspheres) {
+                sph->set_position(refpos + sph->get_relative_position());
+            }
+        }
+    }
+    return have_splitted;
 }
 void Aggregate::print() const noexcept {
     std::cout << "Printing details of Aggregat " << index_in_storage << " " << label << std::endl;
