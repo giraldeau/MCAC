@@ -54,15 +54,19 @@ public:
     void sort_time_steps(double factor);
     void duplication();
     bool split();
-    size_t merge(size_t first, size_t second);
+    size_t merge(AggregateContactInfo contact_info);
     /* other */
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;
-    std::pair<int, double> distance_to_next_contact(size_t source,
-                                                       std::array<double, 3> direction) const;
-    std::vector<size_t> get_search_space(size_t source, std::array<double, 3> direction) const;
-    std::vector<std::pair<size_t, double> > sort_search_space(size_t moving_aggregate,
-                                                              std::array<double, 3> direction,
-                                                              const std::vector<size_t> &search_space) const;
+    AggregateContactInfo distance_to_next_contact(const size_t source,
+                                                  const std::array<double, 3> &direction,
+                                                  const double distance) const;
+    std::vector<size_t> get_neighborhood(const size_t source,
+                                         const std::array<double, 3> &direction,
+                                         const double distance) const;
+    std::multimap<double, size_t> filter_neighborhood(const size_t moving_aggregate,
+                                                      const std::array<double, 3> &direction,
+                                                      const std::vector<size_t> &neighborhood,
+                                                      const double distance) const;
     bool test_free_space(std::array<double, 3> pos, double diameter) const;
     /* I/O */
     void save() {

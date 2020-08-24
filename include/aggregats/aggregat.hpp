@@ -21,6 +21,7 @@
 #include "elem_storage/elem_storage.hpp"
 #include "spheres/sphere_list.hpp"
 #include "sbl/volume_surface.hpp"
+#include "tools/contact_info.hpp"
 #include <list>
 
 
@@ -106,7 +107,7 @@ public:
     void compute_max_radius() noexcept;
     void compute_giration_radius() noexcept;
     /* other */
-    void merge(Aggregate *) noexcept;
+    void merge(Aggregate *other, AggregateContactInfo contact_info) noexcept;
     bool split();
     void print() const noexcept;
     /* Storage specific */

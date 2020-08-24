@@ -100,7 +100,6 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
     inipp::extract(ini.sections["output"]["write_between_event_every"], write_between_event_every);
     // checks
-    number_of_aggregates_limit = std::max(number_of_aggregates_limit, size_t(1));
     if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
         throw InputError("Monomere initialisation mode unknown");
     }
