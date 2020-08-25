@@ -47,14 +47,13 @@ Sphere.h and Sphere.cpp defines the data storage.
  * #############################################################################################################*/
 namespace mcac {
 void SphereList::init(const PhysicalModel &physical_model, size_t size) {
-    delete writer;
     physicalmodel = &physical_model;
-    writer = new ThreadedIO(physical_model, size);
+    writer = std::make_unique<ThreadedIO>(physical_model.output_dir / "Spheres", physical_model, size);
     ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>::init(size, *this);
     setpointers();
 }
 void SphereList::decrease_label() noexcept {
-    for (Sphere *mysphere : list) {
+    for (const auto& mysphere : list) {
         mysphere->decrease_label();
     }
 }
@@ -65,7 +64,7 @@ void SphereList::print() const {
     } else {
         std::cout << "  Without external Storage" << std::endl;
     }
-    for (const Sphere *s : list) {
+    for (const auto& s : list) {
         s->print();
     }
 }
@@ -73,7 +72,7 @@ void SphereList::print() const {
  * ########################################### grow all spheres ################################################
  * #############################################################################################################*/
 void SphereList::croissance_surface(double dt) noexcept {
-    for (Sphere *mysphere : list) {
+    for (const auto& mysphere : list) {
         mysphere->croissance_surface(dt);
     }
 }

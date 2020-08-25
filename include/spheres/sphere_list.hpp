@@ -58,7 +58,7 @@ class SphereList : public ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere> {
 private:
     std::vector<double>::iterator ptr_deb;
     std::vector<double>::iterator ptr_fin;
-    gsl::owner<ThreadedIO *> writer;
+    std::unique_ptr<ThreadedIO> writer;
     size_t last_saved;
 public:
     const PhysicalModel *physicalmodel;
@@ -66,10 +66,7 @@ public:
     void decrease_label() noexcept;
     void croissance_surface(double dt) noexcept;
     void print() const;
-    void save() {
-        save(false);
-    }
-    void save(bool finish);
+    void save();
     auto get_data() const;
     std::vector<double> format_position() const;
     std::vector<double> format_get_radius() const;

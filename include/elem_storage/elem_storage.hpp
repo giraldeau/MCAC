@@ -19,6 +19,7 @@
 #define INCLUDE_ELEM_STORAGE_ELEM_STORAGE_HPP 1
 #include <array>
 #include <vector>
+#include <memory>
 
 
 namespace mcac {
@@ -26,10 +27,10 @@ template<int N, class mystorage>
 class ElemStorage {
     template<int, class>
     friend
-    class StorageList;
+    class ListStorage;
 
 protected:
-    std::array<std::vector<double>, N> *storage;
+    std::shared_ptr<std::array<std::vector<double>, N>> storage;
     mystorage *external_storage;
     size_t index_in_storage{0};
 public:

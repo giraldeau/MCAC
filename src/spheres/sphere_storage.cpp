@@ -115,7 +115,7 @@ Sphere::~Sphere() noexcept {
 }
 /** Copy constructor */
 Sphere::Sphere(const Sphere &other, SphereList *aggregat, size_t id) noexcept:
-    ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList>(other, *this, *aggregat),
+    ElemStorage<SpheresFields::SPHERE_NFIELDS, SphereList>(*aggregat, id),
     x(nullptr),
     y(nullptr),
     z(nullptr),

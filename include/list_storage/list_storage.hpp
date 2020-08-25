@@ -29,8 +29,8 @@ class ListStorage {
     class ElemStorage;
 
 protected:
-    std::vector<elem *> list;
-    std::array<std::vector<double>, N> *storage;
+    std::vector<std::shared_ptr<elem>> list;
+    std::shared_ptr<std::array<std::vector<double>, N>> storage;
     const ListStorage *external_storage;
 public:
     elem &operator[](size_t i) noexcept;
@@ -43,11 +43,11 @@ public:
     template<class mylist>
     void add(size_t, mylist &owner) noexcept;
     template<class mylist>
-    elem *add(const elem &other, mylist &owner) noexcept;
-    typename std::vector<elem *>::iterator begin() noexcept;
-    typename std::vector<elem *>::iterator end() noexcept;
-    typename std::vector<elem *>::const_iterator begin() const noexcept;
-    typename std::vector<elem *>::const_iterator end() const noexcept;
+    std::shared_ptr<elem> add(const elem &other, mylist &owner) noexcept;
+    typename std::vector<std::shared_ptr<elem>>::iterator begin() noexcept;
+    typename std::vector<std::shared_ptr<elem>>::iterator end() noexcept;
+    typename std::vector<std::shared_ptr<elem>>::const_iterator begin() const noexcept;
+    typename std::vector<std::shared_ptr<elem>>::const_iterator end() const noexcept;
 private:
     void destroy() noexcept;
 public:

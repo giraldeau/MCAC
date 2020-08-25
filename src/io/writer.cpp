@@ -69,14 +69,6 @@ template shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                              const double &value);
 template shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                              const int &value);
-void ThreadedIO::wait() {
-    if (static_cast<bool>(writer)) {
-        writer->join();
-        delete writer;
-        writer = nullptr;
-        writer_owner = nullptr;
-    }
-}
 void ThreadedIO::create_file() {
     if (gsl::at(status, static_cast<long>(current_thread)) == WriterStatus::WRITING) {
         if (writer_owner == this) {
@@ -98,7 +90,7 @@ void ThreadedIO::create_file() {
     gsl::at(time_collection, static_cast<long>(current_thread))->setType(XdmfGridCollectionType::Temporal());
     gsl::at(status, static_cast<long>(current_thread)) = WriterStatus::APPENDING;
 }
-void ThreadedIO::write(const fs::path &prefix, const shared_ptr<XdmfUnstructuredGrid> &data, bool all) {
+void ThreadedIO::write(const shared_ptr<XdmfUnstructuredGrid> &data) {
     if (step % _n_time_per_file == 0) {
         create_file();
     }
@@ -107,34 +99,27 @@ void ThreadedIO::write(const fs::path &prefix, const shared_ptr<XdmfUnstructured
     }
     gsl::at(time_collection, static_cast<long>(current_thread))->insert(data);
     step++;
-    if (step % _n_time_per_file == 0 || all) {
-        gsl::at(xmf_file, static_cast<long>(current_thread))
-            ->insert(gsl::at(time_collection, static_cast<long>(current_thread)));
-        std::string file_name = std::string(prefix) + filename(num_file, _n);
-        wait();
-
-        //std::cout << "Writing " << file_name << std::endl;
-        if (true) {
-            writer =
-                new std::thread(write_task, file_name, &gsl::at(xmf_file, static_cast<long>(current_thread)));
-            writer_owner = this;
-            gsl::at(status, static_cast<long>(current_thread)) = WriterStatus::WRITING;
-        } else { // Sequential
-            write_task(file_name, &gsl::at(xmf_file, static_cast<long>(current_thread)));
-            gsl::at(status, static_cast<long>(current_thread)) = WriterStatus::IDLE;
-        }
-        gsl::at(status, static_cast<long>(current_thread)) = WriterStatus::IDLE;
+    if (step % _n_time_per_file == 0) {
+        _write();
         current_thread = !current_thread;
         num_file++;
-        if (all) {
-            if (gsl::at(status, static_cast<long>(!current_thread)) == WriterStatus::WRITING) {
-                if (ThreadedIO::writer_owner == this) {
-                    wait();
-                }
-                gsl::at(status, static_cast<long>(!current_thread)) = WriterStatus::IDLE;
-            }
-            step = 0;
-        }
+    }
+}
+void ThreadedIO::_write() {
+    gsl::at(xmf_file, static_cast<long>(current_thread))
+        ->insert(gsl::at(time_collection, static_cast<long>(current_thread)));
+    std::string file_name = std::string(prefix) + filename(num_file, _n);
+
+    //std::cout << "Writing " << file_name << std::endl;
+    if (true) {
+        wait();
+        writer = std::make_unique<std::thread>(write_task,
+                                               file_name, &gsl::at(xmf_file, static_cast<long>(current_thread)));
+        writer_owner = this;
+        gsl::at(status, static_cast<long>(current_thread)) = WriterStatus::WRITING;
+    } else { // Sequential
+        write_task(file_name, &gsl::at(xmf_file, static_cast<long>(current_thread)));
+        gsl::at(status, static_cast<long>(current_thread)) = WriterStatus::IDLE;
     }
 }
 void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data) {
@@ -147,6 +132,13 @@ void write_task(const std::string &filename, const shared_ptr<XdmfDomain> *data)
 
     // Write data
     (*data)->accept(xmf_file);
+}
+void ThreadedIO::wait() {
+    if (static_cast<bool>(writer)) {
+        writer->join();
+        writer.reset();
+    }
+    writer_owner = nullptr;
 }
 }  // namespace mcac
 

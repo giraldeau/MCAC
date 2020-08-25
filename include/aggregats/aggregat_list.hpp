@@ -38,7 +38,7 @@ private:
     std::vector<double> cumulative_time_steps;
     std::vector<double>::iterator ptr_deb;
     std::vector<double>::iterator ptr_fin;
-    gsl::owner<ThreadedIO *> writer;
+    std::unique_ptr<ThreadedIO> writer;
     size_t last_saved;
 public:
     SphereList spheres;
@@ -72,10 +72,7 @@ public:
                                                       const double distance) const;
     bool test_free_space(std::array<double, 3> pos, double diameter) const;
     /* I/O */
-    void save() {
-        save(false);
-    }
-    void save(bool);
+    void save();
     auto get_data() const;
     std::vector<double> format_position() const;
     std::vector<double> format_rg() const;

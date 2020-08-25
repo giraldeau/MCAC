@@ -118,7 +118,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
     myspheres[0].set_position(refpos);
 
     // move all the other sphere relatively to the first
-    for (Sphere *mysphere : myspheres) {
+    for (const auto& mysphere : myspheres) {
         std::array<double, 3> relpos = mysphere->get_relative_position();
         mysphere->set_position(refpos + relpos);
     }
@@ -325,7 +325,7 @@ void Aggregate::compute_giration_radius() noexcept {
 }
 //#####################################################################################################################
 
-void Aggregate::merge(Aggregate *other, AggregateContactInfo contact_info) noexcept {
+void Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept {
     size_t i_mysphere, i_othersphere;
     if (contact_info.moving_aggregate == get_label()) {
         i_mysphere = contact_info.moving_sphere;
@@ -348,7 +348,7 @@ void Aggregate::merge(Aggregate *other, AggregateContactInfo contact_info) noexc
     std::array<double, 3> diffpos = ref_root_to_contact + diffcontact - other_root_to_contact;
 
     // For all the spheres that were in the deleted aggregate
-    for (Sphere *othersphere : other->myspheres) {
+    for (const auto& othersphere : other->myspheres) {
         // change the Label to the new owner
         othersphere->set_label(long(get_label()));
 
@@ -407,7 +407,7 @@ bool Aggregate::split() {
         auto initial_number_of_spheres = external_storage->spheres.size();
         for (auto &split: independant_components) {
             // duplicate the current aggregate
-            auto *agg = external_storage->add(*this, *external_storage);
+            auto agg = external_storage->add(*this, *external_storage);
             agg->label = external_storage->size() - 1;
             external_storage->setpointers();
             // the verlet reference is not conserved by the duplication
@@ -419,13 +419,13 @@ bool Aggregate::split() {
             // copy reference of the selection into the duplication
             agg->myspheres = SphereList(&myspheres, split);
             agg->n_spheres = agg->myspheres.size();
-            for (Sphere *sph : agg->myspheres) {
+            for (const auto& sph : agg->myspheres) {
                 sph->set_label(long(agg->get_label()));
             }
             // by creating and destroying spheres, this is important
             external_storage->spheres.setpointers();
             std::array<double, 3> refpos = agg->myspheres[0].get_position();
-            for (Sphere *sph : agg->myspheres) {
+            for (const auto& sph : agg->myspheres) {
                 // change the relative position of the new aggregate
                 sph->set_relative_position(sph->get_position() - refpos);
             }
@@ -434,7 +434,7 @@ bool Aggregate::split() {
             agg->update();
             // we have to move all the spheres (periodicity)
             refpos = agg->get_position() - agg->get_relative_position();
-            for (Sphere *sph : agg->myspheres) {
+            for (const auto& sph : agg->myspheres) {
                 sph->set_position(refpos + sph->get_relative_position());
             }
         }
@@ -445,13 +445,14 @@ void Aggregate::remove(const size_t &id) noexcept {
     for (size_t local_id = 0; local_id < n_spheres; local_id++) {
         if (myspheres[local_id].index_in_storage == id) {
             myspheres.list.erase(myspheres.list.begin() + long(local_id));
+            break;
         }
     }
     external_storage->spheres.remove(id);
     n_spheres = myspheres.size();
     if (n_spheres > 0) {
         std::array<double, 3> refpos = myspheres[0].get_position();
-        for (Sphere *sph : myspheres) {
+        for (const auto& sph : myspheres) {
             // change the relative position of the new aggregate
             sph->set_relative_position(sph->get_position() - refpos);
         }
@@ -460,7 +461,7 @@ void Aggregate::remove(const size_t &id) noexcept {
         update();
         // we have to move all the spheres (periodicity)
         refpos = get_position() - get_relative_position();
-        for (Sphere *sph : myspheres) {
+        for (const auto& sph : myspheres) {
             sph->set_position(refpos + sph->get_relative_position());
         }
     } // else it should be deleted ASAP

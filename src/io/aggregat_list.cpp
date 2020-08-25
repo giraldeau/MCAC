@@ -58,9 +58,9 @@ auto AggregatList::get_data() const {
     aggregats_data->insert(scalar("Label", format_label()));
     return aggregats_data;
 }
-void AggregatList::save(const bool _finish) {
+void AggregatList::save() {
     auto data = get_data();
-    writer->write(physicalmodel->output_dir / "Aggregats", data, _finish);
+    writer->write(data);
 }
 DEF_FORMATER_POSITION(AggregatList)
 DEF_FORMATER_PTR(AggregatList, rg, double)
@@ -75,7 +75,7 @@ DEF_FORMATER(AggregatList, label, int)
 #else
 
 
-void AggregatList::save(const bool finish){}
+void AggregatList::save(){}
 
 #endif
 }  // namespace mcac

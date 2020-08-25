@@ -28,7 +28,7 @@ void AggregatList::setpointers() {
     if ((newdeb == ptr_deb) && (newfin == ptr_fin)) {
         return;
     }
-    for (Aggregate *aggregate : list) {
+    for (const auto& aggregate : list) {
         aggregate->setpointers();
     }
     ptr_deb = newdeb;
@@ -59,7 +59,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
     cumulative_time_steps(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    writer(new ThreadedIO(*physicalmodel, physicalmodel->n_monomeres)),
+    writer(std::make_unique<ThreadedIO>(physicalmodel->output_dir / "Aggregats", *physicalmodel, physicalmodel->n_monomeres)),
     last_saved(0),
     spheres(*the_physical_model, physicalmodel->n_monomeres),
     verlet(the_physical_model->n_verlet_divisions, the_physical_model->box_lenght) {
@@ -73,11 +73,8 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
     refresh();
 }
 AggregatList::~AggregatList() noexcept {
-    delete writer;
-    writer = nullptr;
-
     //#pragma omp simd
-    for (Aggregate *aggregate : list) {
+    for (const auto& aggregate : list) {
         aggregate->unset_verlet();
     }
 }

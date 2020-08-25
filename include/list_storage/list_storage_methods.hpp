@@ -38,18 +38,13 @@ template<int N, class elem>
 }
 template<int N, class elem>
 void ListStorage<N, elem>::destroy() noexcept {
-    if (!external_storage) {
-        if (storage) {
-            if (size() > 0) {
-                for (size_t n = size(); n-- > 0;) {
-                    delete list[n];
-                }
-            }
-            delete storage;
-        }
-    } else {
-        storage = nullptr;
-    }
+//    if (!external_storage) {
+//        if (storage) {
+//            delete storage;
+//        }
+//    } else {
+//        storage = nullptr;
+//    }
 }
 //template<int N, class elem>
 //void swap(ListStorage<N, elem> &first, ListStorage<N, elem> &second) noexcept {
@@ -74,7 +69,6 @@ void ListStorage<N, elem>::merge(ListStorage<N, elem> &other) noexcept {
 }
 template<int N, class elem>
 void ListStorage<N, elem>::remove(const size_t &id) noexcept {
-    delete list[id];
     list.erase(list.begin() + long(id));
     for (size_t i = 0; i < N; i++) {
         (*storage)[i].erase((*storage)[i].begin() + long(id));
@@ -84,19 +78,19 @@ void ListStorage<N, elem>::remove(const size_t &id) noexcept {
     }
 }
 template<int N, class elem>
-typename std::vector<elem *>::iterator ListStorage<N, elem>::begin() noexcept {
+typename std::vector<std::shared_ptr<elem>>::iterator ListStorage<N, elem>::begin() noexcept {
     return list.begin();
 }
 template<int N, class elem>
-typename std::vector<elem *>::iterator ListStorage<N, elem>::end() noexcept {
+typename std::vector<std::shared_ptr<elem>>::iterator ListStorage<N, elem>::end() noexcept {
     return list.end();
 }
 template<int N, class elem>
-typename std::vector<elem *>::const_iterator ListStorage<N, elem>::begin() const noexcept {
+typename std::vector<std::shared_ptr<elem>>::const_iterator ListStorage<N, elem>::begin() const noexcept {
     return list.begin();
 }
 template<int N, class elem>
-typename std::vector<elem *>::const_iterator ListStorage<N, elem>::end() const noexcept {
+typename std::vector<std::shared_ptr<elem>>::const_iterator ListStorage<N, elem>::end() const noexcept {
     return list.end();
 }
 template<int N, class elem>
@@ -113,13 +107,19 @@ void ListStorage<N, elem>::add(size_t n, mylist &owner) noexcept {
         data.insert(data.end(), n, 0.);
     }
     for (size_t i = initial_size; i < final_size; i++) {
-        list.push_back(new elem(&owner, i));
+        list.push_back(std::make_shared<elem>(&owner, i));
     }
 }
 template<int N, class elem>
 template<class mylist>
-elem *ListStorage<N, elem>::add(const elem &other, mylist &owner) noexcept {
-    return new elem(other, &owner);
+std::shared_ptr<elem> ListStorage<N, elem>::add(const elem &other, mylist &owner) noexcept {
+    //copy data
+    for (size_t j = 0; j < N; j++) {
+        (*storage)[j].push_back((*other.storage)[j][other.index_in_storage]);
+    }
+    size_t id = list.size();
+    list.push_back(std::make_shared<elem>(other, &owner, id));
+    return list[id];
 }
 /** Default constructor in local storage */
 //template<int N, class elem>
@@ -147,7 +147,7 @@ template<int N, class elem>
 template<class mylist>
 void ListStorage<N, elem>::init(size_t size, mylist &owner) noexcept {
     destroy();
-    storage = new std::array<std::vector<double>, N>;
+    storage = std::make_shared<std::array<std::vector<double>, N>>();
     external_storage = nullptr;
 
     //preallocation
@@ -159,7 +159,7 @@ void ListStorage<N, elem>::init(size_t size, mylist &owner) noexcept {
     }
     const size_t _list_size = size;
     for (size_t i = 0; i < _list_size; i++) {
-        list.push_back(new elem(&owner, i));
+        list.push_back(std::make_shared<elem>(&owner, i));
     }
 }
 /** Constructor with external storage */
@@ -170,10 +170,10 @@ ListStorage<N, elem>::ListStorage(ListStorage<N, elem> &parent, const std::vecto
     external_storage(&parent) {
     list.assign(index.size(), nullptr);
     const size_t _list_size = size();
-//    #pragma omp for simd
-        for (size_t i = 0; i < _list_size; i++) {
-            list[i] = external_storage->list[index[i]];
-        }
+    //    #pragma omp for simd
+    for (size_t i = 0; i < _list_size; i++) {
+        list[i] = external_storage->list[index[i]];
+    }
 }
 /** Destructor */
 template<int N, class elem>
@@ -189,12 +189,12 @@ ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &own
     external_storage(&ext_storage) {
     const size_t _start = (*storage)[0].size();
     for (size_t i = 0; i < N; i++) {
-        (*storage)[i].reserve(other.size() + _start);
+        (*storage)[i].insert((*storage)[i].end(), (*other.storage)[i].begin(), (*other.storage)[i].end());
     }
     list.reserve(other.size() + _start);
     const size_t _list_size = other.size();
     for (size_t size = 0; size < _list_size; size++) {
-        list.push_back(new elem(*other.list[size], &ext_storage, size + _start));
+        list.push_back(std::make_shared<elem>(*other.list[size], &ext_storage, size + _start));
     }
 }
 /** Move constructor */

@@ -47,9 +47,7 @@ public:
         write_message();
     }
     [[nodiscard]] const char *what() const noexcept override {
-        char *cstr = new char[message.length() + 1];
-        strcpy(cstr, message.c_str());
-        return cstr;
+        return message.c_str();
     }
 };
 

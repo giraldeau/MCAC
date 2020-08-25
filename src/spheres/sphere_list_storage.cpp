@@ -47,7 +47,7 @@ void SphereList::setpointers() {
     if ((newdeb == ptr_deb) && (newfin == ptr_fin)) {
         return;
     }
-    for (Sphere *mysphere : list) {
+    for (const auto& mysphere : list) {
         mysphere->setpointers();
     }
     ptr_deb = newdeb;
@@ -71,7 +71,7 @@ SphereList::SphereList(const PhysicalModel &physical_model, size_t size) noexcep
     ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    writer(new ThreadedIO(physical_model, size)),
+    writer(std::make_unique<ThreadedIO>(physical_model.output_dir / "Spheres", physical_model, size)),
     last_saved(0),
     physicalmodel(&physical_model) {
     init(physical_model, size);
@@ -81,7 +81,7 @@ SphereList::SphereList(SphereList *parent, const std::vector<size_t> &index) noe
     ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(*parent, index),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    writer(new ThreadedIO(*parent->physicalmodel, size())),
+    writer(std::make_unique<ThreadedIO>(parent->physicalmodel->output_dir / "Spheres", *parent->physicalmodel, size())),
     last_saved(0),
     physicalmodel(parent->physicalmodel) {
     setpointers();
@@ -91,7 +91,7 @@ SphereList::SphereList(SphereList *parent, const std::vector<size_t> &index) noe
 //    storage_list<SpheresFields::NFIELD,Sphere>(other,*this),
 //    ptr_deb(nullptr),
 //    ptr_fin(nullptr),
-//    writer (new ThreadedIO(*other.physicalmodel, size())),
+//    writer (std::make_unique<ThreadedIO>(*other.physicalmodel, size())),
 //    last_saved(other.last_saved),
 //    physicalmodel(other.physicalmodel)
 //{
@@ -106,10 +106,10 @@ SphereList::SphereList(const SphereList &other, SphereList *sphere_list) noexcep
     ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(other, *this, *sphere_list),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    writer(new ThreadedIO(*other.physicalmodel, size())),
+    writer(std::make_unique<ThreadedIO>(other.physicalmodel->output_dir / "Spheres", *other.physicalmodel, size())),
     last_saved(other.last_saved),
     physicalmodel(other.physicalmodel) {
-    for (Sphere *s: list) {
+    for (const auto& s: list) {
         s->physicalmodel = physicalmodel;
     }
     setpointers();
@@ -119,7 +119,7 @@ SphereList::SphereList(SphereList &&other) noexcept:
     ListStorage<SpheresFields::SPHERE_NFIELDS, Sphere>(std::move(other)),
     ptr_deb(nullptr),
     ptr_fin(nullptr),
-    writer(other.writer),
+    writer(std::move(other.writer)),
     last_saved(other.last_saved),
     physicalmodel(other.physicalmodel) {
     other.writer = nullptr;
@@ -127,7 +127,6 @@ SphereList::SphereList(SphereList &&other) noexcept:
 }
 /** Destructor */
 SphereList::~SphereList() noexcept {
-    delete writer;
 }
 
 /** Copy assignment operator */
@@ -142,8 +141,7 @@ SphereList::~SphereList() noexcept {
 /** Move assignment operator */
 SphereList &SphereList::operator=(SphereList &&other) noexcept {
     physicalmodel = other.physicalmodel;
-    delete writer;
-    writer = other.writer;
+    writer = std::move(other.writer);
     last_saved = other.last_saved;
     other.physicalmodel = nullptr;
     other.writer = nullptr;
