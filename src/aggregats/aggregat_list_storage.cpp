@@ -17,7 +17,7 @@
  */
 #include "aggregats/aggregat_list.hpp"
 #include "tools/tools.hpp"
-#include "exceptions.hpp"
+#include "spheres/sphere.hpp"
 #include <iostream>
 
 
@@ -34,7 +34,22 @@ void AggregatList::setpointers() {
     ptr_deb = newdeb;
     ptr_fin = newfin;
 }
-AggregatList::AggregatList(PhysicalModel *the_physical_model) :
+void AggregatList::remove(const size_t &id) noexcept {
+    ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::remove(id);
+    // keep index and label in sync
+    for (size_t i = id; i < list.size(); i++) {
+        list[i]->decrease_label();
+    }
+    setpointers();
+}
+void AggregatList::remove_sphere(const size_t &id) noexcept {
+    auto agg_num = size_t(spheres[id].agg_label);
+    list[agg_num]->remove(id);
+    if (list[agg_num]->size() == 0) {
+        remove(agg_num);
+    }
+}
+AggregatList::AggregatList(PhysicalModel *the_physical_model):
     ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>(),
     physicalmodel(the_physical_model),
     maxradius(0.),
@@ -52,51 +67,8 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model) :
     setpointers();
 
     //Initialize the aggregates
-
-    size_t testmem = 0;
-    setpointers();
     for (size_t i = 0; i < size(); i++) {
-
-        //random size
-        double x = random();
-        double dp = 0;
-        if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-            dp = (physicalmodel->mean_diameter)
-                 + std::sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * x - 1.0);
-        } else if (physicalmodel->monomeres_initialisation_type
-                   == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-            // TODO: CHECK WICH ONE TO KEEP
-//            dp = std::pow(physicalmodel->mean_diameter,
-//                          std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * x - 1.0));
-            dp = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
-                          std::sqrt(2.) * inverf(2. * x - 1.0));
-        } else {
-            exit(ErrorCodes::UNKNOWN_ERROR);
-        }
-        dp = dp * 1E-9;
-        if (dp <= 0) {
-            dp = physicalmodel->mean_diameter * 1E-9;
-        }
-        bool placed = false;
-        while (!placed) {
-            //random position
-            std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
-                                          random() * physicalmodel->box_lenght,
-                                          random() * physicalmodel->box_lenght}};
-
-            //++++++++++++ Test de superposition des sphérules lors de leur génération aléatoire ++++++++++++
-            if (test_free_space(newpos, dp)) {
-                list[i]->init(*physicalmodel, &verlet, newpos, i, &spheres, dp);
-                placed = true;
-            } else {
-                i--;
-                testmem++;
-            }
-            if (testmem > size()) {
-                throw TooDenseError();
-            }
-            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        }
+        list[i]->init(i, i);
     }
     refresh();
 }

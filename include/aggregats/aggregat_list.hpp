@@ -50,12 +50,15 @@ public:
     size_t pick_random() const;
     size_t pick_last() const;
     /* modifiers */
+    using ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::add;
+    void add(size_t);
     void refresh();
     void sort_time_steps(double factor);
     void duplication();
     bool split();
     size_t merge(AggregateContactInfo contact_info);
     /* other */
+    void croissance_surface(double dt);
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;
     AggregateContactInfo distance_to_next_contact(const size_t source,
                                                   const std::array<double, 3> &direction,
@@ -84,7 +87,8 @@ public:
     std::vector<double> format_agregat_volume() const;
     std::vector<double> format_agregat_surface() const;
     std::vector<int> format_label() const;
-
+    void remove(const size_t &id) noexcept;
+    void remove_sphere(const size_t &id) noexcept;
     /* Storage specific */
 private:
     void setpointers();

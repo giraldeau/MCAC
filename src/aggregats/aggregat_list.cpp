@@ -55,12 +55,27 @@ namespace mcac {
     }
     return latest;
 }
+void AggregatList::add(size_t n) {
+    size_t initial_n_agg = size();
+    size_t initial_n_sph = spheres.size();
+    spheres.add(n, spheres);
+    spheres.setpointers();
+    add(n, *this);
+    setpointers();
+
+    //initialize data
+    for (size_t i = 0; i < n; i++) {
+        size_t i_agg = initial_n_agg + i;
+        size_t i_sph = initial_n_sph + i;
+        list[i_agg]->init(i_agg, i_sph);
+    }
+    refresh();
+}
 void AggregatList::refresh() {
     max_time_step = *list[0]->time_step;
     for (const Aggregate *agg : list) {
         max_time_step = std::max(*agg->time_step, max_time_step);
     }
-
     avg_npp = static_cast<double>(spheres.size()) / static_cast<double>(size());
 }
 template<typename T>
@@ -239,23 +254,25 @@ std::multimap<double, size_t> AggregatList::filter_neighborhood(const size_t mov
     return sorted_neighborhood;
 }
 //################################### Determination of the contacts between agrgates ###################################
-bool AggregatList::test_free_space(std::array<double, 3> pos, double diameter) const {
+bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) const {
     // Use Verlet to reduce search
-    double mindist(diameter * 0.5 + maxradius);
-    std::vector<size_t> neighborhood = verlet.get_neighborhood(pos, mindist);
-    double mindist_2 = std::pow(mindist, 2);
-
+    std::vector<size_t> neighborhood = verlet.get_neighborhood(pos, radius + maxradius);
+    Sphere sphere(*physicalmodel, pos, radius);
     //$ loop on the agregates potentially in contact
     for (const size_t &suspect : neighborhood) //For every aggregate that could be in contact
     {
-        //$ Loop on all the spheres of the aggregate
-        for (const Sphere *sphere : list[suspect]->myspheres) {
-            if (distance_2(sphere->get_position(), pos, sphere->physicalmodel->box_lenght) <= mindist_2) {
-                return false;
-            }
+        if (contact(sphere, *list[suspect])) {
+            return false;
         }
     }
     return true;
 }
+void AggregatList::croissance_surface(double dt) {
+    spheres.croissance_surface(dt);
+    for (Sphere *sphere : spheres) {
+        if (sphere->get_radius() <= 0) {
+            remove_sphere(sphere->get_index());
+        }
+    }
+}
 }// namespace mcac
-

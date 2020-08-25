@@ -69,6 +69,7 @@ public:
     long agg_label;
     const PhysicalModel *physicalmodel;
     /* getters */
+    const size_t &get_index() const noexcept;
     const double &get_volume() const noexcept;
     const double &get_surface() const noexcept;
     const double &get_radius() const noexcept;
@@ -77,10 +78,10 @@ public:
     /* modifiers */
     void set_label(long value) noexcept;
     void decrease_label() noexcept;
-    void set_position(std::array<double, 3> newposition) noexcept;
-    void set_relative_position(std::array<double, 3> newposition) noexcept;
-    void translate(const std::array<double, 3> &trans) noexcept;
-    void relative_translate(std::array<double, 3> trans) noexcept;
+    void set_position(const std::array<double, 3>& newposition) noexcept;
+    void set_relative_position(const std::array<double, 3>& newposition) noexcept;
+    void translate(const std::array<double, 3>& trans) noexcept;
+    void relative_translate(const std::array<double, 3>& trans) noexcept;
     void init_val() noexcept;
     void init_val(std::array<double, 3> newposition, double newr) noexcept;
     void croissance_surface(double dt) noexcept;

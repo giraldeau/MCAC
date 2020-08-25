@@ -28,6 +28,7 @@ AggregateContactInfo distance_to_contact(const Aggregate &aggregate_1,
                                          const std::array<double, 3> &direction,
                                          const double distance) noexcept;
 bool contact(const Aggregate &aggregate_1, const Aggregate &aggregate_2) noexcept;
+bool contact(const Sphere &sphere, const Aggregate &aggregate) noexcept;
 }  // namespace mcac
 
 

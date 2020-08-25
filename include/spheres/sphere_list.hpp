@@ -76,6 +76,7 @@ public:
     std::vector<long> format_agg_label() const;
 
     /* Storage specific */
+    void remove(const size_t &id) noexcept;
 private:
     void setpointers();
 public:

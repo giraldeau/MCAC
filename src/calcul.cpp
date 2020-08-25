@@ -91,28 +91,25 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         }
         physicalmodel->time = physicalmodel->time + deltatemps;
 
-        event = false;
         if (contact) {
             //$ Aggregates in contact are reunited;
             num_agg = aggregates->merge(next_contact);
-            event = true;
         }
 
         //$ update of the Aggregates/Spheres
         bool split = false;
         if (std::abs(physicalmodel->a_surfgrowth) > 0.) {
             //$ Growth of all spheres
-            aggregates->spheres.croissance_surface(deltatemps);
+            aggregates->croissance_surface(deltatemps);
             split = aggregates->split();
-            if (split){
-                event=true;
-            }
 
             //$ Aggregates update
             for (Aggregate *agg : *aggregates) {
                 agg->update();
             }
         }
+        event = split || contact;
+
         auto[success, fractal_dimension, fractal_prefactor, error] = aggregates->get_instantaneous_fractal_law();
         if (!success) {
             fractal_dimension = physicalmodel->fractal_dimension;
@@ -137,6 +134,21 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
             physicalmodel->n_iter_without_event = 0;
         } else {
             physicalmodel->n_iter_without_event++;
+        }
+        if (contact) {
+            aggregates->remove_sphere(0);
+            if(aggregates->split()) {
+                for (Aggregate *agg : *aggregates) {
+                    agg->update();
+                }
+            }
+            try{
+                aggregates->add(1);
+            }
+            catch (TooDenseError const &e) {
+                std::cout << e.what() << std::endl;
+                break;
+            }
         }
     }
     aggregates->spheres.save(true);

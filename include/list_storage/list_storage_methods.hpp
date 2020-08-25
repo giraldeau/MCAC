@@ -80,7 +80,7 @@ void ListStorage<N, elem>::remove(const size_t &id) noexcept {
         (*storage)[i].erase((*storage)[i].begin() + long(id));
     }
     for (size_t i = id; i < list.size(); i++) {
-        list[i]->decrease_label();
+        list[i]->decrease_index();
     }
 }
 template<int N, class elem>
@@ -98,6 +98,23 @@ typename std::vector<elem *>::const_iterator ListStorage<N, elem>::begin() const
 template<int N, class elem>
 typename std::vector<elem *>::const_iterator ListStorage<N, elem>::end() const noexcept {
     return list.end();
+}
+template<int N, class elem>
+template<class mylist>
+void ListStorage<N, elem>::add(size_t n, mylist &owner) noexcept {
+    size_t initial_size = size();
+    size_t final_size = initial_size + n;
+
+    //preallocation
+    list.reserve(final_size);
+
+    //initialize data
+    for (std::vector<double> &data : (*storage)) {
+        data.insert(data.end(), n, 0.);
+    }
+    for (size_t i = initial_size; i < final_size; i++) {
+        list.push_back(new elem(&owner, i));
+    }
 }
 template<int N, class elem>
 template<class mylist>

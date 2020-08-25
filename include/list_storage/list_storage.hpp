@@ -41,6 +41,8 @@ public:
     void remove(const size_t &id) noexcept;
     size_t size() const noexcept;
     template<class mylist>
+    void add(size_t, mylist &owner) noexcept;
+    template<class mylist>
     elem *add(const elem &other, mylist &owner) noexcept;
     typename std::vector<elem *>::iterator begin() noexcept;
     typename std::vector<elem *>::iterator end() noexcept;

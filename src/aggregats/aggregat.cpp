@@ -22,6 +22,7 @@
 #include "spheres/sphere_intersection.hpp"
 #include "tools/tools.hpp"
 #include "verlet/verlet.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 
 
@@ -73,8 +74,6 @@ void Aggregate::decrease_label() noexcept {
     if (static_cast<bool>(verlet)) {
         verlet->remove(get_label(), index_verlet);
     }
-    // Keep index and label in sync
-    decrease_index();
     label--;
 
     // Keep aggLabel of myspheres in sync
@@ -124,11 +123,52 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
         mysphere->set_position(refpos + relpos);
     }
 }
+void Aggregate::init(size_t new_label,
+                     size_t sphere_index) {
+    //initialize data
+
+    //random size
+    double diameter = 0;
+    if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
+        diameter = (physicalmodel->mean_diameter)
+                   + std::sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * random() - 1.0);
+    } else if (physicalmodel->monomeres_initialisation_type
+               == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
+        // TODO: CHECK WICH ONE TO KEEP
+//        diameter = std::pow(physicalmodel->mean_diameter,
+//                       std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
+        diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
+                                                     std::sqrt(2.) * inverf(2. * random() - 1.0));
+    } else {
+        throw InputError("Monomere initialisation mode unknown");
+    }
+    if (diameter <= 0) {
+        diameter = physicalmodel->mean_diameter;
+    }
+    diameter *= 1E-9;
+    for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
+        //random position
+        std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
+                                      random() * physicalmodel->box_lenght,
+                                      random() * physicalmodel->box_lenght}};
+        if (external_storage->test_free_space(newpos, diameter * 0.5)) {
+            init(*external_storage->physicalmodel,
+                 &external_storage->spheres,
+                 &external_storage->verlet,
+                 external_storage->physicalmodel->time,
+                 new_label, sphere_index, newpos, diameter);
+            return;
+        }
+    }
+    throw TooDenseError();
+}
 void Aggregate::init(const PhysicalModel &new_physicalmodel,
-                     Verlet *new_verlet,
-                     const std::array<double, 3> &position,
-                     size_t new_label,
                      SphereList *spheres,
+                     Verlet *new_verlet,
+                     double new_time,
+                     size_t new_label,
+                     size_t sphere_index,
+                     const std::array<double, 3> &position,
                      double sphere_diameter) noexcept {
     physicalmodel = &new_physicalmodel;
     label = new_label;
@@ -138,12 +178,13 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     }
     setpointers();
     set_position(position);
+    *time = new_time;
     if (static_cast<bool>(new_verlet)) {
         set_verlet(new_verlet);
     }
-    (*spheres)[label].set_label(int(label));
-    (*spheres)[label].init_val(position, sphere_diameter * 0.5);
-    myspheres = SphereList(spheres, {label});
+    (*spheres)[sphere_index].set_label(int(label));
+    (*spheres)[sphere_index].init_val(position, sphere_diameter * 0.5);
+    myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
     update_distances();
     update();
@@ -399,6 +440,30 @@ bool Aggregate::split() {
         }
     }
     return have_splitted;
+}
+void Aggregate::remove(const size_t &id) noexcept {
+    for (size_t local_id = 0; local_id < n_spheres; local_id++) {
+        if (myspheres[local_id].index_in_storage == id) {
+            myspheres.list.erase(myspheres.list.begin() + long(local_id));
+        }
+    }
+    external_storage->spheres.remove(id);
+    n_spheres = myspheres.size();
+    if (n_spheres > 0) {
+        std::array<double, 3> refpos = myspheres[0].get_position();
+        for (Sphere *sph : myspheres) {
+            // change the relative position of the new aggregate
+            sph->set_relative_position(sph->get_position() - refpos);
+        }
+        // we have to recompute all the caracteristic of this new aggregate
+        update_distances();
+        update();
+        // we have to move all the spheres (periodicity)
+        refpos = get_position() - get_relative_position();
+        for (Sphere *sph : myspheres) {
+            sph->set_position(refpos + sph->get_relative_position());
+        }
+    } // else it should be deleted ASAP
 }
 void Aggregate::print() const noexcept {
     std::cout << "Printing details of Aggregat " << index_in_storage << " " << label << std::endl;

@@ -41,22 +41,31 @@ AggregateContactInfo distance_to_contact(const Aggregate &aggregate_1,
     }
     return closest_contact;
 }
+bool contact(const Sphere &sphere,
+             const Aggregate &aggregate) noexcept {
+    Sphere SphereAggregate(aggregate);
+    if (!contact(sphere, SphereAggregate)) {
+        return false;
+    }
+    //$ Loop on all the spheres of the other aggregate
+    for (const auto &othersphere : aggregate.myspheres) {
+        if (!contact(sphere, *othersphere)) {
+            return true;
+        }
+    }
+    return false;
+}
 bool contact(const Aggregate &aggregate_1,
              const Aggregate &aggregate_2) noexcept {
-    /*
-        Sphere SphereMe(aggregate_1);
-        Sphere SphereOther(aggregate_2);
-
-        if (! SphereMe.contact(SphereOther))
-            return false;
-    */
+    Sphere SphereMe(aggregate_1);
+    Sphere SphereOther(aggregate_2);
+    if (!contact(SphereMe, SphereOther)) {
+        return false;
+    }
     //$ Loop on all the spheres of the other aggregate
-    for (const auto& othersphere : aggregate_1.myspheres) {
-        //$ For every sphere in the aggregate :
-        for (const auto& mysphere: aggregate_2.myspheres) {
-            if (contact(*mysphere, *othersphere)) {
-                return true;
-            }
+    for (const auto &othersphere : aggregate_1.myspheres) {
+        if (contact(*othersphere, aggregate_2)) {
+            return true;
         }
     }
     return false;

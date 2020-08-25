@@ -95,11 +95,15 @@ public:
     void set_position(const std::array<double, 3> &position) noexcept;
     void translate(std::array<double, 3> vector) noexcept;
     //    void init();
+    void init(size_t new_label,
+              size_t sphere_index);
     void init(const PhysicalModel &,
-              Verlet *,
-              const std::array<double, 3> &position,
-              size_t new_label,
               SphereList *,
+              Verlet *,
+              double new_time,
+              size_t new_label,
+              size_t sphere_index,
+              const std::array<double, 3> &position,
               double sphere_diameter) noexcept;
     void update() noexcept;
     void compute_volume() noexcept;
@@ -109,6 +113,7 @@ public:
     /* other */
     void merge(Aggregate *other, AggregateContactInfo contact_info) noexcept;
     bool split();
+    void remove(const size_t &id) noexcept;
     void print() const noexcept;
     /* Storage specific */
 private:
