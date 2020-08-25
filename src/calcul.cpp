@@ -135,21 +135,6 @@ void calcul(PhysicalModel *physicalmodel, AggregatList *aggregates) {//Coeur du 
         } else {
             physicalmodel->n_iter_without_event++;
         }
-        if (contact) {
-            aggregates->remove_sphere(0);
-            if(aggregates->split()) {
-                for (Aggregate *agg : *aggregates) {
-                    agg->update();
-                }
-            }
-            try{
-                aggregates->add(1);
-            }
-            catch (TooDenseError const &e) {
-                std::cout << e.what() << std::endl;
-                break;
-            }
-        }
     }
     aggregates->spheres.save(true);
     aggregates->save(true);
