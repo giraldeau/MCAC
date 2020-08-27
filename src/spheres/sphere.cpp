@@ -89,6 +89,9 @@ void Sphere::set_relative_position(const std::array<double, 3>& newposition) noe
     *ry = newposition[1];
     *rz = newposition[2];
 }
+void Sphere::set_radius(double new_radius) noexcept {
+    *r = new_radius;
+}
 void Sphere::init_val() noexcept {
     init_val({0, 0, 0}, 0.);
 }

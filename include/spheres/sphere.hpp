@@ -79,6 +79,7 @@ public:
     void set_label(long value) noexcept;
     void decrease_label() noexcept;
     void set_position(const std::array<double, 3>& newposition) noexcept;
+    void set_radius(double new_radius) noexcept;
     void set_relative_position(const std::array<double, 3>& newposition) noexcept;
     void translate(const std::array<double, 3>& trans) noexcept;
     void relative_translate(const std::array<double, 3>& trans) noexcept;
