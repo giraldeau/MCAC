@@ -46,7 +46,7 @@ public:
     int mean_monomere_per_aggregate_limit;
     size_t number_of_aggregates_limit;
     int n_iter_without_event_limit;
-    size_t write_between_event_every;
+    size_t write_between_event_frequency;
     std::experimental::filesystem::path output_dir;
 
     explicit PhysicalModel(const std::string &fichier_param);

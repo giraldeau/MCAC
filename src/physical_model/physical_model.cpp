@@ -60,7 +60,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     mean_monomere_per_aggregate_limit(-1),
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
-    write_between_event_every(100),
+    write_between_event_frequency(100),
     output_dir("MCAC_output") {
     std::string default_str;
     // read the config file
@@ -103,7 +103,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     // output
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
-    inipp::extract(ini.sections["output"]["write_between_event_every"], write_between_event_every);
+    inipp::extract(ini.sections["output"]["write_between_event_frequency"], write_between_event_frequency);
     output_dir = extract_path(fichier_param) / output_dir;
     if (fs::exists(output_dir) && fs::is_directory(output_dir)) {
         std::string answer;
