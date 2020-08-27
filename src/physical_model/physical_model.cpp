@@ -25,6 +25,7 @@
 #include <fstream>
 #include <inipp.h>
 #include <iostream>
+#include <algorithm>
 
 
 namespace fs = std::experimental::filesystem;
@@ -62,8 +63,10 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
     output_dir("MCAC_output"),
+    flame_file("flame_input"),
     with_collisions(true),
-    with_surface_reactions(false) {
+    with_surface_reactions(false),
+    with_flame_coupling(false) {
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -105,6 +108,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     default_str = resolve_pick_method(pick_method);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
     pick_method = resolve_pick_method(default_str);
+    // input - flame coupling
+    inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
+    inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
     // output
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
@@ -164,6 +170,13 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     cpu_start = clock();
 }
 [[gnu::pure]] bool PhysicalModel::finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const {
+    if (with_flame_coupling) {
+        if (finished_by_flame) {
+            std::cout << "The simulation is finished by the flame coupling" << std::endl;
+            return true;
+        }
+        return false;
+    }
     if (number_of_aggregates <= number_of_aggregates_limit) {
         std::cout << "We reach the AggMin condition" << std::endl << std::endl;
         return true;
@@ -227,6 +240,12 @@ void PhysicalModel::print() const {
     } else {
         std::cout << " Without surface reations" << std::endl;
     }
+    if (with_flame_coupling) {
+        std::cout << " With flame coupling" << std::endl
+                  << "  flame_file: " << flame_file << std::endl;
+    } else {
+        std::cout << " Without flame coupling" << std::endl;
+    }
     std::cout << std::endl
               << "Options for Pysical model: " << std::endl
               << " Initialisation mode : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
@@ -253,6 +272,30 @@ void PhysicalModel::print() const {
 void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
     aggregate_concentration = static_cast<double>(n_aggregates) / std::pow(box_lenght, 3);
     volume_fraction = total_volume / std::pow(box_lenght, 3);
+}
+void PhysicalModel::update_from_flame(const FlameCoupling &flame) {
+    auto next_t = std::upper_bound(flame.t_res.begin(), flame.t_res.end(), time);
+    if (next_t == flame.t_res.begin()) {
+        throw InputError("Initial time not in the flame time range");
+    }
+    auto previous_t = next_t - 1;
+    if (next_t == flame.t_res.end()) {
+        // ignore being right on the last time
+        finished_by_flame = true;
+        return;
+    }
+    double dt = *next_t - *previous_t;
+    double t = time - *previous_t;
+
+    // 1. Flame temperature
+    auto next_temp = flame.Temp.begin() + (next_t - flame.t_res.begin());
+    auto previous_temp = flame.Temp.begin() + (previous_t - flame.t_res.begin());
+    update_temperature(*previous_temp + t * (*next_temp - *previous_temp) / dt);
+
+    // 2. surface growth velocity (dRp/dt)
+    auto next_u_sg = flame.u_sg.begin() + (next_t - flame.t_res.begin());
+    auto previous_u_sg = flame.u_sg.begin() + (previous_t - flame.t_res.begin());
+    u_sg = *previous_u_sg + t * (*next_u_sg - *previous_u_sg) / dt;
 }
 //#####################################################################################################################
 void PhysicalModel::update_temperature(double new_temperature) noexcept {

@@ -46,6 +46,13 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     bool event(true);
     size_t multiply_threshold = aggregates.size() / 8;
 
+    // load flame-coupling info.
+    FlameCoupling flame;
+    if (physicalmodel.with_flame_coupling) {
+        flame = FlameCoupling(physicalmodel.flame_file);
+        physicalmodel.update_from_flame(flame);
+    }
+
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
         save_advancement(physicalmodel, aggregates);
@@ -133,7 +140,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         if (event) {
             aggregates.refresh();
         }
-        if (physicalmodel.with_surface_reactions) {
+        if (physicalmodel.with_surface_reactions 
+            || physicalmodel.with_flame_coupling) {
             if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
                 for (const auto &agg : aggregates) {
                     agg->update();
@@ -173,6 +181,9 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         if (event
             || physicalmodel.with_surface_reactions) {
             physicalmodel.update(aggregates.size(), aggregates.get_total_volume());
+        }
+        if (physicalmodel.with_flame_coupling) {
+            physicalmodel.update_from_flame(flame);
         }
     }
     save_advancement(physicalmodel, aggregates);
