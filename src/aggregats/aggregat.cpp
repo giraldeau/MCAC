@@ -136,10 +136,14 @@ void Aggregate::init(size_t new_label,
     } else if (physicalmodel->monomeres_initialisation_type
                == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         // TODO: CHECK WICH ONE TO KEEP
-//        diameter = std::pow(physicalmodel->mean_diameter,
-//                       std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
-        diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
-                                                     std::sqrt(2.) * inverf(2. * random() - 1.0));
+        if (physicalmodel->dispersion_diameter >= 1.0) {
+            // diameter = std::pow(physicalmodel->mean_diameter,
+            //                     std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
+            diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
+                                                               std::sqrt(2.) * inverf(2. * random() - 1.0));
+        } else {
+            throw InputError("dispersion_diameter cannot be lower than 1");
+        }
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
