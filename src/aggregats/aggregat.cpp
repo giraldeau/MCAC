@@ -194,7 +194,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     (*spheres)[sphere_index].init_val(position, sphere_diameter * 0.5);
     myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
-    update_distances_and_overlapping();
+    //update_distances_and_overlapping();
     update();
 }
 
@@ -373,7 +373,7 @@ void Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     // merge the spheresLists
     myspheres.merge(other->myspheres);
     n_spheres = myspheres.size();
-    update_distances_and_overlapping();
+    //update_distances_and_overlapping();
     update();
 }
 bool Aggregate::split() {
@@ -439,7 +439,7 @@ bool Aggregate::split() {
                 sph->set_relative_position(sph->get_position() - refpos);
             }
             // we have to recompute all the caracteristic of this new aggregate
-            agg->update_distances_and_overlapping();
+            //agg->update_distances_and_overlapping();
             agg->update();
             // we have to move all the spheres (periodicity)
             refpos = agg->get_position() - agg->get_relative_position();
@@ -466,7 +466,7 @@ void Aggregate::remove(const size_t &id) noexcept {
             sph->set_relative_position(sph->get_position() - refpos);
         }
         // we have to recompute all the caracteristic of this new aggregate
-        update_distances_and_overlapping();
+        //update_distances_and_overlapping();
         update();
         // we have to move all the spheres (periodicity)
         refpos = get_position() - get_relative_position();
