@@ -48,6 +48,8 @@ public:
     int n_iter_without_event_limit;
     size_t write_between_event_frequency;
     std::experimental::filesystem::path output_dir;
+    bool with_collisions;
+    bool with_surface_reactions;
 
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;

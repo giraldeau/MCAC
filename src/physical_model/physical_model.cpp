@@ -61,7 +61,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
     write_between_event_frequency(100),
-    output_dir("MCAC_output") {
+    output_dir("MCAC_output"),
+    with_collisions(true),
+    with_surface_reactions(false) {
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -97,6 +99,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["limits"]["physical_time"], physical_time_limit);
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
+    inipp::extract(ini.sections["numerics"]["with_collisions"], with_collisions);
+    inipp::extract(ini.sections["numerics"]["with_surface_reactions"], with_surface_reactions);
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
     default_str = resolve_pick_method(pick_method);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
@@ -217,11 +221,21 @@ void PhysicalModel::print() const {
               << " Initial aggregate concentration : " << aggregate_concentration << " (#/m^3)" << std::endl
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_lenght << " (m)" << std::endl
-              << " FV                              : " << volume_fraction << " (-)" << std::endl
-              << " Asurfgrowth                     : " << a_surfgrowth << std::endl
-              << " xsurfgrowth                     : " << x_surfgrowth << std::endl
-              << " coeffB                          : " << coeff_b << std::endl
-              << std::endl
+              << " FV                              : " << volume_fraction << " (-)" << std::endl;
+    if (with_collisions) {
+        std::cout << " With collisions" << std::endl;
+    } else{
+        std::cout << " Without collision" << std::endl;
+    }
+    if (with_surface_reactions) {
+        std::cout << " With surface reations" << std::endl
+                  << "  Asurfgrowth                : " << a_surfgrowth << std::endl
+                  << "  xsurfgrowth                : " << x_surfgrowth << std::endl
+                  << "  coeffB                     : " << coeff_b << std::endl;
+    } else {
+        std::cout << " Without surface reations" << std::endl;
+    }
+    std::cout << std::endl
               << "Options for Pysical model: " << std::endl
               << " Initialisation mode : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
               << std::endl

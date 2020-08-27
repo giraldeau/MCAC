@@ -89,12 +89,16 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         double full_distance = aggregates[num_agg].get_lpm();
         double move_distance = full_distance;
 
-        //$ looking for potential contacts
-        AggregateContactInfo next_contact = aggregates.distance_to_next_contact(num_agg, vectdir, full_distance);
-        bool contact = next_contact <= full_distance;
-        if (contact) {
-            move_distance = next_contact.distance;
-            deltatemps = deltatemps * move_distance / full_distance;
+        bool contact = false;
+        AggregateContactInfo next_contact;
+        if (physicalmodel.with_collisions) {
+            //$ looking for potential contacts
+            next_contact = aggregates.distance_to_next_contact(num_agg, vectdir, full_distance);
+            contact = next_contact <= full_distance;
+            if (contact) {
+                move_distance = next_contact.distance;
+                deltatemps = deltatemps * move_distance / full_distance;
+            }
         }
 
         //$ Translation of the aggregate
@@ -107,24 +111,33 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         }
         physicalmodel.time = physicalmodel.time + deltatemps;
 
+        //$ Event management
         if (contact) {
             //$ Aggregates in contact are reunited;
             num_agg = aggregates.merge(next_contact);
         }
-
-        //$ update of the Aggregates/Spheres
         bool split = false;
-        if (std::abs(physicalmodel.a_surfgrowth) > 0.) {
-            //$ Growth of all spheres
+        if (physicalmodel.with_surface_reactions) {
             aggregates.croissance_surface(deltatemps);
             split = aggregates.split();
+        }
+        event = split || contact;
+        size_t current_n_iter_without_event = physicalmodel.n_iter_without_event;
+        if (event) {
+            physicalmodel.n_iter_without_event = 0;
+        } else {
+            physicalmodel.n_iter_without_event++;
+        }
 
-            //$ Aggregates update
-            for (const auto& agg : aggregates) {
+        //$ Update aggregates
+        if (event) {
+            aggregates.refresh();
+        }
+        if (physicalmodel.with_surface_reactions) {
+            for (const auto &agg : aggregates) {
                 agg->update();
             }
         }
-        event = split || contact;
 
         /* no calculation of fractal dimension in time
         auto[success, fractal_dimension, fractal_prefactor, error] = aggregates.get_instantaneous_fractal_law();
@@ -136,7 +149,6 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
 
         //$ Show progress
         if (event) {
-            aggregates.refresh();
             clock_t now = clock();
             double elapse = double(now - physicalmodel.cpu_start) / CLOCKS_PER_SEC;
             std::cout.precision(3);
@@ -147,16 +159,13 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                       << " CPU="     << std::setw(4) << elapse << "s"
                       << " contact=" << std::setw(4) << contact
                       << " split="   << std::setw(4) << split
-                      << " after "   << std::setw(4) << physicalmodel.n_iter_without_event << " it"
+                      << " after "   << std::setw(4) << current_n_iter_without_event << " it"
                       // << " --- "     << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
                       << std::endl;
-            physicalmodel.n_iter_without_event = 0;
-        } else {
-            physicalmodel.n_iter_without_event++;
         }
         //$ Update physical model
         if (event
-            || std::abs(physicalmodel.a_surfgrowth) > 0.) {
+            || physicalmodel.with_surface_reactions) {
             physicalmodel.update(aggregates.size(), aggregates.get_total_volume());
         }
     }
