@@ -126,6 +126,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
 void Aggregate::init(size_t new_label,
                      size_t sphere_index) {
     //initialize data
+    set_time(physicalmodel->time);
 
     //random size
     double diameter = 0;

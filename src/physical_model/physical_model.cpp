@@ -81,6 +81,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         throw InputError("Monomere initialisation mode unknown: " + default_str);
     }
     // environment
+    inipp::extract(ini.sections["environment"]["initial_time"], time);
     inipp::extract(ini.sections["environment"]["volume_fraction"], volume_fraction);
     inipp::extract(ini.sections["environment"]["temperature"], temperature);
     inipp::extract(ini.sections["environment"]["pressure"], pressure);
