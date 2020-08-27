@@ -47,6 +47,8 @@ private:
     double *time;                   // Proper time of the aggregate
     double *dp;                     // Mean monomer diameters
     double *dg_over_dp;
+    double *overlapping;            // Average overlapping coefficient
+    double *coordination_number;    // Average coordination number
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
 
@@ -64,7 +66,7 @@ private:
     */
     std::array<size_t, 3> compute_index_verlet() noexcept;
     void update_verlet() noexcept;
-    void update_distances() noexcept;
+    void update_distances_and_overlapping() noexcept;
     double internal_sphere_distance(size_t i, size_t j) const noexcept;
     double sphere_distance_center(size_t i) const noexcept;
 public:
@@ -74,6 +76,7 @@ public:
     SphereList myspheres;
     /* getters */
     const double &get_rg() const noexcept;
+    const double &get_dp() const noexcept;
     const double &get_f_agg() const noexcept;
     const double &get_lpm() const noexcept;
     const double &get_time_step() const noexcept;
@@ -106,7 +109,7 @@ public:
               const std::array<double, 3> &position,
               double sphere_diameter) noexcept;
     void update() noexcept;
-    void compute_volume() noexcept;
+    void compute_volume_surface();
     void compute_mass_center() noexcept;
     void compute_max_radius() noexcept;
     void compute_giration_radius() noexcept;

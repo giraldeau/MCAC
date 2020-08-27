@@ -55,6 +55,8 @@ auto AggregatList::get_data() const {
     aggregats_data->insert(scalar("Rmax", format_rmax()));
     aggregats_data->insert(scalar("Volume", format_agregat_volume()));
     aggregats_data->insert(scalar("Surface", format_agregat_surface()));
+    aggregats_data->insert(scalar("coordination_number", format_coordination_number()));
+    aggregats_data->insert(scalar("overlapping", format_overlapping()));
     aggregats_data->insert(scalar("Label", format_label()));
     return aggregats_data;
 }
@@ -70,6 +72,8 @@ DEF_FORMATER_PTR(AggregatList, time_step, double)
 DEF_FORMATER_PTR(AggregatList, rmax, double)
 DEF_FORMATER_PTR(AggregatList, agregat_volume, double)
 DEF_FORMATER_PTR(AggregatList, agregat_surface, double)
+DEF_FORMATER_PTR(AggregatList, coordination_number, double)
+DEF_FORMATER_PTR(AggregatList, overlapping, double)
 DEF_FORMATER(AggregatList, n_spheres, int)
 DEF_FORMATER(AggregatList, label, int)
 #else

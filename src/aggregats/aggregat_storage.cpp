@@ -38,6 +38,8 @@ void Aggregate::setpointers() noexcept {
     time = &(*storage)[AggregatesFields::AGGREGAT_TIME][index_in_storage];
     dp = &(*storage)[AggregatesFields::AGGREGAT_DP][index_in_storage];
     dg_over_dp = &(*storage)[AggregatesFields::AGGREGAT_DG_OVER_DP][index_in_storage];
+    overlapping = &(*storage)[AggregatesFields::AGGREGAT_OVERLAPPING][index_in_storage];
+    coordination_number = &(*storage)[AggregatesFields::AGGREGAT_COORDINATION_NUMBER][index_in_storage];
 }
 Aggregate::Aggregate() noexcept:
     ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(),
@@ -57,6 +59,8 @@ Aggregate::Aggregate() noexcept:
     time(nullptr),
     dp(nullptr),
     dg_over_dp(nullptr),
+    overlapping(nullptr),
+    coordination_number(nullptr),
     n_spheres(0),
     label(0),
     distances(),
@@ -86,6 +90,8 @@ Aggregate::Aggregate(AggregatList *aggregat_list, size_t newlabel) noexcept:
     time(nullptr),
     dp(nullptr),
     dg_over_dp(nullptr),
+    overlapping(nullptr),
+    coordination_number(nullptr),
     n_spheres(0),
     label(newlabel),
     distances(),
@@ -119,6 +125,8 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list, size_t
     time(nullptr),
     dp(nullptr),
     dg_over_dp(nullptr),
+    overlapping(nullptr),
+    coordination_number(nullptr),
     n_spheres(other.n_spheres),
     label(other.label),
     distances(other.distances),

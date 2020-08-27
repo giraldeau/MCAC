@@ -34,6 +34,9 @@ namespace mcac {
 [[gnu::pure]] const double &Aggregate::get_f_agg() const noexcept {
     return *f_agg;
 }
+[[gnu::pure]] const double &Aggregate::get_dp() const noexcept {
+    return *dp;
+}
 [[gnu::pure]] const double &Aggregate::get_lpm() const noexcept {
     return *lpm;
 }
@@ -191,7 +194,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     (*spheres)[sphere_index].init_val(position, sphere_diameter * 0.5);
     myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
-    update_distances();
+    update_distances_and_overlapping();
     update();
 }
 
@@ -200,7 +203,8 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
 //### Update all physical params of an aggregate except volume and surface (rayon de giration, masse, nombre de sphérules primaires) #####
 void Aggregate::update() noexcept {
     // This function will update the parameter of Agg
-    compute_volume();
+    update_distances_and_overlapping();
+    compute_volume_surface();
     compute_mass_center();
     compute_max_radius();
     compute_giration_radius();
@@ -226,7 +230,7 @@ void Aggregate::update() noexcept {
     }
 }
 //####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
-void Aggregate::compute_volume() noexcept {
+void Aggregate::compute_volume_surface() {
     *agregat_volume = *agregat_surface = 0.0; // compute_volume and surface of Agg Id
 
     //$ Initialisation of the arrays of volume, surface of each sphere, and the center of mass
@@ -369,7 +373,7 @@ void Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     // merge the spheresLists
     myspheres.merge(other->myspheres);
     n_spheres = myspheres.size();
-    update_distances();
+    update_distances_and_overlapping();
     update();
 }
 bool Aggregate::split() {
@@ -435,7 +439,7 @@ bool Aggregate::split() {
                 sph->set_relative_position(sph->get_position() - refpos);
             }
             // we have to recompute all the caracteristic of this new aggregate
-            agg->update_distances();
+            agg->update_distances_and_overlapping();
             agg->update();
             // we have to move all the spheres (periodicity)
             refpos = agg->get_position() - agg->get_relative_position();
@@ -462,7 +466,7 @@ void Aggregate::remove(const size_t &id) noexcept {
             sph->set_relative_position(sph->get_position() - refpos);
         }
         // we have to recompute all the caracteristic of this new aggregate
-        update_distances();
+        update_distances_and_overlapping();
         update();
         // we have to move all the spheres (periodicity)
         refpos = get_position() - get_relative_position();
@@ -532,7 +536,11 @@ void Aggregate::update_verlet() noexcept {
         verlet->add(get_label(), new_verlet_index);
     }
 }
-void Aggregate::update_distances() noexcept {
+// In the function below we do both, update distances and calc. n_c_avg and c_ov_avg
+void Aggregate::update_distances_and_overlapping() noexcept {
+    *overlapping = *coordination_number = 0.0; // average overlapping and coord. numbers calculated if needed
+    double c_ij(0);
+    int intersections(0);
     distances.resize(n_spheres);
     distances_center.resize(n_spheres);
     const size_t _loopsize(n_spheres);
@@ -554,15 +562,25 @@ void Aggregate::update_distances() noexcept {
             distances[i][j] = dist;
             // distances are symetric !
             distances[j][i] = dist;
-#else
+#endif
             // if in contact (with some tolerence)
             if (dist <= (1. + 1e-10) * (myspheres[i].get_radius() + myspheres[j].get_radius())) {
+#ifndef FULL_INTERNAL_DISTANCES
                 distances[i][j] = dist;
                 // distances are symetric !
                 distances[j][i] = dist;
-            }
 #endif
+                // calculate overlapping coefficient
+                c_ij = (myspheres[i].get_radius() + myspheres[j].get_radius() - dist)
+                       / (myspheres[i].get_radius() + myspheres[j].get_radius());
+                *overlapping += c_ij;
+                intersections += 2;
+            }
         }
+    }
+    if (intersections > 0) {
+        *overlapping /= static_cast<double>(intersections);
+        *coordination_number = static_cast<double>(intersections) / static_cast<double>(n_spheres);
     }
 }
 double Aggregate::internal_sphere_distance(size_t i, size_t j) const noexcept {
