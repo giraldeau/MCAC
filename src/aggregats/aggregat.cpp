@@ -201,10 +201,8 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
 //###################################################################################################################
 
 //### Update all physical params of an aggregate except volume and surface (rayon de giration, masse, nombre de sphérules primaires) #####
-void Aggregate::update() noexcept {
+void Aggregate::update_partial() noexcept {
     // This function will update the parameter of Agg
-    update_distances_and_overlapping();
-    compute_volume_surface();
     compute_mass_center();
     compute_max_radius();
     compute_giration_radius();
@@ -228,6 +226,12 @@ void Aggregate::update() noexcept {
             external_storage->maxradius = *rmax;
         }
     }
+}
+//### Update all physical params of an aggregate (rayon de giration, masse, nombre de sphérules primaires) #####
+void Aggregate::update() noexcept {
+    update_distances_and_overlapping();
+    compute_volume_surface();
+    update_partial();
 }
 //####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
 void Aggregate::compute_volume_surface() {

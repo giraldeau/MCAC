@@ -61,6 +61,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
     write_between_event_frequency(100),
+    full_aggregate_update_frequency(1),
     output_dir("MCAC_output"),
     with_collisions(true),
     with_surface_reactions(false) {
@@ -92,6 +93,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     // surface_growth
     inipp::extract(ini.sections["surface_growth"]["coeff_b"], coeff_b);
     inipp::extract(ini.sections["surface_growth"]["x_surfgrowth"], x_surfgrowth);
+    inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
     inipp::extract(ini.sections["limits"]["n_iter_without_event"], n_iter_without_event_limit);

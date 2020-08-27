@@ -108,6 +108,7 @@ public:
               size_t sphere_index,
               const std::array<double, 3> &position,
               double sphere_diameter) noexcept;
+    void update_partial() noexcept;
     void update() noexcept;
     void compute_volume_surface();
     void compute_mass_center() noexcept;

@@ -134,8 +134,14 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             aggregates.refresh();
         }
         if (physicalmodel.with_surface_reactions) {
-            for (const auto &agg : aggregates) {
-                agg->update();
+            if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
+                for (const auto &agg : aggregates) {
+                    agg->update();
+                }
+            } else {
+                for (const auto &agg : aggregates) {
+                    agg->update_partial();
+                }
             }
         }
 

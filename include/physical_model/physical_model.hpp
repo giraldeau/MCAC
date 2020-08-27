@@ -47,6 +47,7 @@ public:
     size_t number_of_aggregates_limit;
     int n_iter_without_event_limit;
     size_t write_between_event_frequency;
+    size_t full_aggregate_update_frequency;
     std::experimental::filesystem::path output_dir;
     bool with_collisions;
     bool with_surface_reactions;
