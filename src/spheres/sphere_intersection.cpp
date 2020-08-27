@@ -23,11 +23,11 @@
 
 namespace mcac {
 Intersection::Intersection(const Sphere &sphere_1,
-                           const Sphere &sphere_2) noexcept : Intersection(sphere_1, sphere_2,
-                                                                           distance(sphere_1, sphere_2)) {
+                           const Sphere &sphere_2) noexcept: Intersection(sphere_1, sphere_2,
+                                                                          distance(sphere_1, sphere_2)) {
 }
 Intersection::Intersection(const Sphere &sphere_1, const Sphere &sphere_2,
-                           double given_dist) noexcept :
+                           double given_dist) noexcept:
     volume_1{0.},
     volume_2{0.},
     surface_1{0.},
@@ -39,6 +39,7 @@ Intersection::Intersection(const Sphere &sphere_1, const Sphere &sphere_2,
     double radius_1 = sphere_1.get_radius();
     double radius_2 = sphere_2.get_radius();
 
+    //$ Spherical caps volume/surface from: Morán, J., et al. (2018).  Powder technology, 330, 67-79.
     //$ Check if they are in contact
     if (dist < radius_1 + radius_2) {
         if (dist >= std::fdim(radius_1, radius_2)) {

@@ -80,7 +80,7 @@ static const std::array<const std::string, 2> PICK_METHODS_STR{{"random", "last"
 enum MonomeresInitialisationMode {
     LOG_NORMAL_INITIALISATION,
     NORMAL_INITIALISATION,
-    INVALID_INITIALISATION,
+    INVALID_INITIALISATION
 };
 static const std::array<const std::string, 2> MONOMERES_INITIALISATION_MODE_STR{{"lognormal", "normal"}};
 const double _pi = atan(1.0) * 4;

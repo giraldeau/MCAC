@@ -45,7 +45,7 @@ private:
     double *x, *y, *z;              // position of the gravity center
     double *rx, *ry, *rz;           // position of the gravity center
     double *time;                   // Proper time of the aggregate
-    double *dp;
+    double *dp;                     // Mean monomer diameters
     double *dg_over_dp;
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
@@ -62,7 +62,7 @@ private:
     bool padding2,padding3,padding4;
     int padding1;
     */
-    std::array<size_t, 3>  compute_index_verlet() noexcept;
+    std::array<size_t, 3> compute_index_verlet() noexcept;
     void update_verlet() noexcept;
     void update_distances() noexcept;
     double internal_sphere_distance(size_t i, size_t j) const noexcept;
@@ -114,6 +114,7 @@ public:
     void merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept;
     bool split();
     void remove(const size_t &id) noexcept;
+    // void agg_to_sphere() noexcept;
     void print() const noexcept;
     /* Storage specific */
 private:

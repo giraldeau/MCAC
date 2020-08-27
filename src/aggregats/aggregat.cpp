@@ -118,7 +118,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
     myspheres[0].set_position(refpos);
 
     // move all the other sphere relatively to the first
-    for (const auto& mysphere : myspheres) {
+    for (const auto &mysphere : myspheres) {
         std::array<double, 3> relpos = mysphere->get_relative_position();
         mysphere->set_position(refpos + relpos);
     }
@@ -130,7 +130,7 @@ void Aggregate::init(size_t new_label,
     //random size
     double diameter = 0;
     if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        diameter = (physicalmodel->mean_diameter)
+        diameter = physicalmodel->mean_diameter
                    + std::sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * random() - 1.0);
     } else if (physicalmodel->monomeres_initialisation_type
                == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
@@ -192,7 +192,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
 
 //###################################################################################################################
 
-//### Mise à jour des paramètres physiques d'un agrégat (rayon de giration, masse, nombre de sphérules primaires) #####
+//### Update all physical params of an aggregate except volume and surface (rayon de giration, masse, nombre de sphérules primaires) #####
 void Aggregate::update() noexcept {
     // This function will update the parameter of Agg
     compute_volume();
@@ -348,7 +348,7 @@ void Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     std::array<double, 3> diffpos = ref_root_to_contact + diffcontact - other_root_to_contact;
 
     // For all the spheres that were in the deleted aggregate
-    for (const auto& othersphere : other->myspheres) {
+    for (const auto &othersphere : other->myspheres) {
         // change the Label to the new owner
         othersphere->set_label(long(get_label()));
 
@@ -419,13 +419,13 @@ bool Aggregate::split() {
             // copy reference of the selection into the duplication
             agg->myspheres = SphereList(&myspheres, split);
             agg->n_spheres = agg->myspheres.size();
-            for (const auto& sph : agg->myspheres) {
+            for (const auto &sph : agg->myspheres) {
                 sph->set_label(long(agg->get_label()));
             }
             // by creating and destroying spheres, this is important
             external_storage->spheres.setpointers();
             std::array<double, 3> refpos = agg->myspheres[0].get_position();
-            for (const auto& sph : agg->myspheres) {
+            for (const auto &sph : agg->myspheres) {
                 // change the relative position of the new aggregate
                 sph->set_relative_position(sph->get_position() - refpos);
             }
@@ -434,7 +434,7 @@ bool Aggregate::split() {
             agg->update();
             // we have to move all the spheres (periodicity)
             refpos = agg->get_position() - agg->get_relative_position();
-            for (const auto& sph : agg->myspheres) {
+            for (const auto &sph : agg->myspheres) {
                 sph->set_position(refpos + sph->get_relative_position());
             }
         }
@@ -452,7 +452,7 @@ void Aggregate::remove(const size_t &id) noexcept {
     n_spheres = myspheres.size();
     if (n_spheres > 0) {
         std::array<double, 3> refpos = myspheres[0].get_position();
-        for (const auto& sph : myspheres) {
+        for (const auto &sph : myspheres) {
             // change the relative position of the new aggregate
             sph->set_relative_position(sph->get_position() - refpos);
         }
@@ -461,11 +461,26 @@ void Aggregate::remove(const size_t &id) noexcept {
         update();
         // we have to move all the spheres (periodicity)
         refpos = get_position() - get_relative_position();
-        for (const auto& sph : myspheres) {
+        for (const auto &sph : myspheres) {
             sph->set_position(refpos + sph->get_relative_position());
         }
     } // else it should be deleted ASAP
 }
+// This function below convert one aggregate to a mass equivalent sphere
+//void Aggregate::agg_to_sphere() noexcept {
+//    // 1. Select one sphere to keep and move it to the agg. center of mass
+//    std::array<double, 3> mypos{{*x, *y, *z}};
+//    myspheres[0].set_position(mypos);
+//    // 2. Increase the radius of the selected sphere - mass conservation
+//    double sph_0_radius = 0.5 * pow(6 * (*agregat_volume) / _pi, 1.0 / 3.0);
+//    myspheres[0].set_radius(sph_0_radius);
+//    // 3. Update myspheres, delete additional ones
+//    // TODO: this part is pending
+//    // 4. Update aggregate properties according to selected sphere
+//    n_spheres = myspheres.size();
+//    update_distances_and_overlapping();
+//    update();
+//}
 void Aggregate::print() const noexcept {
     std::cout << "Printing details of Aggregat " << index_in_storage << " " << label << std::endl;
     if (static_cast<bool>(external_storage)) {
