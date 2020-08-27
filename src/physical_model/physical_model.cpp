@@ -135,7 +135,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
                 * (_sutterland_interpolation_constant + _temperature_ref)
                 / (_sutterland_interpolation_constant + temperature)
                 * std::pow(temperature / _temperature_ref, 1.5); // Schlichting 1979
-    gaz_mean_free_path = _mean_free_path_ref
+    gaz_mean_free_path = _fluid_mean_free_path_ref
                          * (_pressure_ref / pressure)
                          * (temperature / _temperature_ref)
                          * (1. + _sutterland_interpolation_constant / _temperature_ref)
