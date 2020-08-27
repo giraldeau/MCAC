@@ -67,6 +67,8 @@ MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::str
 std::string resolve_monomeres_initialisation_mode(MonomeresInitialisationMode mode);
 PickMethods resolve_pick_method(const std::string &input);
 std::string resolve_pick_method(PickMethods method);
+VolSurfMethods resolve_surfvol_method(const std::string &input);
+std::string resolve_surfvol_method(VolSurfMethods method);
 [[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
                                                                const std::vector<double> &y);
 }  //namespace mcac

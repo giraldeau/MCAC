@@ -61,6 +61,18 @@ PickMethods resolve_pick_method(const std::string &input) {
 std::string resolve_pick_method(PickMethods method) {
     return PICK_METHODS_STR[method];
 }
+VolSurfMethods resolve_surfvol_method(const std::string &input) {
+    auto itr = std::find(VOLSURF_METHODS_STR.begin(),
+                         VOLSURF_METHODS_STR.end(),
+                         input);
+    if (itr != VOLSURF_METHODS_STR.end()) {
+        return VolSurfMethods(std::distance(VOLSURF_METHODS_STR.begin(), itr));
+    }
+    return INVALID_VOLSURF_METHOD;
+}
+std::string resolve_surfvol_method(VolSurfMethods method) {
+    return VOLSURF_METHODS_STR[method];
+}
 [[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
                                                                const std::vector<double> &y) {
     double sumx = 0.0;                        /* sum of x                      */

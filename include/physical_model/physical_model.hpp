@@ -37,6 +37,7 @@ public:
     double volume_fraction, box_lenght, aggregate_concentration;
     size_t n_verlet_divisions;
     PickMethods pick_method;
+    VolSurfMethods volsurf_method;
     size_t n_monomeres;
     size_t n_time_per_file;
     MonomeresInitialisationMode monomeres_initialisation_type;

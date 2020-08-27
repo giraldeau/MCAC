@@ -118,5 +118,21 @@ public:
         write_message();
     }
 };
+
+class VolSurfError : public BaseException {
+public:
+    VolSurfError() {
+        name = "Volume/Surface error";
+        code = ErrorCodes::VOL_SURF_ERROR;
+        std::stringstream standard_error;
+        standard_error << "An Aggregate has a negative volume or surface." << std::endl;
+        detail = standard_error.str();
+        write_message();
+    }
+    explicit VolSurfError(const std::string &new_detail) : VolSurfError() {
+        detail = new_detail;
+        write_message();
+    }
+};
 }  //namespace mcac
 #endif //INCLUDE_EXCEPTIONS_HPP

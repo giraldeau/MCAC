@@ -71,7 +71,9 @@ enum ErrorCodes {
     VERLET_ERROR,
     INPUT_ERROR,
     ABANDON_ERROR,
-    TOO_DENSE_ERROR
+    TOO_DENSE_ERROR,
+    SBL_ERROR,
+    VOL_SURF_ERROR
 };
 enum PickMethods {
     PICK_RANDOM,
@@ -85,6 +87,16 @@ enum MonomeresInitialisationMode {
     INVALID_INITIALISATION
 };
 static const std::array<const std::string, 2> MONOMERES_INITIALISATION_MODE_STR{{"lognormal", "normal"}};
+enum VolSurfMethods {
+    SPHERICAL_CAPS,
+    EXACT_SBL,
+    EXACT_ARVO,
+    ALPHAS,
+    NONE,
+    INVALID_VOLSURF_METHOD
+};
+static const std::array<const std::string, 5> VOLSURF_METHODS_STR{{"caps", "sbl", "arvo", "alphas", "none"}};
+
 const double _pi = atan(1.0) * 4;
 const double _volume_factor = 4 * _pi / 3;
 const double _surface_factor = 4 * _pi;

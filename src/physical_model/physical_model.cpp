@@ -41,7 +41,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     viscosity(_viscosity_ref),
     density(1800.),
     mean_diameter(30.),
-    dispersion_diameter(1.25),
+    dispersion_diameter(1.0),
     mean_massic_radius(0.),
     friction_exponnant(0.),
     time(0.),
@@ -50,9 +50,10 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     aggregate_concentration(0.0),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),
+    volsurf_method(VolSurfMethods::NONE),
     n_monomeres(2500),
     n_time_per_file(10),
-    monomeres_initialisation_type(MonomeresInitialisationMode::NORMAL_INITIALISATION),
+    monomeres_initialisation_type(MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION),
     n_iter_without_event(0),
     cpu_start(),
     cpu_limit(-1),
@@ -79,9 +80,10 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["monomers"]["density"], density);
     inipp::extract(ini.sections["monomers"]["dispersion_diameter"], dispersion_diameter);
     inipp::extract(ini.sections["monomers"]["mean_diameter"], mean_diameter);
-    default_str = resolve_monomeres_initialisation_mode(monomeres_initialisation_type);
     inipp::extract(ini.sections["monomers"]["initialisation_mode"], default_str);
-    monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_str);
+    if (default_str != "") {
+        monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_str);
+    }
     if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
         throw InputError("Monomere initialisation mode unknown: " + default_str);
     }
@@ -93,7 +95,15 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["environment"]["fractal_prefactor"], fractal_prefactor);
     inipp::extract(ini.sections["environment"]["fractal_dimension"], fractal_dimension);
     // surface_growth
+    inipp::extract(ini.sections["surface_growth"]["with_surface_reactions"], with_surface_reactions);
     inipp::extract(ini.sections["surface_growth"]["flux_surfgrowth"], flux_surfgrowth);
+    inipp::extract(ini.sections["surface_growth"]["volsurf_method"], default_str);
+    if (default_str != "") {
+        volsurf_method = resolve_surfvol_method(default_str);
+    }
+    if (volsurf_method == VolSurfMethods::INVALID_VOLSURF_METHOD) {
+        throw InputError("Invalid method to calculate Vols/Surf: " + default_str);
+    }
     inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
@@ -103,7 +113,6 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
     inipp::extract(ini.sections["numerics"]["with_collisions"], with_collisions);
-    inipp::extract(ini.sections["numerics"]["with_surface_reactions"], with_surface_reactions);
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
     default_str = resolve_pick_method(pick_method);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
@@ -141,6 +150,13 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         }
     }
     // secondary variables
+    if (not with_surface_reactions && volsurf_method != VolSurfMethods::NONE) {
+        std::cout << "WARNING: volsurf_method are useless without surface reactions" << std::endl;
+    }
+    if (with_surface_reactions && volsurf_method == VolSurfMethods::NONE) {
+        std::cout << "WARNING: You should select a volsurf_method in order to take correctly in account" << std::endl
+                  << "         Overlap induced by surface reactions" << std::endl;
+    }
     if (monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
@@ -230,7 +246,7 @@ void PhysicalModel::print() const {
               << " FV                              : " << volume_fraction << " (-)" << std::endl;
     if (with_collisions) {
         std::cout << " With collisions" << std::endl;
-    } else{
+    } else {
         std::cout << " Without collision" << std::endl;
     }
     if (with_surface_reactions) {
@@ -247,10 +263,12 @@ void PhysicalModel::print() const {
         std::cout << " Without flame coupling" << std::endl;
     }
     std::cout << std::endl
-              << "Options for Pysical model: " << std::endl
-              << " Initialisation mode : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
+              << "Options for Physical model: " << std::endl
+              << " Initialisation mode       : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
               << std::endl
-              << " Pick method         : " << resolve_pick_method(pick_method) << std::endl
+              << " Pick method               : " << resolve_pick_method(pick_method) << std::endl
+              << " Surf/Vol method           : " << resolve_surfvol_method(volsurf_method) << std::endl
+              << " Aggregate update frequency: " << full_aggregate_update_frequency << std::endl
               << std::endl
               << "Ending simulation when:" << std::endl
               << " - There are " << number_of_aggregates_limit << " aggregats left or less" << std::endl;

@@ -23,6 +23,7 @@
 #include "tools/tools.hpp"
 #include "verlet/verlet.hpp"
 #include "exceptions.hpp"
+#include "arvo/arvo_mcac_call.hpp"
 #include <iostream>
 
 
@@ -240,6 +241,27 @@ void Aggregate::update() noexcept {
     compute_volume_surface();
     update_partial();
 }
+static double volume_alpha_correction(const double coordination_number,
+                                      const double c_20,
+                                      const double c_30,
+                                      const double min_coordination_number) noexcept {
+    double difference_coordination = abs(coordination_number - min_coordination_number);
+    double correction = 0.25 * (3.0 * c_20 - c_30) * coordination_number
+                        - c_30 * difference_coordination * 0.62741833
+                        - pow(difference_coordination, 1.5) * 0.00332425;
+    correction = std::min(std::max(correction, 0.0), 1.0);
+    return 1.0 - correction;
+}
+static double surface_alpha_correction(const double coordination_number,
+                                       const double c_10,
+                                       const double min_coordination_number) noexcept {
+    double difference_coordination = abs(coordination_number - min_coordination_number);
+    double correction = 0.5 * c_10 * coordination_number
+                        - std::pow(c_10, 2) * difference_coordination * 0.70132500
+                        - std::pow(difference_coordination, 2) * 0.00450000;
+    correction = std::min(std::max(correction, 0.0), 1.0);
+    return 1.0 - correction;
+}
 //####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
 void Aggregate::compute_volume_surface() {
     *agregat_volume = *agregat_surface = 0.0; // compute_volume and surface of Agg Id
@@ -248,53 +270,101 @@ void Aggregate::compute_volume_surface() {
     volumes.resize(n_spheres);
     surfaces.resize(n_spheres);
 
-    //$ For the Spheres i in Agg Id
-    for (size_t i = 0; i < n_spheres; i++) {
-        //$ Calculation of the volume and surface of monomere i of Agg id
-        volumes[i] = myspheres[i].get_volume();      //Calculation of the volume of i
-        surfaces[i] = myspheres[i].get_surface();    //Calculation of the surface of i
-    }
+    // Compute volumes and surfaces using a library or ignoring overlap
+    if (physicalmodel->volsurf_method == VolSurfMethods::EXACT_SBL) {
 #ifdef WITH_SBL
-    std::pair<std::vector<double>, std::vector<double>> volume_surface(compute_volume_surface_sbl(myspheres));
+        auto volume_surface(compute_volume_surface_sbl(myspheres));
+        volumes = volume_surface.first;
+        surfaces = volume_surface.second;
+#else
+        std::cout << "  ERROR SBL not available - activate it when doing cmake (cmake -DWITH_SBL=ON ..)" << std::endl;
+        exit(ErrorCodes::SBL_ERROR);
+#endif
+    } else if (physicalmodel->volsurf_method == VolSurfMethods::EXACT_ARVO) {
+        auto volume_surface(arvo_call(myspheres, distances));
+        volumes = volume_surface.first;
+        surfaces = volume_surface.second;
+    } else {
+        //$ For the Spheres i in Agg Id
+        for (size_t i = 0; i < n_spheres; i++) {
+            //$ Calculation of the volume and surface of monomere i of Agg id
+            volumes[i] = myspheres[i].get_volume();      //Calculation of the volume of i
+            surfaces[i] = myspheres[i].get_surface();    //Calculation of the surface of i
+        }
+    }
 
-    volumes = volume_surface.first;
-    surfaces = volume_surface.second;
+    // Use alpha or spherical caps to correct for the overlap
+    if (physicalmodel->volsurf_method == VolSurfMethods::SPHERICAL_CAPS) {
+        for (size_t i = 0; i < n_spheres; i++) {
+#ifdef FULL_INTERNAL_DISTANCES
+            for (size_t j = i + 1; j < n_spheres; j++) { //for the j spheres composing Aggregate n°id
+                double dist = internal_sphere_distance(i, j);
+#else
+            for (const auto &[j, dist] : distances[i]) {
+                if (j <= i) {
+                    continue;
+                }
+#endif
+                //$ Calculation of the intersection between the spheres i and j if in contact
+                Intersection intersection(myspheres[i],
+                                          myspheres[j],
+                                          dist);
 
-    for (size_t i = 0; i < n_spheres; i++)
-    {
+                //$ The volume and surface covered by j is substracted from those of i
+                volumes[i] = volumes[i] - intersection.volume_1;
+                surfaces[i] = surfaces[i] - intersection.surface_1;
+
+                //$ The volume and surface covered by i is substracted from those of j
+                volumes[j] = volumes[j] - intersection.volume_2;
+                surfaces[j] = surfaces[j] - intersection.surface_2;
+            }
+            //$ For large overlapping, this function gives negative values, so in this case=0
+            volumes[i] = std::max(volumes[i], 0.0);
+            surfaces[i] = std::max(surfaces[i], 0.0);
+        }
+    }
+    for (size_t i = 0; i < n_spheres; i++) {
         *agregat_volume = *agregat_volume + volumes[i];    //Total compute_volume of Agg id
         *agregat_surface = *agregat_surface + surfaces[i]; //Total Surface of Agg id
     }
-#else
-    for (size_t i = 0; i < n_spheres; i++) {
-#ifdef FULL_INTERNAL_DISTANCES
-        for (size_t j = i + 1; j < n_spheres; j++) //for the j spheres composing Aggregate n°id
-        {
-            double dist = internal_sphere_distance(i, j);
-#else
-        for (const auto &[j, dist] : distances[i]) {
-            if (j <= i) {
-                continue;
+    if (physicalmodel->volsurf_method == VolSurfMethods::ALPHAS) {
+        *overlapping = 0.0; // average overlapping and coord. numbers updated here
+        double c_v30(0.0), c_v20(0.0), c_s10(0.0);
+        double vp_sum(0.0), sp_sum(0.0);
+        int intersections(0);
+        for (size_t i = 0; i < n_spheres; i++) {
+            // loop over the neighbor list
+            for (const auto &it : distances[i]) {
+                double radius_1 = myspheres[i].get_radius();
+                double radius_2 = myspheres[it.first].get_radius();
+                double c_ij = (radius_1 + radius_2 - it.second) / (radius_1 + radius_2);
+                double vp1 = std::pow(radius_1, 3);
+                double vp2 = std::pow(radius_2, 3);
+                double sp1 = std::pow(radius_1, 2);
+                double sp2 = std::pow(radius_2, 2);
+                vp_sum += (vp1 + vp2);
+                sp_sum += (sp1 + sp2);
+                *overlapping += c_ij;
+                c_s10 += c_ij * (sp1 + sp2);
+                c_v20 += std::pow(c_ij, 2) * (vp1 + vp2);
+                c_v30 += std::pow(c_ij, 3) * (vp1 + vp2);
             }
-#endif
-            //$ Calculation of the intersection between the spheres i and j if in contact
-            Intersection intersection(myspheres[i],
-                                      myspheres[j],
-                                      dist);
-
-            //$ The volume and surface covered by j is substracted from those of i
-            volumes[i] = volumes[i] - intersection.volume_1;
-            surfaces[i] = surfaces[i] - intersection.surface_1;
-
-            //$ The volume and surface covered by i is substracted from those of j
-            volumes[j] = volumes[j] - intersection.volume_2;
-            surfaces[j] = surfaces[j] - intersection.surface_2;
+            intersections += distances[i].size();
         }
-        //$ Calculation of the total volume and surface of the aggregate
-        *agregat_volume = *agregat_volume + volumes[i];
-        *agregat_surface = *agregat_surface + surfaces[i];
+        if (intersections > 0) {
+            c_s10 /= static_cast<double>(sp_sum);
+            c_v20 /= static_cast<double>(vp_sum);
+            c_v30 /= static_cast<double>(vp_sum);
+            double min_coordination_number = 2 * (1.0 - 1.0 / static_cast<double>(n_spheres));
+            *overlapping /= static_cast<double>(intersections);
+            *coordination_number = static_cast<double>(intersections) / static_cast<double>(n_spheres);
+            *agregat_volume *= volume_alpha_correction(*coordination_number, c_v20, c_v30, min_coordination_number);
+            *agregat_surface *= surface_alpha_correction(*coordination_number, c_s10, min_coordination_number);
+        }
     }
-#endif
+    if (*agregat_volume <= 0 || *agregat_surface <= 0) {
+        throw VolSurfError();
+    }
 }
 void Aggregate::compute_mass_center() noexcept {
     const size_t _loopsize{n_spheres};
