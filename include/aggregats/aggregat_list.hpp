@@ -44,6 +44,7 @@ public:
     SphereList spheres;
     Verlet verlet;
     /* getters */
+    double get_total_volume() const;
     double get_avg_npp() const;
     double get_max_time_step() const;
     double get_time_step(double max) const;

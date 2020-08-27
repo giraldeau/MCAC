@@ -25,6 +25,13 @@
 
 
 namespace mcac {
+[[gnu::pure]]  double AggregatList::get_total_volume() const {
+    double total_volume(0.0);
+    for (const auto& agg : list) {
+        total_volume += *agg->agregat_volume;
+    }
+    return total_volume;
+}
 [[gnu::pure]] double AggregatList::get_avg_npp() const {
     return avg_npp;
 }

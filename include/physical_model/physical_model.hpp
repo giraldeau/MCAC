@@ -34,7 +34,7 @@ public:
     double mean_diameter, dispersion_diameter;
     double mean_massic_radius, friction_exponnant;
     double time;
-    double volume_fraction, box_lenght;
+    double volume_fraction, box_lenght, aggregate_concentration;
     size_t n_verlet_divisions;
     PickMethods pick_method;
     size_t n_monomeres;
@@ -48,7 +48,7 @@ public:
     int n_iter_without_event_limit;
     size_t write_between_event_every;
     std::experimental::filesystem::path output_dir;
-public:
+
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
     [[gnu::pure]] double grow(double r, double dt) const;
@@ -57,6 +57,7 @@ public:
     [[gnu::pure]] double diffusivity(double) const;
     [[gnu::pure]] static double relax_time(double masse, double) ;
     void print() const;
+    void update(size_t n_aggregates, double total_volume) noexcept;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;
     XMF_OUTPUT xmf_write() const;
 };

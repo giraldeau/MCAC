@@ -31,6 +31,7 @@ static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggrega
     std::ofstream outfile;
     outfile.open(physicalmodel.output_dir / "advancement.dat", std::ios_base::app);
     outfile << physicalmodel.time
+            << " " << physicalmodel.aggregate_concentration
             << " " << physicalmodel.volume_fraction
             << " " << aggregates.get_avg_npp()
             << " " << physicalmodel.temperature
@@ -152,6 +153,11 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             physicalmodel.n_iter_without_event = 0;
         } else {
             physicalmodel.n_iter_without_event++;
+        }
+        //$ Update physical model
+        if (event
+            || std::abs(physicalmodel.a_surfgrowth) > 0.) {
+            physicalmodel.update(aggregates.size(), aggregates.get_total_volume());
         }
     }
     save_advancement(physicalmodel, aggregates);

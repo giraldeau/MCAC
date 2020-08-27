@@ -1,17 +1,17 @@
 /*
  * MCAC
  * Copyright (C) 2020 CORIA
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -47,6 +47,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     time(0.),
     volume_fraction(1e-3),
     box_lenght(0.),
+    aggregate_concentration(0.0),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),
     n_monomeres(2500),
@@ -67,6 +68,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     std::ifstream is(fichier_param);
     ini.parse(is);
     ini.interpolate();
+    std::cout << "Directory, input parameters: " << extract_path(fichier_param) << std::endl;
     // monomeres
     inipp::extract(ini.sections["monomers"]["number"], n_monomeres);
     inipp::extract(ini.sections["monomers"]["density"], density);
@@ -75,6 +77,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     default_str = resolve_monomeres_initialisation_mode(monomeres_initialisation_type);
     inipp::extract(ini.sections["monomers"]["initialisation_mode"], default_str);
     monomeres_initialisation_type = resolve_monomeres_initialisation_mode(default_str);
+    if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
+        throw InputError("Monomere initialisation mode unknown: " + default_str);
+    }
     // environment
     inipp::extract(ini.sections["environment"]["volume_fraction"], volume_fraction);
     inipp::extract(ini.sections["environment"]["temperature"], temperature);
@@ -99,10 +104,6 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
     inipp::extract(ini.sections["output"]["write_between_event_every"], write_between_event_every);
-    // checks
-    if (monomeres_initialisation_type == MonomeresInitialisationMode::INVALID_INITIALISATION) {
-        throw InputError("Monomere initialisation mode unknown");
-    }
     output_dir = extract_path(fichier_param) / output_dir;
     if (fs::exists(output_dir) && fs::is_directory(output_dir)) {
         std::string answer;
@@ -125,7 +126,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         }
     } else {
         if (!fs::is_directory(output_dir)) {
-            throw InputError("Error not a directory " + output_dir.string());
+            throw InputError("Error output_dir is not a directory " + output_dir.string());
         }
     }
     // secondary variables
@@ -157,6 +158,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         throw InputError("Monomere initialisation mode unknown");
     }
     a_surfgrowth = coeff_b * 1E-3;
+    // Particle number concentration
+    aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
     print();
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
@@ -195,32 +198,33 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
 }
 void PhysicalModel::print() const {
     std::cout << "PARTICLES PROPERTIES:" << std::endl
-              << " density          : " << density << " (kg/m^3)" << std::endl
-              << " Dpm              : " << mean_diameter << " (nm)" << std::endl
-              << " sigmaDpm         : " << dispersion_diameter << " (- Lognormal, nm Normal)" << std::endl
-              << " dfe              : " << fractal_dimension << " (-)" << std::endl
-              << " kfe              : " << fractal_prefactor << " (-)" << std::endl
-              << " rpeqmass         : " << mean_massic_radius << " (m)" << std::endl
-              << " gamma_           : " << friction_exponnant << " (-)" << std::endl
+              << " density  : " << density << " (kg/m^3)" << std::endl
+              << " Dpm      : " << mean_diameter << " (nm)" << std::endl
+              << " sigmaDpm : " << dispersion_diameter << " (- Lognormal, nm Normal)" << std::endl
+              << " dfe      : " << fractal_dimension << " (-)" << std::endl
+              << " kfe      : " << fractal_prefactor << " (-)" << std::endl
+              << " rpeqmass : " << mean_massic_radius << " (m)" << std::endl
+              << " gamma_   : " << friction_exponnant << " (-)" << std::endl
               << std::endl
               << "FLUID PROPERTIES:" << std::endl
-              << " Pressure         : " << pressure << " (Pa)" << std::endl
-              << " Temperature      : " << temperature << " (K)" << std::endl
-              << " viscosity        : " << viscosity << " (kg/m*s)" << std::endl
-              << " lambda           : " << gaz_mean_free_path << " (m)" << std::endl
+              << " Pressure    : " << pressure << " (Pa)" << std::endl
+              << " Temperature : " << temperature << " (K)" << std::endl
+              << " viscosity   : " << viscosity << " (kg/m*s)" << std::endl
+              << " lambda      : " << gaz_mean_free_path << " (m)" << std::endl
               << std::endl
               << "SIMULATION OPTIONS:" << std::endl
-              << " Initial Nagg     : " << n_monomeres << " (-)" << std::endl
-              << " Box size         : " << box_lenght << " (m)" << std::endl
-              << " FV               : " << volume_fraction << " (-)" << std::endl
-              << " Asurfgrowth      : " << a_surfgrowth << std::endl
-              << " xsurfgrowth      : " << x_surfgrowth << std::endl
-              << " coeffB           : " << coeff_b << std::endl
+              << " Initial aggregate concentration : " << aggregate_concentration << " (#/m^3)" << std::endl
+              << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
+              << " Box size                        : " << box_lenght << " (m)" << std::endl
+              << " FV                              : " << volume_fraction << " (-)" << std::endl
+              << " Asurfgrowth                     : " << a_surfgrowth << std::endl
+              << " xsurfgrowth                     : " << x_surfgrowth << std::endl
+              << " coeffB                          : " << coeff_b << std::endl
               << std::endl
               << "Options for Pysical model: " << std::endl
               << " Initialisation mode : " << resolve_monomeres_initialisation_mode(monomeres_initialisation_type)
               << std::endl
-              << " Pick method : " << resolve_pick_method(pick_method) << std::endl
+              << " Pick method         : " << resolve_pick_method(pick_method) << std::endl
               << std::endl
               << "Ending simulation when:" << std::endl
               << " - There are " << number_of_aggregates_limit << " aggregats left or less" << std::endl;
@@ -238,6 +242,10 @@ void PhysicalModel::print() const {
                   << std::endl;
     }
     std::cout << std::endl;
+}
+void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
+    aggregate_concentration = static_cast<double>(n_aggregates) / std::pow(box_lenght, 3);
+    volume_fraction = total_volume / std::pow(box_lenght, 3);
 }
 
 
