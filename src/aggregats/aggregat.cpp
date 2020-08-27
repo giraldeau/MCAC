@@ -207,19 +207,26 @@ void Aggregate::update_partial() noexcept {
     compute_max_radius();
     compute_giration_radius();
 
+    // Mean monomer diameter
+    *dp = 0.;
+    double vol_pp(0.0);
+    //$ For the Spheres i in Agg Id
+    for (size_t i = 0; i < n_spheres; i++) {
+        vol_pp += myspheres[i].get_volume();
+        *dp += myspheres[i].get_radius();
+    }
+    *dp = 2 * (*dp) / double(n_spheres);
+    vol_pp = vol_pp / double(n_spheres);
+
     //$ Determination of the friction coefficient
-    *f_agg = physicalmodel->friction_coeff(n_spheres);
+    *f_agg = physicalmodel->friction_coeff(*agregat_volume, vol_pp, 0.5 * (*dp));
+
+    // Momentum relaxation time and lpm (persistent distance)
     double masse = physicalmodel->density * (*agregat_volume);
     double relax_time = mcac::PhysicalModel::relax_time(masse, *f_agg);
     *time_step = 3. * relax_time;
     double diffusivity = physicalmodel->diffusivity(*f_agg);
-    *lpm = std::sqrt(6. * diffusivity * (*time_step));
-    *dp = 0.;
-    //$ For the Spheres i in Agg Id
-    for (size_t i = 0; i < n_spheres; i++) {
-        *dp += myspheres[i].get_radius();
-    }
-    *dp = 2 * (*dp) / double(n_spheres);
+    *lpm = sqrt(6. * diffusivity * (*time_step));
     *dg_over_dp = 2 * (*rg) / (*dp);
     if (static_cast<bool>(external_storage)) {
         if (*rmax > external_storage->maxradius) {

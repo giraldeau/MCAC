@@ -54,12 +54,12 @@ public:
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
     [[gnu::pure]] double grow(double r, double dt) const;
-    [[gnu::pure]] double friction_coeff(size_t npp) const;
-    [[gnu::pure]] double friction_coeff_2(double rgg) const;
+    [[gnu::pure]] double friction_coeff(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     [[gnu::pure]] double diffusivity(double) const;
     [[gnu::pure]] static double relax_time(double masse, double);
     void print() const;
     void update(size_t n_aggregates, double total_volume) noexcept;
+    void update_temperature(double new_temperature) noexcept;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;
     XMF_OUTPUT xmf_write() const;
 };

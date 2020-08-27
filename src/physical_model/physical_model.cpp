@@ -135,33 +135,26 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         }
     }
     // secondary variables
-    viscosity = _viscosity_ref
-                * (_sutterland_interpolation_constant + _temperature_ref)
-                / (_sutterland_interpolation_constant + temperature)
-                * std::pow(temperature / _temperature_ref, 1.5); // Schlichting 1979
-    gaz_mean_free_path = _fluid_mean_free_path_ref
-                         * (_pressure_ref / pressure)
-                         * (temperature / _temperature_ref)
-                         * (1. + _sutterland_interpolation_constant / _temperature_ref)
-                         / (1. + _sutterland_interpolation_constant / temperature); // Willeke 1976
-    mean_massic_radius = 0.5 * mean_diameter * 1E-9
-                         * std::exp(1.5 * std::pow(std::log(dispersion_diameter), 2));  // Hatch-Choate
-    friction_exponnant = 0.689 * (1.
-                                  + std::erf(((gaz_mean_free_path / mean_massic_radius) + 4.454)
-                                             / 10.628)); // Yon et al. Journal of Aerosol Science vol.87 2015 p.2837 eq.7
     if (monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
                               * (1. + 3. * std::pow(dispersion_diameter / mean_diameter, 2)),
                               1. / 3.);
+        mean_massic_radius = 0.5 * 1E-9 * (std::pow(mean_diameter, 4)
+                                           + 6 * std::pow(mean_diameter, 2) * std::pow(dispersion_diameter, 2)
+                                           + 3 * std::pow(dispersion_diameter, 4))
+                             / (std::pow(mean_diameter, 3) + 3 * mean_diameter * std::pow(dispersion_diameter, 2));
     } else if (monomeres_initialisation_type == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
                               * std::exp(9. / 2. * std::pow(std::log(dispersion_diameter), 2)),
                               1. / 3.);
+        mean_massic_radius = 0.5 * mean_diameter * 1E-9
+                             * std::exp(1.5 * std::pow(std::log(dispersion_diameter), 2));  // Hatch-Choate
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
+    update_temperature(temperature);
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number concentration
     aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
@@ -261,7 +254,21 @@ void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
     aggregate_concentration = static_cast<double>(n_aggregates) / std::pow(box_lenght, 3);
     volume_fraction = total_volume / std::pow(box_lenght, 3);
 }
-
+//#####################################################################################################################
+void PhysicalModel::update_temperature(double new_temperature) noexcept {
+    temperature = new_temperature;
+    viscosity = _viscosity_ref
+                * (_sutterland_interpolation_constant + _temperature_ref)
+                / (_sutterland_interpolation_constant + temperature)
+                * std::pow(temperature / _temperature_ref, 1.5); // Schlichting 1979
+    gaz_mean_free_path = _fluid_mean_free_path_ref
+                         * (_pressure_ref / pressure)
+                         * (temperature / _temperature_ref)
+                         * (1. + _sutterland_interpolation_constant / _temperature_ref)
+                         / (1. + _sutterland_interpolation_constant / temperature); // Willeke 1976
+    // Yon et al. Journal of Aerosol Science vol.87 2015 p.2837 eq.7
+    friction_exponnant = 0.689 * (1. + std::erf(((gaz_mean_free_path / mean_massic_radius) + 4.454) / 10.628));
+}
 
 //#####################################################################################################################
 
@@ -285,16 +292,13 @@ void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
     // Based on the molecular flux
     return r + u_sg * dt;
 }
-[[gnu::pure]] double PhysicalModel::friction_coeff(size_t npp) const {
-    //to be expressed in terms of V_agg/V_pp
-    double cc = cunningham(mean_massic_radius);
-    return (6. * _pi * viscosity * mean_massic_radius / cc)
-           * std::pow(npp, friction_exponnant / fractal_dimension);
-}
-[[gnu::pure]] double PhysicalModel::friction_coeff_2(double rgg) const {
-    double rmm = rgg * 1.3;
-    double cc = cunningham(rmm);
-    return (6. * _pi * viscosity * rmm / cc);
+[[gnu::pure]] double PhysicalModel::friction_coeff(double aggregate_volume,
+                                                   double sphere_volume,
+                                                   double sphere_radius) const {
+    double friction_exp = 0.689 * (1. + std::erf(((gaz_mean_free_path / sphere_radius) + 4.454) / 10.628));
+    double cc = cunningham(sphere_radius);
+    return (6. * _pi * viscosity * sphere_radius / cc)
+           * std::pow(aggregate_volume / sphere_volume, friction_exp / fractal_dimension);
 }
 [[gnu::pure]] double PhysicalModel::diffusivity(double f_agg) const {
     return _boltzmann * temperature / f_agg;
