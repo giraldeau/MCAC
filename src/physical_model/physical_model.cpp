@@ -114,10 +114,14 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     // numerics
     inipp::extract(ini.sections["numerics"]["with_collisions"], with_collisions);
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
-    default_str = resolve_pick_method(pick_method);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
-    pick_method = resolve_pick_method(default_str);
-    // input - flame coupling
+    if (default_str != "") {
+        pick_method = resolve_pick_method(default_str);
+    }
+    if (pick_method == PickMethods::INVALID_PICK_METHOD) {
+        throw InputError("Invalid pick method: " + default_str);
+    }
+    // flame coupling
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
     // output
@@ -251,8 +255,8 @@ void PhysicalModel::print() const {
     }
     if (with_surface_reactions) {
         std::cout << " With surface reations" << std::endl
-                  << "  flux_surfgrowth                 : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
-                  << "  u_sg                            : " << u_sg << " (m/s)" << std::endl;
+                  << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
+                  << "  u_sg                           : " << u_sg << " (m/s)" << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
     }
