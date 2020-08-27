@@ -17,21 +17,37 @@
  */
 #include "calcul.hpp"
 #include "tools/tools.hpp"
-#include "exceptions.hpp"
 #include "tools/contact_info.hpp"
 #include <iomanip>
 #include <iostream>
+#include <fstream>
 
 
 namespace mcac {
-void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {//Coeur du programme
-
+/********************************************************************************
+* write time-resolved data to a text file
+********************************************************************************/
+static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggregates) noexcept {
+    std::ofstream outfile;
+    outfile.open(physicalmodel.output_dir / "advancement.dat", std::ios_base::app);
+    outfile << physicalmodel.time
+            << " " << physicalmodel.volume_fraction
+            << " " << aggregates.get_avg_npp()
+            << " " << physicalmodel.temperature
+            << std::endl;
+    outfile.close();
+}
+/********************************************************************************
+* Calcul: The main function of MCAC
+********************************************************************************/
+void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     // contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool event(true);
     size_t multiply_threshold = aggregates.size() / 8;
 
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
+        save_advancement(physicalmodel, aggregates);
         if (physicalmodel.n_iter_without_event % physicalmodel.write_between_event_every == 0) {
             aggregates.spheres.save();
             aggregates.save();
@@ -74,9 +90,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {//Coeur du 
 
         //$ looking for potential contacts
         AggregateContactInfo next_contact = aggregates.distance_to_next_contact(num_agg, vectdir, full_distance);
-
         bool contact = next_contact <= full_distance;
-        if (contact){
+        if (contact) {
             move_distance = next_contact.distance;
             deltatemps = deltatemps * move_distance / full_distance;
         }
@@ -110,11 +125,14 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {//Coeur du 
         }
         event = split || contact;
 
+        /* no calculation of fractal dimension in time
         auto[success, fractal_dimension, fractal_prefactor, error] = aggregates.get_instantaneous_fractal_law();
         if (!success) {
             fractal_dimension = physicalmodel.fractal_dimension;
             fractal_prefactor = physicalmodel.fractal_prefactor;
         }
+        */
+
         //$ Show progress
         if (event) {
             aggregates.refresh();
@@ -129,13 +147,14 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {//Coeur du 
                       << " contact=" << std::setw(4) << contact
                       << " split="   << std::setw(4) << split
                       << " after "   << std::setw(4) << physicalmodel.n_iter_without_event << " it"
-                      << " --- "     << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
+                      // << " --- "     << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
                       << std::endl;
             physicalmodel.n_iter_without_event = 0;
         } else {
             physicalmodel.n_iter_without_event++;
         }
     }
+    save_advancement(physicalmodel, aggregates);
     aggregates.spheres.save();
     aggregates.save();
     std::cout << "Final number of aggregates : " << aggregates.size() << std::endl;
@@ -144,5 +163,3 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {//Coeur du 
     std::cout << "\nThe End\n" << std::endl;
 }
 }  // namespace mcac
-
-
