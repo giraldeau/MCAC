@@ -28,8 +28,7 @@ namespace mcac {
 class PhysicalModel {
 public:
     double fractal_dimension, fractal_prefactor;
-    double x_surfgrowth, coeff_b;
-    double a_surfgrowth;
+    double flux_surfgrowth, u_sg;                // surface growth molecular flux [kg/m2/s], SG velocity u_sg [m/s]
     double pressure, temperature, gaz_mean_free_path, viscosity, density;
     double mean_diameter, dispersion_diameter;
     double mean_massic_radius, friction_exponnant;
@@ -58,7 +57,7 @@ public:
     [[gnu::pure]] double friction_coeff(size_t npp) const;
     [[gnu::pure]] double friction_coeff_2(double rgg) const;
     [[gnu::pure]] double diffusivity(double) const;
-    [[gnu::pure]] static double relax_time(double masse, double) ;
+    [[gnu::pure]] static double relax_time(double masse, double);
     void print() const;
     void update(size_t n_aggregates, double total_volume) noexcept;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;

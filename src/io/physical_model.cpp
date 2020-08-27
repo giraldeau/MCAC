@@ -29,11 +29,10 @@ extern template shared_ptr<XdmfInformation> xmf_format(const std::string &name,
                                                        const int &number);
 shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
     shared_ptr<XdmfInformation> info = XdmfInformation::New("Physics", "Physical properties of the simulation");
-    info->insert(xmf_format("Asurfgrowth", a_surfgrowth));
+    info->insert(xmf_format("flux_surfgrowth", flux_surfgrowth));
+    info->insert(xmf_format("u_sg", u_sg));
     info->insert(xmf_format("dfe", fractal_dimension));
     info->insert(xmf_format("kfe", fractal_prefactor));
-    info->insert(xmf_format("xsurfgrowth", x_surfgrowth));
-    info->insert(xmf_format("coeffB", coeff_b));
     info->insert(xmf_format("lambda", gaz_mean_free_path));
     info->insert(xmf_format("rpeqmass", mean_massic_radius));
     info->insert(xmf_format("gamma_", friction_exponnant));

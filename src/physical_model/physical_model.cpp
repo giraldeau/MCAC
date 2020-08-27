@@ -32,9 +32,8 @@ namespace mcac {
 PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     fractal_dimension(1.4),
     fractal_prefactor(1.8),
-    x_surfgrowth(0.),
-    coeff_b(0.),
-    a_surfgrowth(0.),
+    flux_surfgrowth(0.),
+    u_sg(0.),
     pressure(_pressure_ref),
     temperature(_temperature_ref),
     gaz_mean_free_path(_fluid_mean_free_path_ref),
@@ -91,8 +90,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["environment"]["fractal_prefactor"], fractal_prefactor);
     inipp::extract(ini.sections["environment"]["fractal_dimension"], fractal_dimension);
     // surface_growth
-    inipp::extract(ini.sections["surface_growth"]["coeff_b"], coeff_b);
-    inipp::extract(ini.sections["surface_growth"]["x_surfgrowth"], x_surfgrowth);
+    inipp::extract(ini.sections["surface_growth"]["flux_surfgrowth"], flux_surfgrowth);
     inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
@@ -164,7 +162,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
-    a_surfgrowth = coeff_b * 1E-3;
+    u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number concentration
     aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
     print();
@@ -231,9 +229,8 @@ void PhysicalModel::print() const {
     }
     if (with_surface_reactions) {
         std::cout << " With surface reations" << std::endl
-                  << "  Asurfgrowth                : " << a_surfgrowth << std::endl
-                  << "  xsurfgrowth                : " << x_surfgrowth << std::endl
-                  << "  coeffB                     : " << coeff_b << std::endl;
+                  << "  flux_surfgrowth                 : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
+                  << "  u_sg                            : " << u_sg << " (m/s)" << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
     }
@@ -285,7 +282,8 @@ void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
 */
 
 [[gnu::pure]]  double PhysicalModel::grow(double r, double dt) const {
-    return r + a_surfgrowth * std::pow(r, x_surfgrowth - 2) * dt;
+    // Based on the molecular flux
+    return r + u_sg * dt;
 }
 [[gnu::pure]] double PhysicalModel::friction_coeff(size_t npp) const {
     //to be expressed in terms of V_agg/V_pp
