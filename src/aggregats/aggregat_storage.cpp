@@ -35,7 +35,7 @@ void Aggregate::setpointers() noexcept {
     rx = &(*storage)[AggregatesFields::AGGREGAT_RX][index_in_storage];
     ry = &(*storage)[AggregatesFields::AGGREGAT_RY][index_in_storage];
     rz = &(*storage)[AggregatesFields::AGGREGAT_RZ][index_in_storage];
-    time = &(*storage)[AggregatesFields::AGGREGAT_TIME][index_in_storage];
+    proper_time = &(*storage)[AggregatesFields::AGGREGAT_TIME][index_in_storage];
     dp = &(*storage)[AggregatesFields::AGGREGAT_DP][index_in_storage];
     dg_over_dp = &(*storage)[AggregatesFields::AGGREGAT_DG_OVER_DP][index_in_storage];
     overlapping = &(*storage)[AggregatesFields::AGGREGAT_OVERLAPPING][index_in_storage];
@@ -56,7 +56,7 @@ Aggregate::Aggregate() noexcept:
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    time(nullptr),
+    proper_time(nullptr),
     dp(nullptr),
     dg_over_dp(nullptr),
     overlapping(nullptr),
@@ -87,7 +87,7 @@ Aggregate::Aggregate(AggregatList *aggregat_list, size_t newlabel) noexcept:
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    time(nullptr),
+    proper_time(nullptr),
     dp(nullptr),
     dg_over_dp(nullptr),
     overlapping(nullptr),
@@ -122,7 +122,7 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list, size_t
     rx(nullptr),
     ry(nullptr),
     rz(nullptr),
-    time(nullptr),
+    proper_time(nullptr),
     dp(nullptr),
     dg_over_dp(nullptr),
     overlapping(nullptr),

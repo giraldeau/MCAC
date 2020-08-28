@@ -64,8 +64,8 @@ namespace mcac {
 [[gnu::pure]] std::array<size_t, 3> Aggregate::get_verlet_index() const noexcept {
     return index_verlet;
 }
-[[gnu::pure]] const double &Aggregate::get_time() const noexcept {
-    return *time;
+[[gnu::pure]] const double &Aggregate::get_proper_time() const noexcept {
+    return *proper_time;
 }
 [[gnu::pure]] const size_t &Aggregate::size() const noexcept {
     return n_spheres;
@@ -97,11 +97,11 @@ void Aggregate::unset_verlet() noexcept {
     }
     verlet = nullptr;
 }
-void Aggregate::set_time(double newtime) noexcept {
-    *time = newtime;
+void Aggregate::set_proper_time(double newtime) noexcept {
+    *proper_time = newtime;
 }
 void Aggregate::time_forward(double deltatemps) noexcept {
-    *time += deltatemps;
+    *proper_time += deltatemps;
 }
 void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
     std::array<double, 3> newposition{periodic_position(position, physicalmodel->box_lenght)};
@@ -130,7 +130,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
 void Aggregate::init(size_t new_label,
                      size_t sphere_index) {
     //initialize data
-    set_time(physicalmodel->time);
+    set_proper_time(physicalmodel->time);
 
     //random size
     double diameter = 0;
@@ -187,7 +187,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     }
     setpointers();
     set_position(position);
-    *time = new_time;
+    *proper_time = new_time;
     if (static_cast<bool>(new_verlet)) {
         set_verlet(new_verlet);
     }
@@ -595,7 +595,7 @@ void Aggregate::print() const noexcept {
     std::cout << "    Volume            : " << *agregat_volume << std::endl;
     std::cout << "    Surface           : " << *agregat_surface << std::endl;
     std::cout << "    Position          : " << *x << " " << *y << " " << *z << std::endl;
-    std::cout << "    Proper time       : " << *time << std::endl;
+    std::cout << "    Proper time       : " << *proper_time << std::endl;
     myspheres.print();
 }
 std::array<size_t, 3> Aggregate::compute_index_verlet() noexcept {

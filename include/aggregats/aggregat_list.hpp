@@ -85,6 +85,7 @@ public:
     std::vector<double> format_agregat_volume() const;
     std::vector<double> format_agregat_surface() const;
     std::vector<double> format_coordination_number() const;
+    std::vector<double> format_proper_time() const;
     std::vector<double> format_overlapping() const;
     std::vector<int> format_label() const;
     void remove(const size_t &id) noexcept;

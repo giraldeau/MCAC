@@ -52,11 +52,11 @@ namespace mcac {
 }
 [[gnu::pure]]  size_t AggregatList::pick_last() const {
     // TODO(pouxa): cache result
-    double time = *list[0]->time;
+    double time = *list[0]->proper_time;
     size_t latest = 0;
     for (const auto& agg : list) {
-        if (*agg->time < time) {
-            time = *agg->time;
+        if (*agg->proper_time < time) {
+            time = *agg->proper_time;
             latest = agg->label;
         }
     }
@@ -155,14 +155,14 @@ size_t AggregatList::merge(AggregateContactInfo contact_info) {
 
     // compute proper time of the final aggregate
     // keeping global time constant
-    double newtime = double(size() - 1) * (*list[_keeped]->time + *list[_removed]->time) / double(size())
+    double newtime = double(size() - 1) * (*list[_keeped]->proper_time + *list[_removed]->proper_time) / double(size())
                      - physicalmodel->time;
 
     // merge the two aggregate but do not remove the deleted one
     list[_keeped]->merge(list[_removed], contact_info);
     remove(_removed);
     setpointers();
-    *list[_keeped]->time = newtime;
+    *list[_keeped]->proper_time = newtime;
     return _keeped;
 }
 bool AggregatList::split() {

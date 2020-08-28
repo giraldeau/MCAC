@@ -44,7 +44,7 @@ private:
     double *agregat_surface;        // Estimation of the aggregate's surface
     double *x, *y, *z;              // position of the gravity center
     double *rx, *ry, *rz;           // position of the gravity center
-    double *time;                   // Proper time of the aggregate
+    double *proper_time;            // Proper time of the aggregate
     double *dp;                     // Mean monomer diameters
     double *dg_over_dp;
     double *overlapping;            // Average overlapping coefficient
@@ -86,14 +86,14 @@ public:
     std::array<double, 3> get_position() const noexcept;
     std::array<double, 3> get_relative_position() const noexcept;
     std::array<size_t, 3> get_verlet_index() const noexcept;
-    const double &get_time() const noexcept;
+    const double &get_proper_time() const noexcept;
     const size_t &size() const noexcept;
     const size_t &get_label() const noexcept;
     /* modifiers */
     void decrease_label() noexcept;
     void set_verlet(Verlet *) noexcept;
     void unset_verlet() noexcept;
-    void set_time(double newtime) noexcept;
+    void set_proper_time(double newtime) noexcept;
     void time_forward(double deltatemps) noexcept;
     void set_position(const std::array<double, 3> &position) noexcept;
     void translate(std::array<double, 3> vector) noexcept;
