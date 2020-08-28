@@ -67,7 +67,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     flame_file("flame_input"),
     with_collisions(true),
     with_surface_reactions(false),
-    with_flame_coupling(false) {
+    with_flame_coupling(false),
+    enforce_volume_fraction(true) {
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -113,6 +114,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
     inipp::extract(ini.sections["numerics"]["with_collisions"], with_collisions);
+    inipp::extract(ini.sections["numerics"]["enforce_volume_fraction"], enforce_volume_fraction);
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
     if (default_str != "") {

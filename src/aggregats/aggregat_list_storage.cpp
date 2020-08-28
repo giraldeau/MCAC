@@ -71,6 +71,20 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
         list[i]->init(i, i);
     }
     refresh();
+
+    if (physicalmodel->enforce_volume_fraction){
+        double current_total_volume = get_total_volume();
+        double prescribed_total_volume = physicalmodel->volume_fraction *  std::pow(physicalmodel->box_lenght, 3);
+        double correction = std::pow(prescribed_total_volume / current_total_volume, 1./3.);
+
+        for (const auto & sphere: spheres) {
+            sphere->set_radius(sphere->get_radius() * correction);
+            sphere->update_vol_and_surf();
+        }
+        for (const auto & aggregate: list) {
+            aggregate->compute_volume_surface();
+        }
+    }
 }
 AggregatList::~AggregatList() noexcept {
     //#pragma omp simd
