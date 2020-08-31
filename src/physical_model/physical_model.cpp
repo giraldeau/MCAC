@@ -68,6 +68,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     with_collisions(true),
     with_surface_reactions(false),
     with_flame_coupling(false),
+    finished_by_flame(false),
     enforce_volume_fraction(true) {
     std::string default_str;
     // read the config file
