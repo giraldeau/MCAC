@@ -654,7 +654,7 @@ void Aggregate::update_distances_and_overlapping() noexcept {
                 // calculate overlapping coefficient
                 c_ij = (myspheres[i].get_radius() + myspheres[j].get_radius() - dist)
                        / (myspheres[i].get_radius() + myspheres[j].get_radius());
-                *overlapping += c_ij;
+                *overlapping += 2.0*c_ij;
                 intersections += 2;
             }
         }
