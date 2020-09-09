@@ -126,7 +126,10 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         bool split = false;
         if (physicalmodel.with_surface_reactions) {
             aggregates.croissance_surface(deltatemps);
-            split = aggregates.split();
+            // Maybe will be modified later -> spliting only happens when u_sg is negative
+            if(physicalmodel.u_sg < 0.0) {
+                split = aggregates.split();
+            }
         }
         event = split || contact;
         size_t current_n_iter_without_event = physicalmodel.n_iter_without_event;
