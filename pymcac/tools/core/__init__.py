@@ -18,23 +18,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Set of post-processing tools for MCAC
+Tools
 """
 
-from .autocorrelation import autocorrelation3d
-from .coverage import coverages
-from .discretize import discretize
-from .inertia import inertia
-from .volume_surface import volume_surface
-from .core import DaskDistribute
-from .core import progress_compute
-from .core import groupby_agg
-from .core import groupby_apply
-from .core import xarray_to_ddframe
-from .core import xarray_to_frame
+from .dask_tools import DaskDistribute
+from .dask_tools import progress_compute
+from .dataframe import groupby_agg
+from .dataframe import groupby_apply
+from .dataframe import xarray_to_ddframe
+from .dataframe import xarray_to_frame
 
 
-__all__ = ["autocorrelation3d", "coverages", "discretize", "inertia", "volume_surface",
-           "progress_compute", "DaskDistribute",
+__all__ = ["progress_compute", "DaskDistribute",
            "groupby_agg", "groupby_apply",
            "xarray_to_frame", "xarray_to_ddframe"]

@@ -3,17 +3,17 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -23,14 +23,13 @@ Read the hdf5 part of MCAC output files
 
 from pathlib import Path
 from typing import Dict
-from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
 
 import numpy as np
-import pandas as pd
-from dask import dataframe as dd
+# import cupy as cp
+from dask import array as da
 from dask import delayed
 from h5py import File as h5File
 
@@ -39,7 +38,7 @@ from .xdmf_reader import XdmfReader
 
 class H5Reader:
     """
-    Object containing all functions necessary to read an h5 file
+    Object containing all functions necessary to read a h5 file
     """
     __slots__ = ("filename",)
 
@@ -49,94 +48,123 @@ class H5Reader:
     @classmethod
     def read_file(cls,
                   filename: Union[str, Path],
-                  index: Optional[str] = None) -> Tuple[np.ndarray, dd.DataFrame]:
+                  chunksize: int = None,
+                  indexname: str = None,
+                  sparse: bool = False) -> Dict[Tuple[float],
+                                                Dict[str, Union[da.Array, np.ndarray]]]:
         """
-        Read the h5 file into a dask dataframe (lazy)
+        Read the h5 file into a mulitple dask arrays (lazy)
 
-        We need info from the xmf file, so this file is also read
+        We need info from the xmf file, so this file is read
         """
-        return cls(filename).read(index=index)
+        return cls(filename).read(indexname=indexname, chunksize=chunksize, sparse=sparse)
 
-    def read(self, index: str = "Num") -> Tuple[np.ndarray, dd.DataFrame]:
+    def read(self,
+             indexname: str = "Num",
+             chunksize: int = None,
+             sparse: bool = False) -> Dict[Tuple[float],
+                                           Dict[str, Union[da.Array, np.ndarray]]]:
         """
-        Read the h5 file into a dask dataframe (lazy)
+        Read the h5 file into a mulitple dask arrays (lazy)
 
-        We need info from the xmf file, so this file is also read
+        We need info from the xmf file, so this file is read
         """
 
         h5_groups = XdmfReader(self.filename).extract_h5_groups()
         sizes = XdmfReader(self.filename).extract_sizes()
 
-        data: Dict[float, pd.DataFrame] = {}
-        for time, step in h5_groups.items():
-            datas = [self.read_one(time, group, attrib, index, sizes)
-                     for attrib, group in step.items()
-                     if attrib not in ("BoxSize", "Time", index)]
-            from functools import reduce
-            data[time] = reduce(lambda x, y: x.join(y), datas)
+        max_npart = max(sizes.values())
 
-            if "BoxSize" in step:
+        times = np.sort(np.fromiter(h5_groups.keys(), dtype=float))
+
+        if chunksize is None:
+            chunksize = len(times)
+        nchunk = min(max(len(times) // chunksize, 1), len(times))
+
+        times_chunks = np.array_split(times, nchunk)
+
+        data: Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]] = {}
+        for times_chunk in times_chunks:
+            times_chunk = tuple(times_chunk)
+
+            chunk_size = sum(sizes[time] for time in times_chunk)
+            chunk_group = {}
+            for time in times_chunk:
+                step = h5_groups[time]
+                for attrib, group in step.items():
+                    chunk_group[attrib] = *chunk_group.get(attrib, tuple()), group
+
+            data[times_chunk] = {col: data
+                                 for attrib, groups in chunk_group.items()
+                                 for col, data in self.read_multiple_array(groups, attrib, chunk_size).items()}
+
+            if "BoxSize" in h5_groups[times_chunk[0]]:
                 with h5File(str(self.filename), 'r') as file_h5:
-                    npdata = np.asarray(file_h5[step["BoxSize"]])[0]
-                data[time]["BoxSize"] = npdata
+                    BoxSizes = [da.full(sizes[time], file_h5[h5_groups[time]["BoxSize"]][0]) for time in times_chunk]
 
-        times = np.sort(np.fromiter(data.keys(), dtype=float))
+                data[times_chunk]["BoxSize"] = da.concatenate(BoxSizes)
+            elif "ll_box" in data[times_chunk]:
+                data[times_chunk]["BoxSize"] = data[times_chunk]["ll_box"]
+                del data[times_chunk]["ll_box"]
 
-        for time in times:
-            data[time]["Time"] = time
+            if sparse:
+                data[times_chunk]["Time"] = np.fromiter((time for time in times_chunk), dtype=float)
+                data[times_chunk][indexname] = np.arange(max_npart)
+                data[times_chunk]["size"] = np.fromiter((sizes[time] for time in times_chunk), dtype=int)
+            else:
+                data[times_chunk]["Time"] = da.concatenate([da.full(sizes[time], time) for time in times_chunk])
+                data[times_chunk][indexname] = da.concatenate([da.arange(sizes[time]) for time in times_chunk])
 
-        meta = {index: np.int64, **data[times[0]].dtypes.to_dict()}
-        del meta["Time"]
+        return data
 
-        all_data = dd.from_delayed([set_index(data[time]) for time in times],
-                                   meta=meta, divisions=(*times, times[-1]))
-
-        return times, all_data
-
-    def read_one(self,
-                 time: float,
-                 group: str,
-                 attrib: str,
-                 index: str,
-                 sizes: Dict[float, int]) -> dd.DataFrame:
+    def read_multiple_array(self,
+                            groups: Sequence[str],
+                            attrib: str,
+                            size: int) -> Dict[str, da.Array]:
         """
-        Read one block of the h5 file into a dask dataframe (lazy)
+        Read multiple blocks of the h5 file into a dask array (lazy)
         """
+        dtype = h5File(self.filename, 'r')[groups[0]].dtype
+        shape = (size,)
+        columns = (attrib,)
 
         if attrib == "Positions":
-            meta = {"Posx": np.float64,
-                    "Posy": np.float64,
-                    "Posz": np.float64}
-            shape = (-1, 3)
-        elif attrib in ("Label", "Np"):
-            meta = {attrib: np.int64}
-            shape = (-1,)
-        else:
-            meta = {attrib: np.float64}
-            shape = (-1,)
-        h5data = read_h5_frame(self.filename, group, list(meta.keys()), shape=shape, index_name=index)
-        return dd.from_delayed([h5data], meta=meta, divisions=(0, sizes[time] - 1))
+            columns = ("Posx", "Posy", "Posz")
+            shape = 3, size
+
+        data = da.from_delayed(read_h5_arrays(self.filename, groups, shape, attrib,
+                                              dask_key_name=f"{groups} ({attrib})\n from {self.filename} (delayed)"),
+                               dtype=dtype, shape=shape, name=f"{groups} ({attrib})\n from {self.filename} (data)",
+                               meta=np.empty(shape, dtype))
+        # meta=cp.empty(shape, dtype))
+
+        if len(columns) == 1:
+            return {columns[0]: data}
+        return {col: data[i] for i, col in enumerate(columns)}
 
 
-@delayed
-def read_h5_frame(filename: Path,
-                  dataset: str,
-                  columns: Sequence[str],
-                  shape: Tuple[int] = (-1,),
-                  index_name: str = "Num") -> pd.DataFrame:
-    """Read one block of data"""
+@delayed(pure=True, traverse=False)
+def read_h5_arrays(filename: Path,
+                   datasets: Sequence[str],
+                   final_shape: Tuple[int, ...] = (-1,),
+                   varname: str = "Unknown") -> np.ndarray:
+    """Read multiple blocks of data"""
 
-    # print("reading", dataset, "in", filename)
+    # print(f"reading {varname} in {filename} ({datasets})")
 
-    df = pd.DataFrame(np.asarray(h5File(filename, 'r')[dataset]).reshape(shape),
-                      columns=columns)
-    df.index.name = index_name
-    return df
+    nvars = np.product(final_shape[:-1], dtype=int)
+    part_shape = -1, *final_shape[:-1]
 
+    with h5File(filename, 'r') as h5file:
 
-@delayed
-def set_index(data: pd.DataFrame) -> pd.DataFrame:
-    """set time as index"""
+        dtype = h5file[datasets[0]].dtype
+        res = np.empty(final_shape, dtype=dtype)
+        end = 0
+        for dataset in datasets:
+            data = h5file[dataset]
+            start, end = end, end + data.size // nvars
 
-    res = data.reset_index().set_index("Time")
+            res[..., start:end] = np.reshape(data, part_shape).T
+
     return res
+    # return cp.array(res)
