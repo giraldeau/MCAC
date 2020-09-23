@@ -32,9 +32,10 @@ from .core import groupby_agg
 from .core import groupby_apply
 from .core import xarray_to_ddframe
 from .core import xarray_to_frame
-
+from .physics import mobility_diameter
 
 __all__ = ["autocorrelation3d", "coverages", "discretize", "inertia", "volume_surface",
            "progress_compute", "DaskDistribute",
            "groupby_agg", "groupby_apply",
-           "xarray_to_frame", "xarray_to_ddframe"]
+           "xarray_to_frame", "xarray_to_ddframe",
+           "mobility_diameter"]

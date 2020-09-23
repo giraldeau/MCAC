@@ -38,6 +38,7 @@ from .tools import groupby_agg
 from .tools import groupby_apply
 from .tools import xarray_to_ddframe
 from .tools import xarray_to_frame
+from .tools import mobility_diameter
 
 
 from .writer import export_ddscat
@@ -56,4 +57,5 @@ __all__ = ["MCAC",
            "export_ddscat",
            "progress_compute", "DaskDistribute",
            "groupby_agg", "groupby_apply",
-           "xarray_to_frame", "xarray_to_ddframe"]
+           "xarray_to_frame", "xarray_to_ddframe",
+           "mobility_diameter"]
