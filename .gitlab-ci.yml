@@ -1,7 +1,7 @@
 # This file is a template, and might need editing before it works on your project.
 # Official language image. Look for the different tagged releases at:
 # https://hub.docker.com/r/library/python/tags/
-image: python:3.9-buster
+image: python:3.9-alpine3.12
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
@@ -19,6 +19,10 @@ cache:
     - venv/
 
 before_script:
+  - apk add --upgrade --no-cache bash openssh curl ca-certificates
+    openssl less htop g++ make wget rsync build-base libpng-dev
+    freetype-dev libexecinfo-dev openblas-dev libgomp lapack-dev
+    libgcc libquadmath musl libgfortran lapack-dev
   - python -V  # Print out python version for debugging
   - pip install virtualenv
   - virtualenv venv
