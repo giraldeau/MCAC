@@ -38,19 +38,40 @@ mypy:
   script:
   - pwd
   - ls -l
-  - python -m mypy bild/file.py
-  - python -m mypy bild/directory.py
+  - pip install mypy
+  - mypy
 
 flake8:
   stage: Static Analysis
   script:
-  - flake8 --max-line-length=120 bild/*.py
+  - pwd
+  - ls -l
+  - pip install flake8
+  - flake8
 
 pylint:
   stage: Static Analysis
   allow_failure: true
   script:
   - pylint -d C0301 bild/*.py
+
+isort:
+  stage: Static Analysis
+  allow_failure: true
+  script:
+  - pwd
+  - ls -l
+  - pip install isort
+  - isort .
+
+black:
+  stage: Static Analysis
+  allow_failure: true
+  script:
+  - pwd
+  - ls -l
+  - pip install black
+  - black .
 
 unit_test:
   stage: Test
