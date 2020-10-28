@@ -1,5 +1,5 @@
 default:
-  image: alpine3.12
+  image: alpine:3.12
   interruptible: true
 
 variables:
