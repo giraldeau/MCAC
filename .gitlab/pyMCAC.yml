@@ -1,7 +1,7 @@
 .python_init: &python_init
   - pwd
   - ls -l
-  - python -V               # Print out python version for debugging
+  - python3 -V               # Print out python version for debugging
   - source venv/bin/activate
 
 build-python:
@@ -9,8 +9,8 @@ build-python:
   script:
     - pwd
     - ls -l
-    - python -V               # Print out python version for debugging
-    - python -m venv venv
+    - python3 -V               # Print out python version for debugging
+    - python3 -m venv venv
     - source venv/bin/activate
     - pip install -r requirements.txt
     - pip install .
