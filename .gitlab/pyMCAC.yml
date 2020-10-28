@@ -58,7 +58,6 @@ isort:
     - isort .
   needs: ["build-python"]
   dependencies:
-    - build-release
     - build-python
 
 black:
