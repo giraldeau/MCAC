@@ -14,11 +14,6 @@ build-python:
     - source venv/bin/activate
     - pip install -r requirements.txt
     - pip install .
-  only:
-    changes:
-      - .gitlab/pyMCAC.yml
-      - ext_bin/**/*
-      - pymcac/**/*
   artifacts:
     paths:
       - venv
@@ -34,8 +29,6 @@ mypy:
     - mypy
   only:
     changes:
-      - .gitlab/pyMCAC.yml
-      - venv/**/*
       - pymcac/**/*
   needs: ["build-python"]
   dependencies:
@@ -49,8 +42,6 @@ flake8:
     - flake8
   only:
     changes:
-      - .gitlab/pyMCAC.yml
-      - venv/**/*
       - pymcac/**/*
   needs: ["build-python"]
   dependencies:
@@ -63,6 +54,9 @@ pylint:
     - *python_init
     - pip install pylint
     - pylint -d C0301 bild/*.py
+  only:
+    changes:
+      - pymcac/**/*
   needs: ["build-python"]
   dependencies:
     - build-python
@@ -76,8 +70,6 @@ isort:
     - isort .
   only:
     changes:
-      - .gitlab/pyMCAC.yml
-      - venv/**/*
       - pymcac/**/*
   needs: ["build-python"]
   dependencies:
@@ -92,8 +84,6 @@ black:
     - black .
   only:
     changes:
-      - .gitlab/pyMCAC.yml
-      - venv/**/*
       - pymcac/**/*
   needs: ["build-python"]
   dependencies:
@@ -109,8 +99,6 @@ pymcac_tests:
     - pytest
   only:
     changes:
-      - .gitlab/pyMCAC.yml
-      - venv/**/*
       - pymcac/**/*
   needs: ["build-python"]
   dependencies:

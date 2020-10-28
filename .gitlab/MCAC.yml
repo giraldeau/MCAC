@@ -9,7 +9,6 @@ build-Debug:
     - make -j
   only:
     changes:
-      - .gitlab/MCAC.yml
       - src/**/*
       - include/**/*
       - cmake/**/*
@@ -30,7 +29,6 @@ build-Release:
     - make -j
   only:
     changes:
-      - .gitlab/MCAC.yml
       - src/**/*
       - include/**/*
       - cmake/**/*

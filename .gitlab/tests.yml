@@ -9,7 +9,11 @@ mcac_runs 1/4:
       - validation/validation_data
   only:
     changes:
-      - bin/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["build-Release"]
   dependencies:
     - build-Release
@@ -25,7 +29,11 @@ mcac_runs 2/4:
       - validation/validation_data
   only:
     changes:
-      - bin/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["build-Release"]
   dependencies:
     - build-Release
@@ -41,7 +49,11 @@ mcac_runs 3/4:
       - validation/validation_data
   only:
     changes:
-      - bin/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["build-Debug"]
   dependencies:
     - build-Debug
@@ -57,7 +69,11 @@ mcac_runs 4/4:
       - validation/validation_data
   only:
     changes:
-      - bin/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["build-Debug"]
   dependencies:
     - build-Debug
@@ -69,8 +85,11 @@ mcac_tests 1/4:
     - ls validation/validation_data
   only:
     changes:
-      - validation/validation_data/**/*
-      - venv/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["mcac_runs 1/4"]
   dependencies:
     - mcac_runs 1/4
@@ -82,8 +101,11 @@ mcac_tests 2/4:
     - ls validation/validation_data
   only:
     changes:
-      - validation/validation_data/**/*
-      - venv/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["mcac_runs 2/4"]
   dependencies:
     - mcac_runs 2/4
@@ -95,8 +117,11 @@ mcac_tests 3/4:
     - ls validation/validation_data
   only:
     changes:
-      - validation/validation_data/**/*
-      - venv/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["mcac_runs 3/4"]
   dependencies:
     - mcac_runs 3/4
@@ -108,8 +133,11 @@ mcac_tests 4/4:
     - ls validation/validation_data
   only:
     changes:
-      - validation/validation_data/**/*
-      - venv/**/*
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - pymcac/**/*
   needs: ["mcac_runs 4/4"]
   dependencies:
     - mcac_runs 4/4
