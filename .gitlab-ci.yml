@@ -10,9 +10,10 @@ variables:
 # freetype-dev libexecinfo-dev 
 
 before_script:
-  - apk add --upgrade --no-cache openblas-dev lapack-dev
-    hdf5-dev mpfr-dev gmp-dev boost-dev cmake extra-cmake-modules
-    python3 libxml2-dev libxslt-dev
+  - apk add --upgrade --no-cache
+    make cmake extra-cmake-modules
+    hdf5-dev mpfr-dev gmp-dev boost-dev 
+    python3 openblas-dev lapack-dev libxml2-dev libxslt-dev
 
 cache:
   paths:
