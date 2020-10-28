@@ -12,13 +12,15 @@ variables:
 before_script:
   - apk add --upgrade --no-cache
     make cmake extra-cmake-modules g++ git
-    hdf5-dev mpfr-dev gmp-dev boost-dev 
-    python3 openblas-dev lapack-dev libxml2-dev libxslt-dev
+    hdf5-dev mpfr-dev gmp-dev boost-dev libunwind-dev
+    python3 python3-dev openblas-dev lapack-dev libxml2-dev libxslt-dev
 
 cache:
   paths:
     - .cache/pip
     - venv/
+    - ext/
+    - ext-bin/
 
 stages:
   - Build
