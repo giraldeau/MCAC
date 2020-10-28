@@ -22,9 +22,9 @@ build-python:
   artifacts:
     paths:
       - venv
-  needs: ["build-release"]
+  needs: ["build-Release"]
   dependencies:
-    - build-release
+    - build-Release
 
 mypy:
   stage: Static Analysis

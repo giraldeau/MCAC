@@ -1,4 +1,4 @@
-build-debug:
+build-Debug:
   stage: Build MCAC
   script:
     - pwd
@@ -19,8 +19,7 @@ build-debug:
       - bin/Debug/MCAC
       - ext_bin
 
-
-build-release:
+build-Release:
   stage: Build MCAC
   script:
     - pwd
@@ -40,6 +39,28 @@ build-release:
     paths:
       - bin/Release/MCAC
       - ext_bin
+
+mcac_runs:
+  stage: Run
+  script:
+    - bin/${opt}/MCAC ${test_case}.ini
+  parallel:
+    matrix:
+      - test_case: 
+          - validation/test1
+          - validation/test2
+      - opt:
+          - Debug
+          - Release
+  artifacts:
+    paths:
+      - validation/${test_case}_data
+  only:
+    changes:
+      - bin/**/*
+  needs: ["build-${opt}"]
+  dependencies:
+    - build-${opt}
 
 mcac_tests:
   stage: Test

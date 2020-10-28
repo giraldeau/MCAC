@@ -1,5 +1,5 @@
 default:
-  image: python:3.9-buster
+  image: python:3.8-buster
   interruptible: true
 
 variables:
@@ -24,8 +24,8 @@ stages:
   - Build MCAC
   - Build pyMCAC
   - Static Analysis
+  - Run
   - Test
-
 
 include:
   - local: .gitlab/MCAC.yml
