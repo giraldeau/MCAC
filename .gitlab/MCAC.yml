@@ -1,5 +1,5 @@
 build-Debug:
-  stage: Build MCAC
+  stage: Build
   script:
     - pwd
     - ls -l
@@ -13,7 +13,7 @@ build-Debug:
       - ext_bin
 
 build-Release:
-  stage: Build MCAC
+  stage: Build
   script:
     - pwd
     - ls -l

@@ -2,24 +2,10 @@
   - pwd
   - ls -l
   - python3 -V               # Print out python version for debugging
+  - python3 -m venv venv
   - source venv/bin/activate
-
-build-python:
-  stage: Build pyMCAC
-  script:
-    - pwd
-    - ls -l
-    - python3 -V               # Print out python version for debugging
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install -r requirements.txt
-    - pip install .
-  artifacts:
-    paths:
-      - venv
-  needs: ["build-Release"]
-  dependencies:
-    - build-Release
+  - pip install -r requirements.txt
+  - pip install .
 
 mypy:
   stage: Static Analysis
@@ -30,9 +16,9 @@ mypy:
   only:
     changes:
       - pymcac/**/*
-  needs: ["build-python"]
+  needs: ["build-Release"]
   dependencies:
-    - build-python
+    - build-Release
 
 flake8:
   stage: Static Analysis
@@ -43,9 +29,9 @@ flake8:
   only:
     changes:
       - pymcac/**/*
-  needs: ["build-python"]
+  needs: ["build-Release"]
   dependencies:
-    - build-python
+    - build-Release
 
 pylint:
   stage: Static Analysis
@@ -57,9 +43,9 @@ pylint:
   only:
     changes:
       - pymcac/**/*
-  needs: ["build-python"]
+  needs: ["build-Release"]
   dependencies:
-    - build-python
+    - build-Release
 
 isort:
   stage: Static Analysis
@@ -71,9 +57,9 @@ isort:
   only:
     changes:
       - pymcac/**/*
-  needs: ["build-python"]
+  needs: ["build-Release"]
   dependencies:
-    - build-python
+    - build-Release
 
 black:
   stage: Static Analysis
@@ -85,9 +71,9 @@ black:
   only:
     changes:
       - pymcac/**/*
-  needs: ["build-python"]
+  needs: ["build-Release"]
   dependencies:
-    - build-python
+    - build-Release
 
 pymcac_tests:
   stage: Test
@@ -100,6 +86,6 @@ pymcac_tests:
   only:
     changes:
       - pymcac/**/*
-  needs: ["build-python"]
+  needs: ["build-Release"]
   dependencies:
-    - build-python
+    - build-Release

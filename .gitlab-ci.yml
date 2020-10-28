@@ -21,8 +21,7 @@ cache:
     - ext_bin/
 
 stages:
-  - Build MCAC
-  - Build pyMCAC
+  - Build
   - Static Analysis
   - Run
   - Test
