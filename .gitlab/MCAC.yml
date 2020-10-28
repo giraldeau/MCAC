@@ -5,12 +5,11 @@ build-debug:
     - ls -l
     - mkdir build
     - cd build
-    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON .. 
+    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF .. 
     - make -j
   artifacts:
     paths:
       - bin/Debug/MCAC
-      - venv/
 
 
 build-release:
@@ -20,9 +19,8 @@ build-release:
     - ls -l
     - mkdir build
     - cd build
-    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON ..
+    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
     - make -j
   artifacts:
     paths:
       - bin/Release/MCAC
-      - venv/

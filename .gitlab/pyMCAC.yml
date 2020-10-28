@@ -4,15 +4,29 @@
   - python -V               # Print out python version for debugging
   - source venv/bin/activate
 
+build-python:
+  stage: Build
+  script:
+    - pwd
+    - ls -l
+    - python -V               # Print out python version for debugging
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install -r requirements.txt
+    - pip install .
+  artifacts:
+    paths:
+      - venv
+
 mypy:
   stage: Static Analysis
   script:
     - *python_init
     - pip install mypy
     - mypy
-  needs: ["build-release"]
+  needs: ["build-python"]
   dependencies:
-    - build-release
+    - build-python
 
 flake8:
   stage: Static Analysis
@@ -20,9 +34,9 @@ flake8:
     - *python_init
     - pip install flake8
     - flake8
-  needs: ["build-release"]
+  needs: ["build-python"]
   dependencies:
-    - build-release
+    - build-python
 
 pylint:
   stage: Static Analysis
@@ -31,9 +45,9 @@ pylint:
     - *python_init
     - pip install pylint
     - pylint -d C0301 bild/*.py
-  needs: ["build-release"]
+  needs: ["build-python"]
   dependencies:
-    - build-release
+    - build-python
 
 isort:
   stage: Static Analysis
@@ -42,9 +56,10 @@ isort:
     - *python_init
     - pip install isort
     - isort .
-  needs: ["build-release"]
+  needs: ["build-python"]
   dependencies:
     - build-release
+    - build-python
 
 black:
   stage: Static Analysis
@@ -53,9 +68,9 @@ black:
     - *python_init
     - pip install black
     - black .
-  needs: ["build-release"]
+  needs: ["build-python"]
   dependencies:
-    - build-release
+    - build-python
 
 unit_test:
   stage: Test
@@ -65,6 +80,7 @@ unit_test:
     - export PYTHONPATH="$PYTHONPATH:."
     - python -c "import sys;print(sys.path)"
     - pytest
-  needs: ["build-release"]
+  needs: ["build-release", "build-python"]
   dependencies:
     - build-release
+    - build-python
