@@ -6,6 +6,7 @@ build-debug:
     - mkdir build
     - cd build
     - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug  .. 
+    - make -j
   artifacts:
     paths:
       - bin/Debug/MCAC
@@ -19,7 +20,8 @@ build-release:
     - ls -l
     - mkdir build
     - cd build
-    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release  .. 
+    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release  ..
+    - make -j
   artifacts:
     paths:
       - bin/Release/MCAC
