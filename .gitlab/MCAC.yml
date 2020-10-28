@@ -49,7 +49,7 @@ mcac_runs:
       - test_case: 
           - validation/test1
           - validation/test2
-      - opt:
+        opt:
           - Debug
           - Release
   artifacts:
