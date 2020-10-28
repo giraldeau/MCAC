@@ -40,42 +40,118 @@ build-Release:
       - bin/Release/MCAC
       - ext_bin
 
-mcac_runs:
+mcac_runs 1/4:
   stage: Run
   script:
-    - bin/${opt}/MCAC ${test_case}.ini
-  parallel:
-    matrix:
-      - test_case: 
-          - validation/test1
-          - validation/test2
-        opt:
-          - Debug
-          - Release
+    #- bin/Release/MCAC validation/test1.ini
+    - mkdir -p validation/validation_data
+    - touch Release1
   artifacts:
     paths:
-      - validation/${test_case}_data
+      - validation/validation_data
   only:
     changes:
       - bin/**/*
-  needs: ["build-${opt}"]
+  needs: ["build-Release"]
   dependencies:
-    - build-${opt}
+    - build-Release
 
-mcac_tests:
-  stage: Test
+mcac_runs 2/4:
+  stage: Run
   script:
-    - echo "Testing MCAC occurs here"
+    #- bin/Release/MCAC validation/test2.ini
+    - mkdir -p validation/validation_data
+    - touch Release2
+  artifacts:
+    paths:
+      - validation/validation_data
   only:
     changes:
-      - .gitlab/MCAC.yml
-      - .gitlab/pyMCAC.yml
-      - src/**/*
-      - include/**/*
-      - pymcac/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - venv/**/*
-  needs: ["build-python"]
+      - bin/**/*
+  needs: ["build-Release"]
   dependencies:
-    - build-python
+    - build-Release
+
+mcac_runs 3/4:
+  stage: Run
+  script:
+    #- bin/Debug/MCAC validation/test1.ini
+    - mkdir -p validation/validation_data
+    - touch Debug1
+  artifacts:
+    paths:
+      - validation/validation_data
+  only:
+    changes:
+      - bin/**/*
+  needs: ["build-Debug"]
+  dependencies:
+    - build-Debug
+    
+mcac_runs 4/4:
+  stage: Run
+  script:
+    #- bin/Debug/MCAC validation/test2.ini
+    - mkdir -p validation/validation_data
+    - touch Debug2
+  artifacts:
+    paths:
+      - validation/validation_data
+  only:
+    changes:
+      - bin/**/*
+  needs: ["build-Debug"]
+  dependencies:
+    - build-Debug
+    
+mcac_tests 1/4:
+  stage: Test
+  script:
+    - echo "validation of MCAC occurs here"
+    - ls validation/validation_data
+  only:
+    changes:
+      - validation/validation_data/**/*
+      - venv/**/*
+  needs: ["mcac_runs 1/4"]
+  dependencies:
+    - mcac_runs 1/4
+
+mcac_tests 2/4:
+  stage: Test
+  script:
+    - echo "validation of MCAC occurs here"
+    - ls validation/validation_data
+  only:
+    changes:
+      - validation/validation_data/**/*
+      - venv/**/*
+  needs: ["mcac_runs 2/4"]
+  dependencies:
+    - mcac_runs 2/4
+
+mcac_tests 3/4:
+  stage: Test
+  script:
+    - echo "validation of MCAC occurs here"
+    - ls validation/validation_data
+  only:
+    changes:
+      - validation/validation_data/**/*
+      - venv/**/*
+  needs: ["mcac_runs 3/4"]
+  dependencies:
+    - mcac_runs 3/4
+
+mcac_tests 4/4:
+  stage: Test
+  script:
+    - echo "validation of MCAC occurs here"
+    - ls validation/validation_data
+  only:
+    changes:
+      - validation/validation_data/**/*
+      - venv/**/*
+  needs: ["mcac_runs 4/4"]
+  dependencies:
+    - mcac_runs 4/4
