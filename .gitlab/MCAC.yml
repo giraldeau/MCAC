@@ -7,12 +7,6 @@ build-Debug:
     - cd build
     - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF .. 
     - make -j
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
   artifacts:
     paths:
       - bin/Debug/MCAC
@@ -27,12 +21,6 @@ build-Release:
     - cd build
     - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
     - make -j
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
   artifacts:
     paths:
       - bin/Release/MCAC
