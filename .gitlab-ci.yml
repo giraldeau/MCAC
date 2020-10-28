@@ -1,85 +1,30 @@
-# This file is a template, and might need editing before it works on your project.
-# Official language image. Look for the different tagged releases at:
-# https://hub.docker.com/r/library/python/tags/
-image: python:3.9-alpine3.12
+default:
+  image: alpine3.12
+  interruptible: true
 
-# Change pip's cache directory to be inside the project directory since we can
-# only cache local items.
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-# Pip's cache doesn't store the python packages
-# https://pip.pypa.io/en/stable/reference/pip_install/#caching
-#
-# If you want to also cache the installed packages, you have to install
-# them in a virtualenv and cache it as well.
+# bash openssh curl ca-certificates libgomp libgcc libquadmath musl libgfortran
+# openssl less g++ make wget rsync build-base libpng-dev
+# freetype-dev libexecinfo-dev 
+
+before_script:
+  - apk add --upgrade --no-cache openblas-dev lapack-dev
+    hdf5-dev mpfr-dev gmp-dev boost-dev cmake extra-cmake-modules cmake-extras
+    python3 libxml2-dev libxslt-dev
+
 cache:
   paths:
     - .cache/pip
     - venv/
 
-before_script:
-  - apk add --upgrade --no-cache bash openssh curl ca-certificates
-    openssl less htop g++ make wget rsync build-base libpng-dev
-    freetype-dev libexecinfo-dev openblas-dev libgomp lapack-dev
-    libgcc libquadmath musl libgfortran lapack-dev git libxml2-dev libxslt-dev
-  - python -V  # Print out python version for debugging
-  - pip install virtualenv
-  - virtualenv venv
-  - source venv/bin/activate
-  - pip install numpy
-  - pip install .
-
 stages:
+  - Build
   - Static Analysis
   - Test
 
-mypy:
-  stage: Static Analysis
-  script:
-  - pwd
-  - ls -l
-  - pip install mypy
-  - mypy
 
-flake8:
-  stage: Static Analysis
-  script:
-  - pwd
-  - ls -l
-  - pip install flake8
-  - flake8
-
-pylint:
-  stage: Static Analysis
-  allow_failure: true
-  script:
-  - pylint -d C0301 bild/*.py
-
-isort:
-  stage: Static Analysis
-  allow_failure: true
-  script:
-  - pwd
-  - ls -l
-  - pip install isort
-  - isort .
-
-black:
-  stage: Static Analysis
-  allow_failure: true
-  script:
-  - pwd
-  - ls -l
-  - pip install black
-  - black .
-
-unit_test:
-  stage: Test
-  script:
-  - pwd
-  - ls -l
-  - export PYTHONPATH="$PYTHONPATH:."
-  - python -c "import sys;print(sys.path)"
-  - pytest
-  needs: []
+include:
+  - local: .gitlab/MCAC.yml
+  - local: .gitlab/pyMCAC.yml

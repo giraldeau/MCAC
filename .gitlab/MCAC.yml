@@ -1,0 +1,26 @@
+build-debug:
+  stage: Build
+  script:
+    - pwd
+    - ls -l
+    - mkdir build
+    - cd build
+    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug  .. 
+  artifacts:
+    paths:
+      - bin/Debug/MCAC
+      - venv/
+
+
+build-release:
+  stage: Build
+  script:
+    - pwd
+    - ls -l
+    - mkdir build
+    - cd build
+    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release  .. 
+  artifacts:
+    paths:
+      - bin/Release/MCAC
+      - venv/

@@ -1,0 +1,53 @@
+.python_init: &python_init
+  - pwd
+  - ls -l
+  - python -V               # Print out python version for debugging
+  - source venv/bin/activate
+
+mypy:
+  stage: Static Analysis
+  script:
+  - *python_init
+  - pip install mypy
+  - mypy
+
+flake8:
+  stage: Static Analysis
+  script:
+  - *python_init
+  - pip install flake8
+  - flake8
+
+pylint:
+  stage: Static Analysis
+  #allow_failure: true
+  script:
+  - *python_init
+  - pip install pylint
+  - pylint -d C0301 bild/*.py
+
+isort:
+  stage: Static Analysis
+  #allow_failure: true
+  script:
+  - *python_init
+  - pip install isort
+  - isort .
+
+black:
+  stage: Static Analysis
+  #allow_failure: true
+  script:
+  - *python_init
+  - pip install black
+  - black .
+
+unit_test:
+  stage: Test
+  script:
+  - *python_init
+  - pip install pytest
+  - export PYTHONPATH="$PYTHONPATH:."
+  - python -c "import sys;print(sys.path)"
+  - pytest
+  needs: ["build-release"]
