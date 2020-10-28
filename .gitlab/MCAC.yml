@@ -1,0 +1,27 @@
+build-Debug:
+  stage: Build
+  script:
+    - pwd
+    - ls -l
+    - mkdir build
+    - cd build
+    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF .. 
+    - make -j
+  artifacts:
+    paths:
+      - bin/Debug/MCAC
+      - ext_bin
+
+build-Release:
+  stage: Build
+  script:
+    - pwd
+    - ls -l
+    - mkdir build
+    - cd build
+    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
+    - make -j
+  artifacts:
+    paths:
+      - bin/Release/MCAC
+      - ext_bin
