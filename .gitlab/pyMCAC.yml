@@ -7,52 +7,64 @@
 mypy:
   stage: Static Analysis
   script:
-  - *python_init
-  - pip install mypy
-  - mypy
+    - *python_init
+    - pip install mypy
+    - mypy
   needs: ["build-release"]
+  dependencies:
+    - build-release
 
 flake8:
   stage: Static Analysis
   script:
-  - *python_init
-  - pip install flake8
-  - flake8
+    - *python_init
+    - pip install flake8
+    - flake8
   needs: ["build-release"]
+  dependencies:
+    - build-release
 
 pylint:
   stage: Static Analysis
   #allow_failure: true
   script:
-  - *python_init
-  - pip install pylint
-  - pylint -d C0301 bild/*.py
+    - *python_init
+    - pip install pylint
+    - pylint -d C0301 bild/*.py
   needs: ["build-release"]
+  dependencies:
+    - build-release
 
 isort:
   stage: Static Analysis
   #allow_failure: true
   script:
-  - *python_init
-  - pip install isort
-  - isort .
+    - *python_init
+    - pip install isort
+    - isort .
   needs: ["build-release"]
+  dependencies:
+    - build-release
 
 black:
   stage: Static Analysis
   #allow_failure: true
   script:
-  - *python_init
-  - pip install black
-  - black .
+    - *python_init
+    - pip install black
+    - black .
   needs: ["build-release"]
+  dependencies:
+    - build-release
 
 unit_test:
   stage: Test
   script:
-  - *python_init
-  - pip install pytest
-  - export PYTHONPATH="$PYTHONPATH:."
-  - python -c "import sys;print(sys.path)"
-  - pytest
+    - *python_init
+    - pip install pytest
+    - export PYTHONPATH="$PYTHONPATH:."
+    - python -c "import sys;print(sys.path)"
+    - pytest
   needs: ["build-release"]
+  dependencies:
+    - build-release
