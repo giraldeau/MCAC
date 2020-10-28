@@ -1,5 +1,5 @@
 default:
-  image: python:3.9-slim-buster
+  image: python:3.9-buster
   interruptible: true
 
 variables:
@@ -16,7 +16,7 @@ before_script:
   - apt-get install -y
     make cmake extra-cmake-modules g++ git
     libhdf5-dev libmpfr-dev libgmp-dev libboost-dev libunwind-dev libtiff-dev
-    python3 python3-dev libopenblas-dev liblapack-dev libxml2-dev libxslt1-dev
+    libopenblas-dev liblapack-dev libxml2-dev libxslt1-dev
 
 cache:
   paths:
