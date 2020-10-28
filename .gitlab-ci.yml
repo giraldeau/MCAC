@@ -11,6 +11,10 @@ variables:
 #    hdf5-dev mpfr-dev gmp-dev boost-dev libunwind-dev tiff-dev
 #    python3 python3-dev py3-numpy-dev openblas-dev lapack-dev libxml2-dev libxslt-dev
 
+before_script:
+  - apt update -qq
+  - apt-get install -y -qq cmake
+
 cache:
   paths:
     - .cache/pip
