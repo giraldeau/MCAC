@@ -11,7 +11,7 @@ variables:
 
 before_script:
   - apk add --upgrade --no-cache openblas-dev lapack-dev
-    hdf5-dev mpfr-dev gmp-dev boost-dev cmake extra-cmake-modules cmake-extras
+    hdf5-dev mpfr-dev gmp-dev boost-dev cmake extra-cmake-modules
     python3 libxml2-dev libxslt-dev
 
 cache:
