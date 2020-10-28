@@ -1,26 +1,22 @@
 default:
-  image: alpine:3.12
+  image: python:3.9-slim-buster
   interruptible: true
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-# bash openssh curl ca-certificates libgomp libgcc libquadmath musl libgfortran
-# openssl less wget rsync build-base libpng-dev
-# freetype-dev libexecinfo-dev 
-
-before_script:
-  - apk add --upgrade --no-cache
-    make cmake extra-cmake-modules g++ git
-    hdf5-dev mpfr-dev gmp-dev boost-dev libunwind-dev tiff-dev
-    python3 python3-dev py3-numpy-dev openblas-dev lapack-dev libxml2-dev libxslt-dev
+#before_script:
+#  - apk add --upgrade --no-cache
+#    make cmake extra-cmake-modules g++ git
+#    hdf5-dev mpfr-dev gmp-dev boost-dev libunwind-dev tiff-dev
+#    python3 python3-dev py3-numpy-dev openblas-dev lapack-dev libxml2-dev libxslt-dev
 
 cache:
   paths:
     - .cache/pip
     - venv/
     - ext/
-    - ext-bin/
+    - ext_bin/
 
 stages:
   - Build
