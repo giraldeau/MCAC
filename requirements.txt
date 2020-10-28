@@ -1,6 +1,6 @@
+numpy
 setuptools_scm
 setuptools
-numpy
 matplotlib
 scipy
 h5py

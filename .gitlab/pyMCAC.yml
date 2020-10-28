@@ -5,7 +5,7 @@
   - source venv/bin/activate
 
 build-python:
-  stage: Build
+  stage: Build pyMCAC
   script:
     - pwd
     - ls -l
@@ -14,9 +14,17 @@ build-python:
     - source venv/bin/activate
     - pip install -r requirements.txt
     - pip install .
+  only:
+    changes:
+      - .gitlab/pyMCAC.yml
+      - ext_bin/**/*
+      - pymcac/**/*
   artifacts:
     paths:
       - venv
+  needs: ["build-release"]
+  dependencies:
+    - build-release
 
 mypy:
   stage: Static Analysis
@@ -24,6 +32,11 @@ mypy:
     - *python_init
     - pip install mypy
     - mypy
+  only:
+    changes:
+      - .gitlab/pyMCAC.yml
+      - venv/**/*
+      - pymcac/**/*
   needs: ["build-python"]
   dependencies:
     - build-python
@@ -34,6 +47,11 @@ flake8:
     - *python_init
     - pip install flake8
     - flake8
+  only:
+    changes:
+      - .gitlab/pyMCAC.yml
+      - venv/**/*
+      - pymcac/**/*
   needs: ["build-python"]
   dependencies:
     - build-python
@@ -56,6 +74,11 @@ isort:
     - *python_init
     - pip install isort
     - isort .
+  only:
+    changes:
+      - .gitlab/pyMCAC.yml
+      - venv/**/*
+      - pymcac/**/*
   needs: ["build-python"]
   dependencies:
     - build-python
@@ -67,11 +90,16 @@ black:
     - *python_init
     - pip install black
     - black .
+  only:
+    changes:
+      - .gitlab/pyMCAC.yml
+      - venv/**/*
+      - pymcac/**/*
   needs: ["build-python"]
   dependencies:
     - build-python
 
-unit_test:
+pymcac_tests:
   stage: Test
   script:
     - *python_init
@@ -79,7 +107,11 @@ unit_test:
     - export PYTHONPATH="$PYTHONPATH:."
     - python -c "import sys;print(sys.path)"
     - pytest
-  needs: ["build-release", "build-python"]
+  only:
+    changes:
+      - .gitlab/pyMCAC.yml
+      - venv/**/*
+      - pymcac/**/*
+  needs: ["build-python"]
   dependencies:
-    - build-release
     - build-python

@@ -1,5 +1,5 @@
 build-debug:
-  stage: Build
+  stage: Build MCAC
   script:
     - pwd
     - ls -l
@@ -7,13 +7,21 @@ build-debug:
     - cd build
     - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF .. 
     - make -j
+  only:
+    changes:
+      - .gitlab/MCAC.yml
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
   artifacts:
     paths:
       - bin/Debug/MCAC
+      - ext_bin
 
 
 build-release:
-  stage: Build
+  stage: Build MCAC
   script:
     - pwd
     - ls -l
@@ -21,6 +29,32 @@ build-release:
     - cd build
     - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
     - make -j
+  only:
+    changes:
+      - .gitlab/MCAC.yml
+      - src/**/*
+      - include/**/*
+      - cmake/**/*
+      - CMakeLists.txt
   artifacts:
     paths:
       - bin/Release/MCAC
+      - ext_bin
+
+mcac_tests:
+  stage: Test
+  script:
+    - echo "Testing MCAC occurs here"
+  only:
+    changes:
+      - .gitlab/MCAC.yml
+      - .gitlab/pyMCAC.yml
+      - src/**/*
+      - include/**/*
+      - pymcac/**/*
+      - cmake/**/*
+      - CMakeLists.txt
+      - venv/**/*
+  needs: ["build-python"]
+  dependencies:
+    - build-python
