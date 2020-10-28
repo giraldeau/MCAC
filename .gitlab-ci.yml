@@ -6,12 +6,12 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 # bash openssh curl ca-certificates libgomp libgcc libquadmath musl libgfortran
-# openssl less g++ make wget rsync build-base libpng-dev
+# openssl less wget rsync build-base libpng-dev
 # freetype-dev libexecinfo-dev 
 
 before_script:
   - apk add --upgrade --no-cache
-    make cmake extra-cmake-modules
+    make cmake extra-cmake-modules g++ 
     hdf5-dev mpfr-dev gmp-dev boost-dev 
     python3 openblas-dev lapack-dev libxml2-dev libxslt-dev
 
