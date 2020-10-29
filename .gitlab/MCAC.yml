@@ -25,3 +25,31 @@ build-Release:
     paths:
       - bin/Release/MCAC
       - ext_bin
+
+cpplint:
+  stage: Static Analysis
+  script:
+    - apt update
+    - apt-get install -y cpplint
+    - cpplint --recursive src include
+  only:
+    changes:
+      - src/**/*
+      - include/**/*
+  needs: []
+
+
+cppcheck:
+  stage: Static Analysis
+  script:
+    - apt update
+    - apt-get install -y cppcheck
+    - cppcheck --enable=all --inconclusive -I include src
+  only:
+    changes:
+      - src/**/*
+      - include/**/*
+  needs: []
+
+
+# clang-check clang-format
