@@ -61,7 +61,8 @@ std::array<T, 3> &operator/=(std::array<T, 3> &a, const T &rhs) {
     a[2] /= rhs;
     return a;
 }
-void init_random();
+unsigned long mix(unsigned long a, unsigned long b, unsigned long c);
+void init_random(int random_seed);
 double random();
 MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string &input);
 std::string resolve_monomeres_initialisation_mode(MonomeresInitialisationMode mode);

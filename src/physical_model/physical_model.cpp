@@ -61,6 +61,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     mean_monomere_per_aggregate_limit(-1),
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
+    random_seed(-1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
     output_dir("MCAC_output"),
@@ -118,6 +119,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["numerics"]["enforce_volume_fraction"], enforce_volume_fraction);
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
+    inipp::extract(ini.sections["numerics"]["random_seed"], random_seed);
+    mcac::init_random(random_seed);
     if (default_str != "") {
         pick_method = resolve_pick_method(default_str);
     }
@@ -251,6 +254,11 @@ void PhysicalModel::print() const {
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_lenght << " (m)" << std::endl
               << " FV                              : " << volume_fraction << " (-)" << std::endl;
+    if (random_seed < 0) {
+        std::cout << " Seed random numbers: auto" << std::endl;
+    } else {
+        std::cout << " Seed random numbers: " << random_seed << std::endl;
+    }
     if (with_collisions) {
         std::cout << " With collisions" << std::endl;
     } else {

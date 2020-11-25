@@ -34,7 +34,6 @@ int main(int argc, char *argv[]) {
     }
     try {
         mcac::PhysicalModel physicalmodel(argv[1]);
-        mcac::init_random();
         mcac::AggregatList aggregates(&physicalmodel);
         mcac::calcul(physicalmodel, aggregates);
     }
