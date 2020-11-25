@@ -46,6 +46,7 @@ if (WITH_SBL)
     endif ()
     find_package(MPFR REQUIRED)
     find_package(GMP REQUIRED)
+    add_definitions(-DCGAL_VERSION_GEQ_4_10)
 endif ()
 find_package(OpenMP QUIET COMPONENTS CXX)
 

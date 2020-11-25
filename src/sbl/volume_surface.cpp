@@ -47,10 +47,10 @@ typedef SBL::GT::T_Union_of_balls_surface_volume_3<Alpha_complex, SK> Union_of_b
 
 
 namespace mcac {
-pair<std::vector<double>, std::vector<double>> compute_volume_surface_sbl(const SphereList &spherelist) {
+std::pair<std::vector<double>, std::vector<double>> compute_volume_surface_sbl(const SphereList &spherelist) {
     // convert data for SBL
     std::vector<K::Sphere_3> spheres;
-    for (const Sphere *sphere :spherelist) {
+    for (const auto& sphere : spherelist) {
         std::array<double, 3> pos(sphere->get_position());
         K::Point_3 p(pos[0], pos[1], pos[2]);
         // TODO temp workaround
@@ -64,7 +64,7 @@ pair<std::vector<double>, std::vector<double>> compute_volume_surface_sbl(const 
         volumes[i] = to_double(surface_volume.volume(i));
         areas[i] = to_double(surface_volume.area(i));
     }
-    return make_pair(volumes, areas);
+    return std::make_pair(volumes, areas);
 }
 }
 #endif
