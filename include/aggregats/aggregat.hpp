@@ -49,6 +49,7 @@ private:
     double *dg_over_dp;
     double *overlapping;            // Average overlapping coefficient
     double *coordination_number;    // Average coordination number
+    double *d_m;                     // Mobility diameter
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
 

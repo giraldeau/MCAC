@@ -387,6 +387,16 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
 [[gnu::pure]] double PhysicalModel::relax_time(double masse, double f_agg) {
     return masse / f_agg;
 }
+[[gnu::pure]] double PhysicalModel::mobility_diameter(double aggregate_volume,
+                                                      double sphere_volume,
+                                                      double sphere_radius) const {
+    double friction_exp = friction_exponent(sphere_radius);
+    double aggregate_radius = sphere_radius *
+            std::pow(aggregate_volume / sphere_volume,friction_exp/fractal_dimension/2.0); // Approximated (free molecular regime)
+    double cc_pp = cunningham(sphere_radius);
+    double cc_a = cunningham(aggregate_radius); // Approximated (free molecular regime)
+    return (cc_a / cc_pp) * 2.0*sphere_radius
+           * std::pow(aggregate_volume / sphere_volume, friction_exp / fractal_dimension);
 }
 [[gnu::const]] fs::path extract_path(const std::string &filename) {
     fs::path path = filename;

@@ -65,6 +65,7 @@ public:
     [[gnu::pure]] double friction_coeff(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     [[gnu::pure]] double diffusivity(double) const;
     [[gnu::pure]] static double relax_time(double masse, double);
+    [[gnu::pure]] double mobility_diameter(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     void print() const;
     void update(size_t n_aggregates, double total_volume) noexcept;
     void update_from_flame(const FlameCoupling& flame);

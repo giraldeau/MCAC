@@ -87,6 +87,7 @@ public:
     std::vector<double> format_coordination_number() const;
     std::vector<double> format_proper_time() const;
     std::vector<double> format_overlapping() const;
+    std::vector<double> format_d_m() const;
     std::vector<int> format_label() const;
     void remove(const size_t &id) noexcept;
     void remove_sphere(const size_t &id) noexcept;

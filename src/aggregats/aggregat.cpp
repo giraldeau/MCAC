@@ -194,6 +194,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     (*spheres)[sphere_index].init_val(position, sphere_diameter * 0.5);
     myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
+    *d_m = sphere_diameter;
     //update_distances_and_overlapping();
     update();
 }
@@ -220,6 +221,7 @@ void Aggregate::update_partial() noexcept {
 
     //$ Determination of the friction coefficient
     *f_agg = physicalmodel->friction_coeff(*agregat_volume, vol_pp, 0.5 * (*dp));
+    *d_m = physicalmodel->mobility_diameter(*agregat_volume, vol_pp, 0.5 * (*dp));
 
     // Momentum relaxation time and lpm (persistent distance)
     double masse = physicalmodel->density * (*agregat_volume);

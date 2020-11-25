@@ -62,6 +62,7 @@ enum AggregatesFields {
     AGGREGAT_DG_OVER_DP,
     AGGREGAT_OVERLAPPING,
     AGGREGAT_COORDINATION_NUMBER,
+    AGGREGAT_D_M,
     AGGREGAT_NFIELDS
 };
 enum ErrorCodes {
