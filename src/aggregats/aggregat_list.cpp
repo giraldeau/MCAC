@@ -158,7 +158,7 @@ size_t AggregatList::merge(AggregateContactInfo contact_info) {
 
     // compute proper time of the final aggregate
     // keeping global time constant
-    double newtime = double(size() - 1) * (*list[_keeped]->proper_time + *list[_removed]->proper_time) / double(size())
+    double newtime = (*list[_keeped]->proper_time) + (*list[_removed]->proper_time)
                      - physicalmodel->time;
 
     // merge the two aggregate but do not remove the deleted one
