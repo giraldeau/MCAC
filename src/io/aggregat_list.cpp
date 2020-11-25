@@ -41,7 +41,7 @@ auto AggregatList::get_data() const {
     boost::shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->time);
     aggregats_data->setTime(time);
     aggregats_data->insert(attribute("Time", physicalmodel->time));
-    aggregats_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
+    //aggregats_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
 
     // Set Positions
     aggregats_data->setGeometry(the_positions(format_position()));

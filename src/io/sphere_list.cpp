@@ -40,7 +40,7 @@ auto SphereList::get_data() const {
     // Set time
     spheres_data->setTime(format_time(physicalmodel->time));
     spheres_data->insert(attribute("Time", physicalmodel->time));
-    spheres_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
+    //spheres_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
 
     // Set Positions
     spheres_data->setGeometry(the_positions(format_position()));
