@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# coding=utf-8
+# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -18,18 +18,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Tools
 """
 
-from .dask_tools import dask_distribute, JupyterDaskDistribute
-from .dask_tools import progress_compute
-from .dataframe import groupby_agg
-from .dataframe import xarray_to_ddframe
-from .dataframe import xarray_to_frame
-from .sorting import sortby
 
-
-__all__ = ["progress_compute", "dask_distribute", "JupyterDaskDistribute",
-           "groupby_agg",
-           "xarray_to_frame", "xarray_to_ddframe",
-           "sortby"]
+def get_idx_name(ds):
+    potentials = set(ds.dims) - ({"k", "Time"} & set(ds.dims))
+    if "Num" in potentials:
+        return "Num"
+    if "Label" in potentials:
+        return "Label"
+    if len(potentials) == 1:
+        return potentials.pop()
+    return None

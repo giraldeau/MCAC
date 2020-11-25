@@ -20,20 +20,25 @@
 """
 Tools to mimic the pandas API
 """
+import warnings
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import dask
 import dask.array as da
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from tqdm import tqdm
 
 from .dask_tools import progress_compute
+from .sorting import sortby
 
 
 def xarray_to_ddframe(ds: xr.Dataset,
@@ -107,7 +112,7 @@ def xarray_to_ddframe(ds: xr.Dataset,
 
     if set_index:
         if len(dim_order) == 1:
-            (dim,) = dim_order
+            [dim] = dim_order
             df = df.set_index(dim)
         else:
             # triggers an error about multi-indexes, even if only one
@@ -137,13 +142,35 @@ def xarray_to_frame(ds: xr.Dataset) -> pd.DataFrame:
     return df
 
 
+def try_extracting_index(index_arrays, length):
+    known_indexes = True
+    for i, index_array in enumerate(index_arrays):
+        if isinstance(index_array, xr.DataArray):
+            index_array = index_array.data
+        if isinstance(index_array, (np.ndarray, da.Array)):
+            index_length = index_array.size
+            if np.isnan(index_length):
+                index_array = index_array.compute_chunk_sizes()
+                index_length = index_array.size
+            if length is not None and not length == index_length:
+                raise ValueError("Your indexes lengths are not coherent")
+            length = index_length
+            if isinstance(index_array, da.Array):
+                index_array = index_array.rechunk(length)
+        if index_array is None:
+            known_indexes = False
+        index_arrays[i] = index_array
+
+    lengths = (length,) if length is not None else None
+    return known_indexes, index_arrays, lengths
+
+
 def groupby_agg(ds: xr.Dataset,
                 by: Union[str, List[str]],
                 agg: List[Tuple[str, Union[str, Callable], str]],
                 sort: bool = True,
-                lengths: Tuple[int] = None,
-                set_index: bool = True,
-                **kwargs: Any) -> xr.Dataset:
+                index_arrays = None,
+                length: int = None) -> xr.Dataset:
     """
     Mimic the groupby().agg mechanism of pandas
 
@@ -171,60 +198,105 @@ def groupby_agg(ds: xr.Dataset,
     """
     if isinstance(by, str):
         by = [by]
-    split_out = kwargs.get("kwargs", 1)
+    if isinstance(index_arrays, tuple):
+        index_arrays = list(index_arrays)
+    if not isinstance(index_arrays, list):
+        index_arrays = [index_arrays for _ in by]
 
-    content = list(ds.data_vars.keys()) + list(ds.coords.keys())
+    if isinstance(ds, xr.DataArray):
+        ds = ds.to_dataset(promote_attrs=True)
+
+    known_indexes, index_arrays, lengths = try_extracting_index(index_arrays, length)
+
+    relevent_dims = {dim for var in ds.data_vars.values() for dim in var.dims}
+    if len(relevent_dims) > 1:
+        raise ValueError("You cannot groupby_agg with mixed shape Dataset")
+    if not relevent_dims:
+        raise ValueError("Nothing to group, your arrays are 0d")
+    [k] = relevent_dims
+
+    ds_only_k = ds.drop_dims([dim for dim in ds.dims if dim != k])
+    ds_only_k = ds_only_k.rename({coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")})
+
+    content = list(ds_only_k.data_vars.keys()) + list(ds_only_k.coords.keys())
     keep = [name_in for name_out, fn, name_in in agg] + by
     remove = [var for var in content if var not in keep]
 
-    ds = ds.drop_vars(remove)
+    ds_only_k = ds_only_k.drop_vars(remove)
+    dask = k in ds_only_k.chunks
 
-    df_gb = xarray_to_ddframe(ds).groupby(by=by, sort=sort)
     res = xr.Dataset()
-    index = by[0] if set_index else "k"
-    for name_out, fn, name_in in agg:
-        serie = df_gb[name_in].agg(fn, **kwargs)
-        if not res.coords:
-            if len(by) == 1:
-                (coord,) = by
-                index = coord if set_index else "k"
-                if split_out == 1:
-                    res.coords[coord] = (index,), serie.index.to_dask_array(lengths)
-                    if lengths is None:
-                        (size,) = res.coords[coord].shape
-                        if np.isnan(size):
-                            lengths = tuple(serie.index.map_partitions(len, enforce_metadata=False).compute())
-                            res.coords[coord] = (index,), serie.index.to_dask_array(lengths)
-                        else:
-                            lengths = (size,)
-                else:
-                    arr = serie.index.to_dask_array(lengths)
-                    if lengths is None:
-                        lengths = serie.index.map_partitions(len, enforce_metadata=False)
-                        lengths, arr = da.compute(lengths, arr)
-                        lengths = tuple(lengths)
-                    res.coords[coord] = (index,), arr
-            else:
-                index = "k"
-                df_coords = serie.index.to_frame(lengths)
-                if lengths is None:
-                    lengths = tuple(serie.index.map_partitions(len, enforce_metadata=False).compute())
-                for coord in by:
-                    res.coords[coord] = (index,), df_coords[coord].to_dask_array(lengths)
-        res[name_out] = (index,), serie.to_dask_array(lengths)
+    if dask:
+        if sort and not known_indexes:
+            index_serie = xarray_to_ddframe(ds_only_k[by]).groupby(by=by, sort=sort).first().index
+            index_arrays, lengths = index_serie_to_index_array(index_serie, lengths)
 
-    if len(agg) == 1:
-        (data_var,) = list(res.data_vars.keys())
-        res = res[data_var]
+        df_gb = xarray_to_ddframe(ds_only_k).groupby(by=by, sort=sort)
+    else:
+        df_gb = ds_only_k.to_dataframe().groupby(by=by, sort=sort)
+
+    index = by[0]
+    for name_out, fn, name_in in agg:
+        serie = df_gb[name_in].agg(fn)
+
+        if not res.coords:
+            if not known_indexes:
+                index_arrays, lengths = index_serie_to_index_array(serie.index, lengths)
+            if len(by) == 1:
+                [index] = by
+                res.coords[index] = (index,), index_arrays[0]
+            else:
+                index = k
+                for coord, index_array in zip(by, index_arrays):
+                    res.coords[coord] = (index,), index_array
+
+        if dask:
+            res[name_out] = (index,), serie.to_dask_array(lengths)
+        else:
+            res[name_out] = (index,), serie.values
+
+    for dim in ("Time", "Label", "Num"):
+        if f"k{dim}" in res.coords:
+            res = res.assign_coords({dim: ds[dim]})
+            if ds[f"n{dim}"].dims[0] in res.dims:
+                res = res.assign_coords({f"n{dim}": ds[f"n{dim}"].compute()})
+
+    if "k" in res.dims:
+        for coord in res.coords:
+            if f"k{coord}" in ds.coords:
+                res = res.rename({coord: f"k{coord}"})
+
+    datavars = res.data_vars.keys()
+    if len(datavars) == 1:
+        [datavar] = datavars
+        res = res[datavar]
 
     return res
+
+
+def index_serie_to_index_array(index_serie, lengths):
+    index_frame = index_serie.to_frame()
+
+    index_arrays = []
+    for i, coord in enumerate(index_frame.columns):
+        if isinstance(index_frame, dd.DataFrame):
+            index_array = index_frame[coord].to_dask_array(lengths)
+        else:
+            index_array = index_frame[coord].values
+        [size] = index_array.shape
+        if np.isnan(size):
+            index_serie.persist()
+            index_array = index_serie.to_dask_array(lengths=True)
+            [lengths] = index_array.chunks
+        index_arrays += [index_array]
+    return index_arrays, lengths
 
 
 def groupby_apply(ds: xr.Dataset,
                   by: Union[str, List[str]],
                   fn: Union[str, Callable],
                   name_in: Union[str, List[str]],
-                  meta_out: Dict[str, Any] = None,
+                  meta_out: Dict[str, Any],
                   sort: bool = False,
                   lengths=None,
                   **kwargs) -> xr.Dataset:
@@ -257,20 +329,27 @@ def groupby_apply(ds: xr.Dataset,
     if isinstance(by, str):
         by = [by]
 
+    ds = sortby(ds, by)
+
     if isinstance(name_in, str):
         name_in = [name_in]
 
-    coords = list(ds.coords.keys())
+    ds_only_k = ds.drop_dims([dim for dim in ds.dims if dim != "k"])
+    ds_only_k = ds_only_k.rename({coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")})
+
+    coords = list(ds_only_k.coords.keys())
     # noinspection PyTypeChecker
     keep = list(set(name_in + by + coords))
-    remove = [var for var in ds.data_vars.keys() if var not in keep]
+    remove = [var for var in ds_only_k.data_vars.keys() if var not in keep]
 
-    ds = ds.drop_vars(remove)
-    with_dask = ([ds[var].chunks is not None for var in ds.data_vars.keys()]
-                 + [ds.coords[coord].chunks is not None for coord in ds.coords.keys()])
+    ds_only_k = ds_only_k.drop_vars(remove)
+    with_dask = (
+            [ds_only_k[var].chunks is not None for var in ds_only_k.data_vars.keys()]
+            + [ds_only_k.coords[coord].chunks is not None for coord in ds_only_k.coords.keys()]
+    )
 
     if any(with_dask):
-        df = xarray_to_ddframe(ds)
+        df = xarray_to_ddframe(ds_only_k)
 
         res_df = df.groupby(by=by, sort=sort).apply(fn, meta={**df.dtypes.to_dict(), **meta_out}, **kwargs)
 
@@ -278,16 +357,39 @@ def groupby_apply(ds: xr.Dataset,
 
         if lengths is None:
             lengths = tuple(res_df.index.map_partitions(len, enforce_metadata=False).compute())
+        else:
+            res_df = res_df.repartition(len(lengths))
 
         for coord in coords:
             res.coords[coord] = ("k",), res_df[coord].to_dask_array(lengths)
         for name_out in meta_out:
             res[name_out] = ("k",), res_df[name_out].to_dask_array(lengths)
     else:
-        df = ds.to_dataframe()
-        res_df = df.groupby(by=by, **kwargs).apply(fn, **kwargs).reset_index()
-        idx = res_df.index
-        idx.name = "k"
-        res_df.index = idx
-        res = xr.Dataset(res_df)
+        df = ds_only_k.to_dataframe()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+            tqdm.pandas()
+        res_df = df.groupby(by=by, sort=sort, **kwargs).progress_apply(fn, **kwargs).reset_index(drop=True)
+
+        res = xr.Dataset()
+        for coord in coords:
+            res.coords[coord] = ("k",), res_df[coord].to_numpy()
+        for name_out in meta_out:
+            res[name_out] = ("k",), res_df[name_out].to_numpy()
+
+    res = res.rename({coord: "k" + coord for coord in res.coords})
+    res = res.assign_coords(ds.drop_dims("k").coords)
+
+    # if sort:
+    #     res = sortby(res, by=by)
+
+    datavars = list(res.data_vars.keys())
+    if len(datavars) == 1:
+        [data_var] = datavars
+        res = res[data_var]
+    else:
+        [idx_name] = ds.nTime.dims
+        for var in ["nTime", f"n{idx_name}"]:
+            res[var] = ds[var]
     return res

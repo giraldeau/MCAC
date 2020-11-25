@@ -32,10 +32,9 @@ from .tools import coverages
 from .tools import discretize
 from .tools import inertia
 from .tools import volume_surface
-from .tools import DaskDistribute
+from .tools import dask_distribute, JupyterDaskDistribute
 from .tools import progress_compute
 from .tools import groupby_agg
-from .tools import groupby_apply
 from .tools import xarray_to_ddframe
 from .tools import xarray_to_frame
 from .tools import mobility_diameter
@@ -55,7 +54,7 @@ __all__ = ["MCAC",
            "view_agg", "view_proj_agg",
            "autocorrelation3d", "coverages", "discretize", "inertia", "volume_surface",
            "export_ddscat",
-           "progress_compute", "DaskDistribute",
-           "groupby_agg", "groupby_apply",
+           "progress_compute", "dask_distribute", "JupyterDaskDistribute",
+           "groupby_agg",
            "xarray_to_frame", "xarray_to_ddframe",
            "mobility_diameter"]

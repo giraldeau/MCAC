@@ -18,18 +18,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Tools
+Functions to compute usual physical quantities
 """
 
-from .dask_tools import dask_distribute, JupyterDaskDistribute
-from .dask_tools import progress_compute
-from .dataframe import groupby_agg
-from .dataframe import xarray_to_ddframe
-from .dataframe import xarray_to_frame
-from .sorting import sortby
+from .mobility_diameter import mobility_diameter
+from .overlap import overlapping
 
 
-__all__ = ["progress_compute", "dask_distribute", "JupyterDaskDistribute",
-           "groupby_agg",
-           "xarray_to_frame", "xarray_to_ddframe",
-           "sortby"]
+__all__ = ["mobility_diameter", "overlapping"]

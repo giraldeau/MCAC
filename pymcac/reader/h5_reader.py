@@ -27,11 +27,13 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
+import dask
 import numpy as np
 # import cupy as cp
 from dask import array as da
 from dask import delayed
 from h5py import File as h5File
+from numba import njit
 
 from .xdmf_reader import XdmfReader
 
@@ -94,27 +96,39 @@ class H5Reader:
                 for attrib, group in step.items():
                     chunk_group[attrib] = *chunk_group.get(attrib, tuple()), group
 
-            data[times_chunk] = {col: data
-                                 for attrib, groups in chunk_group.items()
-                                 for col, data in self.read_multiple_array(groups, attrib, chunk_size).items()}
+            times_chunk_data = {col: data
+                                for attrib, groups in chunk_group.items()
+                                for col, data in self.read_multiple_array(groups, attrib, chunk_size).items()}
 
-            if "BoxSize" in h5_groups[times_chunk[0]]:
-                with h5File(str(self.filename), 'r') as file_h5:
-                    BoxSizes = [da.full(sizes[time], file_h5[h5_groups[time]["BoxSize"]][0]) for time in times_chunk]
+            # if "BoxSize" in h5_groups[times_chunk[0]]:
+            #     with h5File(str(self.filename), 'r') as file_h5:
+            #         times_chunk_data["BoxSize"] = np.fromiter((file_h5[h5_groups[time]["BoxSize"]][0]
+            #                                                    for time in times_chunk), dtype=np.float64)
 
-                data[times_chunk]["BoxSize"] = da.concatenate(BoxSizes)
-            elif "ll_box" in data[times_chunk]:
-                data[times_chunk]["BoxSize"] = data[times_chunk]["ll_box"]
-                del data[times_chunk]["ll_box"]
+            if "ll_box" in times_chunk_data:
+                times_chunk_data["BoxSize"] = times_chunk_data.pop("ll_box")
 
             if sparse:
-                data[times_chunk]["Time"] = np.fromiter((time for time in times_chunk), dtype=float)
-                data[times_chunk][indexname] = np.arange(max_npart)
-                data[times_chunk]["size"] = np.fromiter((sizes[time] for time in times_chunk), dtype=int)
+                times_chunk_data["Time"] = np.fromiter((time for time in times_chunk), dtype=np.float64)
+                times_chunk_data[indexname] = np.arange(max_npart)
+                times_chunk_data["size"] = np.fromiter((sizes[time] for time in times_chunk), dtype=np.int64)
             else:
-                data[times_chunk]["Time"] = da.concatenate([da.full(sizes[time], time) for time in times_chunk])
-                data[times_chunk][indexname] = da.concatenate([da.arange(sizes[time]) for time in times_chunk])
+                times_chunk_data["Time"] = np.fromiter((time for time in times_chunk), dtype=np.float64)
+                # times_chunk_data["iTime"] = da.arange(len(times_chunk), dtype=np.int64, chunks=-1).persist()
+                times_chunk_data["N"] = np.fromiter((sizes[time] for time in times_chunk), dtype=np.int64)
+                times_chunk_data["kTime"] = np.concatenate([np.full(sizes[time], time) for time in times_chunk])
+                # times_chunk_data["kiTime"] = da.concatenate([da.full(sizes[time], i, chunks=-1)
+                #                                              for i, time in enumerate(times_chunk)]).not_aligned_rechunk(-1)
+                times_chunk_data[indexname] = np.concatenate([np.arange(sizes[time]) for time in times_chunk])
 
+                times_chunk_data["Nt"] = compute_Nt(times_chunk_data["N"]).copy()#.compute())
+
+                # to_persist = ("Time", "N", "kTime", indexname)
+                # for k, persisted in zip(to_persist,
+                #                         dask.persist(*(times_chunk_data[k] for k in to_persist))):
+                #     times_chunk_data[k] = persisted
+
+            data[times_chunk] = times_chunk_data
         return data
 
     def read_multiple_array(self,
@@ -158,13 +172,18 @@ def read_h5_arrays(filename: Path,
     with h5File(filename, 'r') as h5file:
 
         dtype = h5file[datasets[0]].dtype
-        res = np.empty(final_shape, dtype=dtype)
+        res = np.empty(final_shape, dtype=dtype).T
         end = 0
         for dataset in datasets:
             data = h5file[dataset]
             start, end = end, end + data.size // nvars
 
-            res[..., start:end] = np.reshape(data, part_shape).T
+            res[start:end, ...] = np.reshape(data, part_shape)
 
-    return res
+    return res.T
     # return cp.array(res)
+
+
+@njit(nogil=True, cache=True)
+def compute_Nt(N):
+    return np.bincount(N)[:0:-1].cumsum()[::-1]
