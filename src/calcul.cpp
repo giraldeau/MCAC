@@ -45,6 +45,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     // contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool event(true);
     size_t multiply_threshold = aggregates.size() / 8;
+    size_t total_events(0);
 
     // load flame-coupling info.
     FlameCoupling flame;
@@ -52,6 +53,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         flame = FlameCoupling(physicalmodel.flame_file);
         physicalmodel.update_from_flame(flame);
     }
+    physicalmodel.print();
 
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
@@ -131,6 +133,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         size_t current_n_iter_without_event = physicalmodel.n_iter_without_event;
         if (event) {
             physicalmodel.n_iter_without_event = 0;
+            total_events++;
         } else {
             physicalmodel.n_iter_without_event++;
         }
@@ -173,6 +176,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                       << " contact=" << std::setw(4) << contact
                       << " split="   << std::setw(4) << split
                       << " after "   << std::setw(4) << current_n_iter_without_event << " it"
+                      << " total_events " << std::setw(4) <<  total_events
                       // << " --- "     << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
                       << std::endl;
         }
@@ -188,6 +192,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     save_advancement(physicalmodel, aggregates);
     aggregates.spheres.save();
     aggregates.save();
+    std::cout << " Final residence time="    << std::setw(4) << physicalmodel.time << "s" << std::endl;
     std::cout << "Final number of aggregates : " << aggregates.size() << std::endl;
     std::cout << "Output files saved on: " << physicalmodel.output_dir << std::endl;
     std::cout << std::endl;

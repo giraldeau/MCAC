@@ -192,7 +192,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number concentration
     aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
-    print();
+
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
     cpu_start = clock();
@@ -259,7 +259,8 @@ void PhysicalModel::print() const {
               << " Initial aggregate concentration : " << aggregate_concentration << " (#/m^3)" << std::endl
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_lenght << " (m)" << std::endl
-              << " FV                              : " << volume_fraction << " (-)" << std::endl;
+              << " FV                              : " << volume_fraction << " (-)" << std::endl
+              << " write_between_event_frequency   : " << write_between_event_frequency << std::endl;
     if (random_seed < 0) {
         std::cout << " Seed random numbers: auto" << std::endl;
     } else {
