@@ -121,11 +121,12 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
 
         bool split = false;
         bool disappear = false;
+        //$ Surface reactions and splitting
         if (physicalmodel.with_surface_reactions) {
             if (physicalmodel.individual_surf_reactions) {
                 disappear = aggregates.croissance_surface_individual(deltatemps_indiv,num_agg);
                 //$ Maybe will be modified later -> spliting only happens when u_sg is negative
-                if((physicalmodel.u_sg < -1e-20) && !disappear) {
+                if((physicalmodel.u_sg < 0.0) && !disappear) {
                     split = aggregates.split_individual(num_agg);
                 }
             } else {
@@ -137,13 +138,36 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             }
         }
 
-        //$ Event management
+        //$ Merge
         bool merge = false;
         if (contact) {
             //$ Aggregates in contact are reunited;
             merge = aggregates.merge(next_contact);
         }
-        event = split || merge || disappear;
+
+        //$ Update if not already done
+        if (!merge && !split &&
+           (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling)) {
+            if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
+                if (physicalmodel.individual_surf_reactions) {
+                    aggregates[num_agg]->update();
+                } else { 
+                    for (const auto &agg : aggregates) {
+                        agg->update();
+                    }
+                }
+            } else {
+                if (physicalmodel.individual_surf_reactions) {
+                    aggregates[num_agg]->update_partial();
+                } else { 
+                    for (const auto &agg : aggregates) {
+                        agg->update_partial();
+                    }
+                }
+            }
+        }
+
+        event = split || merge || disappear || nucleation ;
         size_t current_n_iter_without_event = physicalmodel.n_iter_without_event;
         if (event) {
             physicalmodel.n_iter_without_event = 0;
@@ -155,18 +179,6 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ Update aggregates
         if (event) {
             aggregates.refresh();
-        }
-        if (!merge && !split &&
-           (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling)) {
-            if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
-                for (const auto &agg : aggregates) {
-                    agg->update();
-                }
-            } else {
-                for (const auto &agg : aggregates) {
-                    agg->update_partial();
-                }
-            }
         }
 
         //$ Show progress
