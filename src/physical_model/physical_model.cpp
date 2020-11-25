@@ -198,6 +198,10 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     cpu_start = clock();
 }
 [[gnu::pure]] bool PhysicalModel::finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const {
+    if (number_of_aggregates < 1) {
+        std::cout << "All the aggregates disappeared" << std::endl << std::endl;
+        return true;
+    }
     if (with_flame_coupling) {
         if (finished_by_flame) {
             std::cout << "The simulation is finished by the flame coupling" << std::endl;
