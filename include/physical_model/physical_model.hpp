@@ -30,6 +30,7 @@ class PhysicalModel {
 public:
     double fractal_dimension, fractal_prefactor;
     double flux_surfgrowth, u_sg;                // surface growth molecular flux [kg/m2/s], SG velocity u_sg [m/s]
+    double flux_nucleation,nucleation_accum;     // Nucleation flux [#/m^3-flame/s], accumulated nucleation [#]
     double pressure, temperature, gaz_mean_free_path, viscosity, density;
     double mean_diameter, dispersion_diameter;
     double mean_massic_radius, friction_exponnant;
@@ -53,6 +54,7 @@ public:
     bool finished_by_flame;
     std::experimental::filesystem::path output_dir;
     std::string flame_file;
+    bool with_nucleation;
     bool with_collisions;
     bool with_surface_reactions;
     bool with_flame_coupling;
@@ -69,6 +71,7 @@ public:
     [[gnu::pure]] double mobility_diameter(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     void print() const;
     void update(size_t n_aggregates, double total_volume) noexcept;
+    void nucleation(double dt) noexcept;
     void update_from_flame(const FlameCoupling& flame);
     void update_temperature(double new_temperature) noexcept;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;

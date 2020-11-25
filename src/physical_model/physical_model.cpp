@@ -35,6 +35,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     fractal_prefactor(1.8),
     flux_surfgrowth(0.),
     u_sg(0.),
+    flux_nucleation(0.),
+    nucleation_accum(0.0),
     pressure(_pressure_ref),
     temperature(_temperature_ref),
     gaz_mean_free_path(_fluid_mean_free_path_ref),
@@ -67,6 +69,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     full_aggregate_update_frequency(1),
     output_dir("MCAC_output"),
     flame_file("flame_input"),
+    with_nucleation(false),
     with_collisions(true),
     with_surface_reactions(false),
     with_flame_coupling(false),
@@ -110,6 +113,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         throw InputError("Invalid method to calculate Vols/Surf: " + default_str);
     }
     inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
+    // nucleation
+    inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
+    inipp::extract(ini.sections["nucleation"]["flux"], flux_nucleation);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
     inipp::extract(ini.sections["limits"]["n_iter_without_event"], n_iter_without_event_limit);
@@ -273,6 +279,11 @@ void PhysicalModel::print() const {
     } else {
         std::cout << " Without individual surf. reactions" << std::endl;
     }
+    if (with_nucleation) {
+        std::cout << " With nucleation in time" << std::endl;
+    } else {
+        std::cout << " Without nucleation in time" << std::endl;
+    }
     if (with_collisions) {
         std::cout << " With collisions" << std::endl;
     } else {
@@ -320,6 +331,10 @@ void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
     aggregate_concentration = static_cast<double>(n_aggregates) / box_volume;
     volume_fraction = total_volume / box_volume;
 }
+void PhysicalModel::nucleation(double dt) noexcept {
+    double delta_nucl = flux_nucleation * box_volume * dt;
+    nucleation_accum += delta_nucl;
+}
 void PhysicalModel::update_from_flame(const FlameCoupling &flame) {
     auto next_t = std::upper_bound(flame.t_res.begin(), flame.t_res.end(), time);
     if (next_t == flame.t_res.begin()) {
@@ -343,6 +358,11 @@ void PhysicalModel::update_from_flame(const FlameCoupling &flame) {
     auto next_u_sg = flame.u_sg.begin() + (next_t - flame.t_res.begin());
     auto previous_u_sg = flame.u_sg.begin() + (previous_t - flame.t_res.begin());
     u_sg = *previous_u_sg + t * (*next_u_sg - *previous_u_sg) / dt;
+
+    // 3. nucleation flux (dN_pp/dt)
+    auto next_J_nucl = flame.J_nucl.begin() + (next_t - flame.t_res.begin());
+    auto previous_J_nucl = flame.J_nucl.begin() + (previous_t - flame.t_res.begin());
+    flux_nucleation = *previous_J_nucl + t * (*next_J_nucl - *previous_J_nucl) / dt;
 }
 //#####################################################################################################################
 void PhysicalModel::update_temperature(double new_temperature) noexcept {

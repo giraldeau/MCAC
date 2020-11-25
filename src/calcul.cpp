@@ -167,6 +167,18 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             }
         }
 
+        //$ Nucleation
+        bool nucleation(false);
+        int monomers_to_add(0);
+        if (physicalmodel.with_nucleation) {
+            physicalmodel.nucleation(deltatemps);
+            if (physicalmodel.nucleation_accum > 1.0) {
+                nucleation = true;
+                monomers_to_add = std::floor(physicalmodel.nucleation_accum);
+                physicalmodel.nucleation_accum -= static_cast<double>(monomers_to_add);
+            }
+        }
+
         event = split || merge || disappear || nucleation ;
         size_t current_n_iter_without_event = physicalmodel.n_iter_without_event;
         if (event) {
@@ -193,6 +205,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                       << " CPU="     << std::setw(4) << elapse << "s"
                       << " contact=" << std::setw(4) << contact
                       << " split="   << std::setw(4) << split
+                      << " nucleation="   << std::setw(4) << nucleation << " - " << std::setw(4) << monomers_to_add
                       << " after "   << std::setw(4) << current_n_iter_without_event << " it"
                       << " total_events " << std::setw(4) <<  total_events
                       << std::endl;
