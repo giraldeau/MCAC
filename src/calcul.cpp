@@ -80,7 +80,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         if (physicalmodel.pick_method == PickMethods::PICK_RANDOM) {
             //$ Choice of an aggregate according to his MFP
             double max = aggregates.get_max_time_step();
-            if (event) {
+            if (event || physicalmodel.with_surface_reactions) {
                 aggregates.sort_time_steps(max);
             }
             num_agg = aggregates.pick_random();
