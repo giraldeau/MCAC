@@ -55,10 +55,10 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
 
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
-        save_advancement(physicalmodel, aggregates);
         if (physicalmodel.n_iter_without_event % physicalmodel.write_between_event_frequency == 0) {
             aggregates.spheres.save();
             aggregates.save();
+            save_advancement(physicalmodel, aggregates);
         }
         if (event) {
             if (aggregates.size() <= multiply_threshold) {
