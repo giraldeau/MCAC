@@ -148,10 +148,13 @@ void AggregatList::duplication() {
     }
 }
 size_t AggregatList::merge(AggregateContactInfo contact_info) {
-    const size_t _keeped(std::min(contact_info.moving_aggregate,
-                             contact_info.other_aggregate));
-    const size_t _removed(std::max(contact_info.moving_aggregate,
-                              contact_info.other_aggregate));
+    Sphere *moving_sphere = &spheres[contact_info.moving_sphere];
+    Sphere *other_sphere = &spheres[contact_info.other_sphere];
+
+    const size_t _keeped(std::min(moving_sphere->agg_label,
+                             other_sphere->agg_label));
+    const size_t _removed(std::max(moving_sphere->agg_label,
+                                   other_sphere->agg_label));
 
     // compute proper time of the final aggregate
     // keeping global time constant

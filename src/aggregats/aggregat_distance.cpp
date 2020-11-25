@@ -33,10 +33,11 @@ AggregateContactInfo distance_to_contact(const Aggregate &aggregate_1,
                                                                           direction,
                                                                           distance);
         if (potential_contact < closest_contact) {
-            closest_contact.moving_sphere = i_sphere;
+            closest_contact.other_sphere = potential_contact.other_sphere;
+            closest_contact.distance = potential_contact.distance;
+            closest_contact.moving_sphere = aggregate_1.myspheres[i_sphere].index_in_storage;
             closest_contact.moving_aggregate = aggregate_1.get_label();
             closest_contact.other_aggregate = aggregate_2.get_label();
-            closest_contact.distance = potential_contact.distance;
         }
     }
     return closest_contact;
@@ -49,7 +50,7 @@ bool contact(const Sphere &sphere,
     }
     //$ Loop on all the spheres of the other aggregate
     for (const auto &othersphere : aggregate.myspheres) {
-        if (!contact(sphere, *othersphere)) {
+        if (contact(sphere, *othersphere)) {
             return true;
         }
     }
