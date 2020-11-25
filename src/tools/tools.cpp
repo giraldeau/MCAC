@@ -53,6 +53,40 @@ double random() {
     v = v / RAND_MAX;
     return v;
 }
+[[gnu::const]] double inverfc(double p) {
+    double x;
+    double t;
+    double pp;
+    if (p >= 2.) {
+        return -100.;
+    }
+    if (p <= 0.0) {
+        return 100.;
+    }
+    pp = (p < 1.0) ? p : 2. - p;
+    t = std::sqrt(-2. * std::log(pp / 2.));
+    x = -0.70711 * ((2.30753 + t * 0.27061) / (1. + t * (0.99229 + t * 0.04481)) - t);
+    for (int j = 0; j < 2; j++) {
+        double err = std::erfc(x) - pp;
+        x += err / (1.12837916709551257 * std::exp(-(x * x)) - x * err);
+    }
+    return (p < 1.0 ? x : -x);
+}
+[[gnu::const]] double inverf(double p) {
+    return inverfc(1. - p);
+}
+double random_normal(const double mean, const double sigma) {
+    double rand_normal = mean + std::sqrt(2.) * sigma* inverf(2. * random() - 1.0);
+    return rand_normal;
+}
+std::array<double, 3> random_direction() {
+    double thetarandom = random() * 2 * _pi;
+    double phirandom = std::acos(1 - 2 * random());
+    std::array<double, 3> vectdir{{std::sin(phirandom) * std::cos(thetarandom),
+                                   std::sin(phirandom) * std::sin(thetarandom),
+                                   std::cos(phirandom)}};
+    return vectdir;
+}
 MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string &input) {
     auto itr = std::find(MONOMERES_INITIALISATION_MODE_STR.begin(),
                          MONOMERES_INITIALISATION_MODE_STR.end(),

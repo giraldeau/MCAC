@@ -34,7 +34,7 @@ public:
     double mean_diameter, dispersion_diameter;
     double mean_massic_radius, friction_exponnant;
     double time;
-    double volume_fraction, box_lenght, aggregate_concentration;
+    double volume_fraction, box_lenght,box_volume, aggregate_concentration;
     size_t n_verlet_divisions;
     PickMethods pick_method;
     VolSurfMethods volsurf_method;
@@ -61,6 +61,7 @@ public:
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
     [[gnu::pure]] double grow(double r, double dt) const;
+    [[gnu::pure]] double friction_exponent(double sphere_radius) const;
     [[gnu::pure]] double friction_coeff(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     [[gnu::pure]] double diffusivity(double) const;
     [[gnu::pure]] static double relax_time(double masse, double);
@@ -72,8 +73,6 @@ public:
     XMF_OUTPUT xmf_write() const;
 };
 
-[[gnu::const]] double inverfc(double p);
-[[gnu::const]] double inverf(double p);
 [[gnu::const]] std::experimental::filesystem::path extract_path(const std::string &file);
 [[gnu::const]] inline double periodic_distance(double dist, double dim) {
     double periodic_distance(dist);

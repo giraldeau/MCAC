@@ -135,8 +135,7 @@ void Aggregate::init(size_t new_label,
     //random size
     double diameter = 0;
     if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        diameter = physicalmodel->mean_diameter
-                   + std::sqrt(2.) * physicalmodel->dispersion_diameter * inverf(2. * random() - 1.0);
+        diameter = random_normal(physicalmodel->mean_diameter,physicalmodel->dispersion_diameter);
     } else if (physicalmodel->monomeres_initialisation_type
                == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         // TODO: CHECK WICH ONE TO KEEP

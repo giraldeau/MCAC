@@ -118,6 +118,7 @@ void AggregatList::duplication() {
     double old_l = physicalmodel->box_lenght;
     physicalmodel->box_lenght *= 2;
     physicalmodel->n_monomeres *= 8;
+    physicalmodel->box_volume = std::pow(physicalmodel->box_lenght,3);
     for (const auto& agg : list) {
         agg->unset_verlet();
     }

@@ -47,6 +47,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     time(0.),
     volume_fraction(1e-3),
     box_lenght(0.),
+    box_volume(0.),
     aggregate_concentration(0.0),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),
@@ -186,6 +187,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
+    box_volume = std::pow(box_lenght,3);
     update_temperature(temperature);
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number concentration
@@ -303,8 +305,8 @@ void PhysicalModel::print() const {
     std::cout << std::endl;
 }
 void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
-    aggregate_concentration = static_cast<double>(n_aggregates) / std::pow(box_lenght, 3);
-    volume_fraction = total_volume / std::pow(box_lenght, 3);
+    aggregate_concentration = static_cast<double>(n_aggregates) / box_volume;
+    volume_fraction = total_volume / box_volume;
 }
 void PhysicalModel::update_from_flame(const FlameCoupling &flame) {
     auto next_t = std::upper_bound(flame.t_res.begin(), flame.t_res.end(), time);
@@ -368,10 +370,13 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     // Based on the molecular flux
     return r + u_sg * dt;
 }
+[[gnu::pure]] double PhysicalModel::friction_exponent(double sphere_radius) const {
+    return 0.689 * (1. + std::erf(((gaz_mean_free_path / sphere_radius) + 4.454) / 10.628));
+}
 [[gnu::pure]] double PhysicalModel::friction_coeff(double aggregate_volume,
                                                    double sphere_volume,
                                                    double sphere_radius) const {
-    double friction_exp = 0.689 * (1. + std::erf(((gaz_mean_free_path / sphere_radius) + 4.454) / 10.628));
+    double friction_exp = friction_exponent(sphere_radius);
     double cc = cunningham(sphere_radius);
     return (6. * _pi * viscosity * sphere_radius / cc)
            * std::pow(aggregate_volume / sphere_volume, friction_exp / fractal_dimension);
@@ -382,27 +387,6 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
 [[gnu::pure]] double PhysicalModel::relax_time(double masse, double f_agg) {
     return masse / f_agg;
 }
-[[gnu::const]] double inverfc(double p) {
-    double x;
-    double t;
-    double pp;
-    if (p >= 2.) {
-        return -100.;
-    }
-    if (p <= 0.0) {
-        return 100.;
-    }
-    pp = (p < 1.0) ? p : 2. - p;
-    t = std::sqrt(-2. * std::log(pp / 2.));
-    x = -0.70711 * ((2.30753 + t * 0.27061) / (1. + t * (0.99229 + t * 0.04481)) - t);
-    for (int j = 0; j < 2; j++) {
-        double err = std::erfc(x) - pp;
-        x += err / (1.12837916709551257 * std::exp(-(x * x)) - x * err);
-    }
-    return (p < 1.0 ? x : -x);
-}
-[[gnu::const]] double inverf(double p) {
-    return inverfc(1. - p);
 }
 [[gnu::const]] fs::path extract_path(const std::string &filename) {
     fs::path path = filename;

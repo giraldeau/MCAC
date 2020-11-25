@@ -72,11 +72,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         }
 
         // -- Generating a random direction --
-        double thetarandom = random() * 2 * _pi;
-        double phirandom = std::acos(1 - 2 * random());
-        std::array<double, 3> vectdir{{std::sin(phirandom) * std::cos(thetarandom),
-                                       std::sin(phirandom) * std::sin(thetarandom),
-                                       std::cos(phirandom)}};
+        std::array<double, 3> vectdir = random_direction();
 
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
