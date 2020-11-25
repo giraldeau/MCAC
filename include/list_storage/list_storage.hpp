@@ -33,8 +33,10 @@ protected:
     std::shared_ptr<std::array<std::vector<double>, N>> storage;
     const ListStorage *external_storage;
 public:
-    elem &operator[](size_t i) noexcept;
-    const elem &operator[](size_t i) const noexcept;
+//    elem &operator[](size_t i) noexcept;
+//    const elem &operator[](size_t i) const noexcept;
+    std::shared_ptr<elem> &operator[](size_t i) noexcept;
+    const std::shared_ptr<elem> &operator[](size_t i) const noexcept;
     template<class mylist>
     void init(size_t size, mylist &owner) noexcept;
     void merge(ListStorage &other) noexcept;

@@ -74,7 +74,8 @@ enum ErrorCodes {
     ABANDON_ERROR,
     TOO_DENSE_ERROR,
     SBL_ERROR,
-    VOL_SURF_ERROR
+    VOL_SURF_ERROR,
+    MERGE_ERROR,
 };
 enum PickMethods {
     PICK_RANDOM,

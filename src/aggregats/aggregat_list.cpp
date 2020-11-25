@@ -148,9 +148,12 @@ void AggregatList::duplication() {
         agg->set_verlet(&verlet);
     }
 }
-size_t AggregatList::merge(AggregateContactInfo contact_info) {
-    Sphere *moving_sphere = &spheres[contact_info.moving_sphere];
-    Sphere *other_sphere = &spheres[contact_info.other_sphere];
+bool AggregatList::merge(AggregateContactInfo contact_info) {
+    auto moving_sphere = contact_info.moving_sphere.lock();
+    auto other_sphere = contact_info.other_sphere.lock();
+    if (!moving_sphere || !other_sphere) {
+        return false;
+    }
 
     const size_t _keeped(std::min(moving_sphere->agg_label,
                              other_sphere->agg_label));
@@ -163,11 +166,13 @@ size_t AggregatList::merge(AggregateContactInfo contact_info) {
                      - physicalmodel->time;
 
     // merge the two aggregate but do not remove the deleted one
-    list[_keeped]->merge(list[_removed], contact_info);
+    if (!list[_keeped]->merge(list[_removed], contact_info)) {
+        throw MergeError("ListAggregate want to merge but the aggregate refuses");
+    }
     remove(_removed);
     setpointers();
     *list[_keeped]->proper_time = newtime;
-    return _keeped;
+    return true;
 }
 bool AggregatList::split() {
     bool has_splitted = false;
@@ -277,12 +282,22 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) con
     }
     return true;
 }
-void AggregatList::croissance_surface(double dt) {
-    spheres.croissance_surface(dt);
-    for (const auto& sphere : spheres) {
-        if (sphere->get_radius() <= 0) {
-            remove_sphere(sphere->get_index());
+bool AggregatList::croissance_surface(double dt) {
+    bool removed_aggregate(false);
+    auto aggregate = list.begin();
+    while (aggregate != list.end()) {
+        auto index = std::distance(list.begin(), aggregate);
+        auto next = list.begin() + index + 1;
+        if ((*aggregate)->croissance_surface(dt)) {
+            removed_aggregate = true;
+            // This aggregate has no spheres anymore
+            remove(size_t(index));
+            setpointers();
+            std::cout << " removed by croissance_surface: aggregate= " << (*aggregate)->get_label() << "/ total= " << list.size() << std::endl;
+            next = list.begin() + index;
         }
+        aggregate = next;
     }
+    return removed_aggregate;
 }
 }// namespace mcac

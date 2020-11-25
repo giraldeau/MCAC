@@ -73,63 +73,67 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             }
         }
 
-        // -- Generating a random direction --
-        std::array<double, 3> vectdir = random_direction();
-
         // -- Pick an aggregate and it's corresponding timestep --
         double deltatemps(0);
         size_t num_agg(0);
         if (physicalmodel.pick_method == PickMethods::PICK_RANDOM) {
             //$ Choice of an aggregate according to his MFP
             double max = aggregates.get_max_time_step();
-            if (event || physicalmodel.with_surface_reactions) {
+            if (event || physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling) {
                 aggregates.sort_time_steps(max);
             }
             num_agg = aggregates.pick_random();
             deltatemps = aggregates.get_time_step(max);
         } else if (physicalmodel.pick_method == PickMethods::PICK_LAST) {
             num_agg = aggregates.pick_last();
-            deltatemps = aggregates[num_agg].get_time_step();
+            deltatemps = aggregates[num_agg]->get_time_step();
         }
-        double full_distance = aggregates[num_agg].get_lpm();
+        double full_distance = aggregates[num_agg]->get_lpm();
         double move_distance = full_distance;
 
         bool contact = false;
         AggregateContactInfo next_contact;
+        std::array<double, 3> vectdir = {{0,0,0}};
+
+        //$ -- Generating a random direction --
+        vectdir = random_direction();
         if (physicalmodel.with_collisions) {
             //$ looking for potential contacts
             next_contact = aggregates.distance_to_next_contact(num_agg, vectdir, full_distance);
             contact = next_contact <= full_distance;
             if (contact) {
                 move_distance = next_contact.distance;
-                deltatemps = deltatemps * move_distance / full_distance;
             }
         }
 
         //$ Translation of the aggregate
-        aggregates[num_agg].translate(vectdir * move_distance);
-        aggregates[num_agg].time_forward(deltatemps);
+        aggregates[num_agg]->translate(vectdir * move_distance);
 
         //$ Time incrementation
+        deltatemps = deltatemps * move_distance / full_distance;
+        aggregates[num_agg]->time_forward(deltatemps);
         if (physicalmodel.pick_method == PickMethods::PICK_LAST) {
             deltatemps = deltatemps / double(aggregates.size());
         }
         physicalmodel.time = physicalmodel.time + deltatemps;
 
-        //$ Event management
-        if (contact) {
-            //$ Aggregates in contact are reunited;
-            num_agg = aggregates.merge(next_contact);
-        }
         bool split = false;
+        bool disappear = false;
         if (physicalmodel.with_surface_reactions) {
-            aggregates.croissance_surface(deltatemps);
+            disappear = aggregates.croissance_surface(deltatemps);
             // Maybe will be modified later -> spliting only happens when u_sg is negative
             if(physicalmodel.u_sg < 0.0) {
                 split = aggregates.split();
             }
         }
-        event = split || contact;
+
+        //$ Event management
+        bool merge = false;
+        if (contact) {
+            //$ Aggregates in contact are reunited;
+            merge = aggregates.merge(next_contact);
+        }
+        event = split || merge || disappear;
         size_t current_n_iter_without_event = physicalmodel.n_iter_without_event;
         if (event) {
             physicalmodel.n_iter_without_event = 0;
@@ -142,8 +146,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         if (event) {
             aggregates.refresh();
         }
-        if (physicalmodel.with_surface_reactions 
-            || physicalmodel.with_flame_coupling) {
+        if (!merge && !split &&
+           (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling)) {
             if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
                 for (const auto &agg : aggregates) {
                     agg->update();
@@ -154,14 +158,6 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 }
             }
         }
-
-        /* no calculation of fractal dimension in time
-        auto[success, fractal_dimension, fractal_prefactor, error] = aggregates.get_instantaneous_fractal_law();
-        if (!success) {
-            fractal_dimension = physicalmodel.fractal_dimension;
-            fractal_prefactor = physicalmodel.fractal_prefactor;
-        }
-        */
 
         //$ Show progress
         if (event) {
@@ -177,7 +173,6 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                       << " split="   << std::setw(4) << split
                       << " after "   << std::setw(4) << current_n_iter_without_event << " it"
                       << " total_events " << std::setw(4) <<  total_events
-                      // << " --- "     << fractal_prefactor << " * x^ " << fractal_dimension << "  --- r= " << error
                       << std::endl;
         }
         //$ Update physical model

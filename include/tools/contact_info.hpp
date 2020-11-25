@@ -41,12 +41,12 @@ public:
 
 class HalfSphereListContactInfo : public SphereContactInfo {
 public:
-    size_t other_sphere{0};
+    std::weak_ptr<Sphere> other_sphere;
     HalfSphereListContactInfo() = default;
-    explicit HalfSphereListContactInfo(size_t _other_sphere) :
+    explicit HalfSphereListContactInfo(const std::shared_ptr<Sphere>& _other_sphere) :
         other_sphere(_other_sphere) {
     }
-    HalfSphereListContactInfo(SphereContactInfo contact_info, size_t _other_sphere) :
+    HalfSphereListContactInfo(SphereContactInfo contact_info, const std::shared_ptr<Sphere>& _other_sphere) :
         SphereContactInfo(contact_info),
         other_sphere(_other_sphere) {
     }
@@ -54,17 +54,17 @@ public:
 
 class SphereListContactInfo : public HalfSphereListContactInfo {
 public:
-    size_t moving_sphere{0};
+    std::weak_ptr<Sphere> moving_sphere;
     SphereListContactInfo() = default;
-    SphereListContactInfo(HalfSphereListContactInfo contact_info, size_t _moving_sphere) :
+    SphereListContactInfo(HalfSphereListContactInfo contact_info, const std::shared_ptr<Sphere>&  _moving_sphere) :
         HalfSphereListContactInfo(contact_info),
         moving_sphere(_moving_sphere) {
     }
-    SphereListContactInfo(SphereContactInfo contact_info, size_t _moving_sphere, size_t _other_sphere) :
+    SphereListContactInfo(SphereContactInfo contact_info, const std::shared_ptr<Sphere>& _moving_sphere, const std::shared_ptr<Sphere>& _other_sphere) :
         HalfSphereListContactInfo(contact_info, _other_sphere),
         moving_sphere(_moving_sphere) {
     }
-    SphereListContactInfo(size_t _moving_sphere, size_t _other_sphere) :
+    SphereListContactInfo(const std::shared_ptr<Sphere>& _moving_sphere, const std::shared_ptr<Sphere>& _other_sphere) :
         HalfSphereListContactInfo(_other_sphere),
         moving_sphere(_moving_sphere) {
     }

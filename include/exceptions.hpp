@@ -134,5 +134,18 @@ public:
         write_message();
     }
 };
+
+class MergeError : public BaseException {
+public:
+    MergeError() {
+        name = "Merge error";
+        code = ErrorCodes::MERGE_ERROR;
+        write_message();
+    }
+    explicit MergeError(const std::string &new_detail) : MergeError() {
+        detail = new_detail;
+        write_message();
+    }
+};
 }  //namespace mcac
 #endif //INCLUDE_EXCEPTIONS_HPP

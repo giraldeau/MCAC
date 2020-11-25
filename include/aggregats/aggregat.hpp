@@ -98,6 +98,7 @@ public:
     void time_forward(double deltatemps) noexcept;
     void set_position(const std::array<double, 3> &position) noexcept;
     void translate(std::array<double, 3> vector) noexcept;
+    bool croissance_surface(double dt);
     //    void init();
     void init(size_t new_label,
               size_t sphere_index);
@@ -116,7 +117,7 @@ public:
     void compute_max_radius() noexcept;
     void compute_giration_radius() noexcept;
     /* other */
-    void merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept;
+    bool merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept;
     bool split();
     void remove(const size_t &id) noexcept;
     // void agg_to_sphere() noexcept;

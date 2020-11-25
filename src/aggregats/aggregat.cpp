@@ -119,7 +119,7 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
 
     // move the first sphere taking care of the periodicity
     std::array<double, 3> refpos{get_position() - get_relative_position()};
-    myspheres[0].set_position(refpos);
+    myspheres[0]->set_position(refpos);
 
     // move all the other sphere relatively to the first
     for (const auto &mysphere : myspheres) {
@@ -190,13 +190,25 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     if (static_cast<bool>(new_verlet)) {
         set_verlet(new_verlet);
     }
-    (*spheres)[sphere_index].set_label(int(label));
-    (*spheres)[sphere_index].init_val(position, sphere_diameter * 0.5);
+    (*spheres)[sphere_index]->set_label(int(label));
+    (*spheres)[sphere_index]->init_val(position, sphere_diameter * 0.5);
     myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
     *d_m = sphere_diameter;
     //update_distances_and_overlapping();
     update();
+}
+bool Aggregate::croissance_surface(double dt) {
+    myspheres.croissance_surface(dt);
+    for (const auto& sphere : myspheres) {
+        if (sphere->get_radius() <= 0) {
+            remove(sphere->get_index());
+            if (myspheres.size() == 0) {
+                return  true;
+            }
+        }
+    }
+    return false;
 }
 
 //###################################################################################################################
@@ -213,8 +225,8 @@ void Aggregate::update_partial() noexcept {
     double vol_pp(0.0);
     //$ For the Spheres i in Agg Id
     for (size_t i = 0; i < n_spheres; i++) {
-        vol_pp += myspheres[i].get_volume();
-        *dp += myspheres[i].get_radius();
+        vol_pp += myspheres[i]->get_volume();
+        *dp += myspheres[i]->get_radius();
     }
     *dp = 2 * (*dp) / double(n_spheres);
     vol_pp = vol_pp / double(n_spheres);
@@ -246,7 +258,7 @@ static double volume_alpha_correction(const double coordination_number,
                                       const double c_20,
                                       const double c_30,
                                       const double min_coordination_number) noexcept {
-    double difference_coordination = abs(coordination_number - min_coordination_number);
+    double difference_coordination = std::abs(coordination_number - min_coordination_number);
     double correction = 0.25 * (3.0 * c_20 - c_30) * coordination_number
                         - c_30 * difference_coordination * 0.62741833
                         - pow(difference_coordination, 1.5) * 0.00332425;
@@ -256,7 +268,7 @@ static double volume_alpha_correction(const double coordination_number,
 static double surface_alpha_correction(const double coordination_number,
                                        const double c_10,
                                        const double min_coordination_number) noexcept {
-    double difference_coordination = abs(coordination_number - min_coordination_number);
+    double difference_coordination = std::abs(coordination_number - min_coordination_number);
     double correction = 0.5 * c_10 * coordination_number
                         - std::pow(c_10, 2) * difference_coordination * 0.70132500
                         - std::pow(difference_coordination, 2) * 0.00450000;
@@ -289,8 +301,8 @@ void Aggregate::compute_volume_surface() {
         //$ For the Spheres i in Agg Id
         for (size_t i = 0; i < n_spheres; i++) {
             //$ Calculation of the volume and surface of monomere i of Agg id
-            volumes[i] = myspheres[i].get_volume();      //Calculation of the volume of i
-            surfaces[i] = myspheres[i].get_surface();    //Calculation of the surface of i
+            volumes[i] = myspheres[i]->get_volume();      //Calculation of the volume of i
+            surfaces[i] = myspheres[i]->get_surface();    //Calculation of the surface of i
         }
     }
 
@@ -307,8 +319,8 @@ void Aggregate::compute_volume_surface() {
                 }
 #endif
                 //$ Calculation of the intersection between the spheres i and j if in contact
-                Intersection intersection(myspheres[i],
-                                          myspheres[j],
+                Intersection intersection(*myspheres[i],
+                                          *myspheres[j],
                                           dist);
 
                 //$ The volume and surface covered by j is substracted from those of i
@@ -336,8 +348,8 @@ void Aggregate::compute_volume_surface() {
         for (size_t i = 0; i < n_spheres; i++) {
             // loop over the neighbor list
             for (const auto &it : distances[i]) {
-                double radius_1 = myspheres[i].get_radius();
-                double radius_2 = myspheres[it.first].get_radius();
+                double radius_1 = myspheres[i]->get_radius();
+                double radius_2 = myspheres[it.first]->get_radius();
                 double c_ij = (radius_1 + radius_2 - it.second) / (radius_1 + radius_2);
                 double vp1 = std::pow(radius_1, 3);
                 double vp2 = std::pow(radius_2, 3);
@@ -374,14 +386,14 @@ void Aggregate::compute_mass_center() noexcept {
     //$ For the Spheres i in Agg Id
     for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of the position of the center of mass
-        r += myspheres[i].get_relative_position() * volumes[i];
+        r += myspheres[i]->get_relative_position() * volumes[i];
     }
     r /= *agregat_volume;
     for (size_t i = 0; i < _loopsize; i++) {
-        std::array<double, 3> diff{myspheres[i].get_relative_position() - r};
+        std::array<double, 3> diff{myspheres[i]->get_relative_position() - r};
         distances_center[i] = std::sqrt(std::pow(diff[0], 2) + std::pow(diff[1], 2) + std::pow(diff[2], 2));
     }
-    set_position(myspheres[0].get_position() + r);
+    set_position(myspheres[0]->get_position() + r);
     *rx = r[0];
     *ry = r[1];
     *rz = r[2];
@@ -395,7 +407,7 @@ void Aggregate::compute_max_radius() noexcept {
     *rmax = 0.0;
     const size_t _loopsize(n_spheres);
     for (size_t i = 0; i < _loopsize; i++) {
-        *rmax = std::max(*rmax, myspheres[i].get_radius() + sphere_distance_center(i));
+        *rmax = std::max(*rmax, myspheres[i]->get_radius() + sphere_distance_center(i));
     }
 }
 void Aggregate::compute_giration_radius() noexcept {
@@ -409,26 +421,29 @@ void Aggregate::compute_giration_radius() noexcept {
     for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of Rg
         arg = arg + volumes[i] * std::pow(sphere_distance_center(i), 2); // distance to the gravity center
-        brg = brg + volumes[i] * std::pow(myspheres[i].get_radius(), 2);
+        brg = brg + volumes[i] * std::pow(myspheres[i]->get_radius(), 2);
     }
     *rg = std::sqrt(std::abs((arg + 3. / 5. * brg) / (*agregat_volume)));
     *agregat_volume = std::abs(*agregat_volume);
 }
 //#####################################################################################################################
 
-void Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept {
-    Sphere *mysphere, *othersphere;
+bool Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept {
+    std::shared_ptr<Sphere> mysphere, othersphere;
     if (contact_info.moving_aggregate == get_label()) {
-        mysphere = &external_storage-> spheres[contact_info.moving_sphere];
-        othersphere = &external_storage-> spheres[contact_info.other_sphere];
+        mysphere = contact_info.moving_sphere.lock();
+        othersphere = contact_info.other_sphere.lock();
     } else {
-        mysphere = &external_storage-> spheres[contact_info.other_sphere];
-        othersphere = &external_storage-> spheres[contact_info.moving_sphere];
+        mysphere = contact_info.other_sphere.lock();
+        othersphere = contact_info.moving_sphere.lock();
+    }
+    if (!mysphere || !othersphere) {
+        return false;
     }
 
     //$ update of the labels of the spheres that were in the deleted aggregate
     //$ And their new relative position
-    std::array<double, 3> refpos = myspheres[0].get_position();
+    std::array<double, 3> refpos = myspheres[0]->get_position();
 
     //use periodic_distance at contact point
     std::array<double, 3> ref_root_to_contact = mysphere->get_relative_position();
@@ -457,6 +472,7 @@ void Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     n_spheres = myspheres.size();
     //update_distances_and_overlapping();
     update();
+    return true;
 }
 bool Aggregate::split() {
     bool have_splitted = false;
@@ -479,7 +495,7 @@ bool Aggregate::split() {
             auto suspect = unvisisted.begin();
             while (suspect != unvisisted.end()) {
                 auto index = std::distance(unvisisted.begin(), suspect);
-                if (contact(myspheres[agg_1], myspheres[*suspect])) {
+                if (contact(*myspheres[agg_1], *myspheres[*suspect])) {
                     // discovered are spheres of which we need to explore the neighborhood
                     component.push_back(*suspect);
                     discovered.push_back(*suspect);
@@ -515,7 +531,7 @@ bool Aggregate::split() {
             }
             // by creating and destroying spheres, this is important
             external_storage->spheres.setpointers();
-            std::array<double, 3> refpos = agg->myspheres[0].get_position();
+            std::array<double, 3> refpos = agg->myspheres[0]->get_position();
             for (const auto &sph : agg->myspheres) {
                 // change the relative position of the new aggregate
                 sph->set_relative_position(sph->get_position() - refpos);
@@ -534,7 +550,7 @@ bool Aggregate::split() {
 }
 void Aggregate::remove(const size_t &id) noexcept {
     for (size_t local_id = 0; local_id < n_spheres; local_id++) {
-        if (myspheres[local_id].index_in_storage == id) {
+        if (myspheres[local_id]->index_in_storage == id) {
             myspheres.list.erase(myspheres.list.begin() + long(local_id));
             break;
         }
@@ -542,7 +558,7 @@ void Aggregate::remove(const size_t &id) noexcept {
     external_storage->spheres.remove(id);
     n_spheres = myspheres.size();
     if (n_spheres > 0) {
-        std::array<double, 3> refpos = myspheres[0].get_position();
+        std::array<double, 3> refpos = myspheres[0]->get_position();
         for (const auto &sph : myspheres) {
             // change the relative position of the new aggregate
             sph->set_relative_position(sph->get_position() - refpos);
@@ -639,22 +655,22 @@ void Aggregate::update_distances_and_overlapping() noexcept {
     for (size_t i = 0; i < _loopsize; i++) {
         for (size_t j = i + 1; j < _loopsize; j++) {
             // Compute the distance between sphere i and j without taking periodicity into account
-            double dist = relative_distance(myspheres[i], myspheres[j]);
+            double dist = relative_distance(*myspheres[i], *myspheres[j]);
 #ifdef FULL_INTERNAL_DISTANCES
             distances[i][j] = dist;
             // distances are symetric !
             distances[j][i] = dist;
 #endif
             // if in contact (with some tolerence)
-            if (dist <= (1. + 1e-10) * (myspheres[i].get_radius() + myspheres[j].get_radius())) {
+            if (dist <= (1. + 1e-10) * (myspheres[i]->get_radius() + myspheres[j]->get_radius())) {
 #ifndef FULL_INTERNAL_DISTANCES
                 distances[i][j] = dist;
                 // distances are symetric !
                 distances[j][i] = dist;
 #endif
                 // calculate overlapping coefficient
-                c_ij = (myspheres[i].get_radius() + myspheres[j].get_radius() - dist)
-                       / (myspheres[i].get_radius() + myspheres[j].get_radius());
+                c_ij = (myspheres[i]->get_radius() + myspheres[j]->get_radius() - dist)
+                       / (myspheres[i]->get_radius() + myspheres[j]->get_radius());
                 *overlapping += 2.0*c_ij;
                 intersections += 2;
             }

@@ -43,7 +43,7 @@ void AggregatList::remove(const size_t &id) noexcept {
     setpointers();
 }
 void AggregatList::remove_sphere(const size_t &id) noexcept {
-    auto agg_num = size_t(spheres[id].agg_label);
+    auto agg_num = size_t(spheres[id]->agg_label);
     list[agg_num]->remove(id);
     if (list[agg_num]->size() == 0) {
         remove(agg_num);

@@ -57,9 +57,9 @@ public:
     void sort_time_steps(double factor);
     void duplication();
     bool split();
-    size_t merge(AggregateContactInfo contact_info);
+    bool merge(AggregateContactInfo contact_info);
     /* other */
-    void croissance_surface(double dt);
+    bool croissance_surface(double dt);
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;
     AggregateContactInfo distance_to_next_contact(const size_t source,
                                                   const std::array<double, 3> &direction,
