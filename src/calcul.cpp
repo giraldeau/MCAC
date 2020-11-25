@@ -88,6 +88,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             num_agg = aggregates.pick_last();
             deltatemps = aggregates[num_agg]->get_time_step();
         }
+        double deltatemps_indiv = aggregates[num_agg]->get_time_step();
         double full_distance = aggregates[num_agg]->get_lpm();
         double move_distance = full_distance;
 
@@ -111,6 +112,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
 
         //$ Time incrementation
         deltatemps = deltatemps * move_distance / full_distance;
+        deltatemps_indiv = deltatemps_indiv * move_distance / full_distance;
         aggregates[num_agg]->time_forward(deltatemps);
         if (physicalmodel.pick_method == PickMethods::PICK_LAST) {
             deltatemps = deltatemps / double(aggregates.size());
@@ -120,10 +122,18 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         bool split = false;
         bool disappear = false;
         if (physicalmodel.with_surface_reactions) {
-            disappear = aggregates.croissance_surface(deltatemps);
-            // Maybe will be modified later -> spliting only happens when u_sg is negative
-            if(physicalmodel.u_sg < 0.0) {
-                split = aggregates.split();
+            if (physicalmodel.individual_surf_reactions) {
+                disappear = aggregates.croissance_surface_individual(deltatemps_indiv,num_agg);
+                //$ Maybe will be modified later -> spliting only happens when u_sg is negative
+                if((physicalmodel.u_sg < -1e-20) && !disappear) {
+                    split = aggregates.split_individual(num_agg);
+                }
+            } else {
+                disappear = aggregates.croissance_surface(deltatemps);
+                // Maybe will be modified later -> spliting only happens when u_sg is negative
+                if(physicalmodel.u_sg < 0.0) {
+                    split = aggregates.split();
+                }
             }
         }
 

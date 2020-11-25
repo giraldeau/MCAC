@@ -71,6 +71,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     with_surface_reactions(false),
     with_flame_coupling(false),
     finished_by_flame(false),
+    individual_surf_reactions(false),
     enforce_volume_fraction(true) {
     std::string default_str;
     // read the config file
@@ -116,6 +117,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["limits"]["physical_time"], physical_time_limit);
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
+    inipp::extract(ini.sections["numerics"]["individual_surf_reactions"], individual_surf_reactions);
     inipp::extract(ini.sections["numerics"]["with_collisions"], with_collisions);
     inipp::extract(ini.sections["numerics"]["enforce_volume_fraction"], enforce_volume_fraction);
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
@@ -265,6 +267,11 @@ void PhysicalModel::print() const {
         std::cout << " Seed random numbers: auto" << std::endl;
     } else {
         std::cout << " Seed random numbers: " << random_seed << std::endl;
+    }
+    if (individual_surf_reactions) {
+        std::cout << " With individual surf. reactions" << std::endl;
+    } else {
+        std::cout << " Without individual surf. reactions" << std::endl;
     }
     if (with_collisions) {
         std::cout << " With collisions" << std::endl;

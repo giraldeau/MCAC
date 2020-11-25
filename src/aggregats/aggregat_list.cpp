@@ -192,6 +192,16 @@ bool AggregatList::split() {
     }
     return has_splitted;
 }
+bool AggregatList::split_individual(size_t numagg) {
+    // The split function will create the new aggregates
+    if (list[numagg]->split()) {
+        // but we still have to destroy the current one
+        remove(numagg);
+        setpointers();
+        return true;
+    }
+    return false;
+}
 //################################# Determination of the contacts between agregates ####################################
 AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
                                                             const std::array<double, 3> &direction,
@@ -299,5 +309,16 @@ bool AggregatList::croissance_surface(double dt) {
         aggregate = next;
     }
     return removed_aggregate;
+}
+bool AggregatList::croissance_surface_individual(const double dt, const size_t index) {
+    if (list[index]->croissance_surface(dt)){
+        remove(index);
+        setpointers();
+        std::cout << " removed by croissance_surface: num_agg= " << index << "/ total= " << list.size() << std::endl;
+        return true;
+    } else {
+        list[index]->update();
+        return false;
+    }
 }
 }// namespace mcac

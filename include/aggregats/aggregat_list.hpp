@@ -57,9 +57,11 @@ public:
     void sort_time_steps(double factor);
     void duplication();
     bool split();
+    bool split_individual(const size_t numagg);
     bool merge(AggregateContactInfo contact_info);
     /* other */
     bool croissance_surface(double dt);
+    bool croissance_surface_individual(const double dt, const size_t index);
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;
     AggregateContactInfo distance_to_next_contact(const size_t source,
                                                   const std::array<double, 3> &direction,

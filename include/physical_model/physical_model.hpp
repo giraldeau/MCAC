@@ -57,6 +57,7 @@ public:
     bool with_surface_reactions;
     bool with_flame_coupling;
     bool enforce_volume_fraction;
+    bool individual_surf_reactions;
 
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
