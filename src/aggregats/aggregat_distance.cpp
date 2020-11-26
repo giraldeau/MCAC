@@ -21,23 +21,23 @@
 
 
 namespace mcac {
-AggregateContactInfo distance_to_contact(const Aggregate &aggregate_1,
-                                         const Aggregate &aggregate_2,
+AggregateContactInfo distance_to_contact(const std::shared_ptr<Aggregate> &aggregate_1,
+                                         const std::shared_ptr<Aggregate> &aggregate_2,
                                          const std::array<double, 3>& direction,
                                          const double distance) noexcept {
     AggregateContactInfo closest_contact; //infinity by default
     //$ For every sphere in the aggregate :
-    for (size_t i_sphere = 0; i_sphere < aggregate_1.myspheres.size(); i_sphere++) {
-        HalfSphereListContactInfo potential_contact = distance_to_contact(*aggregate_1.myspheres[i_sphere],
-                                                                          aggregate_2.myspheres,
+    for (size_t i_sphere = 0; i_sphere < aggregate_1->myspheres.size(); i_sphere++) {
+        HalfSphereListContactInfo potential_contact = distance_to_contact(*aggregate_1->myspheres[i_sphere],
+                                                                          aggregate_2->myspheres,
                                                                           direction,
                                                                           distance);
         if (potential_contact < closest_contact) {
             closest_contact.other_sphere = potential_contact.other_sphere;
             closest_contact.distance = potential_contact.distance;
-            closest_contact.moving_sphere = aggregate_1.myspheres[i_sphere];
-            closest_contact.moving_aggregate = aggregate_1.get_label();
-            closest_contact.other_aggregate = aggregate_2.get_label();
+            closest_contact.moving_sphere = aggregate_1->myspheres[i_sphere];
+            closest_contact.moving_aggregate = std::weak_ptr<Aggregate>(aggregate_1);
+            closest_contact.other_aggregate = std::weak_ptr<Aggregate>(aggregate_2);
         }
     }
     return closest_contact;

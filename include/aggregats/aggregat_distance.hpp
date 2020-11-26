@@ -23,8 +23,8 @@
 
 
 namespace mcac {
-AggregateContactInfo distance_to_contact(const Aggregate &aggregate_1,
-                                         const Aggregate &aggregate_2,
+AggregateContactInfo distance_to_contact(const std::shared_ptr<Aggregate> &aggregate_1,
+                                         const std::shared_ptr<Aggregate> &aggregate_2,
                                          const std::array<double, 3> &direction,
                                          const double distance) noexcept;
 bool contact(const Aggregate &aggregate_1, const Aggregate &aggregate_2) noexcept;

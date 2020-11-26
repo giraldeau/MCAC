@@ -72,10 +72,12 @@ public:
 
 class AggregateContactInfo : public SphereListContactInfo {
 public:
-    size_t moving_aggregate{0};
-    size_t other_aggregate{0};
+    std::weak_ptr<Aggregate> moving_aggregate;
+    std::weak_ptr<Aggregate> other_aggregate;
     AggregateContactInfo() = default;
-    AggregateContactInfo(SphereListContactInfo contact_info, size_t _moving_aggregate, size_t _other_aggregate) :
+    AggregateContactInfo(SphereListContactInfo contact_info,
+                         const std::shared_ptr<Aggregate>& _moving_aggregate,
+                         const std::shared_ptr<Aggregate>& _other_aggregate) :
         SphereListContactInfo(contact_info),
         moving_aggregate(_moving_aggregate),
         other_aggregate(_other_aggregate) {

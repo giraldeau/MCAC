@@ -166,8 +166,10 @@ InterPotentialRegime AggregatList::check_InterPotentialRegime(AggregateContactIn
     //$ 3. Energy barrier/well depth
     double P_stick(1.0), P_coll(1.0);
     if (physicalmodel->with_external_potentials) {
-        int q_moving = list[contact_info.moving_aggregate]->get_electric_charge();
-        int q_other = list[contact_info.other_aggregate]->get_electric_charge();
+        auto moving_aggregate = contact_info.moving_aggregate.lock();
+        auto other_aggregate = contact_info.other_aggregate.lock();
+        int q_moving = moving_aggregate->get_electric_charge();
+        int q_other = other_aggregate->get_electric_charge();
         auto [E_bar, E_well] = physicalmodel->intpotential_info.get_Ebar_Ewell(D_moving,D_other,q_moving,q_other);
         double E_stick = std::abs(E_well)+std::abs(E_bar);
         P_stick = std::erf(std::sqrt(E_stick))-std::sqrt(E_stick)*std::exp(-E_stick);
@@ -284,8 +286,8 @@ AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
             // We already found the closests one
             break;
         }
-        AggregateContactInfo potential_contact = distance_to_contact(*list[source],
-                                                                     *list[id],
+        AggregateContactInfo potential_contact = distance_to_contact(list[source],
+                                                                     list[id],
                                                                      direction,
                                                                      distance);
         if (potential_contact < closest_contact) {

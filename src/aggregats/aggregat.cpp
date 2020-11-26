@@ -438,15 +438,27 @@ void Aggregate::compute_giration_radius() noexcept {
 //#####################################################################################################################
 
 bool Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept {
+
+    std::shared_ptr<Aggregate> moving_aggregate = contact_info.moving_aggregate.lock();
+    std::shared_ptr<Aggregate> other_aggregate = contact_info.other_aggregate.lock();
+    if (!moving_aggregate || !other_aggregate) {
+        // we lost one of the aggregates to be merged
+        return false;
+    }
+
     std::shared_ptr<Sphere> mysphere, othersphere;
-    if (contact_info.moving_aggregate == get_label()) {
+    if (moving_aggregate.get() == this) {
         mysphere = contact_info.moving_sphere.lock();
         othersphere = contact_info.other_sphere.lock();
-    } else {
+    } else if (other_aggregate.get() == this) {
         mysphere = contact_info.other_sphere.lock();
         othersphere = contact_info.moving_sphere.lock();
+    } else {
+        // ?
+        return false;
     }
     if (!mysphere || !othersphere) {
+        // we lost one of the spheres of the contact point
         return false;
     }
 
