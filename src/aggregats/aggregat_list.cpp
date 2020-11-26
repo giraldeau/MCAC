@@ -200,6 +200,9 @@ bool AggregatList::merge(AggregateContactInfo contact_info) {
     if (!moving_sphere || !other_sphere) {
         return false;
     }
+    if (!contact(*moving_sphere,*other_sphere)){
+        return false;
+    }
 
     const size_t _keeped(std::min(moving_sphere->agg_label,
                              other_sphere->agg_label));
