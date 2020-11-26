@@ -69,10 +69,15 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     full_aggregate_update_frequency(1),
     output_dir("MCAC_output"),
     flame_file("flame_input"),
+    interpotential_file("interpotential_file"),
     with_nucleation(false),
     with_collisions(true),
     with_surface_reactions(false),
     with_flame_coupling(false),
+    with_potentials(false),
+    with_external_potentials(false),
+    with_dynamic_random_charges(false),
+    with_electric_charges(false),
     finished_by_flame(false),
     individual_surf_reactions(false),
     enforce_volume_fraction(true) {
@@ -136,6 +141,12 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     if (pick_method == PickMethods::INVALID_PICK_METHOD) {
         throw InputError("Invalid pick method: " + default_str);
     }
+    // interaction potentials
+    inipp::extract(ini.sections["inter_potential"]["with_potentials"], with_potentials);
+    inipp::extract(ini.sections["inter_potential"]["with_electric_charges"], with_electric_charges);
+    inipp::extract(ini.sections["inter_potential"]["with_external_potentials"], with_external_potentials);
+    inipp::extract(ini.sections["inter_potential"]["with_dynamic_random_charges"], with_dynamic_random_charges);
+    inipp::extract(ini.sections["inter_potential"]["interpotential_file"], interpotential_file);
     // flame coupling
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
@@ -203,6 +214,19 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
 
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
+
+    // load flame-coupling info.
+    if (with_flame_coupling) {
+        flame = FlameCoupling(flame_file);
+        update_from_flame();
+    }
+
+    // Load inter-potential info
+    if (with_external_potentials) {
+        // load input data
+        intpotential_info = Interpotential(interpotential_file);
+    }
+
     cpu_start = clock();
 }
 [[gnu::pure]] bool PhysicalModel::finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const {
@@ -289,6 +313,27 @@ void PhysicalModel::print() const {
     } else {
         std::cout << " Without collision" << std::endl;
     }
+    if (with_potentials) {
+        std::cout << " With interaction potentials" << std::endl;
+        if (with_external_potentials) {
+            std::cout << "  - Externally driven: " << std::endl
+                      << "       interpotential_file: " << interpotential_file << std::endl;
+        } else {
+            std::cout << "  - Internally driven " << std::endl;
+        }
+        if (with_electric_charges) {
+            std::cout << "  - Considering electric charges " << std::endl;
+        } else {
+            std::cout << "  - Not considering electric charges " << std::endl;
+        }
+        if (with_dynamic_random_charges) {
+            std::cout << "  - Dynamic random charges " << std::endl;
+        } else {
+            std::cout << "  - Without dynamic random charges " << std::endl;
+        }
+    } else {
+        std::cout << " Without interaction potentials" << std::endl;
+    }
     if (with_surface_reactions) {
         std::cout << " With surface reations" << std::endl
                   << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
@@ -335,7 +380,7 @@ void PhysicalModel::nucleation(double dt) noexcept {
     double delta_nucl = flux_nucleation * box_volume * dt;
     nucleation_accum += delta_nucl;
 }
-void PhysicalModel::update_from_flame(const FlameCoupling &flame) {
+void PhysicalModel::update_from_flame() {
     auto next_t = std::upper_bound(flame.t_res.begin(), flame.t_res.end(), time);
     if (next_t == flame.t_res.begin()) {
         throw InputError("Initial time not in the flame time range");
@@ -438,6 +483,18 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     }
     fs::path parentpath = fullpath.parent_path();
     return parentpath;
+}
+[[gnu::pure]] int PhysicalModel::get_random_charge(double d_m) const {
+    // Charge distribution: M. Matti Maricq/J. Aerosol Science, 39 (2008) 141–149
+    double kbT = _boltzmann * temperature;
+    double sigma_q = std::sqrt(d_m * kbT / (2.0*_dit_boltzmann_Ke_e2));
+    double mean_q = 0.0;
+    int rand_normal = std::round(random_normal(mean_q, sigma_q));
+
+    rand_normal = std::min(std::max(rand_normal,
+                                    intpotential_info.get_min_charge()),
+                           intpotential_info.get_max_charge());
+    return rand_normal;
 }
 }  // namespace mcac
 

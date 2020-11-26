@@ -59,6 +59,7 @@ public:
     bool split();
     bool split_individual(const size_t numagg);
     bool merge(AggregateContactInfo contact_info);
+    InterPotentialRegime check_InterPotentialRegime(AggregateContactInfo contact_info);
     /* other */
     bool croissance_surface(double dt);
     bool croissance_surface_individual(const double dt, const size_t index);
@@ -90,6 +91,7 @@ public:
     std::vector<double> format_proper_time() const;
     std::vector<double> format_overlapping() const;
     std::vector<double> format_d_m() const;
+    std::vector<int> format_electric_charge() const;
     std::vector<int> format_label() const;
     void remove(const size_t &id) noexcept;
     void remove_sphere(const size_t &id) noexcept;

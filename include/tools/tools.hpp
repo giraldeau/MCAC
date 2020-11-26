@@ -76,5 +76,11 @@ VolSurfMethods resolve_surfvol_method(const std::string &input);
 std::string resolve_surfvol_method(VolSurfMethods method);
 [[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
                                                                const std::vector<double> &y);
+[[gnu::pure]] double interpolate_2d(const double& f_x1_y1,
+                                    const double& f_x1_y2,
+                                    const double& f_x2_y1,
+                                    const double& f_x2_y2,
+                                    const double& dx_over_Dx,
+                                    const double& dy_over_Dy);
 }  //namespace mcac
 #endif //INCLUDE_TOOLS_TOOLS_HPP

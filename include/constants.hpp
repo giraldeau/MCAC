@@ -62,6 +62,7 @@ enum AggregatesFields {
     AGGREGAT_DG_OVER_DP,
     AGGREGAT_OVERLAPPING,
     AGGREGAT_COORDINATION_NUMBER,
+    AGGREGAT_ELECTRIC_CHARGE,
     AGGREGAT_D_M,
     AGGREGAT_NFIELDS
 };
@@ -76,6 +77,14 @@ enum ErrorCodes {
     SBL_ERROR,
     VOL_SURF_ERROR,
     MERGE_ERROR,
+    InterPotential_ERROR
+};
+enum InterPotentialRegime {
+    STICKING,
+    REPULSION,
+    BOUNCING,
+    INFINIT,
+    INVALID_INTER_POTENTIAL_REGIME
 };
 enum PickMethods {
     PICK_RANDOM,
@@ -108,5 +117,6 @@ const double _temperature_ref = 293.15;
 const double _sutterland_interpolation_constant = 110;
 const double _pressure_ref = 101300;
 const double _viscosity_ref = 18.203E-6;
+const double _dit_boltzmann_Ke_e2 = 9.0e+09*std::pow(1.60217662e-19,2);   // N*m^2*C^2/C^2 = N*m^2
 }  //namespace mcac
 #endif //INCLUDE_CONSTANTS_HPP

@@ -47,12 +47,6 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     size_t multiply_threshold = aggregates.size() / 8;
     size_t total_events(0);
 
-    // load flame-coupling info.
-    FlameCoupling flame;
-    if (physicalmodel.with_flame_coupling) {
-        flame = FlameCoupling(physicalmodel.flame_file);
-        physicalmodel.update_from_flame(flame);
-    }
     physicalmodel.print();
 
     //$ Loop on the N monomeres
@@ -90,20 +84,36 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         }
         double deltatemps_indiv = aggregates[num_agg]->get_time_step();
         double full_distance = aggregates[num_agg]->get_lpm();
-        double move_distance = full_distance;
 
+        //$ L2 - Loop on orientations
+        std::array<double, 3> vectdir = {{0,0,0}};
+        bool effective_move = false;
+        double move_distance;
+        int n_try(0);
         bool contact = false;
         AggregateContactInfo next_contact;
-        std::array<double, 3> vectdir = {{0,0,0}};
 
-        //$ -- Generating a random direction --
-        vectdir = random_direction();
-        if (physicalmodel.with_collisions) {
-            //$ looking for potential contacts
-            next_contact = aggregates.distance_to_next_contact(num_agg, vectdir, full_distance);
-            contact = next_contact <= full_distance;
-            if (contact) {
-                move_distance = next_contact.distance;
+        while (!effective_move){
+            //$ -- Generating a random direction --
+            vectdir = random_direction();
+            effective_move = true;
+            move_distance = full_distance;
+            n_try++;
+            if (physicalmodel.with_collisions) {
+                //$ looking for potential geometric contacts
+                next_contact = aggregates.distance_to_next_contact(num_agg, vectdir, full_distance);
+                contact = next_contact <= full_distance;
+                if (contact) {
+                    move_distance = next_contact.distance;
+                    if (physicalmodel.with_potentials) {
+                        //$ Check repulsion/rebound (Coulomb or Pauli)
+                        InterPotentialRegime regime_potential = aggregates.check_InterPotentialRegime(next_contact);
+                        //$ Update contact
+                        if (regime_potential != InterPotentialRegime::STICKING) {
+                            effective_move = false;
+                        }
+                    }
+                }
             }
         }
 
@@ -111,8 +121,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         aggregates[num_agg]->translate(vectdir * move_distance);
 
         //$ Time incrementation
-        deltatemps = deltatemps * move_distance / full_distance;
-        deltatemps_indiv = deltatemps_indiv * move_distance / full_distance;
+        deltatemps = deltatemps * (move_distance / full_distance + static_cast<double>(n_try - 1));
+        deltatemps_indiv = deltatemps_indiv * (move_distance / full_distance + static_cast<double>(n_try - 1));
         aggregates[num_agg]->time_forward(deltatemps);
         if (physicalmodel.pick_method == PickMethods::PICK_LAST) {
             deltatemps = deltatemps / double(aggregates.size());
@@ -216,7 +226,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             physicalmodel.update(aggregates.size(), aggregates.get_total_volume());
         }
         if (physicalmodel.with_flame_coupling) {
-            physicalmodel.update_from_flame(flame);
+            physicalmodel.update_from_flame();
         }
     }
     save_advancement(physicalmodel, aggregates);

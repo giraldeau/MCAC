@@ -64,6 +64,7 @@ private:
     double *rz;
     double *volume;
     double *surface;
+    int electric_charge;
     void update_vol_and_surf() noexcept;
 public:
     long agg_label;
@@ -76,6 +77,7 @@ public:
     std::array<double, 3> get_position() const noexcept;
     std::array<double, 3> get_relative_position() const noexcept;
     /* modifiers */
+    void set_sphere_charge(const int charge);
     void set_label(long value) noexcept;
     void decrease_label() noexcept;
     void set_position(const std::array<double, 3>& newposition) noexcept;

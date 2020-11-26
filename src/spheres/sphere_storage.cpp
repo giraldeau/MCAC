@@ -64,6 +64,7 @@ Sphere::Sphere() noexcept:
     volume(nullptr),
     surface(nullptr),
     agg_label(-1),
+    electric_charge(0),
     physicalmodel(nullptr) {
     init_val();
 }
@@ -79,6 +80,7 @@ Sphere::Sphere(const PhysicalModel &physical_model) noexcept:
     volume(nullptr),
     surface(nullptr),
     agg_label(-1),
+    electric_charge(0),
     physicalmodel(&physical_model) {
     init_val();
 }
@@ -102,6 +104,7 @@ Sphere::Sphere(SphereList *aggregat, size_t id) noexcept:
     volume(nullptr),
     surface(nullptr),
     agg_label(-1),
+    electric_charge(0),
     physicalmodel(aggregat->physicalmodel) {
     init_val();
     external_storage->setpointers();
@@ -126,6 +129,7 @@ Sphere::Sphere(const Sphere &other, SphereList *aggregat, size_t id) noexcept:
     volume(nullptr),
     surface(nullptr),
     agg_label(long(id)),
+    electric_charge(0),
     physicalmodel(other.physicalmodel) {
     setpointers();
 }

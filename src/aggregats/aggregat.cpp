@@ -73,6 +73,9 @@ namespace mcac {
 [[gnu::pure]] const size_t &Aggregate::get_label() const noexcept {
     return label;
 }
+[[gnu::pure]] const int &Aggregate::get_electric_charge() const noexcept {
+    return electric_charge;
+}
 /* modifiers */
 void Aggregate::decrease_label() noexcept {
     if (static_cast<bool>(verlet)) {
@@ -195,6 +198,13 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
     *d_m = sphere_diameter;
+    // random initial charge
+    if (physicalmodel->with_electric_charges) {
+        electric_charge = physicalmodel->get_random_charge(*d_m);
+    } else {
+        electric_charge = 0;
+    }
+    (*spheres)[sphere_index]->set_sphere_charge(electric_charge);
     //update_distances_and_overlapping();
     update();
 }
@@ -212,7 +222,6 @@ bool Aggregate::croissance_surface(double dt) {
 }
 
 //###################################################################################################################
-
 //### Update all physical params of an aggregate except volume and surface (rayon de giration, masse, nombre de sphérules primaires) #####
 void Aggregate::update_partial() noexcept {
     // This function will update the parameter of Agg
@@ -543,6 +552,16 @@ bool Aggregate::split() {
             refpos = agg->get_position() - agg->get_relative_position();
             for (const auto &sph : agg->myspheres) {
                 sph->set_position(refpos + sph->get_relative_position());
+            }
+            // electric charge
+            if (physicalmodel->with_dynamic_random_charges) {
+                agg->electric_charge = physicalmodel->get_random_charge(*(agg->d_m));
+            } else { // electric charges preservation
+                int total_charge=0;
+                for (const auto &sph : agg->myspheres) {
+                    total_charge += sph->electric_charge;
+                }
+                agg->electric_charge = total_charge;
             }
         }
     }

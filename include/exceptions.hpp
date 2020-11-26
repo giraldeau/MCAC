@@ -147,5 +147,18 @@ public:
         write_message();
     }
 };
+
+class InterPotentialError : public BaseException {
+public:
+    InterPotentialError() {
+        name = "InterPotential error";
+        code = ErrorCodes::InterPotential_ERROR;
+        write_message();
+    }
+    explicit InterPotentialError(const std::string &new_detail) : InterPotentialError() {
+        detail = new_detail;
+        write_message();
+    }
+};
 }  //namespace mcac
 #endif //INCLUDE_EXCEPTIONS_HPP

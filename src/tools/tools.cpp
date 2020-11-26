@@ -155,4 +155,22 @@ std::string resolve_surfvol_method(VolSurfMethods method) {
                         (sumy_2 - std::pow(sumy, 2) / n), 2);
     return {true, a, b, r};
 }
+
+/********************************************************************************
+* Interpolate a 2d function
+********************************************************************************/
+[[gnu::pure]] double interpolate_2d(const double& f_x1_y1,
+                                    const double& f_x1_y2,
+                                    const double& f_x2_y1,
+                                    const double& f_x2_y2,
+                                    const double& dx_over_Dx,
+                                    const double& dy_over_Dy) {
+    double Df_x = f_x2_y1 - f_x1_y1;
+    double Df_y = f_x1_y2 - f_x1_y1;
+    double Df_xy = (f_x1_y1 + f_x2_y2) - (f_x2_y1 + f_x1_y2);
+
+    return Df_x * dx_over_Dx
+           + Df_y * dy_over_Dy
+           + Df_xy * dx_over_Dx * dy_over_Dy + f_x1_y1;
+}
 }  // namespace mcac

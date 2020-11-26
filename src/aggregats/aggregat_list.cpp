@@ -148,6 +148,52 @@ void AggregatList::duplication() {
         agg->set_verlet(&verlet);
     }
 }
+InterPotentialRegime AggregatList::check_InterPotentialRegime(AggregateContactInfo contact_info) {
+    auto moving_sphere = contact_info.moving_sphere.lock();
+    auto other_sphere = contact_info.other_sphere.lock();
+
+    //$ 1. Colliding primary spheres properties
+    double D_moving = 2.0 * moving_sphere->get_radius();
+    double D_other = 2.0 * other_sphere->get_radius();
+
+    //$ 2. Electric charges
+/*    if (physicalmodel->with_dynamic_random_charges) {
+        list[contact_info.moving_aggregate]->set_random_charge(kbT, intpotential_info);
+        list[contact_info.other_aggregate]->set_random_charge(kbT, intpotential_info);
+    }
+*/
+
+    //$ 3. Energy barrier/well depth
+    double P_stick(1.0), P_coll(1.0);
+    if (physicalmodel->with_external_potentials) {
+        int q_moving = list[contact_info.moving_aggregate]->get_electric_charge();
+        int q_other = list[contact_info.other_aggregate]->get_electric_charge();
+        auto [E_bar, E_well] = physicalmodel->intpotential_info.get_Ebar_Ewell(D_moving,D_other,q_moving,q_other);
+        double E_stick = std::abs(E_well)+std::abs(E_bar);
+        P_stick = std::erf(std::sqrt(E_stick))-std::sqrt(E_stick)*std::exp(-E_stick);
+        P_coll = 1.0-std::erf(std::sqrt(E_bar))+std::sqrt(E_bar)*std::exp(-E_bar);
+    } else {
+        // Hou et al., J. Aerosol Sci. (2020) 105478.
+        double kbT = _boltzmann * (physicalmodel->temperature);
+        double D = D_moving * D_other / (D_moving + D_other);
+        D = D * (1e+09);
+        double E_well = (-6.6891e-23)*std::pow(D,3) +
+                (1.1244e-21)*std::pow(D,2) +
+                (1.1394e-20)*D - 5.5373e-21;
+        P_stick = 1.0-(1.0+std::abs(E_well)/kbT)*std::exp(-std::abs(E_well)/kbT);
+    }
+
+    //$ 4. Check - Coulomb repulsion
+    if (random() > P_coll) {
+        return InterPotentialRegime::REPULSION;
+    }
+
+    //$ 5. Check - Pauli repulsion
+    if (random() > P_stick){
+        return InterPotentialRegime::BOUNCING;
+    }
+    return  InterPotentialRegime::STICKING;
+}
 bool AggregatList::merge(AggregateContactInfo contact_info) {
     auto moving_sphere = contact_info.moving_sphere.lock();
     auto other_sphere = contact_info.other_sphere.lock();
@@ -164,6 +210,8 @@ bool AggregatList::merge(AggregateContactInfo contact_info) {
     // keeping global time constant
     double newtime = (*list[_keeped]->proper_time) + (*list[_removed]->proper_time)
                      - physicalmodel->time;
+    int total_charge = list[_keeped]->get_electric_charge() +
+                       list[_removed]->get_electric_charge();
 
     // merge the two aggregate but do not remove the deleted one
     if (!list[_keeped]->merge(list[_removed], contact_info)) {
@@ -172,6 +220,13 @@ bool AggregatList::merge(AggregateContactInfo contact_info) {
     remove(_removed);
     setpointers();
     *list[_keeped]->proper_time = newtime;
+
+    if (physicalmodel->with_dynamic_random_charges) {
+        list[_keeped]->electric_charge = physicalmodel->get_random_charge(*(list[_keeped]->d_m));
+    } else { // electric charges preservation
+        list[_keeped]->electric_charge = total_charge;
+    }
+
     return true;
 }
 bool AggregatList::split() {

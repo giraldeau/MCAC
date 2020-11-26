@@ -70,6 +70,7 @@ public:
     auto get_data() const;
     std::vector<double> format_position() const;
     std::vector<double> format_get_radius() const;
+    std::vector<int> format_electric_charge() const;
     std::vector<long> format_agg_label() const;
 
     /* Storage specific */

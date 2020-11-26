@@ -58,6 +58,7 @@ auto AggregatList::get_data() const {
     aggregats_data->insert(scalar("proper_time", format_proper_time()));
     aggregats_data->insert(scalar("coordination_number", format_coordination_number()));
     aggregats_data->insert(scalar("overlapping", format_overlapping()));
+    aggregats_data->insert(scalar("electric_charge", format_electric_charge()));
     aggregats_data->insert(scalar("d_m", format_d_m()));
     aggregats_data->insert(scalar("Label", format_label()));
     return aggregats_data;
@@ -78,6 +79,7 @@ DEF_FORMATER_PTR(AggregatList, coordination_number, double)
 DEF_FORMATER_PTR(AggregatList, proper_time, double)
 DEF_FORMATER_PTR(AggregatList, overlapping, double)
 DEF_FORMATER_PTR(AggregatList, d_m, double)
+DEF_FORMATER(AggregatList, electric_charge, int)
 DEF_FORMATER(AggregatList, n_spheres, int)
 DEF_FORMATER(AggregatList, label, int)
 #else

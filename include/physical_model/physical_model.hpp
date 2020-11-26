@@ -20,6 +20,7 @@
 #include "constants.hpp"
 #include "io/xmf_includes.hpp"
 #include "physical_model_flame_coupling.hpp"
+#include "physical_model_interpotential.hpp"
 #include <array>
 #include <ctime>
 #include <experimental/filesystem>
@@ -53,13 +54,17 @@ public:
     size_t full_aggregate_update_frequency;
     bool finished_by_flame;
     std::experimental::filesystem::path output_dir;
-    std::string flame_file;
+    std::string flame_file,interpotential_file;
     bool with_nucleation;
     bool with_collisions;
     bool with_surface_reactions;
     bool with_flame_coupling;
     bool enforce_volume_fraction;
     bool individual_surf_reactions;
+    bool with_potentials,with_external_potentials,with_dynamic_random_charges;
+    bool with_electric_charges;
+    FlameCoupling flame;
+    Interpotential intpotential_info;
 
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
@@ -69,10 +74,11 @@ public:
     [[gnu::pure]] double diffusivity(double) const;
     [[gnu::pure]] static double relax_time(double masse, double);
     [[gnu::pure]] double mobility_diameter(double aggregate_volume, double sphere_volume, double sphere_radius) const;
+    [[gnu::pure]] int get_random_charge(double mobility_diameter) const;
     void print() const;
     void update(size_t n_aggregates, double total_volume) noexcept;
     void nucleation(double dt) noexcept;
-    void update_from_flame(const FlameCoupling& flame);
+    void update_from_flame();
     void update_temperature(double new_temperature) noexcept;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;
     XMF_OUTPUT xmf_write() const;

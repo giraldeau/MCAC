@@ -23,6 +23,7 @@
 #include "sbl/volume_surface.hpp"
 #include "tools/contact_info.hpp"
 #include <list>
+#include "physical_model/physical_model_interpotential.hpp"
 
 
 namespace mcac {
@@ -50,6 +51,7 @@ private:
     double *overlapping;            // Average overlapping coefficient
     double *coordination_number;    // Average coordination number
     double *d_m;                     // Mobility diameter
+    int electric_charge;            // Total agg. electric charge
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
 
@@ -90,6 +92,7 @@ public:
     const double &get_proper_time() const noexcept;
     const size_t &size() const noexcept;
     const size_t &get_label() const noexcept;
+    const int &get_electric_charge() const noexcept;
     /* modifiers */
     void decrease_label() noexcept;
     void set_verlet(Verlet *) noexcept;

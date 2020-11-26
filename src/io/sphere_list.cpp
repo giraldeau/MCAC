@@ -45,6 +45,9 @@ auto SphereList::get_data() const {
     // Set Positions
     spheres_data->setGeometry(the_positions(format_position()));
 
+    // Set electric charge
+    spheres_data->insert(scalar("electric_charge", format_electric_charge()));
+
     // Set Radius
     spheres_data->insert(scalar("Radius", format_get_radius()));
     spheres_data->insert(scalar("Label", format_agg_label()));
@@ -57,6 +60,7 @@ void SphereList::save() {
 }
 DEF_FORMATER_POSITION(SphereList)
 DEF_FORMATER(SphereList, agg_label, long)
+DEF_FORMATER(SphereList, electric_charge, int)
 DEF_FORMATER_FUNC(SphereList, get_radius, double)
 }  // namespace mcac
 
