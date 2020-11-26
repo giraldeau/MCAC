@@ -66,6 +66,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
     random_seed(-1),
+    write_events_frequency_oxid(1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
     output_dir("MCAC_output"),
@@ -120,6 +121,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     }
     inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
     // oxidation
+    inipp::extract(ini.sections["oxidation"]["write_events_frequency_oxid"], write_events_frequency_oxid);
     inipp::extract(ini.sections["oxidation"]["rp_min"], rp_min_oxid);
     // nucleation
     inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
@@ -341,7 +343,8 @@ void PhysicalModel::print() const {
         std::cout << " With surface reations" << std::endl
                   << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
                   << "  u_sg                           : " << u_sg << " (m/s)" << std::endl
-                  << "  Minimum diameter (delete PPs)  : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl;
+                  << "  Minimum diameter (delete PPs)  : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl
+                  << "  write_events_frequency_oxid    : " << write_events_frequency_oxid << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
     }
