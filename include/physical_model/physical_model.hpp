@@ -37,6 +37,7 @@ public:
     double mean_massic_radius, friction_exponnant;
     double time;
     double volume_fraction, box_lenght,box_volume, aggregate_concentration;
+    double rp_min_oxid;     // Minimum d_pp below which the particle disappear
     size_t n_verlet_divisions;
     PickMethods pick_method;
     VolSurfMethods volsurf_method;

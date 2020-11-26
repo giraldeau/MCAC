@@ -211,7 +211,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
 bool Aggregate::croissance_surface(double dt) {
     myspheres.croissance_surface(dt);
     for (const auto& sphere : myspheres) {
-        if (sphere->get_radius() <= 0) {
+        if (sphere->get_radius() <= physicalmodel->rp_min_oxid) {
             remove(sphere->get_index());
             if (myspheres.size() == 0) {
                 return  true;

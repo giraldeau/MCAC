@@ -51,6 +51,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     box_lenght(0.),
     box_volume(0.),
     aggregate_concentration(0.0),
+    rp_min_oxid(0.166e-09),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),
     volsurf_method(VolSurfMethods::NONE),
@@ -118,6 +119,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         throw InputError("Invalid method to calculate Vols/Surf: " + default_str);
     }
     inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
+    // oxidation
+    inipp::extract(ini.sections["oxidation"]["rp_min"], rp_min_oxid);
     // nucleation
     inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
     inipp::extract(ini.sections["nucleation"]["flux"], flux_nucleation);
@@ -337,7 +340,8 @@ void PhysicalModel::print() const {
     if (with_surface_reactions) {
         std::cout << " With surface reations" << std::endl
                   << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
-                  << "  u_sg                           : " << u_sg << " (m/s)" << std::endl;
+                  << "  u_sg                           : " << u_sg << " (m/s)" << std::endl
+                  << "  Minimum diameter (delete PPs)  : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
     }
