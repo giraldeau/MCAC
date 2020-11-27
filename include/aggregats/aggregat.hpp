@@ -122,7 +122,7 @@ public:
     /* other */
     bool merge(std::shared_ptr<Aggregate> other, AggregateContactInfo contact_info) noexcept;
     bool split();
-    void remove(const size_t &id) noexcept;
+    void remove_sphere(const size_t &id) noexcept;
     // void agg_to_sphere() noexcept;
     void print() const noexcept;
     /* Storage specific */

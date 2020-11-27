@@ -41,9 +41,9 @@ public:
     Interpotential();
     explicit Interpotential(const std::string &interpotential_file);
     /* getters */
-    const double get_fixed_Temperature() const noexcept;
-    const int get_max_charge() const noexcept;
-    const int get_min_charge() const noexcept;
+    double get_fixed_Temperature() const noexcept;
+    int get_max_charge() const noexcept;
+    int get_min_charge() const noexcept;
     std::pair<double, double> get_Ebar_Ewell(const double dp1, const double dp2, const int charge1, const int charge2);
 private:
     void set_min_max_charge();

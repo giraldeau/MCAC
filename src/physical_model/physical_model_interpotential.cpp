@@ -88,16 +88,16 @@ Interpotential::Interpotential(const std::string &interpotential_file) : Interpo
     }
 
     // 5th line: val_charge
-    for (int i=0; i<N_charge; i++) {
+    for (size_t i=0; i<N_charge; i++) {
         ext_FILE >> d_temp;
         val_charge[i] = static_cast<int>(d_temp);
     }
     // 6th line: val_dp1
-    for (int i=0; i<N_val_p1; i++) {
+    for (size_t i=0; i<N_val_p1; i++) {
         ext_FILE >> val_dp1[i];
     }
     // 7th line: val_dp2
-    for (int i=0; i<N_val_p2; i++) {
+    for (size_t i=0; i<N_val_p2; i++) {
         ext_FILE >> val_dp2[i];
     }
     // >=8th line: [E_barr, E_well]
@@ -122,13 +122,13 @@ Interpotential::Interpotential(const std::string &interpotential_file) : Interpo
 * Access information
 ********************************************************************************/
 /* getters */
-[[gnu::pure]] const double Interpotential::get_fixed_Temperature() const noexcept {
+[[gnu::pure]] double Interpotential::get_fixed_Temperature() const noexcept {
     return fixed_Temperature;
 }
-[[gnu::pure]] const int Interpotential::get_max_charge() const noexcept {
+[[gnu::pure]] int Interpotential::get_max_charge() const noexcept {
     return max_charge;
 }
-[[gnu::pure]] const int Interpotential::get_min_charge() const noexcept {
+[[gnu::pure]] int Interpotential::get_min_charge() const noexcept {
     return min_charge;
 }
 /********************************************************************************
@@ -165,14 +165,14 @@ std::pair<double, double> Interpotential::get_Ebar_Ewell(const double dp1, const
         throw InterPotentialError("charges out of range");
     }
 
-    int loc_previous_dp1 = std::distance( val_dp1.begin(), previous_dp1 );
-    int loc_next_dp1 = std::distance( val_dp1.begin(), next_dp1 );
+    auto loc_previous_dp1 = static_cast<size_t>(std::distance( val_dp1.begin(), previous_dp1 ));
+    auto loc_next_dp1 = static_cast<size_t>(std::distance( val_dp1.begin(), next_dp1 ));
 
-    int loc_previous_dp2 = std::distance( val_dp2.begin(), previous_dp2 );
-    int loc_next_dp2 = std::distance( val_dp2.begin(), next_dp2 );
+    auto loc_previous_dp2 = static_cast<size_t>(std::distance( val_dp2.begin(), previous_dp2 ));
+    auto loc_next_dp2 = static_cast<size_t>(std::distance( val_dp2.begin(), next_dp2 ));
 
-    int loc_charg1 = std::distance(val_charge.begin(), charg1 );
-    int loc_charg2 = std::distance(val_charge.begin(), charg2 );
+    auto loc_charg1 = static_cast<size_t>(std::distance(val_charge.begin(), charg1 ));
+    auto loc_charg2 = static_cast<size_t>(std::distance(val_charge.begin(), charg2 ));
 
     double delta_dp1 = *next_dp1 - *previous_dp1;
     double delta_dp2 = *next_dp2 - *previous_dp2;
@@ -184,16 +184,16 @@ std::pair<double, double> Interpotential::get_Ebar_Ewell(const double dp1, const
     double E_bar_prev_next = E_barr[loc_charg1][loc_charg2][loc_previous_dp1][loc_next_dp2];
     double E_bar_next_prev = E_barr[loc_charg1][loc_charg2][loc_next_dp1][loc_previous_dp2];
     double E_bar_next_next = E_barr[loc_charg1][loc_charg2][loc_next_dp1][loc_next_dp2];
-    double E_bar = interpolate_2d(E_bar_prev_prev,E_bar_prev_next,E_bar_next_prev,E_bar_next_next,d_dp1_D_dp1,d_dp2_D_dp2);
+    double interpolated_E_bar = interpolate_2d(E_bar_prev_prev,E_bar_prev_next,E_bar_next_prev,E_bar_next_next,d_dp1_D_dp1,d_dp2_D_dp2);
 
     // Interpolate E_well
     double E_well_prev_prev = E_well[loc_charg1][loc_charg2][loc_previous_dp1][loc_previous_dp2];
     double E_well_prev_next = E_well[loc_charg1][loc_charg2][loc_previous_dp1][loc_next_dp2];
     double E_well_next_prev = E_well[loc_charg1][loc_charg2][loc_next_dp1][loc_previous_dp2];
     double E_well_next_next = E_well[loc_charg1][loc_charg2][loc_next_dp1][loc_next_dp2];
-    double E_well = interpolate_2d(E_well_prev_prev,E_well_prev_next,E_well_next_prev,E_well_next_next,d_dp1_D_dp1,d_dp2_D_dp2);
+    double interpolated_E_well = interpolate_2d(E_well_prev_prev,E_well_prev_next,E_well_next_prev,E_well_next_next,d_dp1_D_dp1,d_dp2_D_dp2);
 
-    return std::make_pair(E_bar, E_well);
+    return std::make_pair(interpolated_E_bar, interpolated_E_well);
 }
 }  // namespace mcac
 

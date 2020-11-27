@@ -26,7 +26,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
  Beyond managing its properties, it can compute
  - its distance to a point or an another sphere
- - its intersection with an another sphere (volume and surface) (TODO : NOT CORRECTLY COMPUTED)
+ - its intersection with an another sphere (volume and surface)
  - detect a collision with an another sphere
 
 */

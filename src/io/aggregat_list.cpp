@@ -28,6 +28,8 @@ extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
 extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                         const std::vector<int> &formated_field);
 extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
+                                                        const std::vector<long> &formated_field);
+extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                         const std::vector<size_t> &formated_field);
 extern template boost::shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                                     const double &value);
@@ -80,8 +82,8 @@ DEF_FORMATER_PTR(AggregatList, proper_time, double)
 DEF_FORMATER_PTR(AggregatList, overlapping, double)
 DEF_FORMATER_PTR(AggregatList, d_m, double)
 DEF_FORMATER(AggregatList, electric_charge, int)
-DEF_FORMATER(AggregatList, n_spheres, int)
-DEF_FORMATER(AggregatList, label, int)
+DEF_FORMATER(AggregatList, n_spheres, long)
+DEF_FORMATER(AggregatList, label, long)
 #else
 
 

@@ -98,7 +98,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ L2 - Loop on orientations
         std::array<double, 3> vectdir = {{0,0,0}};
         bool effective_move = false;
-        double move_distance;
+        double move_distance = full_distance;
         int n_try(0);
         bool contact = false;
         AggregateContactInfo next_contact;
@@ -144,10 +144,10 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ Surface reactions and splitting
         if (physicalmodel.with_surface_reactions) {
             if (physicalmodel.individual_surf_reactions) {
-                disappear = aggregates.croissance_surface_individual(deltatemps_indiv,num_agg);
+                disappear = aggregates.croissance_surface(deltatemps_indiv, num_agg);
                 //$ Maybe will be modified later -> spliting only happens when u_sg is negative
                 if((physicalmodel.u_sg < 0.0) && !disappear) {
-                    split = aggregates.split_individual(num_agg);
+                    split = aggregates.split(num_agg);
                 }
             } else {
                 disappear = aggregates.croissance_surface(deltatemps);
@@ -194,7 +194,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             physicalmodel.nucleation(deltatemps);
             if (physicalmodel.nucleation_accum > 1.0) {
                 nucleation = true;
-                monomers_to_add = std::floor(physicalmodel.nucleation_accum);
+                monomers_to_add = static_cast<int>(std::floor(physicalmodel.nucleation_accum));
                 physicalmodel.nucleation_accum -= static_cast<double>(monomers_to_add);
             }
         }

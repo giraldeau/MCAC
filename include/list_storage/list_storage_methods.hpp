@@ -191,7 +191,7 @@ ListStorage<N, elem>::~ListStorage() noexcept {
 /** Copy constructor */
 template<int N, class elem>
 template<class mylist>
-ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &owner, mylist &ext_storage) noexcept:
+ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &ext_storage) noexcept:
     list(),
     storage(ext_storage.storage),
     external_storage(&ext_storage) {

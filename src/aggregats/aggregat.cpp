@@ -212,7 +212,7 @@ bool Aggregate::croissance_surface(double dt) {
     myspheres.croissance_surface(dt);
     for (const auto& sphere : myspheres) {
         if (sphere->get_radius() <= physicalmodel->rp_min_oxid) {
-            remove(sphere->get_index());
+            remove_sphere(sphere->get_index());
             if (myspheres.size() == 0) {
                 return  true;
             }
@@ -585,7 +585,7 @@ bool Aggregate::split() {
     }
     return have_splitted;
 }
-void Aggregate::remove(const size_t &id) noexcept {
+void Aggregate::remove_sphere(const size_t &id) noexcept {
     for (size_t local_id = 0; local_id < n_spheres; local_id++) {
         if (myspheres[local_id]->index_in_storage == id) {
             myspheres.list.erase(myspheres.list.begin() + long(local_id));

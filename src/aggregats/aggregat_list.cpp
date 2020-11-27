@@ -206,10 +206,11 @@ bool AggregatList::merge(AggregateContactInfo contact_info) {
         return false;
     }
 
-    const size_t _keeped(std::min(moving_sphere->agg_label,
-                             other_sphere->agg_label));
-    const size_t _removed(std::max(moving_sphere->agg_label,
-                                   other_sphere->agg_label));
+    auto _keeped = static_cast<const size_t>(std::min(moving_sphere->agg_label,
+                                                      other_sphere->agg_label));
+    auto _removed = static_cast<const size_t>(std::max(moving_sphere->agg_label,
+                                                       other_sphere->agg_label));
+
 
     // compute proper time of the final aggregate
     // keeping global time constant
@@ -252,7 +253,7 @@ bool AggregatList::split() {
     }
     return has_splitted;
 }
-bool AggregatList::split_individual(size_t numagg) {
+bool AggregatList::split(const size_t numagg) {
     // The split function will create the new aggregates
     if (list[numagg]->split()) {
         // but we still have to destroy the current one
@@ -370,7 +371,7 @@ bool AggregatList::croissance_surface(double dt) {
     }
     return removed_aggregate;
 }
-bool AggregatList::croissance_surface_individual(const double dt, const size_t index) {
+bool AggregatList::croissance_surface(const double dt, const size_t index) {
     if (list[index]->croissance_surface(dt)){
         remove(index);
         setpointers();

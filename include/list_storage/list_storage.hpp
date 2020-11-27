@@ -61,7 +61,7 @@ public:
     ~ListStorage() noexcept;
     /** Copy constructor with external storage */
     template<class mylist>
-    ListStorage(const ListStorage &other, mylist &owner, mylist &storage) noexcept;
+    ListStorage(const ListStorage &other, mylist &storage) noexcept;
     /** Move constructor */
     ListStorage(ListStorage &&other) noexcept;
     /** Move assignment operator */

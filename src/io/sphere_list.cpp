@@ -26,6 +26,8 @@
 
 namespace mcac {
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
+                                                 const std::vector<int> &formated_field);
+extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                  const std::vector<double> &formated_field);
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
                                                  const std::vector<long> &formated_field);

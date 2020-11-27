@@ -69,6 +69,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     write_events_frequency_oxid(1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
+    finished_by_flame(false),
     output_dir("MCAC_output"),
     flame_file("flame_input"),
     interpotential_file("interpotential_file"),
@@ -76,13 +77,12 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     with_collisions(true),
     with_surface_reactions(false),
     with_flame_coupling(false),
+    enforce_volume_fraction(true),
+    individual_surf_reactions(false),
     with_potentials(false),
     with_external_potentials(false),
     with_dynamic_random_charges(false),
-    with_electric_charges(false),
-    finished_by_flame(false),
-    individual_surf_reactions(false),
-    enforce_volume_fraction(true) {
+    with_electric_charges(false){
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -496,7 +496,7 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     double kbT = _boltzmann * temperature;
     double sigma_q = std::sqrt(d_m * kbT / (2.0*_dit_boltzmann_Ke_e2));
     double mean_q = 0.0;
-    int rand_normal = std::round(random_normal(mean_q, sigma_q));
+    int rand_normal = static_cast<int>(std::round(random_normal(mean_q, sigma_q)));
 
     rand_normal = std::min(std::max(rand_normal,
                                     intpotential_info.get_min_charge()),
