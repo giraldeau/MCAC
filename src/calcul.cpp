@@ -35,6 +35,7 @@ static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggrega
             << " " << physicalmodel.volume_fraction
             << " " << aggregates.get_avg_npp()
             << " " << physicalmodel.temperature
+            << " " << physicalmodel.box_volume
             << std::endl;
     outfile.close();
 }
