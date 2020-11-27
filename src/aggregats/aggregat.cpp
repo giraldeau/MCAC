@@ -303,9 +303,15 @@ void Aggregate::compute_volume_surface() {
         exit(ErrorCodes::SBL_ERROR);
 #endif
     } else if (physicalmodel->volsurf_method == VolSurfMethods::EXACT_ARVO) {
+#ifdef WITH_ARVO
         auto volume_surface(arvo_call(myspheres, distances));
         volumes = volume_surface.first;
         surfaces = volume_surface.second;
+#else
+        std::cout << "  ERROR ARVO not available - activate it when doing cmake (cmake -DWITH_ARVO=ON ..)" << std::endl;
+        exit(ErrorCodes::ARVO_ERROR);
+#endif
+
     } else {
         //$ For the Spheres i in Agg Id
         for (size_t i = 0; i < n_spheres; i++) {

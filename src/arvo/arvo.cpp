@@ -22,6 +22,7 @@
  * Rouen, France - 20.04.2020
  *
  */
+#ifdef WITH_ARVO
 
 #include <stdio.h>
 #include <string.h>
@@ -793,3 +794,4 @@ void main_arvo(const double sph[],
     return;
 }
 }
+#endif WITH_ARVO

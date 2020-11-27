@@ -77,6 +77,7 @@ enum ErrorCodes {
     SBL_ERROR,
     VOL_SURF_ERROR,
     MERGE_ERROR,
+    ARVO_ERROR,
     InterPotential_ERROR
 };
 enum InterPotentialRegime {

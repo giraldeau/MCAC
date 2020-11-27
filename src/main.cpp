@@ -32,10 +32,13 @@ int main(int argc, char *argv[]) {
         std::cout << "Missing argument : param file." << std::endl;
         return mcac::ErrorCodes::INPUT_ERROR;
     }
+#ifndef DEBUG_MCAC
     try {
+#endif
         mcac::PhysicalModel physicalmodel(argv[1]);
         mcac::AggregatList aggregates(&physicalmodel);
         mcac::calcul(physicalmodel, aggregates);
+#ifndef DEBUG_MCAC
     }
     catch (const mcac::AbandonError &e) {
         return e.code;
@@ -48,5 +51,6 @@ int main(int argc, char *argv[]) {
         std::cout << e.what() << std::endl;
         return mcac::ErrorCodes::UNKNOWN_ERROR;
     }
+#endif
     return mcac::ErrorCodes::NO_ERROR;
 }

@@ -17,6 +17,7 @@
  */
 #ifndef INCLUDE_ARVO_MCAC_CALL_HPP
 #define INCLUDE_ARVO_MCAC_CALL_HPP 1
+#ifdef WITH_ARVO
 #include "spheres/sphere_list.hpp"
 #include "arvo/arvo.hpp"
 #include <vector>
@@ -28,4 +29,5 @@ std::pair<std::vector<double>, std::vector<double>>
 arvo_call(const SphereList &spherelist,
           const std::vector<std::unordered_map<size_t, double>> &distances);
 }
+#endif
 #endif //INCLUDE_ARVO_MCAC_CALL_HPP
