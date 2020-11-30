@@ -343,7 +343,7 @@ void PhysicalModel::print() const {
         std::cout << " With surface reations" << std::endl
                   << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
                   << "  u_sg                           : " << u_sg << " (m/s)" << std::endl
-                  << "  Minimum diameter (delete PPs)  : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl
+                  << "  Minimum radius (delete PPs)    : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl
                   << "  write_events_frequency_oxid    : " << write_events_frequency_oxid << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
