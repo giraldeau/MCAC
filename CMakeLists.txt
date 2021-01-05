@@ -60,6 +60,15 @@ ExternalProject_Add(cgal_project
     EXCLUDE_FROM_ALL ON
 )
 
+ExternalProject_Add(libunwind_project
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/libunwind
+    INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/libunwind
+    GIT_TAG v1.5
+    GIT_REPOSITORY https://github.com/libunwind/libunwind.git
+    CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ext/libunwind/autogen.sh COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ext/libunwind/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/libunwind
+    EXCLUDE_FROM_ALL ON
+)
+
 
 add_subdirectory(src)
 
