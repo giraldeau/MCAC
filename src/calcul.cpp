@@ -196,6 +196,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 nucleation = true;
                 monomers_to_add = static_cast<int>(std::floor(physicalmodel.nucleation_accum));
                 physicalmodel.nucleation_accum -= static_cast<double>(monomers_to_add);
+                aggregates.add(monomers_to_add);
+                aggregates.sort_time_steps(aggregates.get_max_time_step());
             }
         }
 
