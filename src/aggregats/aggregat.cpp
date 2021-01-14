@@ -118,11 +118,12 @@ void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
 }
 void Aggregate::set_bulk_density() noexcept {
     double newdensity(0.0);
+    double dpp_nm = (*dp)*1e+09;
     if (physicalmodel->with_maturity){
-        newdensity = (-4.30e-04)*std::pow(*dp,4) +
-                (9.12e-02)*std::pow(*dp,3) +
-                (-3.01e+00)*std::pow(*dp,2) +
-                (4.33e+01)*(*dp) + 1.37e+03;
+        newdensity = (-4.30e-04)*std::pow(dpp_nm,4) +
+                (9.12e-02)*std::pow(dpp_nm,3) +
+                (-3.01e+00)*std::pow(dpp_nm,2) +
+                (4.33e+01)*(dpp_nm) + 1.37e+03;
     } else {
         newdensity = physicalmodel->density;
     }
