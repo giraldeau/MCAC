@@ -65,6 +65,7 @@ public:
     bool individual_surf_reactions;
     bool with_potentials,with_external_potentials,with_dynamic_random_charges;
     bool with_electric_charges;
+    bool with_maturity;
     FlameCoupling flame;
     Interpotential intpotential_info;
 

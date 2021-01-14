@@ -82,7 +82,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     with_potentials(false),
     with_external_potentials(false),
     with_dynamic_random_charges(false),
-    with_electric_charges(false){
+    with_electric_charges(false),
+    with_maturity(false){
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -152,6 +153,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["inter_potential"]["with_external_potentials"], with_external_potentials);
     inipp::extract(ini.sections["inter_potential"]["with_dynamic_random_charges"], with_dynamic_random_charges);
     inipp::extract(ini.sections["inter_potential"]["interpotential_file"], interpotential_file);
+    inipp::extract(ini.sections["inter_potential"]["with_maturity"], with_maturity);
     // flame coupling
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
