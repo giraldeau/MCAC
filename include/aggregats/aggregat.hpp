@@ -54,6 +54,7 @@ private:
     int electric_charge;            // Total agg. electric charge
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
+    double bulk_density;
 
 #ifdef FULL_INTERNAL_DISTANCES
     std::vector<std::vector<double> > distances;
@@ -98,6 +99,7 @@ public:
     void set_verlet(Verlet *) noexcept;
     void unset_verlet() noexcept;
     void set_proper_time(double newtime) noexcept;
+    void set_bulk_density() noexcept;
     void time_forward(double deltatemps) noexcept;
     void set_position(const std::array<double, 3> &position) noexcept;
     void translate(std::array<double, 3> vector) noexcept;

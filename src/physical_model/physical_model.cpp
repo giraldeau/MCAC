@@ -338,6 +338,11 @@ void PhysicalModel::print() const {
         } else {
             std::cout << "  - Without dynamic random charges " << std::endl;
         }
+        if (with_maturity) {
+            std::cout << "  - With maturity (density changing in time) " << std::endl;
+        } else {
+            std::cout << "  - Without maturity (constant density)" << std::endl;
+        }
     } else {
         std::cout << " Without interaction potentials" << std::endl;
     }

@@ -116,6 +116,18 @@ void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
         update_verlet();
     }
 }
+void Aggregate::set_bulk_density() noexcept {
+    double newdensity(0.0);
+    if (physicalmodel->with_maturity){
+        newdensity = (-4.30e-04)*std::pow(*dp,4) +
+                (9.12e-02)*std::pow(*dp,3) +
+                (-3.01e+00)*std::pow(*dp,2) +
+                (4.33e+01)*(*dp) + 1.37e+03;
+    } else {
+        newdensity = physicalmodel->density;
+    }
+    bulk_density = newdensity;
+}
 void Aggregate::translate(std::array<double, 3> vector) noexcept {
     // move the aggregate
     set_position(get_position() + vector);
@@ -240,12 +252,14 @@ void Aggregate::update_partial() noexcept {
     *dp = 2 * (*dp) / double(n_spheres);
     vol_pp = vol_pp / double(n_spheres);
 
+    set_bulk_density();
+
     //$ Determination of the friction coefficient
     *f_agg = physicalmodel->friction_coeff(*agregat_volume, vol_pp, 0.5 * (*dp));
     *d_m = physicalmodel->mobility_diameter(*agregat_volume, vol_pp, 0.5 * (*dp));
 
     // Momentum relaxation time and lpm (persistent distance)
-    double masse = physicalmodel->density * (*agregat_volume);
+    double masse = bulk_density * (*agregat_volume);
     double relax_time = mcac::PhysicalModel::relax_time(masse, *f_agg);
     *time_step = 3. * relax_time;
     double diffusivity = physicalmodel->diffusivity(*f_agg);
