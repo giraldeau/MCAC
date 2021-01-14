@@ -25,7 +25,7 @@
 #include "exceptions.hpp"
 #include "arvo/arvo_mcac_call.hpp"
 #include <iostream>
-
+#include <string.h>
 
 namespace mcac {
 /* getters */
@@ -125,6 +125,9 @@ void Aggregate::set_bulk_density() noexcept {
                 (4.33e+01)*(*dp) + 1.37e+03;
     } else {
         newdensity = physicalmodel->density;
+    }
+    if (newdensity < 1200 || newdensity > 1800){
+        throw InputError("Problem with bulk density: " + std::to_string(newdensity));
     }
     bulk_density = newdensity;
 }
