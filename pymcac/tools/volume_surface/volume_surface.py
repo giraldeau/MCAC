@@ -28,6 +28,8 @@ from skimage import measure
 
 from pymcac.tools.discretize import discretize
 
+import multiprocessing
+
 
 def volume_surface_sbl(spheres: Union[pd.DataFrame, np.ndarray],
                        aggregate: Optional[pd.Series] = None):
@@ -44,7 +46,28 @@ def volume_surface_sbl(spheres: Union[pd.DataFrame, np.ndarray],
     if isinstance(spheres, pd.DataFrame):
         spheres = spheres[cols].values.copy()
 
-    return compute_volume_surface_sbl(spheres)
+    def thread_shield(spheres, volume, surface):
+        _volume, _surface = compute_volume_surface_sbl(spheres)
+        volume.value = _volume
+        surface.value = _surface
+
+    with multiprocessing.Manager() as manager:
+        volume = manager.Value(float, 0.)
+        surface = manager.Value(float, 0.)        
+        p = multiprocessing.Process(target=thread_shield, args=(spheres, volume, surface))
+        p.start()
+        p.join()
+        if p.exitcode:
+            print("retrying")
+            # there is at least one contact point that make sbl crash
+            spheres += 1e-10
+            p = multiprocessing.Process(target=thread_shield, args=(spheres, volume, surface))
+            p.start()
+            p.join()
+        if p.exitcode:
+            raise RuntimeError("SBL is crashing")
+
+        return volume.value, surface.value
 
 
 def volume_surface_disc(spheres: pd.DataFrame,
@@ -82,5 +105,6 @@ try:
     WithSBL = True
     volume_surface = volume_surface_sbl
 except ImportError:
+    print("SBL unavailable")
     WithSBL = False
     volume_surface = volume_surface_disc
