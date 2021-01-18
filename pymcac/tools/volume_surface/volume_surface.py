@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 from skimage import measure
 
-from pymcac.tools.discretize import discretize
+from pymcac.tools.discretize import discretize_spherelist
 
 import multiprocessing
 
@@ -70,7 +70,7 @@ def volume_surface_sbl(spheres: Union[pd.DataFrame, np.ndarray],
         return volume.value, surface.value
 
 
-def volume_surface_disc(spheres: pd.DataFrame,
+def volume_surface_disc(spheres: Union[pd.DataFrame, np.ndarray],
                         aggregate: Optional[pd.Series] = None,
                         resolution: int = 128,
                         alphagangue: float = 0):
@@ -79,21 +79,30 @@ def volume_surface_disc(spheres: pd.DataFrame,
 
         alphagangue is a parameter allowing some gangue around the aggregate
     """
+    cols = ["Posx", "Posy", "Posz", "Radius"]
+    if aggregate is not None:
+        t, label = aggregate.name
 
-    data, (x, y, z) = discretize(spheres, aggregate,
-                                 resolution=resolution, alphagangue=alphagangue)
+        # get the spheres of the given aggregate
+        spheres = spheres[spheres["Label"] == label].loc[t]
+
+    if isinstance(spheres, pd.DataFrame):
+        spheres = spheres[cols].values.copy()
+
+    data, (x, y, z) = discretize_spherelist(spheres,
+                                            resolution=resolution,
+                                            alphagangue=alphagangue)
 
     dx = abs(x[0, 0, 0] - x[1, 0, 0])
     dy = abs(y[0, 0, 0] - y[0, 1, 0])
     dz = abs(z[0, 0, 0] - z[0, 0, 1])
 
-    dvol = dx*dy*dy
+    dvol = dx*dy*dz
 
     volume = data.sum() * dvol
 
     # compute the 3d surface of the aggregate
-    verts, faces, *_ = measure.marching_cubes_lewiner(data, 0.,
-                                                      spacing=(dx, dy, dz))
+    verts, faces, *_ = measure.marching_cubes(data, 0., spacing=(dx, dy, dz))
 
     surface = measure.mesh_surface_area(verts, faces)
 

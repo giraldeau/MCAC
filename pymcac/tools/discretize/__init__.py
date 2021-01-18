@@ -21,7 +21,7 @@
 This library discretize a list of sphere
 """
 
-from .discretize import discretize
+from .discretize import discretize, discretize_spherelist
 
 
-__all__ = ["discretize"]
+__all__ = ["discretize", "discretize_spherelist"]
