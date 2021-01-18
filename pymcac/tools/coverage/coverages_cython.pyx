@@ -47,7 +47,7 @@ cdef double _coverage(const double* X,
         return 0
 
 
-def coverages_cython(const int[::1]& Aggs,
+def coverages_cython(const long[::1]& Aggs,
                      const double[::1]& X,
                      const double[::1]& Y,
                      const double[::1]& Z,
