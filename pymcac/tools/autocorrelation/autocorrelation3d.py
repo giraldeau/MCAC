@@ -28,7 +28,7 @@ import os
 from queue import Empty
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import numpy as np
 
 from pymcac.tools.volume_surface import volume_surface
@@ -290,11 +290,11 @@ if __name__ == "__main__":
     from pymcac import autocorrelation3d
 
     # The folder with all .h5 and .xmf files
-    data_dir = Path("python-analysis/output_dir/")
+    MCACSimulation = MCAC("examples_data/classic/")
 
     # Read all data
-    Spheres, Aggregates = MCAC(data_dir).read()
-
+    Spheres, Aggregates = MCACSimulation.spheres, MCACSimulation.aggregates
+    
     last_agg = Aggregates.iloc[-1]
 
     _radius, _volumes = autocorrelation3d(Spheres, last_agg)
