@@ -61,4 +61,5 @@ except CalledProcessError:
 else:
     # Add the version from git
     # --------------------------------
-    setup(use_scm_version={'write_to': 'pymcac/version.py'})
+    setup(use_scm_version={'write_to': 'pymcac/version.py',
+			   "fallback_version": "UNKNOWN"})
