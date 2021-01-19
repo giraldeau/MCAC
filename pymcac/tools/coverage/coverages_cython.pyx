@@ -1,13 +1,13 @@
-# coding=utf-8
-"""
-Compute the overlapping coefficient COV
-"""
 # cython: language_level=3
 # cython: initializedcheck=False
 # cython: binding=True
 # cython: nonecheck=False
 # cython: boundscheck=False
 # cython: wraparound=False
+# coding=utf-8
+"""
+Compute the overlapping coefficient COV
+"""
 
 import numpy as np
 cimport numpy as np
