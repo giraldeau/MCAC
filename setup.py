@@ -28,7 +28,7 @@ sbl = Extension(name='pymcac.tools.volume_surface.sbl_wrapper',
                               "/opt/cgal/include"],
                 library_dirs=["/opt/cgal/lib64"],
                 extra_compile_args=["-fopenmp", "-O3", "-frounding-math", "-DNDEBUG"],
-                libraries=["CGAL", "mpfr", "gmp"],
+                libraries=["mpfr", "gmp"],
                 extra_link_args=["-fopenmp"],
                 language="c++")
 # noinspection PyUnusedName
