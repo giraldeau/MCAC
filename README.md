@@ -159,6 +159,10 @@ You can activate it with
 
     scl enable devtoolset-9 bash
 
+If you need SBL, you'll have to add this option to cmake
+
+     cmake .. -DBoost_INCLUDE_DIR=/usr/include/boost169
+
 ### Myria
 
 You'll need the following module
