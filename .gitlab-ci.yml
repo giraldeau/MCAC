@@ -34,7 +34,7 @@ include:
 
 
 code_quality:
-  stage: test
+  stage: Test
   artifacts:
     paths: [gl-code-quality-report.json]
 
