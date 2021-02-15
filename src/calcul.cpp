@@ -166,7 +166,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         }
 
         //$ Update if not already done
-        if (!merge && !split &&
+        if (!merge && !split && !disappear &&
            (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling)) {
             if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
                 if (physicalmodel.individual_surf_reactions) {
