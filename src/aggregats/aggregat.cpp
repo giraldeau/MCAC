@@ -681,6 +681,8 @@ void Aggregate::print() const noexcept {
     std::cout << "    Delta t           : " << *time_step << std::endl;
     std::cout << "    Volume            : " << *agregat_volume << std::endl;
     std::cout << "    Surface           : " << *agregat_surface << std::endl;
+    std::cout << "    C/H ratio         : " << *CH_ratio << std::endl;
+    std::cout << "    bulk density      : " << bulk_density << std::endl;
     std::cout << "    Position          : " << *x << " " << *y << " " << *z << std::endl;
     std::cout << "    Proper time       : " << *proper_time << std::endl;
     myspheres.print();
