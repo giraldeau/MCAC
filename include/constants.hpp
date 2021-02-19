@@ -119,5 +119,9 @@ const double _sutterland_interpolation_constant = 110;
 const double _pressure_ref = 101300;
 const double _viscosity_ref = 18.203E-6;
 const double _dit_boltzmann_Ke_e2 = 9.0e+09*std::pow(1.60217662e-19,2);   // N*m^2*C^2/C^2 = N*m^2
+const double _CH_mature = 10;
+const double _CH_young = 1.1;
+const double _bulk_density_mature = 1800;
+const double _bulk_density_young = 1200;
 }  //namespace mcac
 #endif //INCLUDE_CONSTANTS_HPP
