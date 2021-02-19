@@ -100,6 +100,7 @@ public:
     void unset_verlet() noexcept;
     void set_proper_time(double newtime) noexcept;
     void set_bulk_density() noexcept;
+    void set_CH_ratio() noexcept;
     void time_forward(double deltatemps) noexcept;
     void set_position(const std::array<double, 3> &position) noexcept;
     void translate(std::array<double, 3> vector) noexcept;

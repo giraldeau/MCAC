@@ -118,6 +118,7 @@ void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
 }
 void Aggregate::set_bulk_density() noexcept {
     double newdensity(0.0);
+    /*
     double dpp_nm = (*dp)*1e+09;
     if (physicalmodel->with_maturity){
         newdensity = (-4.30e-04)*std::pow(dpp_nm,4) +
@@ -127,10 +128,24 @@ void Aggregate::set_bulk_density() noexcept {
     } else {
         newdensity = physicalmodel->density;
     }
-    if (newdensity < 1200 || newdensity > 1800){
+    */
+    if (physicalmodel->with_maturity){
+        set_CH_ratio();
+        newdensity = _bulk_density_young+
+                (_bulk_density_mature-_bulk_density_young)/(_CH_mature-_CH_young) *
+                ((*CH_ratio)-_CH_young);
+    } else {
+        newdensity = physicalmodel->density;
+    }
+    if (newdensity < _bulk_density_young || newdensity > _bulk_density_mature){
         throw InputError("Problem with bulk density: " + std::to_string(newdensity));
     }
     bulk_density = newdensity;
+}
+void Aggregate::set_CH_ratio() noexcept {
+    const double a(4.0), b(1.0);
+    double dpp_nm = (*dp)*1e+09;
+    *CH_ratio = 0.5*(std::erf((dpp_nm-a)/b)+1.0)*(_CH_mature-_CH_young)+_CH_young;
 }
 void Aggregate::translate(std::array<double, 3> vector) noexcept {
     // move the aggregate
