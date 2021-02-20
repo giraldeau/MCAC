@@ -64,6 +64,7 @@ enum AggregatesFields {
     AGGREGAT_COORDINATION_NUMBER,
     AGGREGAT_ELECTRIC_CHARGE,
     AGGREGAT_D_M,
+    AGGREGAT_CH_RATIO,
     AGGREGAT_NFIELDS
 };
 enum ErrorCodes {

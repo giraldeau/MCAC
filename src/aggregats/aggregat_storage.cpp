@@ -41,6 +41,7 @@ void Aggregate::setpointers() noexcept {
     overlapping = &(*storage)[AggregatesFields::AGGREGAT_OVERLAPPING][index_in_storage];
     coordination_number = &(*storage)[AggregatesFields::AGGREGAT_COORDINATION_NUMBER][index_in_storage];
     d_m = &(*storage)[AggregatesFields::AGGREGAT_D_M][index_in_storage];
+    CH_ratio = &(*storage)[AggregatesFields::AGGREGAT_CH_RATIO][index_in_storage];
 }
 Aggregate::Aggregate() noexcept:
     ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(),
