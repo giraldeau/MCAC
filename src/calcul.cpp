@@ -68,6 +68,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         }
         if (event) {
             if (aggregates.size() <= multiply_threshold &&
+                    physicalmodel.with_domain_duplication &&
                     !(physicalmodel.u_sg < 0.0)) {
                 std::cout << "Duplication : " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates";

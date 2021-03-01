@@ -57,6 +57,7 @@ public:
     bool finished_by_flame;
     std::experimental::filesystem::path output_dir;
     std::string flame_file,interpotential_file;
+    bool with_domain_duplication;
     bool with_nucleation;
     bool with_collisions;
     bool with_surface_reactions;
