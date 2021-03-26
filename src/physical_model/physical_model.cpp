@@ -51,6 +51,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     box_lenght(0.),
     box_volume(0.),
     aggregate_concentration(0.0),
+    monomer_concentration(0.0),
     rp_min_oxid(0.166e-09),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),
@@ -220,6 +221,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number concentration
     aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
+    monomer_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
 
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
@@ -393,8 +395,9 @@ void PhysicalModel::print() const {
     }
     std::cout << std::endl;
 }
-void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
+void PhysicalModel::update(size_t n_aggregates, size_t n_monomers, double total_volume) noexcept {
     aggregate_concentration = static_cast<double>(n_aggregates) / box_volume;
+    monomer_concentration = static_cast<double>(n_monomers) / box_volume;
     volume_fraction = total_volume / box_volume;
 }
 void PhysicalModel::nucleation(double dt) noexcept {

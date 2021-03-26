@@ -36,6 +36,9 @@ static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggrega
             << " " << aggregates.get_avg_npp()
             << " " << physicalmodel.temperature
             << " " << physicalmodel.box_volume
+            << " " << physicalmodel.monomer_concentration
+            << " " << physicalmodel.u_sg
+            << " " << physicalmodel.flux_nucleation
             << std::endl;
     outfile.close();
 }
@@ -235,7 +238,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ Update physical model
         if (event
             || physicalmodel.with_surface_reactions) {
-            physicalmodel.update(aggregates.size(), aggregates.get_total_volume());
+            physicalmodel.update(aggregates.size(), aggregates.spheres.size(), aggregates.get_total_volume());
         }
         if (physicalmodel.with_flame_coupling) {
             physicalmodel.update_from_flame();
