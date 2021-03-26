@@ -53,18 +53,16 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
         if (physicalmodel.n_iter_without_event % physicalmodel.write_between_event_frequency == 0) {
-            if(physicalmodel.u_sg < 0.0) {
-                // When there is oxidation we save info with a certain frequency only
-                if (total_events % physicalmodel.write_events_frequency_oxid == 0){
-                    aggregates.spheres.save();
-                    aggregates.save();
-                    save_advancement(physicalmodel, aggregates);
-                }
-            } else {
+            // When there is oxidation we save info with a certain frequency only
+            if (total_events % physicalmodel.write_events_frequency == 0){
                 aggregates.spheres.save();
                 aggregates.save();
                 save_advancement(physicalmodel, aggregates);
             }
+        } else {
+            aggregates.spheres.save();
+            aggregates.save();
+            save_advancement(physicalmodel, aggregates);
         }
         if (event) {
             if (aggregates.size() <= multiply_threshold &&

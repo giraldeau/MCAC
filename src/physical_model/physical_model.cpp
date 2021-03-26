@@ -66,7 +66,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
     random_seed(-1),
-    write_events_frequency_oxid(1),
+    write_events_frequency(1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
     finished_by_flame(false),
@@ -123,7 +123,6 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     }
     inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
     // oxidation
-    inipp::extract(ini.sections["oxidation"]["write_events_frequency_oxid"], write_events_frequency_oxid);
     inipp::extract(ini.sections["oxidation"]["rp_min"], rp_min_oxid);
     // nucleation
     inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
@@ -160,6 +159,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
     // output
+    inipp::extract(ini.sections["output"]["write_events_frequency"], write_events_frequency);
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
     inipp::extract(ini.sections["output"]["write_between_event_frequency"], write_between_event_frequency);
@@ -301,7 +301,8 @@ void PhysicalModel::print() const {
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_lenght << " (m)" << std::endl
               << " FV                              : " << volume_fraction << " (-)" << std::endl
-              << " write_between_event_frequency   : " << write_between_event_frequency << std::endl;
+              << " write_between_event_frequency   : " << write_between_event_frequency << std::endl
+              << " write_events_frequency          : " << write_events_frequency << std::endl;
     if (with_domain_duplication) {
         std::cout << " With domain duplication" << std::endl;
     } else {
@@ -357,8 +358,7 @@ void PhysicalModel::print() const {
         std::cout << " With surface reations" << std::endl
                   << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
                   << "  u_sg                           : " << u_sg << " (m/s)" << std::endl
-                  << "  Minimum radius (delete PPs)    : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl
-                  << "  write_events_frequency_oxid    : " << write_events_frequency_oxid << std::endl;
+                  << "  Minimum radius (delete PPs)    : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
     }

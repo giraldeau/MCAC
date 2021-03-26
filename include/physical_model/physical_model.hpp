@@ -51,7 +51,7 @@ public:
     size_t number_of_aggregates_limit;
     int n_iter_without_event_limit;
     int random_seed;
-    size_t write_events_frequency_oxid;
+    size_t write_events_frequency;
     size_t write_between_event_frequency;
     size_t full_aggregate_update_frequency;
     bool finished_by_flame;
