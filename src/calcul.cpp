@@ -62,10 +62,6 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 aggregates.save();
                 save_advancement(physicalmodel, aggregates);
             }
-        } else {
-            aggregates.spheres.save();
-            aggregates.save();
-            save_advancement(physicalmodel, aggregates);
         }
         if (event) {
             if (aggregates.size() <= multiply_threshold &&
