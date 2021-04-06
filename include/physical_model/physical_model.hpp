@@ -33,7 +33,8 @@ public:
     double flux_surfgrowth, u_sg;                // surface growth molecular flux [kg/m2/s], SG velocity u_sg [m/s]
     double flux_nucleation,nucleation_accum;     // Nucleation flux [#/m^3-flame/s], accumulated nucleation [#]
     double pressure, temperature, gaz_mean_free_path, viscosity, density;
-    double mean_diameter, dispersion_diameter, dispersion_diameter_nucleation;
+    double mean_diameter, dispersion_diameter;
+    double mass_nuclei, mean_diameter_nucleation, dispersion_diameter_nucleation;
     double mean_massic_radius, friction_exponnant;
     double time;
     double volume_fraction, box_lenght,box_volume, aggregate_concentration, monomer_concentration;

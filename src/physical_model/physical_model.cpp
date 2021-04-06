@@ -44,8 +44,10 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     density(1800.),
     mean_diameter(30.),
     dispersion_diameter(1.0),
-    dispersion_diameter_nucleation(1.0),
     mean_massic_radius(0.),
+    mean_diameter_nucleation(5.0),
+    dispersion_diameter_nucleation(1.0),
+    mass_nuclei(0.0),
     friction_exponnant(0.),
     time(0.),
     volume_fraction(1e-3),
@@ -127,9 +129,15 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     // oxidation
     inipp::extract(ini.sections["oxidation"]["rp_min"], rp_min_oxid);
     // nucleation
+    mean_diameter_nucleation = mean_diameter;               // Equal by default unless the user provide them
+    dispersion_diameter_nucleation = dispersion_diameter;   // Equal by default unless the user provide them
+    mass_nuclei = (_pi/6.) * std::pow(mean_diameter_nucleation*(1e-09),3) * density *
+                   std::exp(std::pow(4.5*std::log(dispersion_diameter_nucleation),2));
     inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
     inipp::extract(ini.sections["nucleation"]["flux"], flux_nucleation);
-    inipp::extract(ini.sections["nucleation"]["dispersion_diameter_nucleation"], dispersion_diameter_nucleation);
+    inipp::extract(ini.sections["nucleation"]["mean_diameter"], mean_diameter_nucleation);
+    inipp::extract(ini.sections["nucleation"]["dispersion_diameter"], dispersion_diameter_nucleation);
+    inipp::extract(ini.sections["nucleation"]["mass_nuclei"], mass_nuclei);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
     inipp::extract(ini.sections["limits"]["n_iter_without_event"], n_iter_without_event_limit);
@@ -433,7 +441,8 @@ void PhysicalModel::update_from_flame() {
     // 3. nucleation flux (dN_pp/dt)
     auto next_J_nucl = flame.J_nucl.begin() + (next_t - flame.t_res.begin());
     auto previous_J_nucl = flame.J_nucl.begin() + (previous_t - flame.t_res.begin());
-    flux_nucleation = *previous_J_nucl + t * (*next_J_nucl - *previous_J_nucl) / dt;
+    double flux_nucleation_mass = *previous_J_nucl + t * (*next_J_nucl - *previous_J_nucl) / dt;
+    flux_nucleation = flux_nucleation_mass/mass_nuclei;
 }
 //#####################################################################################################################
 void PhysicalModel::update_temperature(double new_temperature) noexcept {
