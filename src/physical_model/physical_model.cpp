@@ -332,8 +332,9 @@ void PhysicalModel::print() const {
     }
     if (with_nucleation) {
         std::cout << " With nucleation in time" << std::endl
-                  << "   - Dp      : " << mean_diameter_nucleation << " (nm)" << std::endl
-                  << "   - sigmaDp : " << dispersion_diameter_nucleation << " (- Lognormal)" << std::endl;
+                  << "   - Dp          : " << mean_diameter_nucleation << " (nm)" << std::endl
+                  << "   - sigmaDp     : " << dispersion_diameter_nucleation << " (- Lognormal)" << std::endl
+                  << "   - mass_nuclei : " << mass_nuclei << " (kg)" << std::endl;
     } else {
         std::cout << " Without nucleation in time" << std::endl;
     }
