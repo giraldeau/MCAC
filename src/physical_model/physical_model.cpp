@@ -44,6 +44,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     density(1800.),
     mean_diameter(30.),
     dispersion_diameter(1.0),
+    dispersion_diameter_nucleation(1.0),
     mean_massic_radius(0.),
     friction_exponnant(0.),
     time(0.),
@@ -128,6 +129,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     // nucleation
     inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
     inipp::extract(ini.sections["nucleation"]["flux"], flux_nucleation);
+    inipp::extract(ini.sections["nucleation"]["dispersion_diameter_nucleation"], dispersion_diameter_nucleation);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
     inipp::extract(ini.sections["limits"]["n_iter_without_event"], n_iter_without_event_limit);
