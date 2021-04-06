@@ -209,11 +209,11 @@ void Aggregate::nucleation(size_t new_label,
     //random size
     double diameter = 0;
     if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        diameter = random_normal(physicalmodel->mean_diameter,physicalmodel->dispersion_diameter_nucleation);
+        diameter = random_normal(physicalmodel->mean_diameter_nucleation,physicalmodel->dispersion_diameter_nucleation);
     } else if (physicalmodel->monomeres_initialisation_type
                == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         if (physicalmodel->dispersion_diameter_nucleation >= 1.0) {
-            diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter_nucleation,
+            diameter = physicalmodel->mean_diameter_nucleation * std::pow(physicalmodel->dispersion_diameter_nucleation,
                                                                std::sqrt(2.) * inverf(2. * random() - 1.0));
         } else {
             throw InputError("dispersion_diameter_nucleation cannot be lower than 1");
@@ -222,7 +222,7 @@ void Aggregate::nucleation(size_t new_label,
         throw InputError("Monomere initialisation mode unknown");
     }
     if (diameter <= 0) {
-        diameter = physicalmodel->mean_diameter;
+        diameter = physicalmodel->mean_diameter_nucleation;
     }
     diameter *= 1E-9;
     for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
