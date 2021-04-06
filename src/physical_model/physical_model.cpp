@@ -331,7 +331,9 @@ void PhysicalModel::print() const {
         std::cout << " Without individual surf. reactions" << std::endl;
     }
     if (with_nucleation) {
-        std::cout << " With nucleation in time" << std::endl;
+        std::cout << " With nucleation in time" << std::endl
+                  << "   - Dp      : " << mean_diameter_nucleation << " (nm)" << std::endl
+                  << "   - sigmaDp : " << dispersion_diameter_nucleation << " (- Lognormal)" << std::endl;
     } else {
         std::cout << " Without nucleation in time" << std::endl;
     }
