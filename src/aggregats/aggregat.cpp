@@ -172,14 +172,51 @@ void Aggregate::init(size_t new_label,
         diameter = random_normal(physicalmodel->mean_diameter,physicalmodel->dispersion_diameter);
     } else if (physicalmodel->monomeres_initialisation_type
                == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-        // TODO: CHECK WICH ONE TO KEEP
         if (physicalmodel->dispersion_diameter >= 1.0) {
-            // diameter = std::pow(physicalmodel->mean_diameter,
-            //                     std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
             diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
                                                                std::sqrt(2.) * inverf(2. * random() - 1.0));
         } else {
             throw InputError("dispersion_diameter cannot be lower than 1");
+        }
+    } else {
+        throw InputError("Monomere initialisation mode unknown");
+    }
+    if (diameter <= 0) {
+        diameter = physicalmodel->mean_diameter;
+    }
+    diameter *= 1E-9;
+    for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
+        //random position
+        std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
+                                      random() * physicalmodel->box_lenght,
+                                      random() * physicalmodel->box_lenght}};
+        if (external_storage->test_free_space(newpos, diameter * 0.5)) {
+            init(*external_storage->physicalmodel,
+                 &external_storage->spheres,
+                 &external_storage->verlet,
+                 external_storage->physicalmodel->time,
+                 new_label, sphere_index, newpos, diameter);
+            return;
+        }
+    }
+    throw TooDenseError();
+}
+void Aggregate::nucleation(size_t new_label,
+                           size_t sphere_index) {
+    //initialize data
+    set_proper_time(physicalmodel->time);
+
+    //random size
+    double diameter = 0;
+    if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
+        diameter = random_normal(physicalmodel->mean_diameter,physicalmodel->dispersion_diameter_nucleation);
+    } else if (physicalmodel->monomeres_initialisation_type
+               == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
+        if (physicalmodel->dispersion_diameter_nucleation >= 1.0) {
+            diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter_nucleation,
+                                                               std::sqrt(2.) * inverf(2. * random() - 1.0));
+        } else {
+            throw InputError("dispersion_diameter_nucleation cannot be lower than 1");
         }
     } else {
         throw InputError("Monomere initialisation mode unknown");

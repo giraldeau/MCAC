@@ -109,6 +109,8 @@ public:
     //    void init();
     void init(size_t new_label,
               size_t sphere_index);
+    void nucleation(size_t new_label,
+                    size_t sphere_index);
     void init(const PhysicalModel &,
               SphereList *,
               Verlet *,

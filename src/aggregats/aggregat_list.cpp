@@ -74,7 +74,7 @@ void AggregatList::add(size_t n) {
     for (size_t i = 0; i < n; i++) {
         size_t i_agg = initial_n_agg + i;
         size_t i_sph = initial_n_sph + i;
-        list[i_agg]->init(i_agg, i_sph);
+        list[i_agg]->nucleation(i_agg, i_sph);
     }
     refresh();
 }
