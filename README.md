@@ -5,7 +5,7 @@ MCAC is a Monte-Carlo Aggregation Code.
 It's purpose is to produce physical aggregates.
 
 The process goes as follow :
- 1. We initialize some spheres in a box (random position and size)
+ 1. We initialize some spheres in a box (random position and size)  
     At first each sphere is one aggregate
  3. We pick randomly an aggregate
  4. We move the aggregate in a random direction for
@@ -18,8 +18,18 @@ Developers are invited to read the [CONTRIBUTING.md](CONTRIBUTING.md) file for g
 
 WARNING the documentation is outdated and is being rewriting  
 WARNING the the code installation process is under refactoring, and may not work currently
+WARNING validation process and unit testing is under construction
 
-Scientific papers are on their way, based on the [JCIS2020](https://gitlab.coria-cfd.fr/MCAC/MCAC/tree/JCIS2020) version
+## Scientific papers
+
+  * **José Morán, Alexandre Poux, Jérôme Yon,** Impact of the competition between aggregation and surface growth on the morphology of soot particles formed in an ethylene laminar premixed flame  
+    *Journal of Aerosol Science, 2020.* ([10.1016/j.jaerosci.2020.105690](https://doi.org/10.1016/j.jaerosci.2020.105690)).
+ * **J. Morán, J. Yon, A. Poux, F. Corbin, F.-X. Ouf, et al..** Monte Carlo Aggregation Code (MCAC) Part 2: Application to soot agglomeration, highlighting the importance of primary particles.  
+   *Journal of Colloid and Interface Science, Elsevier, 2020, 575, pp.274-285. ⟨[10.1016/j.jcis.2020.04.085](https://dx.doi.org/10.1016/j.jcis.2020.04.085)⟩.* ⟨[hal-02563051](https://hal.archives-ouvertes.fr/hal-02563051)⟩
+ * **J. Morán, J. Yon, A. Poux.** Monte Carlo Aggregation Code (MCAC) Part 1: Fundamentals.  
+   *Journal of Colloid and Interface Science, Elsevier, 2020, 569, pp.184-194.* ⟨[10.1016/j.jcis.2020.02.039](https://dx.doi.org/10.1016/j.jcis.2020.02.039)⟩. ⟨[hal-02494461](https://hal.archives-ouvertes.fr/hal-02494461)⟩
+
+The corresponding code versions are [tagged](https://gitlab.coria-cfd.fr/MCAC/MCAC/-/tags).
 
 ## Dependencies
 
@@ -148,6 +158,31 @@ You need the correct compilation environment for the compilation and execution o
 You can activate it with
 
     scl enable devtoolset-9 bash
+
+If you need SBL, you'll have to add this option to cmake
+
+     cmake .. -DBoost_INCLUDE_DIR=/usr/include/boost169
+
+If you need SBL in pyMCAC, you'll need to apply this:
+
+```diff
+diff --git a/setup.py b/setup.py
+index 34f2b92..e8bad37 100644
+--- a/setup.py
++++ b/setup.py
+@@ -25,8 +25,9 @@ sbl = Extension(name='pymcac.tools.volume_surface.sbl_wrapper',
+                          'pymcac/tools/volume_surface/SBLVolumeSurface.cpp'],
+                 include_dirs=['pymcac/tools/volume_surface',
+                               "ext_bin/sbl/include",
+-                              "/opt/cgal/include"],
+-                library_dirs=["/opt/cgal/lib64"],
++                              "ext_bin/cgal/include",
++                              "/usr/include/boost169"],
++                library_dirs=["ext_bin/cgal/lib64"],
+                 extra_compile_args=["-fopenmp", "-O3", "-frounding-math", "-DNDEBUG"],
+                 libraries=["mpfr", "gmp"],
+                 extra_link_args=["-fopenmp"],
+```
 
 ### Myria
 

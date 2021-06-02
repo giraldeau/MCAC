@@ -3,6 +3,8 @@
 // Jose MORAN, CORIA Laboratory, France, 2020
 // Based on: Computer Physics Communications 183 (2012) 2494–2497
 //********************************************************************************
+#ifdef WITH_ARVO
+
 #include "arvo/arvo_mcac_call.hpp"
 #include "spheres/sphere.hpp"
 #include "tools/tools.hpp"
@@ -35,3 +37,4 @@ arvo_call(const SphereList &spherelist,
     return std::make_pair(volumes, surfaces);
 }
 }  // namespace mcac
+#endif WITH_ARVO

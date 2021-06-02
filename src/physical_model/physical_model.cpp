@@ -35,6 +35,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     fractal_prefactor(1.8),
     flux_surfgrowth(0.),
     u_sg(0.),
+    flux_nucleation(0.),
+    nucleation_accum(0.0),
     pressure(_pressure_ref),
     temperature(_temperature_ref),
     gaz_mean_free_path(_fluid_mean_free_path_ref),
@@ -47,7 +49,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     time(0.),
     volume_fraction(1e-3),
     box_lenght(0.),
+    box_volume(0.),
     aggregate_concentration(0.0),
+    rp_min_oxid(0.166e-09),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),
     volsurf_method(VolSurfMethods::NONE),
@@ -61,15 +65,24 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     mean_monomere_per_aggregate_limit(-1),
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
+    random_seed(-1),
+    write_events_frequency_oxid(1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
+    finished_by_flame(false),
     output_dir("MCAC_output"),
     flame_file("flame_input"),
+    interpotential_file("interpotential_file"),
+    with_nucleation(false),
     with_collisions(true),
     with_surface_reactions(false),
     with_flame_coupling(false),
-    finished_by_flame(false),
-    enforce_volume_fraction(true) {
+    enforce_volume_fraction(true),
+    individual_surf_reactions(false),
+    with_potentials(false),
+    with_external_potentials(false),
+    with_dynamic_random_charges(false),
+    with_electric_charges(false){
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -107,6 +120,12 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         throw InputError("Invalid method to calculate Vols/Surf: " + default_str);
     }
     inipp::extract(ini.sections["surface_growth"]["full_aggregate_update_frequency"], full_aggregate_update_frequency);
+    // oxidation
+    inipp::extract(ini.sections["oxidation"]["write_events_frequency_oxid"], write_events_frequency_oxid);
+    inipp::extract(ini.sections["oxidation"]["rp_min"], rp_min_oxid);
+    // nucleation
+    inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
+    inipp::extract(ini.sections["nucleation"]["flux"], flux_nucleation);
     // limits
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
     inipp::extract(ini.sections["limits"]["n_iter_without_event"], n_iter_without_event_limit);
@@ -114,16 +133,25 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["limits"]["physical_time"], physical_time_limit);
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
+    inipp::extract(ini.sections["numerics"]["individual_surf_reactions"], individual_surf_reactions);
     inipp::extract(ini.sections["numerics"]["with_collisions"], with_collisions);
     inipp::extract(ini.sections["numerics"]["enforce_volume_fraction"], enforce_volume_fraction);
     inipp::extract(ini.sections["numerics"]["n_verlet_divisions"], n_verlet_divisions);
     inipp::extract(ini.sections["numerics"]["pick_method"], default_str);
+    inipp::extract(ini.sections["numerics"]["random_seed"], random_seed);
+    mcac::init_random(random_seed);
     if (default_str != "") {
         pick_method = resolve_pick_method(default_str);
     }
     if (pick_method == PickMethods::INVALID_PICK_METHOD) {
         throw InputError("Invalid pick method: " + default_str);
     }
+    // interaction potentials
+    inipp::extract(ini.sections["inter_potential"]["with_potentials"], with_potentials);
+    inipp::extract(ini.sections["inter_potential"]["with_electric_charges"], with_electric_charges);
+    inipp::extract(ini.sections["inter_potential"]["with_external_potentials"], with_external_potentials);
+    inipp::extract(ini.sections["inter_potential"]["with_dynamic_random_charges"], with_dynamic_random_charges);
+    inipp::extract(ini.sections["inter_potential"]["interpotential_file"], interpotential_file);
     // flame coupling
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
@@ -183,16 +211,34 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
+    box_volume = std::pow(box_lenght,3);
     update_temperature(temperature);
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number concentration
     aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
-    print();
+
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
+
+    // load flame-coupling info.
+    if (with_flame_coupling) {
+        flame = FlameCoupling(flame_file);
+        update_from_flame();
+    }
+
+    // Load inter-potential info
+    if (with_external_potentials) {
+        // load input data
+        intpotential_info = Interpotential(interpotential_file);
+    }
+
     cpu_start = clock();
 }
 [[gnu::pure]] bool PhysicalModel::finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const {
+    if (number_of_aggregates < 1) {
+        std::cout << "All the aggregates disappeared" << std::endl << std::endl;
+        return true;
+    }
     if (with_flame_coupling) {
         if (finished_by_flame) {
             std::cout << "The simulation is finished by the flame coupling" << std::endl;
@@ -250,16 +296,55 @@ void PhysicalModel::print() const {
               << " Initial aggregate concentration : " << aggregate_concentration << " (#/m^3)" << std::endl
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_lenght << " (m)" << std::endl
-              << " FV                              : " << volume_fraction << " (-)" << std::endl;
+              << " FV                              : " << volume_fraction << " (-)" << std::endl
+              << " write_between_event_frequency   : " << write_between_event_frequency << std::endl;
+    if (random_seed < 0) {
+        std::cout << " Seed random numbers: auto" << std::endl;
+    } else {
+        std::cout << " Seed random numbers: " << random_seed << std::endl;
+    }
+    if (individual_surf_reactions) {
+        std::cout << " With individual surf. reactions" << std::endl;
+    } else {
+        std::cout << " Without individual surf. reactions" << std::endl;
+    }
+    if (with_nucleation) {
+        std::cout << " With nucleation in time" << std::endl;
+    } else {
+        std::cout << " Without nucleation in time" << std::endl;
+    }
     if (with_collisions) {
         std::cout << " With collisions" << std::endl;
     } else {
         std::cout << " Without collision" << std::endl;
     }
+    if (with_potentials) {
+        std::cout << " With interaction potentials" << std::endl;
+        if (with_external_potentials) {
+            std::cout << "  - Externally driven: " << std::endl
+                      << "       interpotential_file: " << interpotential_file << std::endl;
+        } else {
+            std::cout << "  - Internally driven " << std::endl;
+        }
+        if (with_electric_charges) {
+            std::cout << "  - Considering electric charges " << std::endl;
+        } else {
+            std::cout << "  - Not considering electric charges " << std::endl;
+        }
+        if (with_dynamic_random_charges) {
+            std::cout << "  - Dynamic random charges " << std::endl;
+        } else {
+            std::cout << "  - Without dynamic random charges " << std::endl;
+        }
+    } else {
+        std::cout << " Without interaction potentials" << std::endl;
+    }
     if (with_surface_reactions) {
         std::cout << " With surface reations" << std::endl
                   << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
-                  << "  u_sg                           : " << u_sg << " (m/s)" << std::endl;
+                  << "  u_sg                           : " << u_sg << " (m/s)" << std::endl
+                  << "  Minimum radius (delete PPs)    : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl
+                  << "  write_events_frequency_oxid    : " << write_events_frequency_oxid << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
     }
@@ -295,10 +380,14 @@ void PhysicalModel::print() const {
     std::cout << std::endl;
 }
 void PhysicalModel::update(size_t n_aggregates, double total_volume) noexcept {
-    aggregate_concentration = static_cast<double>(n_aggregates) / std::pow(box_lenght, 3);
-    volume_fraction = total_volume / std::pow(box_lenght, 3);
+    aggregate_concentration = static_cast<double>(n_aggregates) / box_volume;
+    volume_fraction = total_volume / box_volume;
 }
-void PhysicalModel::update_from_flame(const FlameCoupling &flame) {
+void PhysicalModel::nucleation(double dt) noexcept {
+    double delta_nucl = flux_nucleation * box_volume * dt;
+    nucleation_accum += delta_nucl;
+}
+void PhysicalModel::update_from_flame() {
     auto next_t = std::upper_bound(flame.t_res.begin(), flame.t_res.end(), time);
     if (next_t == flame.t_res.begin()) {
         throw InputError("Initial time not in the flame time range");
@@ -321,6 +410,11 @@ void PhysicalModel::update_from_flame(const FlameCoupling &flame) {
     auto next_u_sg = flame.u_sg.begin() + (next_t - flame.t_res.begin());
     auto previous_u_sg = flame.u_sg.begin() + (previous_t - flame.t_res.begin());
     u_sg = *previous_u_sg + t * (*next_u_sg - *previous_u_sg) / dt;
+
+    // 3. nucleation flux (dN_pp/dt)
+    auto next_J_nucl = flame.J_nucl.begin() + (next_t - flame.t_res.begin());
+    auto previous_J_nucl = flame.J_nucl.begin() + (previous_t - flame.t_res.begin());
+    flux_nucleation = *previous_J_nucl + t * (*next_J_nucl - *previous_J_nucl) / dt;
 }
 //#####################################################################################################################
 void PhysicalModel::update_temperature(double new_temperature) noexcept {
@@ -360,10 +454,13 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     // Based on the molecular flux
     return r + u_sg * dt;
 }
+[[gnu::pure]] double PhysicalModel::friction_exponent(double sphere_radius) const {
+    return 0.689 * (1. + std::erf(((gaz_mean_free_path / sphere_radius) + 4.454) / 10.628));
+}
 [[gnu::pure]] double PhysicalModel::friction_coeff(double aggregate_volume,
                                                    double sphere_volume,
                                                    double sphere_radius) const {
-    double friction_exp = 0.689 * (1. + std::erf(((gaz_mean_free_path / sphere_radius) + 4.454) / 10.628));
+    double friction_exp = friction_exponent(sphere_radius);
     double cc = cunningham(sphere_radius);
     return (6. * _pi * viscosity * sphere_radius / cc)
            * std::pow(aggregate_volume / sphere_volume, friction_exp / fractal_dimension);
@@ -374,27 +471,16 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
 [[gnu::pure]] double PhysicalModel::relax_time(double masse, double f_agg) {
     return masse / f_agg;
 }
-[[gnu::const]] double inverfc(double p) {
-    double x;
-    double t;
-    double pp;
-    if (p >= 2.) {
-        return -100.;
-    }
-    if (p <= 0.0) {
-        return 100.;
-    }
-    pp = (p < 1.0) ? p : 2. - p;
-    t = std::sqrt(-2. * std::log(pp / 2.));
-    x = -0.70711 * ((2.30753 + t * 0.27061) / (1. + t * (0.99229 + t * 0.04481)) - t);
-    for (int j = 0; j < 2; j++) {
-        double err = std::erfc(x) - pp;
-        x += err / (1.12837916709551257 * std::exp(-(x * x)) - x * err);
-    }
-    return (p < 1.0 ? x : -x);
-}
-[[gnu::const]] double inverf(double p) {
-    return inverfc(1. - p);
+[[gnu::pure]] double PhysicalModel::mobility_diameter(double aggregate_volume,
+                                                      double sphere_volume,
+                                                      double sphere_radius) const {
+    double friction_exp = friction_exponent(sphere_radius);
+    double aggregate_radius = sphere_radius *
+            std::pow(aggregate_volume / sphere_volume,friction_exp/fractal_dimension/2.0); // Approximated (free molecular regime)
+    double cc_pp = cunningham(sphere_radius);
+    double cc_a = cunningham(aggregate_radius); // Approximated (free molecular regime)
+    return (cc_a / cc_pp) * 2.0*sphere_radius
+           * std::pow(aggregate_volume / sphere_volume, friction_exp / fractal_dimension);
 }
 [[gnu::const]] fs::path extract_path(const std::string &filename) {
     fs::path path = filename;
@@ -404,6 +490,18 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     }
     fs::path parentpath = fullpath.parent_path();
     return parentpath;
+}
+[[gnu::pure]] int PhysicalModel::get_random_charge(double d_m) const {
+    // Charge distribution: M. Matti Maricq/J. Aerosol Science, 39 (2008) 141–149
+    double kbT = _boltzmann * temperature;
+    double sigma_q = std::sqrt(d_m * kbT / (2.0*_dit_boltzmann_Ke_e2));
+    double mean_q = 0.0;
+    int rand_normal = static_cast<int>(std::round(random_normal(mean_q, sigma_q)));
+
+    rand_normal = std::min(std::max(rand_normal,
+                                    intpotential_info.get_min_charge()),
+                           intpotential_info.get_max_charge());
+    return rand_normal;
 }
 }  // namespace mcac
 

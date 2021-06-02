@@ -25,6 +25,7 @@
 
 #ifndef ARVO_H_
 #define ARVO_H_
+#ifdef WITH_ARVO
 #include<unordered_map>
 #include<vector>
 
@@ -36,4 +37,5 @@ void main_arvo(const double sph[],
                size_t size,
                const std::vector<std::unordered_map<size_t, double>> &distances);
 }
+#endif
 #endif // ARVO

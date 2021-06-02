@@ -19,7 +19,6 @@
 #define INCLUDE_CALCUL_HPP 1
 #include "aggregats/aggregat_list.hpp"
 #include "physical_model/physical_model.hpp"
-#include "physical_model/physical_model_flame_coupling.hpp"
 
 
 namespace mcac {

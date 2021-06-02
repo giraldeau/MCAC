@@ -26,7 +26,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
  Beyond managing its properties, it can compute
  - its distance to a point or an another sphere
- - its intersection with an another sphere (volume and surface) (TODO : NOT CORRECTLY COMPUTED)
+ - its intersection with an another sphere (volume and surface)
  - detect a collision with an another sphere
 
  * Aggregat *
@@ -129,9 +129,9 @@ namespace mcac {
                                                             const double distance) noexcept {
     HalfSphereListContactInfo closest_contact; //infinity by default
     for (size_t i_sphere_2 = 0; i_sphere_2 < list.size(); i_sphere_2++) {
-        SphereContactInfo potential_contact = distance_to_contact(sphere_1, list[i_sphere_2], displacement, distance);
+        SphereContactInfo potential_contact = distance_to_contact(sphere_1, *list[i_sphere_2], displacement, distance);
         if (potential_contact < closest_contact) {
-            closest_contact.other_sphere = i_sphere_2;
+            closest_contact.other_sphere = std::weak_ptr<Sphere>(list[i_sphere_2]);
             closest_contact.distance = potential_contact.distance;
         }
     }

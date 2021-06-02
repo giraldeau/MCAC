@@ -28,13 +28,21 @@ template<int N, class elem>
 [[gnu::pure]] size_t ListStorage<N, elem>::size() const noexcept {
     return list.size();
 }
+//template<int N, class elem>
+//[[gnu::pure]] elem &ListStorage<N, elem>::operator[](size_t i) noexcept {
+//    return *list[i];
+//}
+//template<int N, class elem>
+//[[gnu::pure]] const elem &ListStorage<N, elem>::operator[](size_t i) const noexcept {
+//    return *list[i];
+//}
 template<int N, class elem>
-[[gnu::pure]] elem &ListStorage<N, elem>::operator[](size_t i) noexcept {
-    return *list[i];
+[[gnu::pure]] std::shared_ptr<elem> &ListStorage<N, elem>::operator[](size_t i) noexcept {
+    return list[i];
 }
 template<int N, class elem>
-[[gnu::pure]] const elem &ListStorage<N, elem>::operator[](size_t i) const noexcept {
-    return *list[i];
+[[gnu::pure]] const std::shared_ptr<elem> &ListStorage<N, elem>::operator[](size_t i) const noexcept {
+    return list[i];
 }
 template<int N, class elem>
 void ListStorage<N, elem>::destroy() noexcept {
@@ -183,7 +191,7 @@ ListStorage<N, elem>::~ListStorage() noexcept {
 /** Copy constructor */
 template<int N, class elem>
 template<class mylist>
-ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &owner, mylist &ext_storage) noexcept:
+ListStorage<N, elem>::ListStorage(const ListStorage<N, elem> &other, mylist &ext_storage) noexcept:
     list(),
     storage(ext_storage.storage),
     external_storage(&ext_storage) {

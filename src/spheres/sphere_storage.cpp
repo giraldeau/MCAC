@@ -26,7 +26,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
  Beyond managing its properties, it can compute
  - its distance to a point or an another sphere
- - its intersection with an another sphere (volume and surface) (TODO : NOT CORRECTLY COMPUTED)
+ - its intersection with an another sphere (volume and surface)
  - detect a collision with an another sphere
 
  * Aggregat *
@@ -63,6 +63,7 @@ Sphere::Sphere() noexcept:
     rz(nullptr),
     volume(nullptr),
     surface(nullptr),
+    electric_charge(0),
     agg_label(-1),
     physicalmodel(nullptr) {
     init_val();
@@ -78,6 +79,7 @@ Sphere::Sphere(const PhysicalModel &physical_model) noexcept:
     rz(nullptr),
     volume(nullptr),
     surface(nullptr),
+    electric_charge(0),
     agg_label(-1),
     physicalmodel(&physical_model) {
     init_val();
@@ -101,6 +103,7 @@ Sphere::Sphere(SphereList *aggregat, size_t id) noexcept:
     rz(nullptr),
     volume(nullptr),
     surface(nullptr),
+    electric_charge(0),
     agg_label(-1),
     physicalmodel(aggregat->physicalmodel) {
     init_val();
@@ -125,6 +128,7 @@ Sphere::Sphere(const Sphere &other, SphereList *aggregat, size_t id) noexcept:
     rz(nullptr),
     volume(nullptr),
     surface(nullptr),
+    electric_charge(0),
     agg_label(long(id)),
     physicalmodel(other.physicalmodel) {
     setpointers();

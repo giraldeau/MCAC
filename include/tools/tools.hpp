@@ -61,8 +61,13 @@ std::array<T, 3> &operator/=(std::array<T, 3> &a, const T &rhs) {
     a[2] /= rhs;
     return a;
 }
-void init_random();
+unsigned long mix(unsigned long a, unsigned long b, unsigned long c);
+void init_random(int random_seed);
+[[gnu::const]] double inverfc(double p);
+[[gnu::const]] double inverf(double p);
 double random();
+double random_normal(const double mean, const double sigma);
+std::array<double, 3> random_direction();
 MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string &input);
 std::string resolve_monomeres_initialisation_mode(MonomeresInitialisationMode mode);
 PickMethods resolve_pick_method(const std::string &input);
@@ -71,5 +76,11 @@ VolSurfMethods resolve_surfvol_method(const std::string &input);
 std::string resolve_surfvol_method(VolSurfMethods method);
 [[gnu::const]] std::tuple<bool, double, double, double> linreg(const std::vector<double> &x,
                                                                const std::vector<double> &y);
+[[gnu::pure]] double interpolate_2d(const double& f_x1_y1,
+                                    const double& f_x1_y2,
+                                    const double& f_x2_y1,
+                                    const double& f_x2_y2,
+                                    const double& dx_over_Dx,
+                                    const double& dy_over_Dy);
 }  //namespace mcac
 #endif //INCLUDE_TOOLS_TOOLS_HPP

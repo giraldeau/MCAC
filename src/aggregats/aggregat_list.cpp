@@ -118,6 +118,7 @@ void AggregatList::duplication() {
     double old_l = physicalmodel->box_lenght;
     physicalmodel->box_lenght *= 2;
     physicalmodel->n_monomeres *= 8;
+    physicalmodel->box_volume = std::pow(physicalmodel->box_lenght,3);
     for (const auto& agg : list) {
         agg->unset_verlet();
     }
@@ -147,23 +148,92 @@ void AggregatList::duplication() {
         agg->set_verlet(&verlet);
     }
 }
-size_t AggregatList::merge(AggregateContactInfo contact_info) {
-    const size_t _keeped(std::min(contact_info.moving_aggregate,
-                             contact_info.other_aggregate));
-    const size_t _removed(std::max(contact_info.moving_aggregate,
-                              contact_info.other_aggregate));
+InterPotentialRegime AggregatList::check_InterPotentialRegime(AggregateContactInfo contact_info) {
+    auto moving_sphere = contact_info.moving_sphere.lock();
+    auto other_sphere = contact_info.other_sphere.lock();
+
+    //$ 1. Colliding primary spheres properties
+    double D_moving = 2.0 * moving_sphere->get_radius();
+    double D_other = 2.0 * other_sphere->get_radius();
+
+    //$ 2. Electric charges
+/*    if (physicalmodel->with_dynamic_random_charges) {
+        list[contact_info.moving_aggregate]->set_random_charge(kbT, intpotential_info);
+        list[contact_info.other_aggregate]->set_random_charge(kbT, intpotential_info);
+    }
+*/
+
+    //$ 3. Energy barrier/well depth
+    double P_stick(1.0), P_coll(1.0);
+    if (physicalmodel->with_external_potentials) {
+        auto moving_aggregate = contact_info.moving_aggregate.lock();
+        auto other_aggregate = contact_info.other_aggregate.lock();
+        int q_moving = moving_aggregate->get_electric_charge();
+        int q_other = other_aggregate->get_electric_charge();
+        auto [E_bar, E_well] = physicalmodel->intpotential_info.get_Ebar_Ewell(D_moving,D_other,q_moving,q_other);
+        double E_stick = std::abs(E_well)+std::abs(E_bar);
+        P_stick = std::erf(std::sqrt(E_stick))-std::sqrt(E_stick)*std::exp(-E_stick);
+        P_coll = 1.0-std::erf(std::sqrt(E_bar))+std::sqrt(E_bar)*std::exp(-E_bar);
+    } else {
+        // Hou et al., J. Aerosol Sci. (2020) 105478.
+        double kbT = _boltzmann * (physicalmodel->temperature);
+        double D = D_moving * D_other / (D_moving + D_other);
+        D = D * (1e+09);
+        double E_well = (-6.6891e-23)*std::pow(D,3) +
+                (1.1244e-21)*std::pow(D,2) +
+                (1.1394e-20)*D - 5.5373e-21;
+        P_stick = 1.0-(1.0+std::abs(E_well)/kbT)*std::exp(-std::abs(E_well)/kbT);
+    }
+
+    //$ 4. Check - Coulomb repulsion
+    if (random() > P_coll) {
+        return InterPotentialRegime::REPULSION;
+    }
+
+    //$ 5. Check - Pauli repulsion
+    if (random() > P_stick){
+        return InterPotentialRegime::BOUNCING;
+    }
+    return  InterPotentialRegime::STICKING;
+}
+bool AggregatList::merge(AggregateContactInfo contact_info) {
+    auto moving_sphere = contact_info.moving_sphere.lock();
+    auto other_sphere = contact_info.other_sphere.lock();
+    if (!moving_sphere || !other_sphere) {
+        return false;
+    }
+    if (!contact(*moving_sphere,*other_sphere)){
+        return false;
+    }
+
+    auto _keeped = static_cast<const size_t>(std::min(moving_sphere->agg_label,
+                                                      other_sphere->agg_label));
+    auto _removed = static_cast<const size_t>(std::max(moving_sphere->agg_label,
+                                                       other_sphere->agg_label));
+
 
     // compute proper time of the final aggregate
     // keeping global time constant
-    double newtime = double(size() - 1) * (*list[_keeped]->proper_time + *list[_removed]->proper_time) / double(size())
+    double newtime = (*list[_keeped]->proper_time) + (*list[_removed]->proper_time)
                      - physicalmodel->time;
+    int total_charge = list[_keeped]->get_electric_charge() +
+                       list[_removed]->get_electric_charge();
 
     // merge the two aggregate but do not remove the deleted one
-    list[_keeped]->merge(list[_removed], contact_info);
+    if (!list[_keeped]->merge(list[_removed], contact_info)) {
+        throw MergeError("ListAggregate want to merge but the aggregate refuses");
+    }
     remove(_removed);
     setpointers();
     *list[_keeped]->proper_time = newtime;
-    return _keeped;
+
+    if (physicalmodel->with_dynamic_random_charges) {
+        list[_keeped]->electric_charge = physicalmodel->get_random_charge(*(list[_keeped]->d_m));
+    } else { // electric charges preservation
+        list[_keeped]->electric_charge = total_charge;
+    }
+
+    return true;
 }
 bool AggregatList::split() {
     bool has_splitted = false;
@@ -182,6 +252,16 @@ bool AggregatList::split() {
         }
     }
     return has_splitted;
+}
+bool AggregatList::split(const size_t numagg) {
+    // The split function will create the new aggregates
+    if (list[numagg]->split()) {
+        // but we still have to destroy the current one
+        remove(numagg);
+        setpointers();
+        return true;
+    }
+    return false;
 }
 //################################# Determination of the contacts between agregates ####################################
 AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
@@ -207,8 +287,8 @@ AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
             // We already found the closests one
             break;
         }
-        AggregateContactInfo potential_contact = distance_to_contact(*list[source],
-                                                                     *list[id],
+        AggregateContactInfo potential_contact = distance_to_contact(list[source],
+                                                                     list[id],
                                                                      direction,
                                                                      distance);
         if (potential_contact < closest_contact) {
@@ -273,12 +353,33 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) con
     }
     return true;
 }
-void AggregatList::croissance_surface(double dt) {
-    spheres.croissance_surface(dt);
-    for (const auto& sphere : spheres) {
-        if (sphere->get_radius() <= 0) {
-            remove_sphere(sphere->get_index());
+bool AggregatList::croissance_surface(double dt) {
+    bool removed_aggregate(false);
+    auto aggregate = list.begin();
+    while (aggregate != list.end()) {
+        auto index = std::distance(list.begin(), aggregate);
+        auto next = list.begin() + index + 1;
+        if ((*aggregate)->croissance_surface(dt)) {
+            removed_aggregate = true;
+            // This aggregate has no spheres anymore
+            remove(size_t(index));
+            setpointers();
+            std::cout << " removed by croissance_surface: aggregate= " << (*aggregate)->get_label() << "/ total= " << list.size() << std::endl;
+            next = list.begin() + index;
         }
+        aggregate = next;
+    }
+    return removed_aggregate;
+}
+bool AggregatList::croissance_surface(const double dt, const size_t index) {
+    if (list[index]->croissance_surface(dt)){
+        remove(index);
+        setpointers();
+        std::cout << " removed by croissance_surface: num_agg= " << index << "/ total= " << list.size() << std::endl;
+        return true;
+    } else {
+        list[index]->update();
+        return false;
     }
 }
 }// namespace mcac

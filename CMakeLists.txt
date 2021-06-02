@@ -16,8 +16,10 @@ ExternalProject_Add(GSL_project
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/GSL
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL
     GIT_REPOSITORY https://github.com/microsoft/GSL.git
+    GIT_TAG main
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL
                -DGSL_TEST=OFF
+               -DCMAKE_BUILD_TYPE=Release
     EXCLUDE_FROM_ALL ON
 )
 
@@ -27,6 +29,7 @@ ExternalProject_Add(inipp_project
     GIT_REPOSITORY https://gitlab.coria-cfd.fr/MCAC/inipp.git
     GIT_TAG no_tests
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/inipp
+               -DCMAKE_BUILD_TYPE=Release
     EXCLUDE_FROM_ALL ON
 )
 
@@ -35,6 +38,7 @@ ExternalProject_Add(sbl_project
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/sbl
     GIT_REPOSITORY ${SBL_GIT_REP}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/sbl
+               -DCMAKE_BUILD_TYPE=Release
     EXCLUDE_FROM_ALL ON
 )
 
@@ -46,17 +50,28 @@ ExternalProject_Add(xdmf_project
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/xdmf
                -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_ALT_SEP}
                -DBUILD_SHARED_LIBS=ON
+               -DCMAKE_BUILD_TYPE=Release
     EXCLUDE_FROM_ALL ON
 )
 
 ExternalProject_Add(cgal_project
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/cgal
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/cgal
-    GIT_TAG releases/CGAL-4.9-branch-tip
+    GIT_TAG v5.2
     GIT_REPOSITORY https://github.com/CGAL/cgal.git
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/cgal
                -DWITH_CGAL_Qt5=OFF
                -DWITH_CGAL_ImageIO=OFF
+               -DCMAKE_BUILD_TYPE=Release
+    EXCLUDE_FROM_ALL ON
+)
+
+ExternalProject_Add(libunwind_project
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext/libunwind
+    INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/libunwind
+    GIT_TAG v1.5
+    GIT_REPOSITORY https://github.com/libunwind/libunwind.git
+    CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ext/libunwind/autogen.sh COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/ext/libunwind/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/libunwind
     EXCLUDE_FROM_ALL ON
 )
 

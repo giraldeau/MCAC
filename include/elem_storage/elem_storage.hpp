@@ -32,8 +32,8 @@ class ElemStorage {
 protected:
     std::shared_ptr<std::array<std::vector<double>, N>> storage;
     mystorage *external_storage;
-    size_t index_in_storage{0};
 public:
+    size_t index_in_storage{0};
     void decrease_index() noexcept;
     /** Default constructor in local storage */
     ElemStorage() noexcept;

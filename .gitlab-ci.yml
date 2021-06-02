@@ -1,0 +1,40 @@
+default:
+  image: python:3.8-buster
+  interruptible: true
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  DOCKER_DRIVER: overlay2
+  
+before_script:
+  - apt update
+  - apt-get install -y
+    make cmake extra-cmake-modules g++ git
+    libhdf5-dev libmpfr-dev libgmp-dev libboost-dev libunwind-dev libtiff-dev
+    libopenblas-dev liblapack-dev libxml2-dev libxslt1-dev
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+    - ext/
+    - ext_bin/
+
+stages:
+  - Build
+  - Static Analysis
+  - Run
+  - Test
+
+include:
+  - template: Code-Quality.gitlab-ci.yml
+  - local: .gitlab/MCAC.yml
+  - local: .gitlab/pyMCAC.yml
+  - local: .gitlab/tests.yml
+
+
+code_quality:
+  stage: Test
+  artifacts:
+    paths: [gl-code-quality-report.json]
+

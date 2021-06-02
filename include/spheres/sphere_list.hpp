@@ -33,7 +33,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
  Beyond managing its properties, it can compute
  - its distance to a point or an another sphere
- - its intersection with an another sphere (volume and surface) (TODO : NOT CORRECTLY COMPUTED)
+ - its intersection with an another sphere (volume and surface)
  - detect a collision with an another sphere
 
  * Aggregat *
@@ -70,6 +70,7 @@ public:
     auto get_data() const;
     std::vector<double> format_position() const;
     std::vector<double> format_get_radius() const;
+    std::vector<int> format_electric_charge() const;
     std::vector<long> format_agg_label() const;
 
     /* Storage specific */

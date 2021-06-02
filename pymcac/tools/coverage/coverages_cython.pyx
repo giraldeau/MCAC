@@ -1,13 +1,13 @@
-# coding=utf-8
-"""
-Compute the overlapping coefficient COV
-"""
 # cython: language_level=3
 # cython: initializedcheck=False
 # cython: binding=True
 # cython: nonecheck=False
 # cython: boundscheck=False
 # cython: wraparound=False
+# coding=utf-8
+"""
+Compute the overlapping coefficient COV
+"""
 
 import numpy as np
 cimport numpy as np
@@ -47,7 +47,7 @@ cdef double _coverage(const double* X,
         return 0
 
 
-def coverages_cython(const int[::1]& Aggs,
+def coverages_cython(const long[::1]& Aggs,
                      const double[::1]& X,
                      const double[::1]& Y,
                      const double[::1]& Z,

@@ -28,7 +28,7 @@ sbl = Extension(name='pymcac.tools.volume_surface.sbl_wrapper',
                               "/opt/cgal/include"],
                 library_dirs=["/opt/cgal/lib64"],
                 extra_compile_args=["-fopenmp", "-O3", "-frounding-math", "-DNDEBUG"],
-                libraries=["CGAL", "mpfr", "gmp"],
+                libraries=["mpfr", "gmp"],
                 extra_link_args=["-fopenmp"],
                 language="c++")
 # noinspection PyUnusedName
@@ -61,4 +61,5 @@ except CalledProcessError:
 else:
     # Add the version from git
     # --------------------------------
-    setup(use_scm_version={'write_to': 'pymcac/version.py'})
+    setup(use_scm_version={'write_to': 'pymcac/version.py',
+			   "fallback_version": "UNKNOWN"})

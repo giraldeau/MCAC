@@ -20,22 +20,72 @@
 #include <tuple>
 #include <cmath>
 #include <algorithm>
+#include <unistd.h>
 
 
 namespace mcac {
-void init_random() {
+// http://www.concentric.net/~Ttwang/tech/inthash.htm
+unsigned long mix(unsigned long a, unsigned long b, unsigned long c)
+{
+    a=a-b;  a=a-c;  a=a^(c >> 13);
+    b=b-c;  b=b-a;  b=b^(a << 8);
+    c=c-a;  c=c-b;  c=c^(b >> 13);
+    a=a-b;  a=a-c;  a=a^(c >> 12);
+    b=b-c;  b=b-a;  b=b^(a << 16);
+    c=c-a;  c=c-b;  c=c^(b >> 5);
+    a=a-b;  a=a-c;  a=a^(c >> 3);
+    b=b-c;  b=b-a;  b=b^(a << 10);
+    c=c-a;  c=c-b;  c=c^(b >> 15);
+    return c;
+}
+void init_random(int random_seed) {
 #ifdef DEBUG_MCAC
     srand(0);
 #else
-    time_t t;
-    time(&t);
-    srand(uint(t));
+    if (random_seed <0) {
+        random_seed = mix(clock(), time(NULL), getpid());
+    }
+    srand(random_seed);
 #endif
 }
 double random() {
     double v = rand();
     v = v / RAND_MAX;
     return v;
+}
+[[gnu::const]] double inverfc(double p) {
+    double x;
+    double t;
+    double pp;
+    if (p >= 2.) {
+        return -100.;
+    }
+    if (p <= 0.0) {
+        return 100.;
+    }
+    pp = (p < 1.0) ? p : 2. - p;
+    t = std::sqrt(-2. * std::log(pp / 2.));
+    x = -0.70711 * ((2.30753 + t * 0.27061) / (1. + t * (0.99229 + t * 0.04481)) - t);
+    for (int j = 0; j < 2; j++) {
+        double err = std::erfc(x) - pp;
+        x += err / (1.12837916709551257 * std::exp(-(x * x)) - x * err);
+    }
+    return (p < 1.0 ? x : -x);
+}
+[[gnu::const]] double inverf(double p) {
+    return inverfc(1. - p);
+}
+double random_normal(const double mean, const double sigma) {
+    double rand_normal = mean + std::sqrt(2.) * sigma* inverf(2. * random() - 1.0);
+    return rand_normal;
+}
+std::array<double, 3> random_direction() {
+    double thetarandom = random() * 2 * _pi;
+    double phirandom = std::acos(1 - 2 * random());
+    std::array<double, 3> vectdir{{std::sin(phirandom) * std::cos(thetarandom),
+                                   std::sin(phirandom) * std::sin(thetarandom),
+                                   std::cos(phirandom)}};
+    return vectdir;
 }
 MonomeresInitialisationMode resolve_monomeres_initialisation_mode(const std::string &input) {
     auto itr = std::find(MONOMERES_INITIALISATION_MODE_STR.begin(),
@@ -104,5 +154,23 @@ std::string resolve_surfvol_method(VolSurfMethods method) {
                std::pow((sumx_2 - std::pow(sumx, 2) / n) *
                         (sumy_2 - std::pow(sumy, 2) / n), 2);
     return {true, a, b, r};
+}
+
+/********************************************************************************
+* Interpolate a 2d function
+********************************************************************************/
+[[gnu::pure]] double interpolate_2d(const double& f_x1_y1,
+                                    const double& f_x1_y2,
+                                    const double& f_x2_y1,
+                                    const double& f_x2_y2,
+                                    const double& dx_over_Dx,
+                                    const double& dy_over_Dy) {
+    double Df_x = f_x2_y1 - f_x1_y1;
+    double Df_y = f_x1_y2 - f_x1_y1;
+    double Df_xy = (f_x1_y1 + f_x2_y2) - (f_x2_y1 + f_x1_y2);
+
+    return Df_x * dx_over_Dx
+           + Df_y * dy_over_Dy
+           + Df_xy * dx_over_Dx * dy_over_Dy + f_x1_y1;
 }
 }  // namespace mcac

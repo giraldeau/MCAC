@@ -57,9 +57,12 @@ public:
     void sort_time_steps(double factor);
     void duplication();
     bool split();
-    size_t merge(AggregateContactInfo contact_info);
+    bool split(const size_t numagg);
+    bool merge(AggregateContactInfo contact_info);
+    InterPotentialRegime check_InterPotentialRegime(AggregateContactInfo contact_info);
     /* other */
-    void croissance_surface(double dt);
+    bool croissance_surface(double dt);
+    bool croissance_surface(const double dt, const size_t index);
     std::tuple<bool, double, double, double> get_instantaneous_fractal_law() const;
     AggregateContactInfo distance_to_next_contact(const size_t source,
                                                   const std::array<double, 3> &direction,
@@ -77,7 +80,7 @@ public:
     auto get_data() const;
     std::vector<double> format_position() const;
     std::vector<double> format_rg() const;
-    std::vector<int> format_n_spheres() const;
+    std::vector<long> format_n_spheres() const;
     std::vector<double> format_f_agg() const;
     std::vector<double> format_lpm() const;
     std::vector<double> format_time_step() const;
@@ -87,7 +90,9 @@ public:
     std::vector<double> format_coordination_number() const;
     std::vector<double> format_proper_time() const;
     std::vector<double> format_overlapping() const;
-    std::vector<int> format_label() const;
+    std::vector<double> format_d_m() const;
+    std::vector<int> format_electric_charge() const;
+    std::vector<long> format_label() const;
     void remove(const size_t &id) noexcept;
     void remove_sphere(const size_t &id) noexcept;
     /* Storage specific */

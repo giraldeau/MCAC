@@ -26,7 +26,7 @@ Sphere.h and Sphere.cpp defines the data storage.
 
  Beyond managing its properties, it can compute
  - its distance to a point or an another sphere
- - its intersection with an another sphere (volume and surface) (TODO : NOT CORRECTLY COMPUTED)
+ - its intersection with an another sphere (volume and surface)
  - detect a collision with an another sphere
 
 */
@@ -103,6 +103,9 @@ void Sphere::init_val(std::array<double, 3> newposition, double newr) noexcept {
     *ry = 0.;
     *rz = 0.;
     update_vol_and_surf();
+}
+void Sphere::set_sphere_charge(const int charge) {
+    electric_charge = charge;
 }
 /* #############################################################################################################
  * ############################################# Sphere growing ################################################

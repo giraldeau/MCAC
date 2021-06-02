@@ -20,6 +20,7 @@
 #include "constants.hpp"
 #include "io/xmf_includes.hpp"
 #include "physical_model_flame_coupling.hpp"
+#include "physical_model_interpotential.hpp"
 #include <array>
 #include <ctime>
 #include <experimental/filesystem>
@@ -30,11 +31,13 @@ class PhysicalModel {
 public:
     double fractal_dimension, fractal_prefactor;
     double flux_surfgrowth, u_sg;                // surface growth molecular flux [kg/m2/s], SG velocity u_sg [m/s]
+    double flux_nucleation,nucleation_accum;     // Nucleation flux [#/m^3-flame/s], accumulated nucleation [#]
     double pressure, temperature, gaz_mean_free_path, viscosity, density;
     double mean_diameter, dispersion_diameter;
     double mean_massic_radius, friction_exponnant;
     double time;
-    double volume_fraction, box_lenght, aggregate_concentration;
+    double volume_fraction, box_lenght,box_volume, aggregate_concentration;
+    double rp_min_oxid;     // Minimum d_pp below which the particle disappear
     size_t n_verlet_divisions;
     PickMethods pick_method;
     VolSurfMethods volsurf_method;
@@ -47,32 +50,42 @@ public:
     int mean_monomere_per_aggregate_limit;
     size_t number_of_aggregates_limit;
     int n_iter_without_event_limit;
+    int random_seed;
+    size_t write_events_frequency_oxid;
     size_t write_between_event_frequency;
     size_t full_aggregate_update_frequency;
     bool finished_by_flame;
     std::experimental::filesystem::path output_dir;
-    std::string flame_file;
+    std::string flame_file,interpotential_file;
+    bool with_nucleation;
     bool with_collisions;
     bool with_surface_reactions;
     bool with_flame_coupling;
     bool enforce_volume_fraction;
+    bool individual_surf_reactions;
+    bool with_potentials,with_external_potentials,with_dynamic_random_charges;
+    bool with_electric_charges;
+    FlameCoupling flame;
+    Interpotential intpotential_info;
 
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
     [[gnu::pure]] double grow(double r, double dt) const;
+    [[gnu::pure]] double friction_exponent(double sphere_radius) const;
     [[gnu::pure]] double friction_coeff(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     [[gnu::pure]] double diffusivity(double) const;
     [[gnu::pure]] static double relax_time(double masse, double);
+    [[gnu::pure]] double mobility_diameter(double aggregate_volume, double sphere_volume, double sphere_radius) const;
+    [[gnu::pure]] int get_random_charge(double mobility_diameter) const;
     void print() const;
     void update(size_t n_aggregates, double total_volume) noexcept;
-    void update_from_flame(const FlameCoupling& flame);
+    void nucleation(double dt) noexcept;
+    void update_from_flame();
     void update_temperature(double new_temperature) noexcept;
     [[gnu::pure]] bool finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const;
     XMF_OUTPUT xmf_write() const;
 };
 
-[[gnu::const]] double inverfc(double p);
-[[gnu::const]] double inverf(double p);
 [[gnu::const]] std::experimental::filesystem::path extract_path(const std::string &file);
 [[gnu::const]] inline double periodic_distance(double dist, double dim) {
     double periodic_distance(dist);

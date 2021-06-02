@@ -83,7 +83,7 @@ def discretize_spherelist(spheres: np.ndarray,
             d = (posx - x) ** 2 + (posy - y) ** 2 + (posz - z) ** 2
             data = np.maximum(data, radius ** 2 - d)
 
-    return data, (x, y, z)
+    return data > 0, (x, y, z)
 
 
 def surrounding_box(spheres: np.ndarray) -> Tuple[Tuple[float, float],

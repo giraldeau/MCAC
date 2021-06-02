@@ -41,12 +41,12 @@ public:
 
 class HalfSphereListContactInfo : public SphereContactInfo {
 public:
-    size_t other_sphere{0};
+    std::weak_ptr<Sphere> other_sphere;
     HalfSphereListContactInfo() = default;
-    explicit HalfSphereListContactInfo(size_t _other_sphere) :
+    explicit HalfSphereListContactInfo(const std::shared_ptr<Sphere>& _other_sphere) :
         other_sphere(_other_sphere) {
     }
-    HalfSphereListContactInfo(SphereContactInfo contact_info, size_t _other_sphere) :
+    HalfSphereListContactInfo(SphereContactInfo contact_info, const std::shared_ptr<Sphere>& _other_sphere) :
         SphereContactInfo(contact_info),
         other_sphere(_other_sphere) {
     }
@@ -54,17 +54,17 @@ public:
 
 class SphereListContactInfo : public HalfSphereListContactInfo {
 public:
-    size_t moving_sphere{0};
+    std::weak_ptr<Sphere> moving_sphere;
     SphereListContactInfo() = default;
-    SphereListContactInfo(HalfSphereListContactInfo contact_info, size_t _moving_sphere) :
+    SphereListContactInfo(HalfSphereListContactInfo contact_info, const std::shared_ptr<Sphere>&  _moving_sphere) :
         HalfSphereListContactInfo(contact_info),
         moving_sphere(_moving_sphere) {
     }
-    SphereListContactInfo(SphereContactInfo contact_info, size_t _moving_sphere, size_t _other_sphere) :
+    SphereListContactInfo(SphereContactInfo contact_info, const std::shared_ptr<Sphere>& _moving_sphere, const std::shared_ptr<Sphere>& _other_sphere) :
         HalfSphereListContactInfo(contact_info, _other_sphere),
         moving_sphere(_moving_sphere) {
     }
-    SphereListContactInfo(size_t _moving_sphere, size_t _other_sphere) :
+    SphereListContactInfo(const std::shared_ptr<Sphere>& _moving_sphere, const std::shared_ptr<Sphere>& _other_sphere) :
         HalfSphereListContactInfo(_other_sphere),
         moving_sphere(_moving_sphere) {
     }
@@ -72,10 +72,12 @@ public:
 
 class AggregateContactInfo : public SphereListContactInfo {
 public:
-    size_t moving_aggregate{0};
-    size_t other_aggregate{0};
+    std::weak_ptr<Aggregate> moving_aggregate;
+    std::weak_ptr<Aggregate> other_aggregate;
     AggregateContactInfo() = default;
-    AggregateContactInfo(SphereListContactInfo contact_info, size_t _moving_aggregate, size_t _other_aggregate) :
+    AggregateContactInfo(SphereListContactInfo contact_info,
+                         const std::shared_ptr<Aggregate>& _moving_aggregate,
+                         const std::shared_ptr<Aggregate>& _other_aggregate) :
         SphereListContactInfo(contact_info),
         moving_aggregate(_moving_aggregate),
         other_aggregate(_other_aggregate) {
