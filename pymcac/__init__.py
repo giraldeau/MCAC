@@ -24,37 +24,48 @@ import os
 
 import psutil
 
-from .plot import view_agg
-from .plot import view_proj_agg
+from .plot import view_agg, view_proj_agg
 from .reader import MCAC
-from .tools import autocorrelation3d
-from .tools import coverages
-from .tools import discretize
-from .tools import inertia
-from .tools import volume_surface
-from .tools import dask_distribute, JupyterDaskDistribute
-from .tools import progress_compute
-from .tools import groupby_agg
-from .tools import xarray_to_ddframe
-from .tools import xarray_to_frame
-from .tools import mobility_diameter
-
-
+from .tools import (
+    JupyterDaskDistribute,
+    autocorrelation3d,
+    coverages,
+    dask_distribute,
+    discretize,
+    groupby_agg,
+    inertia,
+    mobility_diameter,
+    progress_compute,
+    volume_surface,
+    xarray_to_ddframe,
+    xarray_to_frame,
+)
 from .writer import export_ddscat
+
 try:
     # noinspection PyUnresolvedReferences
-    from .version import version
+    from .version import version as VERSION
 except ModuleNotFoundError:
-    version = "Unknown"
+    VERSION = "Unknown"
 
 ncores = psutil.cpu_count(logical=False)
-os.environ['OMP_NUM_THREADS'] = os.environ.get('OMP_NUM_THREADS', str(ncores))
+os.environ["OMP_NUM_THREADS"] = os.environ.get("OMP_NUM_THREADS", str(ncores))
 
-__all__ = ["MCAC",
-           "view_agg", "view_proj_agg",
-           "autocorrelation3d", "coverages", "discretize", "inertia", "volume_surface",
-           "export_ddscat",
-           "progress_compute", "dask_distribute", "JupyterDaskDistribute",
-           "groupby_agg",
-           "xarray_to_frame", "xarray_to_ddframe",
-           "mobility_diameter"]
+__all__ = [
+    "MCAC",
+    "view_agg",
+    "view_proj_agg",
+    "autocorrelation3d",
+    "coverages",
+    "discretize",
+    "inertia",
+    "volume_surface",
+    "export_ddscat",
+    "progress_compute",
+    "dask_distribute",
+    "JupyterDaskDistribute",
+    "groupby_agg",
+    "xarray_to_frame",
+    "xarray_to_ddframe",
+    "mobility_diameter",
+]

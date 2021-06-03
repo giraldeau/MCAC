@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# type: ignore
+# TODO remove lxml
+
 """
 Read the xdmf part of the MCAC output files
 
@@ -24,7 +27,7 @@ TODO do not use lxml
 """
 
 from pathlib import Path
-from typing import Union, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 from lxml import etree
 
@@ -33,10 +36,8 @@ class XdmfReader:
     """
     Object containing all functions necessary to read a xdmf file
     """
-    __slots__ = ("filename",
-                 "xml",
-                 "metadata",
-                 "h5_groups")
+
+    __slots__ = ("filename", "xml", "metadata", "h5_groups")
 
     def __init__(self, filename: Union[str, Path]) -> None:
         self.filename = Path(filename).with_suffix(".xmf")
@@ -46,9 +47,9 @@ class XdmfReader:
 
     # noinspection PyUnusedFunction
     @classmethod
-    def read_file(cls,
-                  filename: Union[str, Path]) -> Tuple[Dict[str, Union[bool, float]],
-                                                       Dict[float, Dict[str, str]]]:
+    def read_file(
+        cls, filename: Union[str, Path]
+    ) -> Tuple[Dict[str, Union[bool, float]], Dict[float, Dict[str, str]]]:
         """
         Read the xdmf file and return metadata and h5_groups
         """
@@ -66,7 +67,7 @@ class XdmfReader:
     @staticmethod
     def bool_from_any(s: str) -> bool:
         """convert printable to boolean"""
-        return str(s).lower() in ['true', '1', 't', 'y', 'yes', 'oui']
+        return str(s).lower() in ["true", "1", "t", "y", "yes", "oui"]
 
     def extract_metadata(self) -> Dict[str, Union[bool, float]]:
         """
@@ -99,10 +100,12 @@ class XdmfReader:
         for step in self.xml.iter("Grid"):
             if step.get("Name") == "Collection":
                 continue
-            time = float(step.find('Time').get("Value"))
+            time = float(step.find("Time").get("Value"))
 
             h5_groups.setdefault(time, dict())
-            h5_groups[time]["Positions"] = step.find('Geometry').getchildren()[0].text.split(":")[-1]
+            h5_groups[time]["Positions"] = (
+                step.find("Geometry").getchildren()[0].text.split(":")[-1]
+            )
             for attrib in step.findall("Attribute"):
                 key = attrib.get("Name")
                 h5_groups[time][key] = attrib.getchildren()[0].text.split(":")[-1]
@@ -119,7 +122,7 @@ class XdmfReader:
         for step in self.xml.iter("Grid"):
             if step.get("Name") == "Collection":
                 continue
-            time = float(step.find('Time').get("Value"))
+            time = float(step.find("Time").get("Value"))
 
             for attrib in step.findall("Attribute"):
                 if attrib.get("Name") in ("BoxSize", "Time"):
@@ -129,8 +132,7 @@ class XdmfReader:
                 break
         return sizes
 
-    def read(self) -> Tuple[Dict[str, Union[bool, float]],
-                            Dict[float, Dict[str, str]]]:
+    def read(self) -> Tuple[Dict[str, Union[bool, float]], Dict[float, Dict[str, str]]]:
         """
         Read the xdmf file and return metadata and h5_groups
         """

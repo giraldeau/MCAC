@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # coding: utf-8
-
-import dask.array as da
 # MCAC
 # Copyright (C) 2020 CORIA
 #
@@ -17,12 +15,13 @@ import dask.array as da
 #:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import dask.array as da
 import numpy as np
 import xarray as xr
 from numba import njit
 
-from pymcac.tools.core.dask_tools import aligned_rechunk
-from pymcac.tools.core.dask_tools import not_aligned_rechunk
+from pymcac.tools.core.dask_tools import aligned_rechunk, not_aligned_rechunk
 
 
 @njit
@@ -34,11 +33,9 @@ def is_sorted(a):
     return True
 
 
-def generate_dummy_aggregates_data(tstart=5., tend=10., nt=3,
-                                   nagg=5,
-                                   sort_info=False,
-                                   dask=0,
-                                   full=True):
+def generate_dummy_aggregates_data(
+    tstart=5.0, tend=10.0, nt=3, nagg=5, sort_info=False, dask=0, full=True
+):
     """Generate dummy aggregate data with minimal data"""
     assert tstart <= tend
     assert nt > 0
@@ -101,12 +98,9 @@ def generate_dummy_aggregates_data(tstart=5., tend=10., nt=3,
     return ds
 
 
-def generate_dummy_spheres_data(tstart=5., tend=10., nt=3,
-                                nsph=7,
-                                aggregates=None,
-                                sort_info=False,
-                                dask=0,
-                                full=True):
+def generate_dummy_spheres_data(
+    tstart=5.0, tend=10.0, nt=3, nsph=7, aggregates=None, sort_info=False, dask=0, full=True
+):
     """Generate dummy spheres data with minimal data"""
 
     assert tstart <= tend
@@ -122,8 +116,9 @@ def generate_dummy_spheres_data(tstart=5., tend=10., nt=3,
         aggregates = aggregates.compute()
         # We need at least one sphere per aggregate
         if "nLabel" in aggregates:
-            N = np.concatenate([np.random.randint(nagg_t, nsph + 1, 1)
-                                for nagg_t in aggregates.nLabel.data])
+            N = np.concatenate(
+                [np.random.randint(nagg_t, nsph + 1, 1) for nagg_t in aggregates.nLabel.data]
+            )
         else:
             if "Label" in aggregates.dims:
                 assert nt == 1
@@ -151,18 +146,34 @@ def generate_dummy_spheres_data(tstart=5., tend=10., nt=3,
 
     if aggregates:
         if "nLabel" in aggregates:
-            Label = np.concatenate([np.random.permutation(np.append(np.arange(nagg_t, dtype=np.int64),
-                                                                    np.random.randint(0, nagg_t, nsph - nagg_t)))
-                                    for nagg_t, nsph in zip(aggregates.nLabel.values, N)])
+            Label = np.concatenate(
+                [
+                    np.random.permutation(
+                        np.append(
+                            np.arange(nagg_t, dtype=np.int64),
+                            np.random.randint(0, nagg_t, nsph - nagg_t),
+                        )
+                    )
+                    for nagg_t, nsph in zip(aggregates.nLabel.values, N)
+                ]
+            )
         else:
             if "Label" in aggregates.dims:
                 assert nt == 1
                 nagg_t = aggregates.data.size
             else:
                 nagg_t = 1
-            Label = np.concatenate([np.random.permutation(np.append(np.arange(nagg_t, dtype=np.int64),
-                                                                    np.random.randint(0, nagg_t, nsph - nagg_t)))
-                                    for nsph in N])
+            Label = np.concatenate(
+                [
+                    np.random.permutation(
+                        np.append(
+                            np.arange(nagg_t, dtype=np.int64),
+                            np.random.randint(0, nagg_t, nsph - nagg_t),
+                        )
+                    )
+                    for nsph in N
+                ]
+            )
 
         ds["Label"] = ("k",), Label
 
@@ -205,24 +216,23 @@ def generate_dummy_spheres_data(tstart=5., tend=10., nt=3,
     return ds
 
 
-def generate_dummy_data(tstart=5., tend=10., nt=3,
-                        nagg=5,
-                        nsph=7,
-                        sort_info=False,
-                        dask=0):
+def generate_dummy_data(tstart=5.0, tend=10.0, nt=3, nagg=5, nsph=7, sort_info=False, dask=0):
     """Generate dummy data with minimal data"""
 
     assert nagg <= nsph
 
-    aggregates = generate_dummy_aggregates_data(tstart=tstart, tend=tend, nt=nt,
-                                                nagg=nagg,
-                                                sort_info=sort_info,
-                                                dask=dask)
-    spheres = generate_dummy_spheres_data(tstart=tstart, tend=tend, nt=nt,
-                                          nsph=nsph,
-                                          aggregates=aggregates,
-                                          sort_info=sort_info,
-                                          dask=dask)
+    aggregates = generate_dummy_aggregates_data(
+        tstart=tstart, tend=tend, nt=nt, nagg=nagg, sort_info=sort_info, dask=dask
+    )
+    spheres = generate_dummy_spheres_data(
+        tstart=tstart,
+        tend=tend,
+        nt=nt,
+        nsph=nsph,
+        aggregates=aggregates,
+        sort_info=sort_info,
+        dask=dask,
+    )
     Label = compute_Np_from_Label(spheres)
     if aggregates.data.chunks is not None:
         Label = da.from_array(Label, chunks=aggregates.data.chunks)
@@ -250,7 +260,9 @@ def compute_Label_from_Np(aggregates):
     aggregates_df = aggregates.Np.to_dataframe()
 
     if {"Time", "Label"}.issubset(set(aggregates.dims)):
-        Label = aggregates_df.groupby(["kTime", "kLabel"], sort=True).apply(lambda df: np.repeat(df.kLabel, df.Np))
+        Label = aggregates_df.groupby(["kTime", "kLabel"], sort=True).apply(
+            lambda df: np.repeat(df.kLabel, df.Np)
+        )
         Label = Label.values
     elif "Time" in aggregates.dims:
         gb_dim = "kTime" if "k" in aggregates.dims else "Time"
@@ -258,7 +270,9 @@ def compute_Label_from_Np(aggregates):
         Label = np.concatenate(Label.values)
     elif "Label" in aggregates.dims:
         gb_dim = "kLabel" if "k" in aggregates.dims else "Label"
-        Label = aggregates_df.groupby([gb_dim], sort=True).apply(lambda df: np.repeat(df.index, df.Np))
+        Label = aggregates_df.groupby([gb_dim], sort=True).apply(
+            lambda df: np.repeat(df.index, df.Np)
+        )
         Label = np.concatenate(Label.values)
     else:
         Label = np.repeat(0, int(aggregates.Np))

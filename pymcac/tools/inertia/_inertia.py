@@ -3,17 +3,17 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -28,24 +28,25 @@ import pandas as pd
 from pymcac.tools.discretize import discretize
 
 
-def inertia(spheres: pd.DataFrame,
-            aggregate: Optional[pd.Series] = None,
-            resolution: int = 128,
-            alphagangue: float = 0.4) -> np.ndarray:
+def inertia(
+    spheres: pd.DataFrame,
+    aggregate: Optional[pd.Series] = None,
+    resolution: int = 128,
+    alphagangue: float = 0.4,
+) -> np.ndarray:
     """
-        Compute gyration radius using discretisation
+    Compute gyration radius using discretisation
 
-        alphagangue is a parameter allowing some gangue around the aggregate
+    alphagangue is a parameter allowing some gangue around the aggregate
     """
     data, grid = discretize(spheres, aggregate, resolution, alphagangue)
 
     return inertia_disc(data, grid)
 
 
-def inertia_disc(data: np.ndarray,
-                 grid: Tuple[np.ndarray, np.ndarray, np.ndarray]) -> np.ndarray:
+def inertia_disc(data: np.ndarray, grid: Tuple[np.ndarray, np.ndarray, np.ndarray]) -> np.ndarray:
     """
-        Compute gyration radius using discretisation
+    Compute gyration radius using discretisation
     """
     X, Y, Z = grid
 
@@ -73,18 +74,23 @@ def inertia_disc(data: np.ndarray,
 
 if __name__ == "__main__":
     from pathlib import Path
+
     import numpy as np
+
     from pymcac import MCAC
 
     # The folder with all .h5 and .xmf files
     data_dir = Path("python-analysis/output_dir/")
 
-    # Read all data
-    Spheres, Aggregates = MCAC(data_dir).read()
+    # # Read all data
+    # Spheres, Aggregates = MCAC(data_dir).read()
 
-    last_agg = Aggregates.iloc[-1]
+    # last_agg = Aggregates.iloc[-1]
 
-    inertia_agg = inertia(Spheres, last_agg)
-    print("Gyration radius (code): ", last_agg.Rg)
-    print("Gyration radius:        ", np.sqrt(np.sum(inertia_agg)/2))
-    print("Anisotropy:             ", inertia_agg.max(initial=-np.inf)/inertia_agg.min(initial=-np.inf))
+    # inertia_agg = inertia(Spheres, last_agg)
+    # print("Gyration radius (code): ", last_agg.Rg)
+    # print("Gyration radius:        ", np.sqrt(np.sum(inertia_agg) / 2))
+    # print(
+    #     "Anisotropy:             ",
+    #     inertia_agg.max(initial=-np.inf) / inertia_agg.min(initial=-np.inf),
+    # )

@@ -22,14 +22,11 @@ import numpy as np
 import pytest
 from dask import delayed
 
-from pymcac.tools.core.dask_tools import aligned_rechunk
-from pymcac.tools.core.dask_tools import broadcast_to
-from pymcac.tools.core.dask_tools import not_aligned_rechunk
+from pymcac.tools.core.dask_tools import aligned_rechunk, broadcast_to, not_aligned_rechunk
 from pymcac.tools.core.sorting import sortby
-from .generator import generate_dummy_aggregates_data
-from .generator import generate_dummy_data
-from .test_data import check_dask_consistency
-from .test_data import check_data
+
+from .generator import generate_dummy_aggregates_data, generate_dummy_data
+from .test_data import check_dask_consistency, check_data
 
 
 def identical(ds1, ds2):
@@ -123,8 +120,9 @@ def test_not_aligned_rechunk_multi(dims):
 def test_not_aligned_rechunk_no_compute():
     data = generate_dummy_aggregates_data()
 
-    data["trigger"] = ("k",), da.from_delayed(raise_if_computed(),
-                                              dtype=int, shape=(data.sizes["k"],))
+    data["trigger"] = ("k",), da.from_delayed(
+        raise_if_computed(), dtype=int, shape=(data.sizes["k"],)
+    )
     not_aligned_rechunk(data, chunks={"k": 3})
 
 
@@ -173,12 +171,12 @@ def test_aligned_rechunk_other(dask):
     assert identical(data_unchunked.compute(), data_chunked.compute())
     assert set(data_chunked.chunks) == {"k"}
 
-    limits_inf = da.map_blocks(lambda Np: np.array([Np.min()]),
-                               data_chunked["Np"].data,
-                               dtype=int).compute()
-    limits_sup = da.map_blocks(lambda Np: np.array([Np.max()]),
-                               data_chunked["Np"].data,
-                               dtype=int).compute()
+    limits_inf = da.map_blocks(
+        lambda Np: np.array([Np.min()]), data_chunked["Np"].data, dtype=int
+    ).compute()
+    limits_sup = da.map_blocks(
+        lambda Np: np.array([Np.max()]), data_chunked["Np"].data, dtype=int
+    ).compute()
     assert np.all(limits_inf[1:] > limits_inf[:-1])
     assert np.all(limits_sup[1:] > limits_sup[:-1])
     assert np.all(limits_sup >= limits_inf)
@@ -213,8 +211,9 @@ def test_aligned_rechunk_mixed():
 def test_aligned_rechunk_no_compute():
     data = generate_dummy_aggregates_data()
 
-    data["trigger"] = ("k",), da.from_delayed(raise_if_computed(),
-                                              dtype=int, shape=(data.sizes["k"],))
+    data["trigger"] = ("k",), da.from_delayed(
+        raise_if_computed(), dtype=int, shape=(data.sizes["k"],)
+    )
     aligned_rechunk(data, Time=2)
 
 
@@ -222,8 +221,7 @@ def test_aligned_rechunk_no_compute():
 @pytest.mark.parametrize("nagg", [1, 29])
 @pytest.mark.parametrize("nt", [1, 31])
 def test_broadcast_0d_to_any(dask, nagg, nt):
-    """
-    """
+    """ """
     source = generate_dummy_aggregates_data(nt=1, nagg=1)
     dest = generate_dummy_aggregates_data(nt=nt, nagg=nagg, dask=dask)
 
@@ -242,7 +240,7 @@ def test_broadcast_0d_to_any(dask, nagg, nt):
 @pytest.mark.parametrize("broadcast", ["Time", "Label"])
 def test_broadcast_using_nums(dasksource, daskdest, broadcast, transpose):
     """
-     * Time      -> Time-Num/Label
+    * Time      -> Time-Num/Label
     """
     from pymcac.tools.core.groupby import groupby2
 
@@ -276,7 +274,7 @@ def test_broadcast_using_nums(dasksource, daskdest, broadcast, transpose):
 @pytest.mark.parametrize("time_in_dest", [True, False])
 def test_broadcast_using_tags(dasksource, daskdest, time_in_source, time_in_dest):
     """
-     * Num/Label -> Num/Label-Time
+    * Num/Label -> Num/Label-Time
     """
     if time_in_source and not time_in_dest:
         return
@@ -312,7 +310,7 @@ def test_broadcast_using_tags(dasksource, daskdest, time_in_source, time_in_dest
 @pytest.mark.parametrize("daskdest", [0, 2, 5])
 def test_broadcast_to_from_Label_to_Num(dasksource, daskdest):
     """
-     * Label     -> Num-Label
+    * Label     -> Num-Label
     """
     aggregates, spheres = generate_dummy_data(nt=1)
     if dasksource:
@@ -332,7 +330,7 @@ def test_broadcast_to_from_Label_to_Num(dasksource, daskdest):
 @pytest.mark.parametrize("dask", [0, 5])
 def test_broadcast_to_from_Time_Label_to_Time_Num(dask):
     """
-     * Time-Label     -> Time-Label-Num
+    * Time-Label     -> Time-Label-Num
     """
     aggregates, spheres = generate_dummy_data(sort_info=True)
     spheres = sortby(spheres, ["Time", "Label"])
@@ -352,27 +350,29 @@ def test_broadcast_to_from_Time_Label_to_Time_Num(dask):
 
 def test_broadcast_to_no_compute():
     """
-     * Time      -> Time-Num/Label
+    * Time      -> Time-Num/Label
     """
     source = generate_dummy_aggregates_data(nagg=1, dask=5)
     dest = generate_dummy_aggregates_data(dask=6)
     chunks = source.chunks
-    source["trigger"] = ("k",), da.from_delayed(raise_if_computed(),
-                                                dtype=int, shape=(source.sizes["k"],))
+    source["trigger"] = ("k",), da.from_delayed(
+        raise_if_computed(), dtype=int, shape=(source.sizes["k"],)
+    )
     source = not_aligned_rechunk(source, chunks=chunks)
     broadcast_to(source, dest)
 
 
 def test_broadcast_to_no_compute_bis():
     """
-     * Time      -> Time-Num/Label
+    * Time      -> Time-Num/Label
     """
     aggregates, spheres = generate_dummy_data(nt=1)
     spheres = aligned_rechunk(spheres, Num=5)
     aggregates = aligned_rechunk(aggregates, Label=6)
     chunks = aggregates.chunks
-    aggregates["trigger"] = ("k",), da.from_delayed(raise_if_computed(),
-                                                    dtype=int, shape=(aggregates.sizes["k"],))
+    aggregates["trigger"] = ("k",), da.from_delayed(
+        raise_if_computed(), dtype=int, shape=(aggregates.sizes["k"],)
+    )
     aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
 
     broadcast_to(aggregates, spheres)

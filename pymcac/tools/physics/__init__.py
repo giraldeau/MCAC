@@ -24,5 +24,4 @@ Functions to compute usual physical quantities
 from .mobility_diameter import mobility_diameter
 from .overlap import overlapping
 
-
 __all__ = ["mobility_diameter", "overlapping"]

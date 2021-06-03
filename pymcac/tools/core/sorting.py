@@ -20,8 +20,7 @@
 """
 Tools to mimic the pandas API
 """
-from typing import List
-from typing import Union
+from typing import List, Union
 
 import dask.array as da
 import numpy as np
@@ -80,7 +79,7 @@ def sortby(ds: xr.Dataset, by: Union[str, List[str]], force=False, nchunk=None):
     return res
 
 
-def custom_sortby(ds: xr.Dataset, by: Union[str, List[str]], nchunk=None):
+def custom_sortby(ds: Union[xr.DataArray, xr.Dataset], by: Union[str, List[str]], nchunk=None):
     res = ds.copy(deep=False)
     was_a_dataarray = False
     if isinstance(res, xr.DataArray):
@@ -148,8 +147,10 @@ def get_chunk_idx(ds, idx, nchunk, by):
 
 
 def chunk_idx(idx, nchunk, align_by=None):
-    chunks = (tuple([idx.size // nchunk + 1 for _ in range(idx.size % nchunk)])
-              + tuple([idx.size // nchunk for _ in range(idx.size % nchunk, nchunk)]),)
+    chunks = (
+        tuple([idx.size // nchunk + 1 for _ in range(idx.size % nchunk)])
+        + tuple([idx.size // nchunk for _ in range(idx.size % nchunk, nchunk)]),
+    )
     chunked_idx = idx.rechunk(chunks)
 
     if align_by is not None:
@@ -158,9 +159,13 @@ def chunk_idx(idx, nchunk, align_by=None):
         sizes = align_by.cumsum()
         by_chunks = np.abs(target.reshape(1, -1) - sizes.reshape(-1, 1)).argmin(axis=0) + 1
         by_chunks[0] = 0
-        chunks = {0: tuple([align_by[start:end].sum() for start, end in zip(by_chunks[:-1], by_chunks[1:])])}
+        chunks = {
+            0: tuple(
+                [align_by[start:end].sum() for start, end in zip(by_chunks[:-1], by_chunks[1:])]
+            )
+        }
         chunked_idx = idx.rechunk(chunks)
-        by_chunks = tuple(np.diff(by_chunks)),
+        by_chunks = (tuple(np.diff(by_chunks)),)
     else:
         by_chunks = -1
 
@@ -206,9 +211,12 @@ def from_argsort(ds, by):
             source_data = source_data[idx]
 
         if dask:
-            new_idx = da.from_delayed(argsort(source_data),
-                                      dtype="i4", shape=source_data.shape,
-                                      meta=np.empty(source_data.shape, "i4"))
+            new_idx = da.from_delayed(
+                argsort(source_data),
+                dtype="i4",
+                shape=source_data.shape,
+                meta=np.empty(source_data.shape, "i4"),
+            )
         else:
             new_idx = source_data.argsort(kind="stable")
 

@@ -37,12 +37,11 @@ def mobility_diameter(f_agg: xr.DataArray, **kwargs) -> xr.DataArray:
         raise ValueError(f"You must provide the following physical parameters: {required}")
 
     if isinstance(f_agg.data, da.Array):
-        return xr.apply_ufunc(_vectorized_compute_dm,
-                              f_agg, kwargs=kwargs,
-                              dask="parallelized", output_dtypes=[float])
+        return xr.apply_ufunc(
+            _vectorized_compute_dm, f_agg, kwargs=kwargs, dask="parallelized", output_dtypes=[float]
+        )
     else:
-        return xr.apply_ufunc(_vectorized_compute_dm,
-                              f_agg, kwargs=kwargs)
+        return xr.apply_ufunc(_vectorized_compute_dm, f_agg, kwargs=kwargs)
 
 
 def _vectorized_compute_dm(vect_f_agg: np.ndarray, x0: float = 1e-8, **kwargs) -> np.ndarray:
@@ -65,9 +64,15 @@ def _compute_dm(f_agg: float, x0: float = 1e-8, **kwargs) -> float:
 
     dm_norm = x0
     x0 /= dm_norm
-    rootresults = root_scalar(_normalized_dm_equation, args=(f_agg, dm_norm, *params),
-                              fprime=True, fprime2=True,
-                              x0=x0, x1=10 * x0, **kwargs)
+    rootresults = root_scalar(
+        _normalized_dm_equation,
+        args=(f_agg, dm_norm, *params),
+        fprime=True,
+        fprime2=True,
+        x0=x0,
+        x1=10 * x0,
+        **kwargs,
+    )
     if not rootresults.converged:
         # raise ValueError("Warning, compute_Dm failed to find a solution ")
         print("Warning, compute_dm failed to find a solution ")
@@ -76,14 +81,16 @@ def _compute_dm(f_agg: float, x0: float = 1e-8, **kwargs) -> float:
 
 
 @njit(nogil=True, cache=True)
-def _normalized_dm_equation(Dm: float = 1.0,
-                            f_agg: float = 1e-12,
-                            dm_norm: float = 1e-8,
-                            A1: float = 1.142,
-                            A2: float = 0.558,
-                            A3: float = 0.999,
-                            lambda_g: float = 5e-7,
-                            mu_g: float = 6e-5):
+def _normalized_dm_equation(
+    Dm: float = 1.0,
+    f_agg: float = 1e-12,
+    dm_norm: float = 1e-8,
+    A1: float = 1.142,
+    A2: float = 0.558,
+    A3: float = 0.999,
+    lambda_g: float = 5e-7,
+    mu_g: float = 6e-5,
+):
     """
     Normalized version of the mobility diameter equation
 
@@ -93,21 +100,19 @@ def _normalized_dm_equation(Dm: float = 1.0,
 
     f, df, ddf = _dm_equation(Dm * dm_norm, f_agg, A1, A2, A3, lambda_g, mu_g)
 
-    return (
-        f / f_norm,
-        df / f_norm * dm_norm,
-        ddf / f_norm * dm_norm * dm_norm
-        )
+    return (f / f_norm, df / f_norm * dm_norm, ddf / f_norm * dm_norm * dm_norm)
 
 
 @njit(nogil=True, cache=True)
-def _dm_equation(dm: float = 1e-8,
-                 f_agg: float = 1e-12,
-                 A1: float = 1.142,
-                 A2: float = 0.558,
-                 A3: float = 0.999,
-                 lambda_g: float = 5e-7,
-                 mu_g: float = 6e-5):
+def _dm_equation(
+    dm: float = 1e-8,
+    f_agg: float = 1e-12,
+    A1: float = 1.142,
+    A2: float = 0.558,
+    A3: float = 0.999,
+    lambda_g: float = 5e-7,
+    mu_g: float = 6e-5,
+):
     """
     Mobility diameter equation
 
@@ -122,5 +127,5 @@ def _dm_equation(dm: float = 1e-8,
     return (
         3 * np.pi * mu_g * dm - f_agg * cunningham,
         3 * np.pi * mu_g + f_agg * cunningham_prime / dm,
-        - f_agg * cunningham_prime2 / dm ** 2
-        )
+        -f_agg * cunningham_prime2 / dm ** 2,
+    )

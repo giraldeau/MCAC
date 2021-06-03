@@ -24,12 +24,12 @@ import xarray as xr
 
 from pymcac.tools.core.dask_tools import not_aligned_rechunk
 from pymcac.tools.core.dataframe import groupby_agg
-from pymcac.tools.core.groupby import groupby2
-from pymcac.tools.core.groupby import groupby_aggregate
+from pymcac.tools.core.groupby import groupby2, groupby_aggregate
+
 # from pymcac.tools.core.dataframe import groupby_apply
 from pymcac.tools.core.sorting import sortby
-from .generator import generate_dummy_aggregates_data
-from .generator import generate_dummy_data
+
+from .generator import generate_dummy_aggregates_data, generate_dummy_data
 from .test_dask import raise_if_computed
 from .test_data import check_data
 
@@ -43,18 +43,20 @@ def noop_pd(df):
 
 
 custom_mean_dd = dd.Aggregation(
-        name='custom_mean',
-        chunk=lambda s: (s.count(), s.sum()),
-        agg=lambda count, sum: (count.sum(), sum.sum()),
-        finalize=lambda count, sum: sum / count,
-        )
+    name="custom_mean",
+    chunk=lambda s: (s.count(), s.sum()),
+    agg=lambda count, sum: (count.sum(), sum.sum()),
+    finalize=lambda count, sum: sum / count,
+)
 
 
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
 @pytest.mark.parametrize("sort_info", [True, False])
 def test_groupby_agg_no_change(dask, full, sort_info):
-    aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask, full=full, sort_info=sort_info)
+    aggregates = generate_dummy_aggregates_data(
+        nt=29, nagg=31, dask=dask, full=full, sort_info=sort_info
+    )
     # print(aggregates)
 
     test = groupby_agg(aggregates, ["Time", "Label"], [("data", "sum", "data")])
@@ -74,10 +76,13 @@ def test_groupby_agg_no_change(dask, full, sort_info):
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
 def test_groupby_agg_new_var(dask, full):
-    aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask, full=full, sort_info=True)
+    aggregates = generate_dummy_aggregates_data(
+        nt=29, nagg=31, dask=dask, full=full, sort_info=True
+    )
 
-    test = groupby_agg(aggregates, ["Time", "Label"], [("data", "sum", "data"),
-                                                       ("data2", "mean", "data")])
+    test = groupby_agg(
+        aggregates, ["Time", "Label"], [("data", "sum", "data"), ("data2", "mean", "data")]
+    )
     check_data(test)
     assert np.allclose(test.data, test.data2)
 
@@ -112,8 +117,9 @@ def test_groupby_agg(sort, fn, dask, full, nt, nagg):
         else:
             fn = custom_mean_dd
 
-    test = groupby_agg(aggregates, "Np", [("new_var", fn, "data"),
-                                          ("data", "sum", "data")], sort=sort)
+    test = groupby_agg(
+        aggregates, "Np", [("new_var", fn, "data"), ("data", "sum", "data")], sort=sort
+    )
     # check_data(test)
 
     test = test.to_dataframe()[["new_var", "data"]]
@@ -123,11 +129,12 @@ def test_groupby_agg(sort, fn, dask, full, nt, nagg):
 
     ref = (
         aggregates[["data", "Np"]]
-            .to_dataframe()
-            .groupby(by="Np", sort=True)
-            .agg(
-                new_var=pd.NamedAgg(column="data", aggfunc=fn),
-                data=pd.NamedAgg(column="data", aggfunc="sum"))
+        .to_dataframe()
+        .groupby(by="Np", sort=True)
+        .agg(
+            new_var=pd.NamedAgg(column="data", aggfunc=fn),
+            data=pd.NamedAgg(column="data", aggfunc="sum"),
+        )
     )
 
     sorted_test = test.sort_index()
@@ -149,7 +156,9 @@ def test_groupby_agg_with_index(dask_index):
     if not dask_index:
         values = values.compute()
 
-    test = groupby_agg(aggregates, "Np", [("data", "sum", "data")], index_arrays=values, length=9).compute()
+    test = groupby_agg(
+        aggregates, "Np", [("data", "sum", "data")], index_arrays=values, length=9
+    ).compute()
     ref = groupby_agg(aggregates, "Np", [("data", "sum", "data")]).compute()
     # check_data(test)
 
@@ -160,8 +169,9 @@ def test_groupby_agg_no_compute():
     aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=5)
     chunks = aggregates.chunks
     aggregates["Np"] = ("k",), np.random.randint(1, 10, aggregates.sizes["k"])
-    aggregates["trigger"] = ("k",), da.from_delayed(raise_if_computed(),
-                                                    dtype=int, shape=(aggregates.sizes["k"],))
+    aggregates["trigger"] = ("k",), da.from_delayed(
+        raise_if_computed(), dtype=int, shape=(aggregates.sizes["k"],)
+    )
     aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
 
     # groupby_agg(aggregates, "Np", [("trigger", "sum", "trigger")])
@@ -174,7 +184,7 @@ def test_groupby_agg_no_compute():
 def test_groupby_aggregate_reduction(dask):
     aggregates, spheres = generate_dummy_data(nt=29, nagg=31, nsph=37, dask=dask)
 
-    test = groupby_aggregate(spheres, aggregates, np.mean, "data")#.compute()
+    test = groupby_aggregate(spheres, aggregates, np.mean, "data")  # .compute()
     check_data(test)
     # print(test)
 
@@ -193,8 +203,9 @@ def test_groupby_aggregate_not_reduction(dask):
 def test_groupby_aggregate_no_compute():
     aggregates, spheres = generate_dummy_data(nt=29, nagg=31, nsph=37, dask=5)
     chunks = spheres.chunks
-    spheres["trigger"] = ("k",), da.from_delayed(raise_if_computed(),
-                                                 dtype=int, shape=(spheres.sizes["k"],))
+    spheres["trigger"] = ("k",), da.from_delayed(
+        raise_if_computed(), dtype=int, shape=(spheres.sizes["k"],)
+    )
     spheres = not_aligned_rechunk(spheres, chunks=chunks)
 
     groupby_aggregate(spheres, aggregates, np.mean, "trigger")
@@ -232,10 +243,14 @@ def test_groupby2_aggregate(dask):
 
     template = aggregates["data"].rename(kLabel="Label")
 
-    test = groupby2(spheres, "Time", op="map",
-                    op_args=(groupby2,), op_kwargs={"args"      : ("Label", "mean"),
-                                                    "keep_coord": "kTime"},
-                    template=template)
+    test = groupby2(
+        spheres,
+        "Time",
+        op="map",
+        op_args=(groupby2,),
+        op_kwargs={"args": ("Label", "mean"), "keep_coord": "kTime"},
+        template=template,
+    )
     check_data(test)
 
     ref = groupby_aggregate(spheres, aggregates, np.mean, "data")

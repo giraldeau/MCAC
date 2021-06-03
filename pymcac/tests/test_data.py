@@ -25,11 +25,14 @@ import xarray as xr
 from numba import njit
 
 from pymcac.tools.core.various import get_idx_name
-from .generator import compute_Label_from_Np
-from .generator import compute_Np_from_Label
-from .generator import generate_dummy_aggregates_data
-from .generator import generate_dummy_data
-from .generator import generate_dummy_spheres_data
+
+from .generator import (
+    compute_Label_from_Np,
+    compute_Np_from_Label,
+    generate_dummy_aggregates_data,
+    generate_dummy_data,
+    generate_dummy_spheres_data,
+)
 
 
 @njit
@@ -115,7 +118,7 @@ def check_sorted(ds):
             else:
                 data = ds[sort_idx].values[idx]
             idx = idx[data.argsort(kind="stable")]
-        assert is_sorted(idx), f"It seems that your data is not sorted"
+        assert is_sorted(idx), "It seems that your data is not sorted"
 
     if "k" not in ds.dims:
         sorted_coords(ds)
@@ -139,39 +142,51 @@ def check_internal_kconsistency(ds):
     idx_name = get_idx_name(ds)
 
     if "Time" in ds.dims:
-        assert set(ds.kTime.values) == set(ds.Time.values), f"Time and kTime contains differents values"
+        assert set(ds.kTime.values) == set(
+            ds.Time.values
+        ), "Time and kTime contains differents values"
 
     if idx_name not in (None, "None"):
-        assert set(ds[f"k{idx_name}"].values) == set(ds[idx_name].values), \
-            f"{idx_name} and k{idx_name} contains differents values"
+        assert set(ds[f"k{idx_name}"].values) == set(
+            ds[idx_name].values
+        ), f"{idx_name} and k{idx_name} contains differents values"
 
     if "Time" in ds.dims and idx_name not in (None, "None"):
-        assert ds.nTime.sum() == ds.sizes["k"], f"the sum of nTime should be the size of k"
-        assert ds[f"n{idx_name}"].sum() == ds.sizes["k"], f"the sum of n{idx_name} should be the size of k"
-        assert np.array_equal(ds.nTime, np.bincount(ds[f"n{idx_name}"])[:0:-1].cumsum()[::-1]), \
-            f"nTime and n{idx_name} are not coherent"
+        assert ds.nTime.sum() == ds.sizes["k"], "the sum of nTime should be the size of k"
+        assert (
+            ds[f"n{idx_name}"].sum() == ds.sizes["k"]
+        ), f"the sum of n{idx_name} should be the size of k"
+        assert np.array_equal(
+            ds.nTime, np.bincount(ds[f"n{idx_name}"])[:0:-1].cumsum()[::-1]
+        ), f"nTime and n{idx_name} are not coherent"
 
     elif "Time" in ds.dims:
-        assert ds.sizes["Time"] == ds.sizes["k"], f"The size of Time should be the size of k"
+        assert ds.sizes["Time"] == ds.sizes["k"], "The size of Time should be the size of k"
     elif idx_name not in (None, "None"):
-        assert ds.sizes[idx_name] == ds.sizes["k"], f"The size of {idx_name} should be the size of k"
+        assert (
+            ds.sizes[idx_name] == ds.sizes["k"]
+        ), f"The size of {idx_name} should be the size of k"
 
 
 def check_consistency(spheres, aggregates):
     spheres_time = spheres.coords.get("Time", None)
     aggregates_time = aggregates.coords.get("Time", None)
     if (spheres_time is not None) or (aggregates_time is not None):
-        assert spheres_time is not None, f"The Time should be present in spheres"
-        assert aggregates_time is not None, f"The Time should be present in aggregates"
+        assert spheres_time is not None, "The Time should be present in spheres"
+        assert aggregates_time is not None, "The Time should be present in aggregates"
 
-        assert np.array_equal(spheres_time, aggregates_time), f"The Time should be the same in spheres and aggregate"
+        assert np.array_equal(
+            spheres_time, aggregates_time
+        ), "The Time should be the same in spheres and aggregate"
     Np = compute_Np_from_Label(spheres)
     if aggregates.Np.dims:
-        assert np.array_equal(aggregates.Np, Np), \
-            f"Np computed from sphere's Label are not equal to the aggregate's Np"
+        assert np.array_equal(
+            aggregates.Np, Np
+        ), "Np computed from sphere's Label are not equal to the aggregate's Np"
     else:
-        assert aggregates.Np == Np[0], \
-            f"Np computed from sphere's Label are not equal to the aggregate's Np"
+        assert (
+            aggregates.Np == Np[0]
+        ), "Np computed from sphere's Label are not equal to the aggregate's Np"
 
     def sort_by_label(df):
         return df.sort_values("Label")
@@ -184,8 +199,9 @@ def check_consistency(spheres, aggregates):
     sorted_labels = df_sorted_labels.Label.values
 
     labels = compute_Label_from_Np(aggregates)
-    assert np.array_equal(sorted_labels, labels), \
-        f"labels computed from aggregate's Np are not equal to the sphere's Labels"
+    assert np.array_equal(
+        sorted_labels, labels
+    ), "labels computed from aggregate's Np are not equal to the sphere's Labels"
 
 
 def check_dask_consistency(ds):
@@ -203,7 +219,7 @@ def check_dask_consistency(ds):
     for dim in ("k", "Time", idx_name):
         chunk = ds.chunks.get(dim, None)
         if chunk is not None:
-            chunk = chunk,
+            chunk = (chunk,)
 
         if dim == "k":
             for coord in ds.coords.values():
@@ -218,9 +234,12 @@ def check_dask_consistency(ds):
             else:
                 coord = da.from_array(ds[dim].data, chunks=ds.nTime.chunks)
 
-            aligned = da.map_blocks(lambda coord_block, kcoord_block: np.array([set(coord_block) == set(kcoord_block)]),
-                                    coord, ds["k" + dim].data,
-                                    dtype=bool)
+            aligned = da.map_blocks(
+                lambda coord_block, kcoord_block: np.array([set(coord_block) == set(kcoord_block)]),
+                coord,
+                ds["k" + dim].data,
+                dtype=bool,
+            )
             assert np.all(aligned), f"The chunks are not aligned of {dim}"
 
         for var in ds.data_vars.values():
@@ -256,7 +275,9 @@ def check_data(ds, aligned=True):
 @repeat(10)
 def test_generate(nt, nobj, data_type, dask, full):
     if data_type == "aggregates":
-        data = generate_dummy_aggregates_data(nt=nt, nagg=nobj, sort_info=True, dask=dask, full=full)
+        data = generate_dummy_aggregates_data(
+            nt=nt, nagg=nobj, sort_info=True, dask=dask, full=full
+        )
     elif data_type == "spheres":
         data = generate_dummy_spheres_data(nt=nt, nsph=nobj, sort_info=True, dask=dask, full=full)
     else:
@@ -275,5 +296,6 @@ def test_generate_both(nt, nagg, dask):
     check_data(aggregates)
     check_data(spheres)
     check_consistency(spheres, aggregates)
+
 
 # TODO hypothesis

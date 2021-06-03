@@ -3,17 +3,17 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -21,9 +21,6 @@
 Compute surface and volume of an aggregate
 """
 
-from .volume_surface import volume_surface
-from .volume_surface import volume_surface_disc
-from .volume_surface import volume_surface_sbl
-
+from ._volume_surface import volume_surface, volume_surface_disc, volume_surface_sbl
 
 __all__ = ["volume_surface", "volume_surface_disc", "volume_surface_sbl"]

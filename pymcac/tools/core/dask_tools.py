@@ -20,22 +20,20 @@
 """
 Tools related to dask
 """
-from contextlib import contextmanager
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 
 import dask.array as da
 import numpy as np
 import xarray as xr
+
 # import cupy as cp
-from dask import compute
-from dask import persist
+from dask import compute, persist
+
 # noinspection PyProtectedMember
 from dask.base import get_scheduler
 from dask.cache import Cache
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client
-from dask.distributed import performance_report
-from dask.distributed import progress
+from dask.distributed import Client, performance_report, progress
 
 from pymcac.tools.core.various import get_idx_name
 
@@ -80,6 +78,7 @@ def dask_distribute(n_workers=None, threads_per_worker=1, report="", jupyter=Fal
         print("Using a IPyParallel cluster seems to be a bad idea...")
         try:
             from ipyparallel import Client as ipyclient
+
             c = ipyclient()  # connect to IPyParallel cluster
             client = c.become_dask()  # start dask on top of IPyParallel
         except (OSError, ImportError):
@@ -103,11 +102,11 @@ def dask_distribute(n_workers=None, threads_per_worker=1, report="", jupyter=Fal
             cache.unregister()
 
 
-class JupyterDaskDistribute():
+class JupyterDaskDistribute:
     def __init__(self, n_workers=None, threads_per_worker=1, report=""):
-        self.gen = dask_distribute(n_workers=n_workers,
-                                   threads_per_worker=threads_per_worker,
-                                   report=report).gen
+        self.gen = dask_distribute(
+            n_workers=n_workers, threads_per_worker=threads_per_worker, report=report
+        ).gen
 
     def start(self):
         return next(self.gen)
@@ -160,7 +159,7 @@ def not_aligned_rechunk(ds, chunks=None, **chunks_dict):
                     var.data = da.from_array(var.data, chunks=var_chunks)
                 else:
                     if isinstance(var_chunks, tuple) and isinstance(var_chunks[0], int):
-                        var_chunks = var_chunks,
+                        var_chunks = (var_chunks,)
                     var.data = var.data.rechunk(var_chunks)
     for c, coord in ds.coords.items():
         if coord.dims:
@@ -173,7 +172,7 @@ def not_aligned_rechunk(ds, chunks=None, **chunks_dict):
                     coord.data = da.from_array(coord.data, chunks=coord_chunks)
                 else:
                     if isinstance(coord_chunks, tuple) and isinstance(coord_chunks[0], int):
-                        coord_chunks = coord_chunks,
+                        coord_chunks = (coord_chunks,)
                     coord.data = coord.data.rechunk(coord_chunks)
     return ds
 
@@ -209,7 +208,9 @@ def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
         on = _infer_on(chunks, ds.attrs)
 
     if "sort" in ds.attrs:
-        assert ds.attrs["sort"][0] == on, f"The array should be sorted on on={on}, not on {ds.attrs['sort'][0]}"
+        assert (
+            ds.attrs["sort"][0] == on
+        ), f"The array should be sorted on on={on}, not on {ds.attrs['sort'][0]}"
     else:
         print("WARNING: you should sort your array before using aligned_rechunk")
 
@@ -235,21 +236,19 @@ def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
     if chunks[on] is None and "k" in chunks:
         if chunks["k"] is None:
             # trusting the caller that k is already well aligned
-            chunk = da.map_blocks(lambda coord_block: np.array([len(set(coord_block))]),
-                                  ds[kon].data,
-                                  dtype=int).compute()
+            chunk = da.map_blocks(
+                lambda coord_block: np.array([len(set(coord_block))]), ds[kon].data, dtype=int
+            ).compute()
             chunks = {on: tuple(chunk)}
         elif isinstance(chunks["k"], int):
             # The given chunksize is a hint, no more
             nchunk = int(np.round(ds.k.size / chunks["k"]))
 
-            time_chunks = np.searchsorted(nums.cumsum() / nums.sum(),
-                                          np.linspace(0, 1, nchunk, endpoint=False))
-            time_chunks = np.append(time_chunks,
-                                    [time_chunks[-1] + nums.size - time_chunks.max()])
-            chunks = {on: tuple([chunksize
-                                 for chunksize in np.diff(time_chunks)
-                                 if chunksize > 0])}
+            time_chunks = np.searchsorted(
+                nums.cumsum() / nums.sum(), np.linspace(0, 1, nchunk, endpoint=False)
+            )
+            time_chunks = np.append(time_chunks, [time_chunks[-1] + nums.size - time_chunks.max()])
+            chunks = {on: tuple([chunksize for chunksize in np.diff(time_chunks) if chunksize > 0])}
         else:
             raise ValueError("I don't understand")
 
@@ -260,16 +259,12 @@ def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
     if isinstance(chunks[on], int):
         time_chunks = np.arange(0, vals.size + chunks[on], chunks[on])
         time_chunks[-1] = vals.size
-        chunks[on] = tuple([chunksize
-                            for chunksize in np.diff(time_chunks)
-                            if chunksize > 0])
+        chunks[on] = tuple([chunksize for chunksize in np.diff(time_chunks) if chunksize > 0])
     else:
         time_chunks = np.cumsum((0, *chunks[on]))
 
     chunksizes = [nums[start:end].sum() for start, end in zip(time_chunks[:-1], time_chunks[1:])]
-    chunks["k"] = tuple([chunksize
-                         for chunksize in chunksizes
-                         if chunksize > 0]),
+    chunks["k"] = (tuple([chunksize for chunksize in chunksizes if chunksize > 0]),)
     return not_aligned_rechunk(ds, **chunks)
 
 
@@ -328,16 +323,22 @@ def broadcast_to(source, dest, nums=None, chunks=None):
             raise ValueError("adding more that one dim ?")
         [missing_dim] = missing_dims
 
-        if f"n{missing_dim}" in dest.coords and set(dest[f"n{missing_dim}"].dims).issubset(common_dims):
+        if f"n{missing_dim}" in dest.coords and set(dest[f"n{missing_dim}"].dims).issubset(
+            common_dims
+        ):
             orig_sort = dest.attrs.get("sort", [])
-            common_dims = list(dict.fromkeys([dim for dim in orig_sort + list(common_dims) if dim in common_dims]))
+            common_dims = list(
+                dict.fromkeys([dim for dim in orig_sort + list(common_dims) if dim in common_dims])
+            )
 
             source = sortby(source, common_dims)
             dest = sortby(dest, common_dims)
 
             if any(dest.chunks):
                 dest = aligned_rechunk(dest, common_dims[0], k=None)
-                source = aligned_rechunk(source, chunks={common_dims[0]: dest.chunks[common_dims[0]]})
+                source = aligned_rechunk(
+                    source, chunks={common_dims[0]: dest.chunks[common_dims[0]]}
+                )
             elif any(source.chunks):
                 source = aligned_rechunk(source, common_dims[0], k=None)
 
@@ -349,7 +350,6 @@ def broadcast_to(source, dest, nums=None, chunks=None):
     if nums is None:
         res = __broadcast_with_tag(source, dest)
     else:
-        fdsfd
         res = __broadcast_with_nums(source, dest, nums, chunks=chunks)
 
     if orig_sort:
@@ -364,10 +364,10 @@ def broadcast_to(source, dest, nums=None, chunks=None):
 
 def __broadcast_with_nums(source, dest, nums, chunks=None):
     """
-     * Time      -> Time-Num/Label (and transpose)
-     * Num/Label -> Num/Label-Time  (and transpose)
-     * Label     -> Num-Label
-     * Label     -> Num-Label
+    * Time      -> Time-Num/Label (and transpose)
+    * Num/Label -> Num/Label-Time  (and transpose)
+    * Label     -> Num-Label
+    * Label     -> Num-Label
     """
 
     source_sort = source.attrs.get("sort", [None])[0]
@@ -400,19 +400,23 @@ def __broadcast_with_nums(source, dest, nums, chunks=None):
         if chunks is None:
             res[v] = ("k",), broadcast_var_block(var.data, nums.data)
         else:
-            res[v] = ("k",), da.map_blocks(broadcast_var_block, var.data, nums.data,
-                                           meta=np.array((), dtype=var.dtype),
-                                           chunks=chunks)
+            res[v] = ("k",), da.map_blocks(
+                broadcast_var_block,
+                var.data,
+                nums.data,
+                meta=np.array((), dtype=var.dtype),
+                chunks=chunks,
+            )
 
     return res
 
 
 def __broadcast_with_tag(source, dest):
     """
-     * Time      -> Time-Num/Label (and transpose)
-     * Num/Label -> Num/Label-Time  (and transpose)
-     * Label     -> Num-Label
-     * Label     -> Num-Label
+    * Time      -> Time-Num/Label (and transpose)
+    * Num/Label -> Num/Label-Time  (and transpose)
+    * Label     -> Num-Label
+    * Label     -> Num-Label
     """
     from pymcac.tools.core.sorting import sortby
 
@@ -441,8 +445,7 @@ def __broadcast_with_tag(source, dest):
     for v, var in source.data_vars.items():
         res[v] = ("k",), var.data[idx]
 
-    res = res.drop_dims(tag).reset_coords(f"k{tag}").rename({f"k{tag}"  : tag,
-                                                             "nTime_old": "nTime"})
+    res = res.drop_dims(tag).reset_coords(f"k{tag}").rename({f"k{tag}": tag, "nTime_old": "nTime"})
 
     if orig_sort is not None:
         res = sortby(res, orig_sort)

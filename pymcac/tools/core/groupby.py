@@ -20,14 +20,7 @@
 """
 Tools to mimic the pandas API
 """
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Hashable
-from typing import List
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Any, Callable, Dict, Hashable, List, Sequence, Tuple, Union
 
 import dask.array as da
 import numpy as np
@@ -37,17 +30,20 @@ from dask.delayed import Delayed
 from numba import njit
 
 from pymcac.tools.core.dask_tools import aligned_rechunk
+
 from .sorting import sortby
 
 
-def groupby_aggregate(Spheres: xr.Dataset,
-                      Aggregates: xr.Dataset,
-                      fn: Union[str, Callable],
-                      sph_names_in: Union[str, List[str]],
-                      agg_names_in: Union[str, List[str]] = None,
-                      meta_out: Dict[str, Any] = None,
-                      reduction=True,
-                      dtype=None) -> xr.Dataset:
+def groupby_aggregate(
+    Spheres: xr.Dataset,
+    Aggregates: xr.Dataset,
+    fn: Union[str, Callable],
+    sph_names_in: Union[str, List[str]],
+    agg_names_in: Union[str, List[str]] = None,
+    meta_out: Dict[str, Any] = None,
+    reduction=True,
+    dtype=None,
+) -> Union[xr.DataArray, xr.Dataset]:
     """TODO use xarray map block and remove intermediate dtype"""
     if not reduction:
         raise NotImplementedError
@@ -89,19 +85,32 @@ def groupby_aggregate(Spheres: xr.Dataset,
         Aggregates = aligned_rechunk(Aggregates, Time=Spheres.chunks["Time"])
         chunks = Spheres.chunks["k"]
 
-    arrs_in = ([Spheres[name_in].data for name_in in sph_names_in] +
-               [Aggregates[name_in].data for name_in in agg_names_in])
+    arrs_in = [Spheres[name_in].data for name_in in sph_names_in] + [
+        Aggregates[name_in].data for name_in in agg_names_in
+    ]
 
-    argin_string = "x" + ", x".join(map(str, range(len(arrs_in) + 1))) + ", fn, nout, intermediate_dtype"
-    argout_string = "x0, (x" + ", x".join(map(str, range(1, len(arrs_in) + 1))) + ",), fn, nout, intermediate_dtype"
+    argin_string = (
+        "x" + ", x".join(map(str, range(len(arrs_in) + 1))) + ", fn, nout, intermediate_dtype"
+    )
+    argout_string = (
+        "x0, (x"
+        + ", x".join(map(str, range(1, len(arrs_in) + 1)))
+        + ",), fn, nout, intermediate_dtype"
+    )
 
-    res = da.map_blocks(eval(f"lambda {argin_string}: groupby_aggregate_in_block({argout_string})"),
-                        Aggregates.Np.data,
-                        *arrs_in,
-                        fn=fn, nout=len(meta_out), intermediate_dtype=dtype,
-                        dtype=dtype, new_axis=[0], chunks=(len(meta_out), chunks))
+    res = da.map_blocks(
+        eval(f"lambda {argin_string}: groupby_aggregate_in_block({argout_string})"),
+        Aggregates.Np.data,
+        *arrs_in,
+        fn=fn,
+        nout=len(meta_out),
+        intermediate_dtype=dtype,
+        dtype=dtype,
+        new_axis=[0],
+        chunks=(len(meta_out), chunks),
+    )
 
-    res_ds = xr.Dataset()
+    res_ds: Union[xr.DataArray, xr.Dataset] = xr.Dataset()
     for i, (col, dtype) in enumerate(meta_out.items()):
         res_ds[col] = ("k",), res[i, :].astype(dtype)
 
@@ -118,9 +127,9 @@ def groupby_aggregate(Spheres: xr.Dataset,
     return res_ds
 
 
-def groupby_aggregate_in_block(npagg: np.ndarray,
-                               arrs: Tuple[np.ndarray, ...],
-                               fn, nout, intermediate_dtype) -> np.ndarray:
+def groupby_aggregate_in_block(
+    npagg: np.ndarray, arrs: Tuple[np.ndarray, ...], fn, nout, intermediate_dtype
+) -> np.ndarray:
     res = np.empty((nout, npagg.size), dtype=intermediate_dtype)
     start = 0
     for iagg, nsph in enumerate(npagg):
@@ -135,15 +144,17 @@ def groupby_aggregate_in_block(npagg: np.ndarray,
     return res
 
 
-def groupby2(ds: xr.Dataset,
-             group: str,
-             op: str,
-             op_args=(),
-             op_kwargs=None,
-             squeeze=True,
-             restore_coord_dims=None,
-             template="reduction",
-             keep_coord=None) -> xr.Dataset:
+def groupby2(
+    ds: xr.Dataset,
+    group: str,
+    op: str,
+    op_args=(),
+    op_kwargs=None,
+    squeeze=True,
+    restore_coord_dims=None,
+    template="reduction",
+    keep_coord=None,
+) -> xr.Dataset:
     """TODO avoid xarray groupby"""
     if op_kwargs is None:
         op_kwargs = {}
@@ -170,12 +181,14 @@ def groupby2(ds: xr.Dataset,
             else:
                 if aligned_ds[group].chunks is None:
                     chunks = None
-                    shape = np.unique(aligned_ds[group].data).sum(),
+                    shape = (np.unique(aligned_ds[group].data).sum(),)
                 else:
-                    chunks = tuple(aligned_ds[group].data.map_blocks(
-                            lambda ds: np.array([len(np.unique(ds))])
-                            ).compute())
-                    shape = sum(chunks),
+                    chunks = tuple(
+                        aligned_ds[group]
+                        .data.map_blocks(lambda ds: np.array([len(np.unique(ds))]))
+                        .compute()
+                    )
+                    shape = (sum(chunks),)
 
             if chunks is None:
                 meta = np.empty(shape)
@@ -225,13 +238,15 @@ def groupby2(ds: xr.Dataset,
     return res
 
 
-def groupby(ds: xr.Dataset,
-            group: str,
-            func: Callable,
-            meta: Union[xr.DataArray, xr.Dataset, Tuple],
-            *args,
-            nchunk: int = None,
-            **kwargs) -> xr.Dataset:
+def groupby(
+    ds: xr.Dataset,
+    group: str,
+    func: Callable,
+    meta: Union[xr.DataArray, xr.Dataset, Tuple],
+    *args,
+    nchunk: int = None,
+    **kwargs,
+) -> xr.Dataset:
     """WIP"""
     sorted_ds = sortby(ds, group, nchunk=nchunk)
     chunks = None
@@ -239,7 +254,9 @@ def groupby(ds: xr.Dataset,
         chunks = sorted_ds.chunks["k"]
 
     ds_only_k = sorted_ds.drop_dims([dim for dim in sorted_ds.dims if dim != "k"])
-    ds_only_k = ds_only_k.rename({coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")})
+    ds_only_k = ds_only_k.rename(
+        {coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")}
+    )
     del ds_only_k.attrs["sort"]
 
     ds_other = sorted_ds.drop_dims("k")
@@ -257,7 +274,9 @@ def groupby(ds: xr.Dataset,
                 if chunks is None:
                     template[name] = (dim,), np.empty(sorted_ds.sizes[dim], dtype=dtype)
                 else:
-                    template[name] = (dim,), da.empty(sorted_ds.sizes[dim], dtype=dtype, chunks=sorted_ds.chunks[dim])
+                    template[name] = (dim,), da.empty(
+                        sorted_ds.sizes[dim], dtype=dtype, chunks=sorted_ds.chunks[dim]
+                    )
             else:
                 template.coords[dim] = (dim,), ds_other.coords[dim].data
                 template[name] = (dim,), da.empty(sorted_ds.sizes[dim], dtype=dtype, chunks=-1)
@@ -266,7 +285,7 @@ def groupby(ds: xr.Dataset,
     if "k" in template.dims:
         for c, coord in template.coords.items():
             if "k" in coord.dims:
-                kname = c
+                kname = str(c)
                 break
 
     label_limits = None
@@ -276,20 +295,36 @@ def groupby(ds: xr.Dataset,
         else:
             limits = np.insert(np.cumsum(ds_other.Nt.values), 0, 0)
 
-        label_limits = ((np.asscalar(label.values), start, end)
-                        for label, start, end in zip(ds_other.coords[group], limits[:-1], limits[1:]))
+        label_limits = (
+            (np.asscalar(label.values), start, end)
+            for label, start, end in zip(ds_other.coords[group], limits[:-1], limits[1:])
+        )
 
     if ds_only_k.chunks is not None and "k" in ds_only_k.chunks:
 
-        res = ds_only_k.map_blocks(_groupby_block,
-                                   args=args,
-                                   kwargs={"group": group, "func": func, "kname": kname, "label_limits": label_limits,
-                                           **kwargs},
-                                   template=template)
+        res = ds_only_k.map_blocks(
+            _groupby_block,
+            args=args,
+            kwargs={
+                "group": group,
+                "func": func,
+                "kname": kname,
+                "label_limits": label_limits,
+                **kwargs,
+            },
+            template=template,
+        )
     else:
         ds_only_k.coords["k"] = np.arange(ds_only_k.sizes["k"])
-        res = _groupby_block(ds_only_k, *args,
-                             group=group, func=func, kname=kname, label_limits=label_limits, **kwargs)
+        res = _groupby_block(
+            ds_only_k,
+            group,
+            func,
+            kname,
+            label_limits,
+            *args,
+            **kwargs,
+        )
 
     if "k" in res.dims:
         res = res.assign_coords(sorted_ds.coords)
@@ -299,27 +334,30 @@ def groupby(ds: xr.Dataset,
     return res
 
 
-def _groupby_block(ds_only_k: xr.Dataset,
-                   group: str,
-                   func: Callable,
-                   kname: str,
-                   label_limits,
-                   *args,
-                   squeeze=True,
-                   restore_coord_dims=None,
-                   **kwargs) -> xr.Dataset:
+def _groupby_block(
+    ds_only_k: xr.Dataset,
+    group: str,
+    func: Callable,
+    kname: str,
+    label_limits,
+    *args,
+    squeeze=True,
+    restore_coord_dims=None,
+    **kwargs,
+) -> xr.Dataset:
     if label_limits is not None:
-        gb = ((float(t), ds_only_k.isel(k=slice(start, end)))
-              for t, start, end in label_limits)
-        gb = filter(lambda x: x[1].sizes["k"] > 0, gb)
+        gb = filter(
+            lambda x: x[1].sizes["k"] > 0,
+            ((float(t), ds_only_k.isel(k=slice(start, end))) for t, start, end in label_limits),
+        )
     else:
 
         try:
             kgroup = group
-            group_data = ds_only_k[group]
+            ds_only_k[group]
         except KeyError:
             kgroup = "k" + group
-            group_data = ds_only_k[kgroup]
+            ds_only_k[kgroup]
 
         gb = ds_only_k.groupby(group=kgroup, squeeze=squeeze, restore_coord_dims=restore_coord_dims)
 
@@ -343,16 +381,20 @@ def _groupby_block(ds_only_k: xr.Dataset,
         return res
 
     applied = (wrap(ds, label, *args, **kwargs) for label, ds in gb)
-    res_ds = xr.concat(applied, dim="k", data_vars="minimal", coords="minimal", compat="no_conflicts")
+    res_ds = xr.concat(
+        applied, dim="k", data_vars="minimal", coords="minimal", compat="no_conflicts"
+    )
 
     return res_ds
 
 
-def groupby_index(ds: xr.Dataset,
-                  indexname: str,
-                  fn: Union[str, Callable],
-                  meta: Union[xr.DataArray, xr.Dataset],
-                  nchunk: int = None) -> xr.Dataset:
+def groupby_index(
+    ds: xr.Dataset,
+    indexname: str,
+    fn: Union[str, Callable],
+    meta: Union[xr.DataArray, xr.Dataset],
+    nchunk: int = None,
+) -> xr.Dataset:
     if nchunk is None:
         nchunk = len(ds.chunks)
 
@@ -361,17 +403,20 @@ def groupby_index(ds: xr.Dataset,
 
     chunked_todo = np.array_split(ds.coords[indexname].data, nchunk)
 
-    res = [chunked_select_and_apply(ds, chunk, fn, indexname, meta) for chunk in chunked_todo]
-    res_dim = [xr.concat([data.drop_dims([d for d in data.dims if d != dim]) for data in res], dim=str(dim))
-               for dim in res[0].dims]
+    res_list = [chunked_select_and_apply(ds, chunk, fn, indexname, meta) for chunk in chunked_todo]
+    res_dim = [
+        xr.concat(
+            [data.drop_dims([d for d in data.dims if d != dim]) for data in res_list], dim=str(dim)
+        )
+        for dim in res_list[0].dims
+    ]
     res = xr.merge(res_dim)
     res.attrs = ds.attrs
     res.attrs["sort"] = indexname
     return res
 
 
-def chunked_select_and_apply(ds, chunk, fn, indexname,
-                             meta: xr.Dataset) -> xr.Dataset:
+def chunked_select_and_apply(ds, chunk, fn, indexname, meta: xr.Dataset) -> xr.Dataset:
     ds.coords["k"] = da.arange(len(ds.k))
 
     idx = np.insert(ds.N.cumsum().values[:-1], 0, 0)
@@ -391,23 +436,25 @@ def chunked_select_and_apply(ds, chunk, fn, indexname,
 
     for var in meta.data_vars:
         if indexname in meta[var].dims:
-            res_ds[var] = (indexname,), da.from_delayed(get_from_delayed(delayed_res, var),
-                                                        shape=(ds_k[indexname].size,),
-                                                        dtype=meta[var].dtype)
+            res_ds[var] = (indexname,), da.from_delayed(
+                get_from_delayed(delayed_res, var),
+                shape=(ds_k[indexname].size,),
+                dtype=meta[var].dtype,
+            )
             res_ds[indexname] = ds_k[indexname]
         if "Time" in meta[var].dims:
-            res_ds[var] = ("k",), da.from_delayed(get_from_delayed(delayed_res, var),
-                                                  shape=(len_k,),
-                                                  dtype=meta[var].dtype)
+            res_ds[var] = ("k",), da.from_delayed(
+                get_from_delayed(delayed_res, var), shape=(len_k,), dtype=meta[var].dtype
+            )
             res_ds["Time"] = ds_k.Time
 
     if "Time" in res_ds.dims:
         res_ds["N"] = ds_k.N
         missing = [coord for coord in ds_k.coords if coord not in ("Time", indexname, "k")]
         for coord in missing:
-            res_ds.coords[coord] = ("k",), da.from_delayed(get_from_delayed(delayed_res, coord),
-                                                           shape=(len_k,),
-                                                           dtype=ds_k.coords[coord].dtype)
+            res_ds.coords[coord] = ("k",), da.from_delayed(
+                get_from_delayed(delayed_res, coord), shape=(len_k,), dtype=ds_k.coords[coord].dtype
+            )
     return res_ds
 
 
@@ -417,7 +464,9 @@ def get_from_delayed(delayed: Delayed, name: Hashable) -> np.ndarray:
 
 
 @delayed
-def delayed_chunked_select_and_apply(ds: xr.Dataset, chunk: Sequence[int], fn: Callable, indexname: str) -> xr.Dataset:
+def delayed_chunked_select_and_apply(
+    ds: xr.Dataset, chunk: Sequence[int], fn: Callable, indexname: str
+) -> xr.Dataset:
     idx = np.insert(ds.N.cumsum().values[:-1], 0, 0)
 
     res = [select_and_apply(ds, k, idx, fn, indexname) for k in chunk]
@@ -427,8 +476,10 @@ def delayed_chunked_select_and_apply(ds: xr.Dataset, chunk: Sequence[int], fn: C
     return res_ds
 
 
-def select_and_apply(ds: xr.Dataset, k: int, idx: np.ndarray, fn: Callable, indexname: str) -> xr.Dataset:
-    to_drop = [coord for coord in ds.coords if coord not in ("Time", indexname)]
+def select_and_apply(
+    ds: xr.Dataset, k: int, idx: np.ndarray, fn: Callable, indexname: str
+) -> xr.Dataset:
+    to_drop = [str(coord) for coord in ds.coords if coord not in ("Time", indexname)]
     mask = k <= ds.N
     ds_k = ds.sel({"k": k + idx[mask], indexname: [k]})
 
@@ -452,14 +503,16 @@ def select_and_apply(ds: xr.Dataset, k: int, idx: np.ndarray, fn: Callable, inde
 
 
 @njit(nogil=True, cache=True)
-def groupby_index_in_block(npagg: np.ndarray,
-                           time: np.ndarray,
-                           naggs: np.ndarray,
-                           nsph: np.ndarray,
-                           sph_time: np.ndarray,
-                           sph_label: np.ndarray,
-                           arrs: Tuple[np.ndarray, ...],
-                           fn) -> np.ndarray:
+def groupby_index_in_block(
+    npagg: np.ndarray,
+    time: np.ndarray,
+    naggs: np.ndarray,
+    nsph: np.ndarray,
+    sph_time: np.ndarray,
+    sph_label: np.ndarray,
+    arrs: Tuple[np.ndarray, ...],
+    fn,
+) -> np.ndarray:
     res = np.empty((npagg.size, 6), dtype=np.float64)
     npcum = nsph.cumsum()
     kagg = 0
@@ -472,12 +525,12 @@ def groupby_index_in_block(npagg: np.ndarray,
         l_sph_label = sph_label[start:end]
         l_arrs = [arr[start:end] for arr in arrs]
 
-        for l in np.arange(nagg):
+        for l_agg in np.arange(nagg):
             subset = np.empty((npagg[kagg], len(arrs)), dtype=np.float64)
             ksph = 0
 
             for j, (sph_t, sph_l) in enumerate(zip(l_sph_time, l_sph_label)):
-                if sph_t == t and sph_l == l:
+                if sph_t == t and sph_l == l_agg:
                     subset[ksph] = [l_arr[j] for l_arr in l_arrs]
                     ksph += 1
             res[kagg] = fn(subset)

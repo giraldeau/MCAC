@@ -10,9 +10,12 @@ Compute the overlapping coefficient COV
 """
 
 import numpy as np
+
 cimport numpy as np
 from libc.math cimport sqrt
+
 # noinspection PyUnresolvedReferences
+
 from cython.parallel import prange
 
 

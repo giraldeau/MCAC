@@ -125,6 +125,7 @@ pylint:
       - pyproject.toml
       - .docker/Dockerfile.gfortran
   needs: []
+  allow_failure: true
 
 cmake-format:
   image: cheshirekow/cmake-format

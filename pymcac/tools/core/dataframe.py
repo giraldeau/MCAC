@@ -21,15 +21,8 @@
 Tools to mimic the pandas API
 """
 import warnings
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Callable, Dict, Hashable, List, Mapping, Tuple, Union, cast
 
-import dask
 import dask.array as da
 import dask.dataframe as dd
 import numpy as np
@@ -41,9 +34,9 @@ from .dask_tools import progress_compute
 from .sorting import sortby
 
 
-def xarray_to_ddframe(ds: xr.Dataset,
-                      set_index: Union[bool, str] = None,
-                      dim_order: List[str] = None) -> dd.DataFrame:
+def xarray_to_ddframe(
+    ds: xr.Dataset, set_index: Union[bool, str] = None, dim_order: List[str] = None
+) -> dd.DataFrame:
     """
     Convert a xarray.Dataset into a dask.dataframe.DataFrame.
 
@@ -76,18 +69,18 @@ def xarray_to_ddframe(ds: xr.Dataset,
     dask.dataframe.DataFrame
     """
     if dim_order is None:
-        dim_order = list(ds.dims)
+        dim_order = [str(d) for d in ds.dims]
     elif set(dim_order) != set(ds.dims):
         raise ValueError(
-                "dim_order {} does not match the set of dimensions on this "
-                "Dataset: {}".format(dim_order, list(ds.dims))
-                )
+            "dim_order {} does not match the set of dimensions on this "
+            "Dataset: {}".format(dim_order, list(ds.dims))
+        )
 
     ordered_dims = {k: ds.dims[k] for k in dim_order}
 
     columns = list(ordered_dims)
-    columns.extend(k for k in ds.coords if k not in ds.dims)
-    columns.extend(ds.data_vars)
+    columns.extend(str(k) for k in ds.coords if k not in ds.dims)
+    columns.extend(str(d) for d in ds.data_vars)
 
     series_list = []
     for name in columns:
@@ -135,7 +128,7 @@ def xarray_to_frame(ds: xr.Dataset) -> pd.DataFrame:
     """
     ds = progress_compute(ds)
 
-    index = {**{"Time": None}, **{col: ds[col].data for col in ds.coords}}
+    index = {**{"Time": None}, **{str(col): ds[col].data for col in ds.coords}}
     multi_index = pd.MultiIndex.from_arrays(arrays=list(index.values()), names=list(index.keys()))
     df = pd.DataFrame(data={col: ds[col].data for col in ds.data_vars}, index=multi_index)
 
@@ -165,12 +158,14 @@ def try_extracting_index(index_arrays, length):
     return known_indexes, index_arrays, lengths
 
 
-def groupby_agg(ds: xr.Dataset,
-                by: Union[str, List[str]],
-                agg: List[Tuple[str, Union[str, Callable], str]],
-                sort: bool = True,
-                index_arrays = None,
-                length: int = None) -> xr.Dataset:
+def groupby_agg(
+    ds: Union[xr.DataArray, xr.Dataset],
+    by: Union[str, List[str]],
+    agg: List[Tuple[str, Union[str, Callable], str]],
+    sort: bool = True,
+    index_arrays=None,
+    length: int = None,
+) -> Union[xr.DataArray, xr.Dataset]:
     """
     Mimic the groupby().agg mechanism of pandas
 
@@ -208,7 +203,7 @@ def groupby_agg(ds: xr.Dataset,
 
     known_indexes, index_arrays, lengths = try_extracting_index(index_arrays, length)
 
-    relevent_dims = {dim for var in ds.data_vars.values() for dim in var.dims}
+    relevent_dims = {str(dim) for var in ds.data_vars.values() for dim in var.dims}
     if len(relevent_dims) > 1:
         raise ValueError("You cannot groupby_agg with mixed shape Dataset")
     if not relevent_dims:
@@ -216,7 +211,9 @@ def groupby_agg(ds: xr.Dataset,
     [k] = relevent_dims
 
     ds_only_k = ds.drop_dims([dim for dim in ds.dims if dim != k])
-    ds_only_k = ds_only_k.rename({coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")})
+    ds_only_k = ds_only_k.rename(
+        {coord: str(coord)[1:] for coord in ds_only_k.coords if str(coord).startswith("k")}
+    )
 
     content = list(ds_only_k.data_vars.keys()) + list(ds_only_k.coords.keys())
     keep = [name_in for name_out, fn, name_in in agg] + by
@@ -225,7 +222,7 @@ def groupby_agg(ds: xr.Dataset,
     ds_only_k = ds_only_k.drop_vars(remove)
     dask = k in ds_only_k.chunks
 
-    res = xr.Dataset()
+    res: Union[xr.DataArray, xr.Dataset] = xr.Dataset()
     if dask:
         if sort and not known_indexes:
             index_serie = xarray_to_ddframe(ds_only_k[by]).groupby(by=by, sort=sort).first().index
@@ -262,9 +259,10 @@ def groupby_agg(ds: xr.Dataset,
                 res = res.assign_coords({f"n{dim}": ds[f"n{dim}"].compute()})
 
     if "k" in res.dims:
-        for coord in res.coords:
+        for coord_ in res.coords:
+            coord = str(coord_)
             if f"k{coord}" in ds.coords:
-                res = res.rename({coord: f"k{coord}"})
+                res = res.rename(cast(Mapping[Hashable, Hashable], {coord: f"k{coord}"}))
 
     datavars = res.data_vars.keys()
     if len(datavars) == 1:
@@ -292,14 +290,16 @@ def index_serie_to_index_array(index_serie, lengths):
     return index_arrays, lengths
 
 
-def groupby_apply(ds: xr.Dataset,
-                  by: Union[str, List[str]],
-                  fn: Union[str, Callable],
-                  name_in: Union[str, List[str]],
-                  meta_out: Dict[str, Any],
-                  sort: bool = False,
-                  lengths=None,
-                  **kwargs) -> xr.Dataset:
+def groupby_apply(
+    ds: xr.Dataset,
+    by: Union[str, List[str]],
+    fn: Union[str, Callable],
+    name_in: Union[str, List[str]],
+    meta_out: Dict[str, Any],
+    sort: bool = False,
+    lengths=None,
+    **kwargs,
+) -> Union[xr.DataArray, xr.Dataset]:
     """
     Mimic the groupby().apply mechanism of pandas
 
@@ -335,25 +335,26 @@ def groupby_apply(ds: xr.Dataset,
         name_in = [name_in]
 
     ds_only_k = ds.drop_dims([dim for dim in ds.dims if dim != "k"])
-    ds_only_k = ds_only_k.rename({coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")})
+    ds_only_k = ds_only_k.rename(
+        {coord: str(coord)[1:] for coord in ds_only_k.coords if str(coord).startswith("k")}
+    )
 
-    coords = list(ds_only_k.coords.keys())
+    coords = [str(coord) for coord in ds_only_k.coords.keys()]
     # noinspection PyTypeChecker
     keep = list(set(name_in + by + coords))
     remove = [var for var in ds_only_k.data_vars.keys() if var not in keep]
 
     ds_only_k = ds_only_k.drop_vars(remove)
-    with_dask = (
-            [ds_only_k[var].chunks is not None for var in ds_only_k.data_vars.keys()]
-            + [ds_only_k.coords[coord].chunks is not None for coord in ds_only_k.coords.keys()]
-    )
-
+    with_dask = [ds_only_k[var].chunks is not None for var in ds_only_k.data_vars.keys()] + [
+        ds_only_k.coords[coord].chunks is not None for coord in ds_only_k.coords.keys()
+    ]
+    res: Union[xr.DataArray, xr.Dataset] = xr.Dataset()
     if any(with_dask):
         df = xarray_to_ddframe(ds_only_k)
 
-        res_df = df.groupby(by=by, sort=sort).apply(fn, meta={**df.dtypes.to_dict(), **meta_out}, **kwargs)
-
-        res = xr.Dataset()
+        res_df = df.groupby(by=by, sort=sort).apply(
+            fn, meta={**df.dtypes.to_dict(), **meta_out}, **kwargs
+        )
 
         if lengths is None:
             lengths = tuple(res_df.index.map_partitions(len, enforce_metadata=False).compute())
@@ -368,17 +369,20 @@ def groupby_apply(ds: xr.Dataset,
         df = ds_only_k.to_dataframe()
 
         with warnings.catch_warnings():
-            warnings.simplefilter(action='ignore', category=FutureWarning)
+            warnings.simplefilter(action="ignore", category=FutureWarning)
             tqdm.pandas()
-        res_df = df.groupby(by=by, sort=sort, **kwargs).progress_apply(fn, **kwargs).reset_index(drop=True)
+        res_df = (
+            df.groupby(by=by, sort=sort, **kwargs)
+            .progress_apply(fn, **kwargs)
+            .reset_index(drop=True)
+        )
 
-        res = xr.Dataset()
         for coord in coords:
             res.coords[coord] = ("k",), res_df[coord].to_numpy()
         for name_out in meta_out:
             res[name_out] = ("k",), res_df[name_out].to_numpy()
 
-    res = res.rename({coord: "k" + coord for coord in res.coords})
+    res = res.rename({coord: "k" + str(coord) for coord in res.coords})
     res = res.assign_coords(ds.drop_dims("k").coords)
 
     # if sort:

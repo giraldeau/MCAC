@@ -20,6 +20,7 @@ import pytest
 
 from pymcac.tools.core.dask_tools import not_aligned_rechunk
 from pymcac.tools.core.sorting import sortby
+
 from .generator import generate_dummy_aggregates_data
 from .test_dask import raise_if_computed
 from .test_data import check_data
@@ -180,7 +181,11 @@ def test_sortby_dim_and_other(dask):
         assert len(sorted_data.chunks["k"]) == len(data.chunks["k"])
 
     test = sorted_data.data.to_dataframe().reset_index(drop=True)
-    ref = data.data.to_dataframe().sort_values(by=["kTime", "data"], kind="stable").reset_index(drop=True)
+    ref = (
+        data.data.to_dataframe()
+        .sort_values(by=["kTime", "data"], kind="stable")
+        .reset_index(drop=True)
+    )
     assert test.equals(ref)
     assert sorted_data.attrs["sort"] == ["Time", "data"]
 
@@ -211,8 +216,9 @@ def test_sortby_useless_sort(dask):
 def test_sortby_no_compute(nt):
     data = generate_dummy_aggregates_data(nt=nt, dask=5)
     chunks = data.chunks
-    data["trigger"] = data.data.dims, da.from_delayed(raise_if_computed(),
-                                                      dtype=int, shape=data.data.shape)
+    data["trigger"] = data.data.dims, da.from_delayed(
+        raise_if_computed(), dtype=int, shape=data.data.shape
+    )
     data = not_aligned_rechunk(data, chunks=chunks)
 
     sortby(data, "data")
