@@ -17,6 +17,8 @@ psutil
 cachey
 cloudpickle
 xarray
+numba
+distributed
 
 pytest
 pytest-html
