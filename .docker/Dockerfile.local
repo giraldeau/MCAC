@@ -2,12 +2,24 @@
 
 ARG COMPILATOR=ifort
 
+FROM mvdan/shfmt:v3.2.0-alpine AS shfmt
 FROM gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-${COMPILATOR}
+
+RUN apt-get -qq update \
+    && apt-get upgrade -yqq \
+    && apt-get install -yqq --no-install-recommends \
+        # extra-linter dependencies
+        shellcheck \
+    # reduce layer size
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir -U pip wheel setuptools \
     && pip install --no-cache-dir -U \
         # linter dependencies
         cmakelang
+
+COPY --from=shfmt /bin/shfmt /bin/shfmt
 
 WORKDIR /builds/MCAC/MCAC
 COPY .git /builds/MCAC/MCAC/.git
@@ -40,7 +52,10 @@ RUN echo " ******************** Static Analysis **********************" \
     && pflake8 && echo " * pflake8 OK" || echo " * pflake8 NOT OK" \
     && echo "** cmake **" \
     && cmake-format --check CMakeLists.txt cmake/* \
-    && cmake-lint CMakeLists.txt cmake/*
+    && cmake-lint CMakeLists.txt cmake/* \
+    && echo "** shell scripts **" \
+    && shfmt -i 2 -ci -d utilities && echo " * shfmt OK" || echo " * shfmt NOT OK" \
+    && shellcheck utilities/*.sh && echo " * shellcheck OK" || echo " * shellcheck NOT OK"
 
 WORKDIR /builds/MCAC/MCAC
 RUN echo " ************************* Pytest **************************" \

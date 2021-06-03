@@ -153,3 +153,31 @@ cmake-lint:
       - .gitlab/static.yml
       - .gitlab-ci.yml
   needs: []
+
+shell check:
+  image: koalaman/shellcheck-alpine:stable
+  stage: Static Analysis
+  before_script:
+    - shellcheck --version
+  script:
+    - shellcheck utilities/*.sh
+  only:
+    changes:
+      - utilities/**/*.sh
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+  needs: []
+
+shfmt:
+  image: mvdan/shfmt:v3.2.0-alpine
+  stage: Static Analysis
+  before_script:
+    - shfmt -version
+  script:
+    - shfmt -i 2 -ci -d utilities
+  only:
+    changes:
+      - utilities/**/*.sh
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+  needs: []
