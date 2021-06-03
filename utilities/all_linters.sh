@@ -18,7 +18,7 @@ shfmt -i 2 -ci -w -d utilities
 shellcheck utilities/*.sh
 
 echo "** cmake **"
-cmake-format --check CMakeLists.txt cmake/*
+cmake-format --check CMakeLists.txt cmake/**/*.cmake
 cmake-lint CMakeLists.txt cmake/*
 
 echo "** Dockerfiles **"
