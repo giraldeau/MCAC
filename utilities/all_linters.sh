@@ -3,6 +3,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 cd "${SCRIPT_DIR}/.." || exit 1
 
 echo "** C++ **"
+clang-format -i src/**/*.cpp include/**/*.hpp
 cpplint --recursive src include
 cppcheck --enable=all --inconclusive --error-exitcode=2 -I include src
 
