@@ -20,7 +20,7 @@ shellcheck utilities/*.sh
 
 echo "** cmake **"
 cmake-format --check CMakeLists.txt cmake/**/*.cmake
-cmake-lint CMakeLists.txt cmake/*
+cmake-lint CMakeLists.txt cmake/**/*.cmake
 
 echo "** Dockerfiles **"
 hadolint .docker/Dockerfile.*

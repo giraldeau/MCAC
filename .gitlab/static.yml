@@ -132,7 +132,7 @@ cmake-format:
   stage: Static Analysis
   script:
     - pip install -U cmakelang
-    - cmake-format --check CMakeLists.txt cmake/*
+    - cmake-format --check CMakeLists.txt cmake/**/*.cmake
   only:
     changes:
       - cmake/**/*.cmake
@@ -146,7 +146,7 @@ cmake-lint:
   stage: Static Analysis
   script:
     - pip install -U cmakelang
-    - cmake-lint CMakeLists.txt cmake/*
+    - cmake-lint CMakeLists.txt cmake/**/*.cmake
   only:
     changes:
       - cmake/**/*.cmake
