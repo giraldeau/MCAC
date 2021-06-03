@@ -4,17 +4,16 @@ from pathlib import Path
 from time import time
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import xarray as xr
-
-from pymcac import MCAC
-from pymcac.tools.core.dataframe import groupby_apply, groupby_agg
-from pymcac import progress_compute, dask_distribute
-from pymcac.tools.core.groupby import groupby_aggregate
-from pymcac.tools.core.groupby import groupby2
-import numpy as np
-from pymcac.tools.physics.overlap import overlapping
 from scipy.special import voigt_profile
+
+from pymcac import MCAC, dask_distribute, progress_compute
+from pymcac.tools.core.dataframe import groupby_agg, groupby_apply
+from pymcac.tools.core.groupby import groupby2, groupby_aggregate
+from pymcac.tools.physics.overlap import overlapping
+
 if __name__ == "__main__":
 
     # The folder with all .h5 and .xmf files
@@ -27,9 +26,9 @@ if __name__ == "__main__":
     # but it should work with this
     with dask_distribute(report=True) as c:
         print(c)
-    # import dask
-    # with dask.config.set(scheduler='single-threaded'):
-    # if True:
+        # import dask
+        # with dask.config.set(scheduler='single-threaded'):
+        # if True:
         start = time()
 
         # Read all data
@@ -79,7 +78,8 @@ if __name__ == "__main__":
         # distances = groupby_agg(tmp, by="Time", agg=[("distance", "mean", "distance")],
         #                         index_arrays=tmp.Time).to_dataset()
         #
-        BoxSize = 300.
+        BoxSize = 300.0
+
         def xdistance(ds: xr.DataArray):
             init = ds.isel(k=ds.kTime.argmin())
             dx = abs(ds.Posx - init.Posx) % BoxSize
@@ -92,7 +92,9 @@ if __name__ == "__main__":
 
         tmp = Spheres[["kTime", "kNum", "Posx", "Posy", "Posz", "Nt", "N"]]
         template = Spheres.Posx.rename("distance")
-        distance = groupby2(tmp, "Num", op="map", op_args=(xdistance,), template=template).to_dataset()
+        distance = groupby2(
+            tmp, "Num", op="map", op_args=(xdistance,), template=template
+        ).to_dataset()
         distance["N"] = Spheres.N
         distance["Nt"] = Spheres.Nt
         distances = groupby2(distance, "Time", "mean")
@@ -101,14 +103,17 @@ if __name__ == "__main__":
         print(distances.compute())
         fsdfs
 
-
         distances["theorical"] = 6 * D * distances.Time
 
-        proper_time = groupby_agg(Aggregates, by="Time", agg=[
-            ("min", "min", "proper_time"),
-            ("mean", "mean", "proper_time"),
-            ("max", "max", "proper_time"),
-            ])
+        proper_time = groupby_agg(
+            Aggregates,
+            by="Time",
+            agg=[
+                ("min", "min", "proper_time"),
+                ("mean", "mean", "proper_time"),
+                ("max", "max", "proper_time"),
+            ],
+        )
 
         # useless if done before
         # print("compute")
