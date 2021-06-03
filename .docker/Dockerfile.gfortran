@@ -28,6 +28,6 @@ RUN pip install --no-cache-dir -U pip wheel setuptools \
         # PyMCAC dependencies
         numpy setuptools_scm setuptools matplotlib scipy h5py pandas \
         dask cython scikit-image lxml tqdm toolz fsspec>=0.3.3 scikit-learn psutil \
-        cachey cloudpickle
+        cachey cloudpickle xarray
         
 ENV dockerfile_version="${GIT_COMMIT}"
