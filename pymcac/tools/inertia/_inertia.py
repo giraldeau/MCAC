@@ -72,25 +72,25 @@ def inertia_disc(data: np.ndarray, grid: Tuple[np.ndarray, np.ndarray, np.ndarra
     return eig
 
 
-if __name__ == "__main__":
-    from pathlib import Path
+# if __name__ == "__main__":
+# from pathlib import Path
 
-    import numpy as np
+# import numpy as np
 
-    from pymcac import MCAC
+# from pymcac import MCAC
 
-    # The folder with all .h5 and .xmf files
-    data_dir = Path("python-analysis/output_dir/")
+# # The folder with all .h5 and .xmf files
+# data_dir = Path("python-analysis/output_dir/")
 
-    # # Read all data
-    # Spheres, Aggregates = MCAC(data_dir).read()
+# # Read all data
+# Spheres, Aggregates = MCAC(data_dir).read()
 
-    # last_agg = Aggregates.iloc[-1]
+# last_agg = Aggregates.iloc[-1]
 
-    # inertia_agg = inertia(Spheres, last_agg)
-    # print("Gyration radius (code): ", last_agg.Rg)
-    # print("Gyration radius:        ", np.sqrt(np.sum(inertia_agg) / 2))
-    # print(
-    #     "Anisotropy:             ",
-    #     inertia_agg.max(initial=-np.inf) / inertia_agg.min(initial=-np.inf),
-    # )
+# inertia_agg = inertia(Spheres, last_agg)
+# print("Gyration radius (code): ", last_agg.Rg)
+# print("Gyration radius:        ", np.sqrt(np.sum(inertia_agg) / 2))
+# print(
+#     "Anisotropy:             ",
+#     inertia_agg.max(initial=-np.inf) / inertia_agg.min(initial=-np.inf),
+# )

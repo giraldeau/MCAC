@@ -1,12 +1,9 @@
-import sys
 from pathlib import Path
 
 import bmesh
 import bpy
 import mathutils
 import numpy as np
-
-sys.path.append(".")
 
 from pymcac import MCAC
 

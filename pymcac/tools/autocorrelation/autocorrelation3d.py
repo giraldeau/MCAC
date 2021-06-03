@@ -25,7 +25,7 @@ import ctypes
 import multiprocessing as mp
 import os
 from queue import Empty
-from typing import Any, Callable, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
 import pandas as pd

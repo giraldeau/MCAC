@@ -77,17 +77,17 @@ def view_agg_disc(data: np.ndarray, grid: Tuple[np.ndarray, np.ndarray, np.ndarr
     plt.show()
 
 
-if __name__ == "__main__":
-    from pathlib import Path
+# if __name__ == "__main__":
+#     from pathlib import Path
 
-    from pymcac import MCAC
+#     from pymcac import MCAC
 
-    # The folder with all .h5 and .xmf files
-    data_dir = Path("python-analysis/output_dir/")
+#     # The folder with all .h5 and .xmf files
+#     data_dir = Path("python-analysis/output_dir/")
 
-    # # Read all data
-    # Spheres, Aggregates = MCAC(data_dir).read()
+# # Read all data
+# Spheres, Aggregates = MCAC(data_dir).read()
 
-    # last_agg = Aggregates.iloc[-1]
+# last_agg = Aggregates.iloc[-1]
 
-    # view_agg(Spheres, last_agg)
+# view_agg(Spheres, last_agg)

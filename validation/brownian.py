@@ -4,10 +4,8 @@ from pathlib import Path
 from time import time
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import xarray as xr
-from scipy.special import voigt_profile
 
 from pymcac import MCAC, dask_distribute, progress_compute
 from pymcac.tools.core.dataframe import groupby_agg, groupby_apply
@@ -17,8 +15,10 @@ from pymcac.tools.physics.overlap import overlapping
 if __name__ == "__main__":
 
     # The folder with all .h5 and .xmf files
-    result_path = Path("/Data/WORK/Projets/SRC/MCAC/validation/brownian_data")
-    # result_path = Path("/stockage/samba/Partages/public/MCAC_validation/03_VARYING_PP_polyd/03p1_SIGMAp_1p25/run1")
+    result_path = Path(
+        # "/stockage/samba/Partages/public/MCAC_validation/03_VARYING_PP_polyd/03p1_SIGMAp_1p25/run1"
+        "/Data/WORK/Projets/SRC/MCAC/validation/brownian_data"
+    )
 
     MCACSimulation = MCAC(result_path)
 
@@ -32,7 +32,7 @@ if __name__ == "__main__":
         start = time()
 
         # Read all data
-        # Aggregates = MCACSimulation.xaggregates
+        Aggregates = MCACSimulation.xaggregates
         # print(Aggregates)
         # print(Aggregates.compute())
         # print(Aggregates.kTime)
@@ -55,12 +55,12 @@ if __name__ == "__main__":
         k_B = 1.38066e-23  # Boltzmann constant in J/K
         T = 293.15  # Temperature
 
-        # D = k_B * T / float(Aggregates["f_agg"][0])
-        # BoxSize = float(Aggregates["BoxSize"][0])
-        #
-        # print(BoxSize, D)
+        D = k_B * T / float(Aggregates["f_agg"][0])
+        BoxSize = float(Aggregates["BoxSize"][0])
 
-        def distance(df: pd.DataFrame):
+        print(BoxSize, D)
+
+        def fdistance(df: pd.DataFrame):
             Posx, Posy, Posz = df.iloc[0][["Posx", "Posy", "Posz"]]
             dx = abs(df["Posx"] - Posx) % BoxSize
             dy = abs(df["Posy"] - Posy) % BoxSize
@@ -71,13 +71,19 @@ if __name__ == "__main__":
         # overlap = overlapping(Spheres, Aggregates)
         # print(overlap)
         # print(overlap.compute())
-        #
-        # tmp = groupby_apply(Spheres, by="Num",
-        #                     meta_out={"distance": float}, fn=distance, name_in=["Posx", "Posy", "Posz"])
+
+        # tmp = groupby_apply(
+        #     Spheres,
+        #     by="Num",
+        #     meta_out={"distance": float},
+        #     fn=fdistance,
+        #     name_in=["Posx", "Posy", "Posz"],
+        # )
         # print(tmp)
-        # distances = groupby_agg(tmp, by="Time", agg=[("distance", "mean", "distance")],
-        #                         index_arrays=tmp.Time).to_dataset()
-        #
+        # distances = groupby_agg(
+        #     tmp, by="Time", agg=[("distance", "mean", "distance")], index_arrays=tmp.Time
+        # ).to_dataset()
+
         BoxSize = 300.0
 
         def xdistance(ds: xr.DataArray):
@@ -101,7 +107,6 @@ if __name__ == "__main__":
 
         print(distances)
         print(distances.compute())
-        fsdfs
 
         distances["theorical"] = 6 * D * distances.Time
 

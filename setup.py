@@ -4,13 +4,11 @@
 import sys
 from subprocess import CalledProcessError, run
 
+import numpy as np
 from setuptools import Extension as Extension
 from setuptools import setup as setup
 
 setup()
-
-# noinspection PyPep8
-import numpy as np
 
 coverage = Extension(
     name="pymcac.tools.coverage.coverages_cython",

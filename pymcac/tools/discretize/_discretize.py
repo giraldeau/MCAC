@@ -124,17 +124,17 @@ def mkgrid(
     return x, y, z
 
 
-if __name__ == "__main__":
-    from pathlib import Path
+# if __name__ == "__main__":
+# from pathlib import Path
 
-    from pymcac import MCAC
+# from pymcac import MCAC
 
-    # The folder with all .h5 and .xmf files
-    data_dir = Path("python-analysis/output_dir/")
+# # The folder with all .h5 and .xmf files
+# data_dir = Path("python-analysis/output_dir/")
 
-    # # Read all data
-    # Spheres, Aggregates = MCAC(data_dir).read()
+# # Read all data
+# Spheres, Aggregates = MCAC(data_dir).read()
 
-    # last_agg = Aggregates.iloc[-1]
+# last_agg = Aggregates.iloc[-1]
 
-    # discretize(Spheres, last_agg)
+# discretize(Spheres, last_agg)

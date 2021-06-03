@@ -22,6 +22,6 @@ skip_gitignore = true
 
 [tool.flake8]
 max-line-length = 100
-extend-exclude="tmp, venv, ext, ext_bin"
+extend-exclude="tmp, venv, ext, ext_bin, cmake-format.py"
 extend-ignore = "E203,"
 show_source = "true"
