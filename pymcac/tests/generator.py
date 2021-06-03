@@ -71,9 +71,11 @@ def generate_dummy_aggregates_data(
     if nagg == 1 and nt > 1:
         ds["data"] = ds.data.swap_dims({"k": "Time"})
         ds = ds.drop_dims("k")
+        ds.get_index("Time").name = "Time"
     elif nagg > 1 and nt == 1:
         ds["data"] = ds.data.swap_dims({"k": "Label"})
         ds = ds.drop_dims("k")
+        ds.get_index("Label").name = "Label"
     elif nagg == 1 and nt == 1:
         ds = ds.isel(k=0)
 
@@ -187,11 +189,13 @@ def generate_dummy_spheres_data(
         if aggregates:
             ds["Label"] = ds.Label.swap_dims({"k": "Time"})
         ds = ds.drop_dims("k")
+        ds.get_index("Time").name = "Time"
     elif nsph > 1 and nt == 1:
         ds["data"] = ds.data.swap_dims({"k": "Num"})
         if aggregates:
             ds["Label"] = ds.Label.swap_dims({"k": "Num"})
         ds = ds.drop_dims("k")
+        ds.get_index("Num").name = "Num"
     elif nsph == 1 and nt == 1:
         ds = ds.isel(k=0)
 

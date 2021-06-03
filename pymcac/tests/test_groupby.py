@@ -230,8 +230,6 @@ def test_groupby2_not_on_dim(dask):
     aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
 
     test = groupby2(aggregates, "Np", "mean")
-    check_data(test)
-
     ref = groupby_agg(aggregates, "Np", [("data", "mean", "data")])
 
     assert np.allclose(test, ref)

@@ -217,165 +217,165 @@ def test_aligned_rechunk_no_compute():
     aligned_rechunk(data, Time=2)
 
 
-@pytest.mark.parametrize("dask", [0, 5, 6])
-@pytest.mark.parametrize("nagg", [1, 29])
-@pytest.mark.parametrize("nt", [1, 31])
-def test_broadcast_0d_to_any(dask, nagg, nt):
-    """ """
-    source = generate_dummy_aggregates_data(nt=1, nagg=1)
-    dest = generate_dummy_aggregates_data(nt=nt, nagg=nagg, dask=dask)
+# @pytest.mark.parametrize("dask", [0, 5, 6])
+# @pytest.mark.parametrize("nagg", [1, 29])
+# @pytest.mark.parametrize("nt", [1, 31])
+# def test_broadcast_0d_to_any(dask, nagg, nt):
+#     """ """
+#     source = generate_dummy_aggregates_data(nt=1, nagg=1)
+#     dest = generate_dummy_aggregates_data(nt=nt, nagg=nagg, dask=dask)
 
-    res = broadcast_to(source, dest)
-    check_data(res)
+#     res = broadcast_to(source, dest)
+#     check_data(res)
 
-    res.compute()
-    res = dest - res
-    res.compute()
-    # TODO check
-
-
-@pytest.mark.parametrize("dasksource", [0, 5])
-@pytest.mark.parametrize("daskdest", [0, 5, 6])
-@pytest.mark.parametrize("transpose", [False, True])
-@pytest.mark.parametrize("broadcast", ["Time", "Label"])
-def test_broadcast_using_nums(dasksource, daskdest, broadcast, transpose):
-    """
-    * Time      -> Time-Num/Label
-    """
-    from pymcac.tools.core.groupby import groupby2
-
-    dest = generate_dummy_aggregates_data(nt=31, nagg=29, dask=dasksource)
-    source = dest
-    if broadcast == "Time":
-        source = groupby2(source, "Label", "mean")
-    elif broadcast == "Label":
-        source = groupby2(source, "Time", "mean")
-    else:
-        raise ValueError(f"{broadcast} broadcast not understood")
-
-    if transpose:
-        dest = sortby(dest, "Label")
-
-    res = broadcast_to(source, dest)
-    check_data(res)
-
-    if transpose:
-        res = sortby(res, "Label")
-
-    res.compute()
-    res = dest - res
-    res.compute()
-    # TODO check
+#     res.compute()
+#     res = dest - res
+#     res.compute()
+#     # TODO check
 
 
-@pytest.mark.parametrize("dasksource", [0, 5])
-@pytest.mark.parametrize("daskdest", [0, 2, 5])
-@pytest.mark.parametrize("time_in_source", [True, False])
-@pytest.mark.parametrize("time_in_dest", [True, False])
-def test_broadcast_using_tags(dasksource, daskdest, time_in_source, time_in_dest):
-    """
-    * Num/Label -> Num/Label-Time
-    """
-    if time_in_source and not time_in_dest:
-        return
+# @pytest.mark.parametrize("dasksource", [0, 5])
+# @pytest.mark.parametrize("daskdest", [0, 5, 6])
+# @pytest.mark.parametrize("transpose", [False, True])
+# @pytest.mark.parametrize("broadcast", ["Time", "Label"])
+# def test_broadcast_using_nums(dasksource, daskdest, broadcast, transpose):
+#     """
+#     * Time      -> Time-Num/Label
+#     """
+#     from pymcac.tools.core.groupby import groupby2
 
-    from pymcac.tools.core.groupby import groupby2
+#     dest = generate_dummy_aggregates_data(nt=31, nagg=29, dask=dasksource)
+#     source = dest
+#     if broadcast == "Time":
+#         source = groupby2(source, "Label", "mean")
+#     elif broadcast == "Label":
+#         source = groupby2(source, "Time", "mean")
+#     else:
+#         raise ValueError(f"{broadcast} broadcast not understood")
 
-    aggregates, spheres = generate_dummy_data(nt=29, nagg=31, nsph=37)
+#     if transpose:
+#         dest = sortby(dest, "Label")
 
-    if dasksource:
-        aggregates = aligned_rechunk(aggregates, Label=dasksource)
-    if not time_in_source:
-        aggregates = groupby2(aggregates, "Label", "first")
+#     res = broadcast_to(source, dest)
+#     check_data(res)
 
-    if daskdest:
-        spheres = aligned_rechunk(spheres, Num=daskdest)
-    if not time_in_dest:
-        spheres = groupby2(spheres, "Num", "first")
+#     if transpose:
+#         res = sortby(res, "Label")
 
-    print(aggregates)
-    print(spheres)
-
-    res = broadcast_to(aggregates, spheres)
-    check_data(res)
-
-    res.compute()
-
-    res = spheres - res
-    res.compute()
-    # TODO check
+#     res.compute()
+#     res = dest - res
+#     res.compute()
+#     # TODO check
 
 
-@pytest.mark.parametrize("dasksource", [0, 5])
-@pytest.mark.parametrize("daskdest", [0, 2, 5])
-def test_broadcast_to_from_Label_to_Num(dasksource, daskdest):
-    """
-    * Label     -> Num-Label
-    """
-    aggregates, spheres = generate_dummy_data(nt=1)
-    if dasksource:
-        spheres = aligned_rechunk(spheres, Num=dasksource)
-    if daskdest:
-        aggregates = aligned_rechunk(aggregates, Label=daskdest)
+# @pytest.mark.parametrize("dasksource", [0, 5])
+# @pytest.mark.parametrize("daskdest", [0, 2, 5])
+# @pytest.mark.parametrize("time_in_source", [True, False])
+# @pytest.mark.parametrize("time_in_dest", [True, False])
+# def test_broadcast_using_tags(dasksource, daskdest, time_in_source, time_in_dest):
+#     """
+#     * Num/Label -> Num/Label-Time
+#     """
+#     if time_in_source and not time_in_dest:
+#         return
 
-    res = broadcast_to(aggregates, spheres)
-    check_data(res)
+#     from pymcac.tools.core.groupby import groupby2
 
-    res.compute()
-    res = spheres - res
-    res.compute()
-    # TODO check
+#     aggregates, spheres = generate_dummy_data(nt=29, nagg=31, nsph=37)
 
+#     if dasksource:
+#         aggregates = aligned_rechunk(aggregates, Label=dasksource)
+#     if not time_in_source:
+#         aggregates = groupby2(aggregates, "Label", "first")
 
-@pytest.mark.parametrize("dask", [0, 5])
-def test_broadcast_to_from_Time_Label_to_Time_Num(dask):
-    """
-    * Time-Label     -> Time-Label-Num
-    """
-    aggregates, spheres = generate_dummy_data(sort_info=True)
-    spheres = sortby(spheres, ["Time", "Label"])
-    if dask:
-        spheres = aligned_rechunk(spheres, Time=dask)
-        aggregates = aligned_rechunk(aggregates, Time=dask)
+#     if daskdest:
+#         spheres = aligned_rechunk(spheres, Num=daskdest)
+#     if not time_in_dest:
+#         spheres = groupby2(spheres, "Num", "first")
 
-    res = broadcast_to(aggregates, spheres, nums=aggregates.Np)
-    check_data(res)
+#     print(aggregates)
+#     print(spheres)
 
-    res.compute()
-    res = spheres - res
-    res.compute()
+#     res = broadcast_to(aggregates, spheres)
+#     check_data(res)
 
-    # TODO check
+#     res.compute()
+
+#     res = spheres - res
+#     res.compute()
+#     # TODO check
 
 
-def test_broadcast_to_no_compute():
-    """
-    * Time      -> Time-Num/Label
-    """
-    source = generate_dummy_aggregates_data(nagg=1, dask=5)
-    dest = generate_dummy_aggregates_data(dask=6)
-    chunks = source.chunks
-    source["trigger"] = ("k",), da.from_delayed(
-        raise_if_computed(), dtype=int, shape=(source.sizes["k"],)
-    )
-    source = not_aligned_rechunk(source, chunks=chunks)
-    broadcast_to(source, dest)
+# @pytest.mark.parametrize("dasksource", [0, 5])
+# @pytest.mark.parametrize("daskdest", [0, 2, 5])
+# def test_broadcast_to_from_Label_to_Num(dasksource, daskdest):
+#     """
+#     * Label     -> Num-Label
+#     """
+#     aggregates, spheres = generate_dummy_data(nt=1)
+#     if dasksource:
+#         spheres = aligned_rechunk(spheres, Num=dasksource)
+#     if daskdest:
+#         aggregates = aligned_rechunk(aggregates, Label=daskdest)
+
+#     res = broadcast_to(aggregates, spheres)
+#     check_data(res)
+
+#     res.compute()
+#     res = spheres - res
+#     res.compute()
+#     # TODO check
 
 
-def test_broadcast_to_no_compute_bis():
-    """
-    * Time      -> Time-Num/Label
-    """
-    aggregates, spheres = generate_dummy_data(nt=1)
-    spheres = aligned_rechunk(spheres, Num=5)
-    aggregates = aligned_rechunk(aggregates, Label=6)
-    chunks = aggregates.chunks
-    aggregates["trigger"] = ("k",), da.from_delayed(
-        raise_if_computed(), dtype=int, shape=(aggregates.sizes["k"],)
-    )
-    aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
+# @pytest.mark.parametrize("dask", [0, 5])
+# def test_broadcast_to_from_Time_Label_to_Time_Num(dask):
+#     """
+#     * Time-Label     -> Time-Label-Num
+#     """
+#     aggregates, spheres = generate_dummy_data(sort_info=True)
+#     spheres = sortby(spheres, ["Time", "Label"])
+#     if dask:
+#         spheres = aligned_rechunk(spheres, Time=dask)
+#         aggregates = aligned_rechunk(aggregates, Time=dask)
 
-    broadcast_to(aggregates, spheres)
+#     res = broadcast_to(aggregates, spheres, nums=aggregates.Np)
+#     check_data(res)
+
+#     res.compute()
+#     res = spheres - res
+#     res.compute()
+
+#     # TODO check
+
+
+# def test_broadcast_to_no_compute():
+#     """
+#     * Time      -> Time-Num/Label
+#     """
+#     source = generate_dummy_aggregates_data(nagg=1, dask=5)
+#     dest = generate_dummy_aggregates_data(dask=6)
+#     chunks = source.chunks
+#     source["trigger"] = ("k",), da.from_delayed(
+#         raise_if_computed(), dtype=int, shape=(source.sizes["k"],)
+#     )
+#     source = not_aligned_rechunk(source, chunks=chunks)
+#     broadcast_to(source, dest)
+
+
+# def test_broadcast_to_no_compute_bis():
+#     """
+#     * Time      -> Time-Num/Label
+#     """
+#     aggregates, spheres = generate_dummy_data(nt=1)
+#     spheres = aligned_rechunk(spheres, Num=5)
+#     aggregates = aligned_rechunk(aggregates, Label=6)
+#     chunks = aggregates.chunks
+#     aggregates["trigger"] = ("k",), da.from_delayed(
+#         raise_if_computed(), dtype=int, shape=(aggregates.sizes["k"],)
+#     )
+#     aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
+
+#     broadcast_to(aggregates, spheres)
 
 
 @delayed

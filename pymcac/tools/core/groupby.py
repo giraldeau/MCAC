@@ -364,6 +364,7 @@ def _groupby_block(
     def wrap(ds, label, *args, **kwargs):
 
         group_ds = ds.swap_dims({"k": kname}).drop_vars([group])
+        ds.get_index(kname).name = kname
         group_ds.coords[group] = [label]
 
         res = func(group_ds, *args, **kwargs)
