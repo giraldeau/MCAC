@@ -14,6 +14,7 @@ cpplint:
       - pyproject.toml
       - .docker/Dockerfile.gfortran
   needs: []
+  allow_failure: true
 
 cppcheck:
   image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
@@ -32,6 +33,7 @@ cppcheck:
       - pyproject.toml
       - .docker/Dockerfile.gfortran
   needs: []
+  allow_failure: true
 
 # clang-check clang-format
 
