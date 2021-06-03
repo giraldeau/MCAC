@@ -1,0 +1,47 @@
+# Copyright (c) Contributors to the mcac Project. All rights reserved.
+
+ARG COMPILATOR=ifort
+
+FROM gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-${COMPILATOR}
+
+RUN pip install --no-cache-dir -U pip wheel setuptools \
+    && pip install --no-cache-dir -U \
+        # linter dependencies
+        cmakelang
+
+WORKDIR /builds/MCAC/MCAC
+COPY .git /builds/MCAC/MCAC/.git
+RUN git reset --hard \
+    && git submodule update --init
+WORKDIR /builds/MCAC/MCAC/PyMCAC
+RUN pip install --no-cache-dir .
+
+ARG GIT_COMMIT="unspecified"
+LABEL version="${GIT_COMMIT}"
+ENV dockerfile_version=${dockerfile_version:-UNKNOWN}
+RUN echo "dockerfile_version : ${dockerfile_version}" \
+    && echo "current version    : ${GIT_COMMIT}"
+
+WORKDIR /builds/MCAC/MCAC/build
+RUN echo " ********************** COMPILATION ************************" \
+    && cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF .. \
+    && make -j 
+
+WORKDIR /builds/MCAC/MCAC
+RUN echo " ******************** Static Analysis **********************" \
+    && echo "** C++ **" \
+    && cpplint --recursive src include && echo " * cpplint OK" || echo " * cpplint NOT OK" \
+    && cppcheck --enable=all --inconclusive --error-exitcode=2 -I include src && echo " * cppcheck OK" || echo " * cppcheck NOT OK" \
+    && echo "** python **" \
+    && black . --check --diff && echo " * black OK" || echo " * black NOT OK" \
+    && isort . --check --diff && echo " * isort OK" || echo " * isort NOT OK" \
+    && mypy pymcac \
+    && pylint pymcac \
+    && pflake8 && echo " * pflake8 OK" || echo " * pflake8 NOT OK" \
+    && echo "** cmake **" \
+    && cmake-format --check CMakeLists.txt cmake/* \
+    && cmake-lint CMakeLists.txt cmake/*
+
+WORKDIR /builds/MCAC/MCAC
+RUN echo " ************************* Pytest **************************" \
+    && pytest

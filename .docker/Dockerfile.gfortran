@@ -1,0 +1,33 @@
+# Copyright (c) Contributors to the mcac Project. All rights reserved.
+
+FROM python:3.8-buster
+
+ARG GIT_COMMIT="unspecified"
+LABEL version="${GIT_COMMIT}"
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get -qq update \
+    && apt-get upgrade -yqq \
+    && apt-get install -yqq --no-install-recommends \
+        # MCAC dependencies
+        make cmake extra-cmake-modules g++ git \
+        libhdf5-dev libmpfr-dev libgmp-dev libboost-dev libunwind-dev libtiff-dev \
+        libopenblas-dev liblapack-dev libxml2-dev libxslt1-dev \
+        # linter dependencies
+        cppcheck \
+    # reduce layer size
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir -U pip wheel setuptools \
+    && pip install --no-cache-dir -U \
+        # linter dependencies
+        black isort flake8 pyproject-flake8 mypy pylint cpplint\
+        # tests dependencies
+        pytest pytest-html pytest-timeout pytest-cov pytest-sugar pytest-icdiff \
+        # PyMCAC dependencies
+        numpy setuptools_scm setuptools matplotlib scipy h5py pandas \
+        dask cython scikit-image lxml tqdm toolz fsspec>=0.3.3 scikit-learn psutil \
+        cachey cloudpickle
+        
+ENV dockerfile_version="${GIT_COMMIT}"

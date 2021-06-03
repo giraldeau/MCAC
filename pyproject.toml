@@ -1,0 +1,21 @@
+[tool.pytest.ini_options]
+timeout = 120
+addopts = "--html=artifacts/report.html --self-contained-html"
+testpaths = [
+    "pymcac",
+]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 100
+skip_gitignore = true
+
+[tool.flake8]
+max-line-length = 100
+extend-exclude="venv, cmake-format.py"
+extend-ignore = "E203,"
+show_source = "true"

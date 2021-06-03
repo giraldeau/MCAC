@@ -1,0 +1,75 @@
+# Copyright (c) Contributors to the mcac Project. All rights reserved.
+
+FROM intel/oneapi-hpckit AS hdf5
+
+ARG HDF5_MAJOR=1
+ARG HDF5_MINOR=12
+ARG HDF5_PATCH=0
+ENV HDF5_VERSION="${HDF5_MAJOR}.${HDF5_MINOR}.${HDF5_PATCH}"
+LABEL version="${HDF5_VERSION}"
+
+# ${HDF5_VERSION//./_}
+ARG HDF5_VERSION_="${HDF5_MAJOR}_${HDF5_MINOR}_${HDF5_PATCH}"
+ARG HDF5_URL="https://hdf-wordpress-1.s3.amazonaws.com/wp-content/uploads/manual/HDF5/HDF5_${HDF5_VERSION_}/source/CMake-hdf5-${HDF5_VERSION}.tar.gz"
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get -qq update \
+    && apt-get upgrade -yqq \
+    && apt-get install -yqq --no-install-recommends \
+        # hdf5 dependencies
+        wget \ 
+    # reduce layer size
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/local/hdf5/
+RUN wget "${HDF5_URL}" -O"CMake-hdf5-${HDF5_VERSION}.tar.gz" \
+    && tar -xf "CMake-hdf5-${HDF5_VERSION}.tar.gz"
+COPY ".docker/HDF5options.cmake" "/opt/local/hdf5/CMake-hdf5-${HDF5_VERSION}/"
+
+WORKDIR "/opt/local/hdf5/CMake-hdf5-${HDF5_VERSION}/"
+RUN ./build-unix.sh
+
+#########################################################
+
+FROM intel/oneapi-hpckit
+
+ARG GIT_COMMIT="unspecified"
+LABEL version="${GIT_COMMIT}"
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get -qq update \
+    && apt-get upgrade -yqq \
+    && apt-get install -yqq --no-install-recommends \
+        # MCAC dependencies
+        make cmake extra-cmake-modules g++ git \
+        libhdf5-dev libmpfr-dev libgmp-dev libboost-dev libunwind-dev libtiff-dev \
+        libopenblas-dev liblapack-dev libxml2-dev libxslt1-dev \
+    # reduce layer size
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG HDF5_MAJOR=1
+ARG HDF5_MINOR=12
+ARG HDF5_PATCH=0
+ENV HDF5_VERSION="${HDF5_MAJOR}.${HDF5_MINOR}.${HDF5_PATCH}"
+
+WORKDIR "/opt/local/hdf5/HDF5-${HDF5_VERSION}-Linux"
+COPY --from=hdf5 "/opt/local/hdf5/CMake-hdf5-${HDF5_VERSION}/HDF5-${HDF5_VERSION}-Linux.sh" .
+RUN "./HDF5-${HDF5_VERSION}-Linux.sh" --skip-license --prefix="/opt/local/hdf5/HDF5-${HDF5_VERSION}-Linux" \
+    && rm "HDF5-${HDF5_VERSION}-Linux.sh"
+ENV HDF5_DIR="/opt/local/hdf5/HDF5-${HDF5_VERSION}-Linux/HDF_Group/HDF5/${HDF5_VERSION}/share/cmake"
+
+RUN pip install --no-cache-dir -U pip wheel setuptools \
+    && pip install --no-cache-dir -U \
+        # linter dependencies
+        black isort flake8 pyproject-flake8 mypy pylint \
+        # tests dependencies
+        pytest pytest-html pytest-timeout pytest-cov pytest-sugar pytest-icdiff \
+        # PyMCAC dependencies
+        numpy setuptools_scm setuptools matplotlib scipy h5py pandas \
+        dask cython scikit-image lxml tqdm toolz fsspec>=0.3.3 scikit-learn psutil \
+        cachey cloudpickle
+        
+ENV FC=ifort \
+    dockerfile_version="${GIT_COMMIT}"

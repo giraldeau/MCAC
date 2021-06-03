@@ -1,143 +1,167 @@
-mcac_runs 1/4:
-  stage: Run
-  script:
-    #- bin/Release/MCAC validation/test1.ini
-    - mkdir -p validation/validation_data
-    - touch Release1
-  artifacts:
-    paths:
-      - validation/validation_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-  needs: ["build-Release"]
-  dependencies:
-    - build-Release
+# mcac_runs 1/4:
+#   stage: Run
+#   script:
+#     #- bin/Release/MCAC validation/test1.ini
+#     - mkdir -p validation/validation_data
+#     - touch Release1
+#   artifacts:
+#     paths:
+#       - validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["build-Release"]
+#   dependencies:
+#     - build-Release
 
-mcac_runs 2/4:
-  stage: Run
-  script:
-    #- bin/Release/MCAC validation/test2.ini
-    - mkdir -p validation/validation_data
-    - touch Release2
-  artifacts:
-    paths:
-      - validation/validation_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-  needs: ["build-Release"]
-  dependencies:
-    - build-Release
+# mcac_runs 2/4:
+#   stage: Run
+#   script:
+#     #- bin/Release/MCAC validation/test2.ini
+#     - mkdir -p validation/validation_data
+#     - touch Release2
+#   artifacts:
+#     paths:
+#       - validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["build-Release"]
+#   dependencies:
+#     - build-Release
 
-mcac_runs 3/4:
-  stage: Run
-  script:
-    #- bin/Debug/MCAC validation/test1.ini
-    - mkdir -p validation/validation_data
-    - touch Debug1
-  artifacts:
-    paths:
-      - validation/validation_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-  needs: ["build-Debug"]
-  dependencies:
-    - build-Debug
+# mcac_runs 3/4:
+#   stage: Run
+#   script:
+#     #- bin/Debug/MCAC validation/test1.ini
+#     - mkdir -p validation/validation_data
+#     - touch Debug1
+#   artifacts:
+#     paths:
+#       - validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["build-Debug"]
+#   dependencies:
+#     - build-Debug
     
-mcac_runs 4/4:
-  stage: Run
-  script:
-    #- bin/Debug/MCAC validation/test2.ini
-    - mkdir -p validation/validation_data
-    - touch Debug2
-  artifacts:
-    paths:
-      - validation/validation_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-  needs: ["build-Debug"]
-  dependencies:
-    - build-Debug
+# mcac_runs 4/4:
+#   stage: Run
+#   script:
+#     #- bin/Debug/MCAC validation/test2.ini
+#     - mkdir -p validation/validation_data
+#     - touch Debug2
+#   artifacts:
+#     paths:
+#       - validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["build-Debug"]
+#   dependencies:
+#     - build-Debug
     
-mcac_tests 1/4:
-  stage: Test
-  script:
-    - echo "validation of MCAC occurs here"
-    - ls validation/validation_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-  needs: ["mcac_runs 1/4"]
-  dependencies:
-    - mcac_runs 1/4
+# mcac_tests 1/4:
+#   stage: Test
+#   script:
+#     - echo "validation of MCAC occurs here"
+#     - ls validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["mcac_runs 1/4"]
+#   dependencies:
+#     - mcac_runs 1/4
 
-mcac_tests 2/4:
-  stage: Test
-  script:
-    - echo "validation of MCAC occurs here"
-    - ls validation/validation_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-  needs: ["mcac_runs 2/4"]
-  dependencies:
-    - mcac_runs 2/4
+# mcac_tests 2/4:
+#   stage: Test
+#   script:
+#     - echo "validation of MCAC occurs here"
+#     - ls validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["mcac_runs 2/4"]
+#   dependencies:
+#     - mcac_runs 2/4
 
-mcac_tests 3/4:
-  stage: Test
-  script:
-    - echo "validation of MCAC occurs here"
-    - ls validation/validation_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-  needs: ["mcac_runs 3/4"]
-  dependencies:
-    - mcac_runs 3/4
+# mcac_tests 3/4:
+#   stage: Test
+#   script:
+#     - echo "validation of MCAC occurs here"
+#     - ls validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["mcac_runs 3/4"]
+#   dependencies:
+#     - mcac_runs 3/4
 
-mcac_tests 4/4:
+# mcac_tests 4/4:
+#   stage: Test
+#   script:
+#     - echo "validation of MCAC occurs here"
+#     - ls validation/validation_data
+#   only:
+#     changes:
+#       - src/**/*
+#       - include/**/*
+#       - cmake/**/*
+#       - CMakeLists.txt
+#       - pymcac/**/*
+#   needs: ["mcac_runs 4/4"]
+#   dependencies:
+#     - mcac_runs 4/4
+
+pymcac_tests:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
   stage: Test
+  before_script:
+    - echo "dockerfile_version=${dockerfile_version}"
   script:
-    - echo "validation of MCAC occurs here"
-    - ls validation/validation_data
+    - pytest --cov=pymcac/ --cov-report=xml --junitxml=artifacts/pytest.xml
+    - coverage xml
   only:
     changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
       - pymcac/**/*
-  needs: ["mcac_runs 4/4"]
-  dependencies:
-    - mcac_runs 4/4
+      - .gitlab/test.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  artifacts:
+    when: always
+    paths:
+      - artifacts/*
+    reports:
+      junit: artifacts/pytest.xml
+      cobertura: coverage.xml
+  needs: []
