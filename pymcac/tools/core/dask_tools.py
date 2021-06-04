@@ -269,185 +269,185 @@ def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
     return not_aligned_rechunk(ds, **chunks)
 
 
-def broadcast_to(source, dest, nums=None, chunks=None):
-    """
-     * Time       -> Time-Num/Label (and transpose)
-     * Num/Label  -> Num/Label-Time  (and transpose)
-     * Label      -> Num-Label
-     * Time-Label -> Time-Num
+# def broadcast_to(source, dest, nums=None, chunks=None):
+#     """
+#      * Time       -> Time-Num/Label (and transpose)
+#      * Num/Label  -> Num/Label-Time  (and transpose)
+#      * Label      -> Num-Label
+#      * Time-Label -> Time-Num
 
-    #     T    -> T + N/L
-    #     N/L  -> T + N/L
-    #
-    # L    -> L+N
-    # L    -> T+L+N
-    # T+L  -> T+L+N
-    #
-    # 0 -> T
-    # 0 -> N/L
-    # 0 -> T + N/L
-    """
-    from pymcac.tools.core.sorting import sortby
+#     #     T    -> T + N/L
+#     #     N/L  -> T + N/L
+#     #
+#     # L    -> L+N
+#     # L    -> T+L+N
+#     # T+L  -> T+L+N
+#     #
+#     # 0 -> T
+#     # 0 -> N/L
+#     # 0 -> T + N/L
+#     """
+#     from pymcac.tools.core.sorting import sortby
 
-    if not source.dims:
-        if isinstance(dest, xr.DataArray):
-            relevent_dims = set(dest.dims)
-        else:
-            relevent_dims = {dim for var in dest.data_vars.values() for dim in var.dims}
-        if len(relevent_dims) > 1:
-            raise ValueError("You cannot broadcast to mixed shape Dataset")
-        if not relevent_dims:
-            return source
-        [k] = relevent_dims
+#     if not source.dims:
+#         if isinstance(dest, xr.DataArray):
+#             relevent_dims = set(dest.dims)
+#         else:
+#             relevent_dims = {dim for var in dest.data_vars.values() for dim in var.dims}
+#         if len(relevent_dims) > 1:
+#             raise ValueError("You cannot broadcast to mixed shape Dataset")
+#         if not relevent_dims:
+#             return source
+#         [k] = relevent_dims
 
-        res, _ = xr.broadcast(source, dest, exclude=set(dest.dims) - {k})
-        return res
+#         res, _ = xr.broadcast(source, dest, exclude=set(dest.dims) - {k})
+#         return res
 
-    missing_dims = set(dest.dims) - set(source.dims) - {"k"}
-    lost_dims = set(source.dims) - set(dest.dims)
+#     missing_dims = set(dest.dims) - set(source.dims) - {"k"}
+#     lost_dims = set(source.dims) - set(dest.dims)
 
-    if not missing_dims and not lost_dims:
-        return source
+#     if not missing_dims and not lost_dims:
+#         return source
 
-    was_a_dataarray = False
-    if isinstance(source, xr.DataArray):
-        was_a_dataarray = True
-        source = source.to_dataset(promote_attrs=True)
+#     was_a_dataarray = False
+#     if isinstance(source, xr.DataArray):
+#         was_a_dataarray = True
+#         source = source.to_dataset(promote_attrs=True)
 
-    if isinstance(dest, xr.DataArray):
-        dest = dest.to_dataset(promote_attrs=True)
+#     if isinstance(dest, xr.DataArray):
+#         dest = dest.to_dataset(promote_attrs=True)
 
-    common_dims = set(dest.dims) & set(source.dims) - {"k"}
-    orig_sort = None
-    if nums is None and missing_dims and common_dims and not lost_dims:
-        if len(missing_dims) > 1:
-            raise ValueError("adding more that one dim ?")
-        [missing_dim] = missing_dims
+#     common_dims = set(dest.dims) & set(source.dims) - {"k"}
+#     orig_sort = None
+#     if nums is None and missing_dims and common_dims and not lost_dims:
+#         if len(missing_dims) > 1:
+#             raise ValueError("adding more that one dim ?")
+#         [missing_dim] = missing_dims
 
-        if f"n{missing_dim}" in dest.coords and set(dest[f"n{missing_dim}"].dims).issubset(
-            common_dims
-        ):
-            orig_sort = dest.attrs.get("sort", [])
-            common_dims = list(
-                dict.fromkeys([dim for dim in orig_sort + list(common_dims) if dim in common_dims])
-            )
+#         if f"n{missing_dim}" in dest.coords and set(dest[f"n{missing_dim}"].dims).issubset(
+#             common_dims
+#         ):
+#             orig_sort = dest.attrs.get("sort", [])
+#             common_dims = list(
+#                 dict.fromkeys([dim for dim in orig_sort + list(common_dims) if dim in common_dims])
+#             )
 
-            source = sortby(source, common_dims)
-            dest = sortby(dest, common_dims)
+#             source = sortby(source, common_dims)
+#             dest = sortby(dest, common_dims)
 
-            if any(dest.chunks):
-                dest = aligned_rechunk(dest, common_dims[0], k=None)
-                source = aligned_rechunk(
-                    source, chunks={common_dims[0]: dest.chunks[common_dims[0]]}
-                )
-            elif any(source.chunks):
-                source = aligned_rechunk(source, common_dims[0], k=None)
+#             if any(dest.chunks):
+#                 dest = aligned_rechunk(dest, common_dims[0], k=None)
+#                 source = aligned_rechunk(
+#                     source, chunks={common_dims[0]: dest.chunks[common_dims[0]]}
+#                 )
+#             elif any(source.chunks):
+#                 source = aligned_rechunk(source, common_dims[0], k=None)
 
-                dest = aligned_rechunk(dest, chunks={common_dims[0]: source.chunks[common_dims[0]]})
+#                 dest = aligned_rechunk(dest, chunks={common_dims[0]: source.chunks[common_dims[0]]})
 
-            if nums is None:
-                nums = dest[f"n{missing_dim}"]
+#             if nums is None:
+#                 nums = dest[f"n{missing_dim}"]
 
-    if nums is None:
-        res = __broadcast_with_tag(source, dest)
-    else:
-        res = __broadcast_with_nums(source, dest, nums, chunks=chunks)
+#     if nums is None:
+#         res = __broadcast_with_tag(source, dest)
+#     else:
+#         res = __broadcast_with_nums(source, dest, nums, chunks=chunks)
 
-    if orig_sort:
-        res = sortby(res, orig_sort)
+#     if orig_sort:
+#         res = sortby(res, orig_sort)
 
-    if was_a_dataarray:
-        [name] = res.data_vars
-        res = res[name]
+#     if was_a_dataarray:
+#         [name] = res.data_vars
+#         res = res[name]
 
-    return res
-
-
-def __broadcast_with_nums(source, dest, nums, chunks=None):
-    """
-    * Time      -> Time-Num/Label (and transpose)
-    * Num/Label -> Num/Label-Time  (and transpose)
-    * Label     -> Num-Label
-    * Label     -> Num-Label
-    """
-
-    source_sort = source.attrs.get("sort", [None])[0]
-    dest_sort = dest.attrs.get("sort", [None])[0]
-    if (source_sort is None) or (dest_sort is None):
-        print("WARNING: You should sort you arrays before broadcasting")
-    else:
-        if source_sort != dest_sort:
-            raise ValueError("Your arrays must be aligned for broadcasting")
-        source_chunks = source.chunks.get(source_sort, None)
-        dest_chunks = dest.chunks.get(dest_sort, None)
-        if source_chunks != dest_chunks:
-            # if source_chunks is None:
-            #     source.chunk(dest_chunks)
-            # elif dest_chunks is None:
-            #     dest.chunk(source_chunks)
-            # else:
-            raise ValueError("Your arrays must be aligned for broadcasting")
-
-    res = dest.drop_vars([v for v in dest.data_vars])
-
-    if chunks is None:
-        chunks = dest.chunks.get("k", None)
-        chunks = (chunks,) if chunks is not None else None
-
-    def broadcast_var_block(arr, _nums):
-        return np.concatenate([np.repeat(val, n) for val, n in zip(arr, _nums)])
-
-    for v, var in source.data_vars.items():
-        if chunks is None:
-            res[v] = ("k",), broadcast_var_block(var.data, nums.data)
-        else:
-            res[v] = ("k",), da.map_blocks(
-                broadcast_var_block,
-                var.data,
-                nums.data,
-                meta=np.array((), dtype=var.dtype),
-                chunks=chunks,
-            )
-
-    return res
+#     return res
 
 
-def __broadcast_with_tag(source, dest):
-    """
-    * Time      -> Time-Num/Label (and transpose)
-    * Num/Label -> Num/Label-Time  (and transpose)
-    * Label     -> Num-Label
-    * Label     -> Num-Label
-    """
-    from pymcac.tools.core.sorting import sortby
+# def __broadcast_with_nums(source, dest, nums, chunks=None):
+#     """
+#     * Time      -> Time-Num/Label (and transpose)
+#     * Num/Label -> Num/Label-Time  (and transpose)
+#     * Label     -> Num-Label
+#     * Label     -> Num-Label
+#     """
 
-    [tag] = set(source.dims) & set(dest.data_vars)
+#     source_sort = source.attrs.get("sort", [None])[0]
+#     dest_sort = dest.attrs.get("sort", [None])[0]
+#     if (source_sort is None) or (dest_sort is None):
+#         print("WARNING: You should sort you arrays before broadcasting")
+#     else:
+#         if source_sort != dest_sort:
+#             raise ValueError("Your arrays must be aligned for broadcasting")
+#         source_chunks = source.chunks.get(source_sort, None)
+#         dest_chunks = dest.chunks.get(dest_sort, None)
+#         if source_chunks != dest_chunks:
+#             # if source_chunks is None:
+#             #     source.chunk(dest_chunks)
+#             # elif dest_chunks is None:
+#             #     dest.chunk(source_chunks)
+#             # else:
+#             raise ValueError("Your arrays must be aligned for broadcasting")
 
-    dest = dest.rename({tag: f"k{tag}"}).set_coords(f"k{tag}")
-    dest[tag] = source[tag]
-    dest = dest.rename(nTime="nTime_old")
-    dest.coords["nTime_old"] = dest.nTime_old.compute()
-    dest.coords["nTime"] = (tag,), np.unique(dest[f"k{tag}"].values, return_counts=True)[1]
+#     res = dest.drop_vars([v for v in dest.data_vars])
 
-    orig_sort = dest.attrs.get("sort", None)
-    source = sortby(source, tag)
-    dest = sortby(dest, tag)
+#     if chunks is None:
+#         chunks = dest.chunks.get("k", None)
+#         chunks = (chunks,) if chunks is not None else None
 
-    if "k" in dest.chunks:
-        dest = aligned_rechunk(dest, tag, k=None)
-        source = aligned_rechunk(source, chunks={tag: dest.chunks[tag]})
-    elif "k" in source.chunks:
-        source = aligned_rechunk(source, tag, k=None)
-        dest = aligned_rechunk(dest, chunks={tag: source.chunks[tag]})
+#     def broadcast_var_block(arr, _nums):
+#         return np.concatenate([np.repeat(val, n) for val, n in zip(arr, _nums)])
 
-    res = dest.drop_vars([v for v in dest.data_vars])
-    idx = np.abs(source[tag].data.reshape(-1) - dest[f"k{tag}"].data.reshape(-1, 1)).argmin(axis=1)
+#     for v, var in source.data_vars.items():
+#         if chunks is None:
+#             res[v] = ("k",), broadcast_var_block(var.data, nums.data)
+#         else:
+#             res[v] = ("k",), da.map_blocks(
+#                 broadcast_var_block,
+#                 var.data,
+#                 nums.data,
+#                 meta=np.array((), dtype=var.dtype),
+#                 chunks=chunks,
+#             )
 
-    for v, var in source.data_vars.items():
-        res[v] = ("k",), var.data[idx]
+#     return res
 
-    res = res.drop_dims(tag).reset_coords(f"k{tag}").rename({f"k{tag}": tag, "nTime_old": "nTime"})
 
-    if orig_sort is not None:
-        res = sortby(res, orig_sort)
-    return res
+# def __broadcast_with_tag(source, dest):
+#     """
+#     * Time      -> Time-Num/Label (and transpose)
+#     * Num/Label -> Num/Label-Time  (and transpose)
+#     * Label     -> Num-Label
+#     * Label     -> Num-Label
+#     """
+#     from pymcac.tools.core.sorting import sortby
+
+#     [tag] = set(source.dims) & set(dest.data_vars)
+
+#     dest = dest.rename({tag: f"k{tag}"}).set_coords(f"k{tag}")
+#     dest[tag] = source[tag]
+#     dest = dest.rename(nTime="nTime_old")
+#     dest.coords["nTime_old"] = dest.nTime_old.compute()
+#     dest.coords["nTime"] = (tag,), np.unique(dest[f"k{tag}"].values, return_counts=True)[1]
+
+#     orig_sort = dest.attrs.get("sort", None)
+#     source = sortby(source, tag)
+#     dest = sortby(dest, tag)
+
+#     if "k" in dest.chunks:
+#         dest = aligned_rechunk(dest, tag, k=None)
+#         source = aligned_rechunk(source, chunks={tag: dest.chunks[tag]})
+#     elif "k" in source.chunks:
+#         source = aligned_rechunk(source, tag, k=None)
+#         dest = aligned_rechunk(dest, chunks={tag: source.chunks[tag]})
+
+#     res = dest.drop_vars([v for v in dest.data_vars])
+#     idx = np.abs(source[tag].data.reshape(-1) - dest[f"k{tag}"].data.reshape(-1, 1)).argmin(axis=1)
+
+#     for v, var in source.data_vars.items():
+#         res[v] = ("k",), var.data[idx]
+
+#     res = res.drop_dims(tag).reset_coords(f"k{tag}").rename({f"k{tag}": tag, "nTime_old": "nTime"})
+
+#     if orig_sort is not None:
+#         res = sortby(res, orig_sort)
+#     return res

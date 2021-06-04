@@ -72,7 +72,7 @@ class H5Reader:
         h5_groups = XdmfReader(self.filename).extract_h5_groups()
         sizes = XdmfReader(self.filename).extract_sizes()
 
-        max_npart = max(sizes.values())
+        # max_npart = max(sizes.values())
 
         times = np.sort(np.fromiter(h5_groups.keys(), dtype=float))
 
@@ -110,13 +110,14 @@ class H5Reader:
                 times_chunk_data["BoxSize"] = times_chunk_data.pop("ll_box")
 
             if sparse:
-                times_chunk_data["Time"] = np.fromiter(
-                    (time for time in times_chunk), dtype=np.float64
-                )
-                times_chunk_data[indexname] = np.arange(max_npart)
-                times_chunk_data["size"] = np.fromiter(
-                    (sizes[time] for time in times_chunk), dtype=np.int64
-                )
+                raise NotImplementedError()
+                # times_chunk_data["Time"] = np.fromiter(
+                #     (time for time in times_chunk), dtype=np.float64
+                # )
+                # times_chunk_data[indexname] = np.arange(max_npart)
+                # times_chunk_data["size"] = np.fromiter(
+                #     (sizes[time] for time in times_chunk), dtype=np.int64
+                # )
             else:
                 times_chunk_data["Time"] = np.fromiter(
                     (time for time in times_chunk), dtype=np.float64
@@ -124,7 +125,7 @@ class H5Reader:
                 # times_chunk_data["iTime"] = da.arange(
                 #     len(times_chunk), dtype=np.int64, chunks=-1
                 # ).persist()
-                times_chunk_data["N"] = np.fromiter(
+                times_chunk_data["n"+indexname] = np.fromiter(
                     (sizes[time] for time in times_chunk), dtype=np.int64
                 )
                 times_chunk_data["kTime"] = np.concatenate(
@@ -137,9 +138,9 @@ class H5Reader:
                     [np.arange(sizes[time]) for time in times_chunk]
                 )
 
-                times_chunk_data["Nt"] = compute_Nt(times_chunk_data["N"]).copy()  # .compute())
+                times_chunk_data["nTime"] = compute_nTime(times_chunk_data["n"+indexname]).copy()  # .compute())
 
-                # to_persist = ("Time", "N", "kTime", indexname)
+                # to_persist = ("Time", "n"+indexname, "kTime", "nTime", indexname)
                 # for k, persisted in zip(to_persist,
                 #                         dask.persist(*(times_chunk_data[k] for k in to_persist))):
                 #     times_chunk_data[k] = persisted
@@ -211,5 +212,5 @@ def read_h5_arrays(
 
 
 @njit(nogil=True, cache=True)
-def compute_Nt(N):
+def compute_nTime(N):
     return np.bincount(N)[:0:-1].cumsum()[::-1]
