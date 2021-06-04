@@ -37,7 +37,7 @@ from .sorting import sortby
 def xarray_to_ddframe(
     ds: Union[xr.DataArray, xr.Dataset],
     set_index: Union[bool, str] = None,
-    dim_order: List[str] = None,
+    dim_order: List[Hashable] = None,
 ) -> dd.DataFrame:
     """
     Convert a xarray.Dataset into a dask.dataframe.DataFrame.
@@ -123,6 +123,38 @@ def xarray_to_ddframe(
     return df
 
 
+def ddframe_to_xarray(
+    df: dd.DataFrame, lengths: Tuple[int] = None
+) -> Union[xr.DataArray, xr.Dataset]:
+    """Convert a dask.dataframe.DataFrame into an xarray.Dataset"""
+
+    if lengths is None:
+        lengths = tuple(
+            df.index.map_partitions(len, enforce_metadata=False).compute()
+        )  # type:ignore
+    lengths = cast(Tuple[int], lengths)
+
+    arrays = [(k, v.to_dask_array(lengths)) for k, v in df.items()]
+    index_name = df.index.name if df.index.name is not None else "k"
+
+    res: Union[xr.DataArray, xr.Dataset] = xr.Dataset()
+    for name, values in arrays:
+        if name[0] == "k":
+            res.coords[name] = ("k",), values
+        else:
+            res[name] = (index_name,), values
+
+    if sum(lengths) == 1:
+        res = res.isel(k=0)
+
+    datavars = list(res.data_vars.keys())
+    if len(datavars) == 1:
+        [data_var] = datavars
+        res = res[data_var]
+
+    return res
+
+
 def xarray_to_frame(ds: Union[xr.DataArray, xr.Dataset]) -> pd.DataFrame:
     """
     Convert a xarray.Dataset into a pandas.DataFrame.
@@ -162,6 +194,55 @@ def xarray_to_frame(ds: Union[xr.DataArray, xr.Dataset]) -> pd.DataFrame:
     df = pd.DataFrame(data={col: ds[col].data for col in ds.data_vars}, index=multi_index)
 
     return df
+
+
+def frame_to_xarray(df: pd.DataFrame, full: bool = True) -> Union[xr.DataArray, xr.Dataset]:
+    """Convert a pandas.DataFrame into an xarray.Dataset"""
+
+    if df.index.is_monotonic_increasing:
+        sort = [c for c in df.index.names if c != "k"]
+
+    df_multi = None
+    if df.index.nlevels > 1:
+        df_multi = df
+
+        for col in df.index.names:
+            df["k" + col] = df.index.get_level_values(col)
+
+        df = df.reset_index(drop=True)
+        df.index.name = "k"
+
+    res: Union[xr.DataArray, xr.Dataset] = xr.Dataset.from_dataframe(df)
+    if "k" in res.coords:
+        res = res.drop_vars("k")
+
+    coords = [coord for coord in res.data_vars if coord[0] == "k"]  # type:ignore
+    res = res.set_coords(coords)
+
+    if len(df) == 1:
+        res = res.isel(k=0)
+
+    if full and df_multi is not None:
+        if df.index.nlevels > 2:
+            raise ValueError("You cannot reconstruct a full xarray with more that 2 levels")
+        a, b = df_multi.index.names
+        df_a = df_multi[df_multi.columns[0]].groupby(a).count()
+        df_b = df_multi[df_multi.columns[0]].groupby(b).count()
+        res.coords[a] = (a,), df_a.index.values
+        res.coords["n" + a] = (b,), df_b.values
+        res.coords[b] = (b,), df_b.index.values
+        res.coords["n" + b] = (a,), df_a.values
+
+    if not full:
+        datavars = list(res.data_vars.keys())
+        if len(datavars) == 1:
+            [data_var] = datavars
+            res = res[data_var]
+
+    if sort is not None:
+        res.attrs["sort"] = sort
+
+    return res
 
 
 def try_extracting_index(index_arrays, length):
