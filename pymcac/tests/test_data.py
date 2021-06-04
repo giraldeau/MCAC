@@ -26,11 +26,13 @@ from numba import njit
 
 from pymcac.tools.core.various import get_idx_name
 
-from .generator import compute_Label_from_Np
-from .generator import compute_Np_from_Label
-from .generator import generate_dummy_aggregates_data
-from .generator import generate_dummy_data
-from .generator import generate_dummy_spheres_data
+from .generator import (
+    compute_Label_from_Np,
+    compute_Np_from_Label,
+    generate_dummy_aggregates_data,
+    generate_dummy_data,
+    generate_dummy_spheres_data,
+)
 
 
 @njit

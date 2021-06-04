@@ -21,6 +21,7 @@
 Set of Python libraries for post-processing MCAC data
 """
 import os
+from pathlib import Path
 
 import psutil
 
@@ -47,6 +48,8 @@ try:
     from .version import version as VERSION
 except ModuleNotFoundError:
     VERSION = "Unknown"
+
+validation_data_path = Path(__file__).parent.parent / "validation"
 
 ncores = psutil.cpu_count(logical=False)
 os.environ["OMP_NUM_THREADS"] = os.environ.get("OMP_NUM_THREADS", str(ncores))

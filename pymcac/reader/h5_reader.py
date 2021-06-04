@@ -125,7 +125,7 @@ class H5Reader:
                 # times_chunk_data["iTime"] = da.arange(
                 #     len(times_chunk), dtype=np.int64, chunks=-1
                 # ).persist()
-                times_chunk_data["n"+indexname] = np.fromiter(
+                times_chunk_data["n" + indexname] = np.fromiter(
                     (sizes[time] for time in times_chunk), dtype=np.int64
                 )
                 times_chunk_data["kTime"] = np.concatenate(
@@ -138,7 +138,9 @@ class H5Reader:
                     [np.arange(sizes[time]) for time in times_chunk]
                 )
 
-                times_chunk_data["nTime"] = compute_nTime(times_chunk_data["n"+indexname]).copy()  # .compute())
+                times_chunk_data["nTime"] = compute_nTime(
+                    times_chunk_data["n" + indexname]
+                ).copy()  # .compute())
 
                 # to_persist = ("Time", "n"+indexname, "kTime", "nTime", indexname)
                 # for k, persisted in zip(to_persist,

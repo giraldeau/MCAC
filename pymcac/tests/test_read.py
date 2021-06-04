@@ -19,7 +19,8 @@
 
 from pymcac import validation_data_path
 from pymcac.reader.mcac_reader import MCAC
-from .test_data import check_data, check_consistency
+
+from .test_data import check_consistency, check_data
 
 
 def test_read_metadata():
@@ -53,9 +54,11 @@ def test_read_xaggregate():
     xaggregates = MCAC(validation_data_path / "pytest_data").xaggregates
     check_data(xaggregates)
 
+
 def test_read_xspheres():
     xspheres = MCAC(validation_data_path / "pytest_data").xspheres
     check_data(xspheres)
+
 
 def test_read_xdata():
     sim = MCAC(validation_data_path / "pytest_data")

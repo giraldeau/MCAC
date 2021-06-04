@@ -20,10 +20,12 @@ import pytest
 import xarray as xr
 from numpy.testing import assert_array_equal
 
-from pymcac.tools.core.dataframe import ddframe_to_xarray
-from pymcac.tools.core.dataframe import frame_to_xarray
-from pymcac.tools.core.dataframe import xarray_to_ddframe
-from pymcac.tools.core.dataframe import xarray_to_frame
+from pymcac.tools.core.dataframe import (
+    ddframe_to_xarray,
+    frame_to_xarray,
+    xarray_to_ddframe,
+    xarray_to_frame,
+)
 
 from .generator import generate_dummy_aggregates_data, generate_dummy_spheres_data
 from .test_dask import raise_if_computed

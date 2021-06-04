@@ -274,7 +274,7 @@ class MCAC:
             else:
                 dims = ("k",)
 
-            if col in ("Time", "nTime", "kTime", indexname, "n"+indexname):  # "iTime", "kiTime"
+            if col in ("Time", "nTime", "kTime", indexname, "n" + indexname):  # "iTime", "kiTime"
                 coords[col] = xr.DataArray(data, dims=dims, name=col)
             else:
                 data_vars[col] = xr.DataArray(data, dims=dims, name=col)
@@ -290,7 +290,7 @@ class MCAC:
         #     coords[k] = persisted
         # data_vars["n"+indexname] = data_vars["n"+indexname].persist()
 
-        nmax = int(coords["n"+indexname].max())  # .compute())
+        nmax = int(coords["n" + indexname].max())  # .compute())
         # Nt = da.from_delayed(
         #     compute_Nt(data_vars["n"+indexname]),
         #     shape=(nmax,),
