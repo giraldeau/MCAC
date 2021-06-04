@@ -35,6 +35,7 @@ from numba import njit
 from pymcac.tools.core.dask_tools import aligned_rechunk
 from pymcac.tools.core.dataframe import groupby_agg, xarray_to_ddframe, xarray_to_frame
 
+from .advancement_reader import AdvancementReader
 from .h5_reader import H5Reader
 from .xdmf_reader import XdmfReader  # type: ignore
 
@@ -46,11 +47,12 @@ class MCAC:
     This object read the simulation results from MCAC
     """
 
-    __slots__ = ("dir", "_metadata", "times")
+    __slots__ = ("dir", "_metadata", "_advancement", "times")
 
     def __init__(self, datadir: Union[str, Path]) -> None:
         self.dir = Path(datadir)
         self._metadata: Optional[Dict[str, Union[bool, float]]] = None
+        self._advancement: dd.DataFrame = None
         self.times: Optional[np.ndarray] = None
 
     @property
@@ -68,6 +70,16 @@ class MCAC:
             self._metadata = XdmfReader(filename).extract_metadata()
 
         return self._metadata
+
+    @property
+    def advancement(self) -> dd.DataFrame:
+        """
+        Read the advancement file of the simulation
+        """
+        if self._advancement is None:
+            self._advancement = AdvancementReader.read_advancement(self.dir)
+
+        return self._advancement
 
     @property
     def xaggregates(self) -> xr.Dataset:
@@ -316,6 +328,10 @@ class MCAC:
             ds = ds.drop_vars("BoxSize")
             BoxSize = groupby_agg(BoxSize, by="Time", agg=[("BoxSize", "first", "BoxSize")])
             ds["BoxSize"] = BoxSize.chunk({"Time": ds.chunks["Time"]})
+
+        for col in self.advancement.columns:
+            if col not in ds.data_vars:
+                ds[col] = ("Time",), self.advancement[col]
 
         return ds
 

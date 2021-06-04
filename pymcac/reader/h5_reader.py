@@ -99,12 +99,12 @@ class H5Reader:
                 for col, data in self.read_multiple_array(groups, attrib, chunk_size).items()
             }
 
-            # if "BoxSize" in h5_groups[times_chunk[0]]:
-            #     with h5File(str(self.filename), "r") as file_h5:
-            #         times_chunk_data["BoxSize"] = np.fromiter(
-            #             (file_h5[h5_groups[time]["BoxSize"]][0] for time in times_chunk),
-            #             dtype=np.float64,
-            #         )
+            if "BoxSize" in h5_groups[times_chunk[0]]:
+                with h5File(str(self.filename), "r") as file_h5:
+                    times_chunk_data["BoxSize"] = np.fromiter(
+                        (file_h5[h5_groups[time]["BoxSize"]][0] for time in times_chunk),
+                        dtype=np.float64,
+                    )
 
             if "ll_box" in times_chunk_data:
                 times_chunk_data["BoxSize"] = times_chunk_data.pop("ll_box")
