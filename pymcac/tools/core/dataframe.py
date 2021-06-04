@@ -35,7 +35,9 @@ from .sorting import sortby
 
 
 def xarray_to_ddframe(
-    ds: xr.Dataset, set_index: Union[bool, str] = None, dim_order: List[str] = None
+    ds: Union[xr.DataArray, xr.Dataset],
+    set_index: Union[bool, str] = None,
+    dim_order: List[str] = None,
 ) -> dd.DataFrame:
     """
     Convert a xarray.Dataset into a dask.dataframe.DataFrame.
@@ -68,15 +70,14 @@ def xarray_to_ddframe(
     -------
     dask.dataframe.DataFrame
     """
-    if dim_order is None:
-        dim_order = [str(d) for d in ds.dims]
-    elif set(dim_order) != set(ds.dims):
-        raise ValueError(
-            "dim_order {} does not match the set of dimensions on this "
-            "Dataset: {}".format(dim_order, list(ds.dims))
-        )
+    if isinstance(ds, xr.DataArray):
+        ds = ds.to_dataset()
 
-    ordered_dims = {k: ds.dims[k] for k in dim_order}
+    if len(ds.coords) > 1:
+        no_k = [d for d in ds.dims if d != "k"]
+        ds = ds.drop_dims(no_k)
+
+    ordered_dims = ds._normalize_dim_order(dim_order=dim_order)
 
     columns = list(ordered_dims)
     columns.extend(str(k) for k in ds.coords if k not in ds.dims)
@@ -104,17 +105,25 @@ def xarray_to_ddframe(
     df = dd.concat(series_list, axis=1)
 
     if set_index:
+        dim_order = [*ordered_dims]
+
         if len(dim_order) == 1:
-            [dim] = dim_order
+            (dim,) = dim_order
             df = df.set_index(dim)
         else:
             # triggers an error about multi-indexes, even if only one
             # dimension is passed
             df = df.set_index(dim_order)
+    else:
+        if len(ds.dims) == 1:
+            index = df.index
+            [index.name] = ds.dims
+            df.index = index
+
     return df
 
 
-def xarray_to_frame(ds: xr.Dataset) -> pd.DataFrame:
+def xarray_to_frame(ds: Union[xr.DataArray, xr.Dataset]) -> pd.DataFrame:
     """
     Convert a xarray.Dataset into a pandas.DataFrame.
 
@@ -126,9 +135,29 @@ def xarray_to_frame(ds: xr.Dataset) -> pd.DataFrame:
     -------
     pandas.DataFrame
     """
+    sort = ds.attrs.get("sort", [])
+
+    if isinstance(ds, xr.DataArray):
+        ds = ds.to_dataset()
+
+    if len(ds.coords) > 1:
+        no_k = [d for d in ds.dims if d != "k"]
+        ds = ds.drop_dims(no_k)
+
+    if (len(ds.coords) > 1) and len(ds.coords) != len(sort):
+        raise ValueError(
+            "You must sort the array in order to transform it into a multi_indexed DataFrame"
+        )
+
     ds = progress_compute(ds)
 
-    index = {**{"Time": None}, **{str(col): ds[col].data for col in ds.coords}}
+    index = {str(col): ds[col].data for col in ds.coords}
+    if len(ds.coords) > 1:
+        index = {col: index["k" + col] for col in sort}
+
+    if not index:
+        index = {"k": [1]}
+
     multi_index = pd.MultiIndex.from_arrays(arrays=list(index.values()), names=list(index.keys()))
     df = pd.DataFrame(data={col: ds[col].data for col in ds.data_vars}, index=multi_index)
 

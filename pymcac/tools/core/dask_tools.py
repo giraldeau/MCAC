@@ -227,6 +227,7 @@ def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
             nums = ds.nTime.values
         else:
             vals, nums = np.unique(ds[kon].values, return_counts=True)
+            raise ValueError("Not tested")
         if chunks[on] is None:
             chunks[on] = ds.chunks.get(on, None)
     else:

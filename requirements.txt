@@ -20,6 +20,8 @@ xarray
 numba
 distributed
 
+ipykernel
+
 pytest
 pytest-html
 pytest-timeout

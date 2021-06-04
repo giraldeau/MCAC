@@ -22,11 +22,14 @@ import numpy as np
 import pytest
 from dask import delayed
 
-from pymcac.tools.core.dask_tools import aligned_rechunk, broadcast_to, not_aligned_rechunk
+from pymcac.tools.core.dask_tools import aligned_rechunk, not_aligned_rechunk
 from pymcac.tools.core.sorting import sortby
 
-from .generator import generate_dummy_aggregates_data, generate_dummy_data
+from .generator import generate_dummy_aggregates_data
 from .test_data import check_dask_consistency, check_data
+
+# from .generator import generate_dummy_data
+# from pymcac.tools.core.dask_tools import broadcast_to
 
 
 def identical(ds1, ds2):
@@ -130,6 +133,14 @@ def test_not_aligned_rechunk_no_compute():
 def test_aligned_rechunk_idempotent(dask):
     data = generate_dummy_aggregates_data(sort_info=True, dask=dask)
     rechunked = aligned_rechunk(data, Time=max(data.chunks["Time"]))
+    assert identical(data, rechunked)
+    check_data(rechunked)
+
+
+@pytest.mark.parametrize("dask", [1, 2])
+def test_aligned_rechunk_infer_on(dask):
+    data = generate_dummy_aggregates_data(sort_info=True, dask=dask)
+    rechunked = aligned_rechunk(data)
     assert identical(data, rechunked)
     check_data(rechunked)
 

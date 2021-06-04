@@ -206,6 +206,7 @@ def from_argsort(ds, by):
                 source_data = source_data.data.rechunk(-1)
             else:
                 source_data = da.from_array(source_data.data, chunks=-1)
+                raise ValueError("Not tested")
 
         if idx is not None:
             source_data = source_data[idx]
@@ -232,6 +233,7 @@ def from_argsort(ds, by):
             idx = da.arange(ds.sizes["k"])
         else:
             idx = np.arange(ds.sizes["k"])
+        raise ValueError("Not tested")
     return idx
 
 

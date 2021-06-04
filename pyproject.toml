@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 timeout = 120
-addopts = "--html=artifacts/report.html --self-contained-html"
+addopts = "--html=artifacts/pytest.html --self-contained-html"
 testpaths = [
     "pymcac",
 ]

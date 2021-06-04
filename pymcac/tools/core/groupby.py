@@ -20,18 +20,21 @@
 """
 Tools to mimic the pandas API
 """
-from typing import Any, Callable, Dict, Hashable, List, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import dask.array as da
 import numpy as np
 import xarray as xr
-from dask import delayed
-from dask.delayed import Delayed
-from numba import njit
 
 from pymcac.tools.core.dask_tools import aligned_rechunk
 
 from .sorting import sortby
+
+# from typing import Hashable, Sequence
+
+# from dask import delayed
+# from dask.delayed import Delayed
+# from numba import njit
 
 
 def groupby_aggregate(
@@ -238,302 +241,308 @@ def groupby2(
     return res
 
 
-def groupby(
-    ds: xr.Dataset,
-    group: str,
-    func: Callable,
-    meta: Union[xr.DataArray, xr.Dataset, Tuple],
-    *args,
-    nchunk: int = None,
-    **kwargs,
-) -> xr.Dataset:
-    """WIP"""
-    sorted_ds = sortby(ds, group, nchunk=nchunk)
-    chunks = None
-    if sorted_ds.chunks is not None and "k" in sorted_ds.chunks:
-        chunks = sorted_ds.chunks["k"]
+# def groupby(
+#     ds: xr.Dataset,
+#     group: str,
+#     func: Callable,
+#     meta: Union[xr.DataArray, xr.Dataset, Tuple],
+#     *args,
+#     nchunk: int = None,
+#     **kwargs,
+# ) -> xr.Dataset:
+#     """WIP"""
+#     sorted_ds = sortby(ds, group, nchunk=nchunk)
+#     chunks = None
+#     if sorted_ds.chunks is not None and "k" in sorted_ds.chunks:
+#         chunks = sorted_ds.chunks["k"]
 
-    ds_only_k = sorted_ds.drop_dims([dim for dim in sorted_ds.dims if dim != "k"])
-    ds_only_k = ds_only_k.rename(
-        {coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")}
-    )
-    del ds_only_k.attrs["sort"]
+#     ds_only_k = sorted_ds.drop_dims([dim for dim in sorted_ds.dims if dim != "k"])
+#     ds_only_k = ds_only_k.rename(
+#         {coord: coord[1:] for coord in ds_only_k.coords if coord.startswith("k")}
+#     )
+#     del ds_only_k.attrs["sort"]
 
-    ds_other = sorted_ds.drop_dims("k")
+#     ds_other = sorted_ds.drop_dims("k")
 
-    if isinstance(meta, xr.DataArray):
-        meta = meta.to_dataset()
-    if isinstance(meta, xr.Dataset):
-        template = meta
-    else:
-        template = xr.Dataset()
-        for name, dim, dtype in meta:
-            if dim != group:
-                template.coords[dim] = ("k",), ds_only_k.coords[dim].data
-                dim = "k"
-                if chunks is None:
-                    template[name] = (dim,), np.empty(sorted_ds.sizes[dim], dtype=dtype)
-                else:
-                    template[name] = (dim,), da.empty(
-                        sorted_ds.sizes[dim], dtype=dtype, chunks=sorted_ds.chunks[dim]
-                    )
-            else:
-                template.coords[dim] = (dim,), ds_other.coords[dim].data
-                template[name] = (dim,), da.empty(sorted_ds.sizes[dim], dtype=dtype, chunks=-1)
+#     if isinstance(meta, xr.DataArray):
+#         meta = meta.to_dataset()
+#     if isinstance(meta, xr.Dataset):
+#         template = meta
+#     else:
+#         template = xr.Dataset()
+#         for name, dim, dtype in meta:
+#             if dim != group:
+#                 template.coords[dim] = ("k",), ds_only_k.coords[dim].data
+#                 dim = "k"
+#                 if chunks is None:
+#                     template[name] = (dim,), np.empty(sorted_ds.sizes[dim], dtype=dtype)
+#                 else:
+#                     template[name] = (dim,), da.empty(
+#                         sorted_ds.sizes[dim], dtype=dtype, chunks=sorted_ds.chunks[dim]
+#                     )
+#             else:
+#                 template.coords[dim] = (dim,), ds_other.coords[dim].data
+#                 template[name] = (dim,), da.empty(sorted_ds.sizes[dim], dtype=dtype, chunks=-1)
 
-    kname = "k"
-    if "k" in template.dims:
-        for c, coord in template.coords.items():
-            if "k" in coord.dims:
-                kname = str(c)
-                break
+#     kname = "k"
+#     if "k" in template.dims:
+#         for c, coord in template.coords.items():
+#             if "k" in coord.dims:
+#                 kname = str(c)
+#                 break
 
-    label_limits = None
-    if group in ds_other.dims:
-        if group == "Time":
-            limits = np.insert(np.cumsum(ds_other.N.values), 0, 0)
-        else:
-            limits = np.insert(np.cumsum(ds_other.Nt.values), 0, 0)
+#     label_limits = None
+#     if group in ds_other.dims:
+#         if group == "Time":
+#             limits = np.insert(np.cumsum(ds_other.N.values), 0, 0)
+#         else:
+#             limits = np.insert(np.cumsum(ds_other.Nt.values), 0, 0)
 
-        label_limits = (
-            (np.asscalar(label.values), start, end)
-            for label, start, end in zip(ds_other.coords[group], limits[:-1], limits[1:])
-        )
+#         label_limits = (
+#             (np.asscalar(label.values), start, end)
+#             for label, start, end in zip(ds_other.coords[group], limits[:-1], limits[1:])
+#         )
 
-    if ds_only_k.chunks is not None and "k" in ds_only_k.chunks:
+#     if ds_only_k.chunks is not None and "k" in ds_only_k.chunks:
 
-        res = ds_only_k.map_blocks(
-            _groupby_block,
-            args=args,
-            kwargs={
-                "group": group,
-                "func": func,
-                "kname": kname,
-                "label_limits": label_limits,
-                **kwargs,
-            },
-            template=template,
-        )
-    else:
-        ds_only_k.coords["k"] = np.arange(ds_only_k.sizes["k"])
-        res = _groupby_block(
-            ds_only_k,
-            group,
-            func,
-            kname,
-            label_limits,
-            *args,
-            **kwargs,
-        )
+#         res = ds_only_k.map_blocks(
+#             _groupby_block,
+#             args=args,
+#             kwargs={
+#                 "group": group,
+#                 "func": func,
+#                 "kname": kname,
+#                 "label_limits": label_limits,
+#                 **kwargs,
+#             },
+#             template=template,
+#         )
+#     else:
+#         ds_only_k.coords["k"] = np.arange(ds_only_k.sizes["k"])
+#         res = _groupby_block(
+#             ds_only_k,
+#             group,
+#             func,
+#             kname,
+#             label_limits,
+#             *args,
+#             **kwargs,
+#         )
 
-    if "k" in res.dims:
-        res = res.assign_coords(sorted_ds.coords)
-        for var in ["N", "Nt", "itmax"]:
-            res[var] = sorted_ds[var]
+#     if "k" in res.dims:
+#         res = res.assign_coords(sorted_ds.coords)
+#         for var in ["N", "Nt", "itmax"]:
+#             res[var] = sorted_ds[var]
 
-    return res
-
-
-def _groupby_block(
-    ds_only_k: xr.Dataset,
-    group: str,
-    func: Callable,
-    kname: str,
-    label_limits,
-    *args,
-    squeeze=True,
-    restore_coord_dims=None,
-    **kwargs,
-) -> xr.Dataset:
-    if label_limits is not None:
-        gb = filter(
-            lambda x: x[1].sizes["k"] > 0,
-            ((float(t), ds_only_k.isel(k=slice(start, end))) for t, start, end in label_limits),
-        )
-    else:
-
-        try:
-            kgroup = group
-            ds_only_k[group]
-        except KeyError:
-            kgroup = "k" + group
-            ds_only_k[kgroup]
-
-        gb = ds_only_k.groupby(group=kgroup, squeeze=squeeze, restore_coord_dims=restore_coord_dims)
-
-    def wrap(ds, label, *args, **kwargs):
-
-        group_ds = ds.swap_dims({"k": kname}).drop_vars([group])
-        ds.get_index(kname).name = kname
-        group_ds.coords[group] = [label]
-
-        res = func(group_ds, *args, **kwargs)
-
-        if isinstance(res, xr.DataArray):
-            res = res.to_dataset()
-
-        for var, data in res.data_vars.items():
-            if not data.dims:
-                res[var] = data.expand_dims({group: [label]})
-
-        if kname in res.dims:
-            res = res.rename_dims({kname: "k"})
-
-        return res
-
-    applied = (wrap(ds, label, *args, **kwargs) for label, ds in gb)
-    res_ds = xr.concat(
-        applied, dim="k", data_vars="minimal", coords="minimal", compat="no_conflicts"
-    )
-
-    return res_ds
+#     return res
 
 
-def groupby_index(
-    ds: xr.Dataset,
-    indexname: str,
-    fn: Union[str, Callable],
-    meta: Union[xr.DataArray, xr.Dataset],
-    nchunk: int = None,
-) -> xr.Dataset:
-    if nchunk is None:
-        nchunk = len(ds.chunks)
+# def _groupby_block(
+#     ds_only_k: xr.Dataset,
+#     group: str,
+#     func: Callable,
+#     kname: str,
+#     label_limits,
+#     *args,
+#     squeeze=True,
+#     restore_coord_dims=None,
+#     **kwargs,
+# ) -> xr.Dataset:
+#     if label_limits is not None:
+#         gb = filter(
+#             lambda x: x[1].sizes["k"] > 0,
+#             ((float(t), ds_only_k.isel(k=slice(start, end))) for t, start, end in label_limits),
+#         )
+#     else:
 
-    if isinstance(meta, xr.DataArray):
-        meta = meta.to_dataset()
+#         try:
+#             kgroup = group
+#             ds_only_k[group]
+#         except KeyError:
+#             kgroup = "k" + group
+#             ds_only_k[kgroup]
 
-    chunked_todo = np.array_split(ds.coords[indexname].data, nchunk)
+#         gb = ds_only_k.groupby(group=kgroup,
+#                                squeeze=squeeze,
+#                                restore_coord_dims=restore_coord_dims)
 
-    res_list = [chunked_select_and_apply(ds, chunk, fn, indexname, meta) for chunk in chunked_todo]
-    res_dim = [
-        xr.concat(
-            [data.drop_dims([d for d in data.dims if d != dim]) for data in res_list], dim=str(dim)
-        )
-        for dim in res_list[0].dims
-    ]
-    res = xr.merge(res_dim)
-    res.attrs = ds.attrs
-    res.attrs["sort"] = indexname
-    return res
+#     def wrap(ds, label, *args, **kwargs):
 
+#         group_ds = ds.swap_dims({"k": kname}).drop_vars([group])
+#         ds.get_index(kname).name = kname
+#         group_ds.coords[group] = [label]
 
-def chunked_select_and_apply(ds, chunk, fn, indexname, meta: xr.Dataset) -> xr.Dataset:
-    ds.coords["k"] = da.arange(len(ds.k))
+#         res = func(group_ds, *args, **kwargs)
 
-    idx = np.insert(ds.N.cumsum().values[:-1], 0, 0)
-    mask = chunk.min() <= ds.N
-    idx_k = (chunk + idx[mask][:, np.newaxis]).flatten()
+#         if isinstance(res, xr.DataArray):
+#             res = res.to_dataset()
 
-    ds_k = ds.sel({"k": idx_k, indexname: chunk, "Time": ds.Time[mask]})
+#         for var, data in res.data_vars.items():
+#             if not data.dims:
+#                 res[var] = data.expand_dims({group: [label]})
 
-    delayed_res: Delayed = delayed_chunked_select_and_apply(ds_k, chunk, fn, indexname)
+#         if kname in res.dims:
+#             res = res.rename_dims({kname: "k"})
 
-    res_ds = meta.copy()
-    len_k = 1
-    if "Time" in meta.dims:
-        len_k *= ds_k.Time.size
-    if indexname in meta.dims:
-        len_k *= ds_k[indexname].size
+#         return res
 
-    for var in meta.data_vars:
-        if indexname in meta[var].dims:
-            res_ds[var] = (indexname,), da.from_delayed(
-                get_from_delayed(delayed_res, var),
-                shape=(ds_k[indexname].size,),
-                dtype=meta[var].dtype,
-            )
-            res_ds[indexname] = ds_k[indexname]
-        if "Time" in meta[var].dims:
-            res_ds[var] = ("k",), da.from_delayed(
-                get_from_delayed(delayed_res, var), shape=(len_k,), dtype=meta[var].dtype
-            )
-            res_ds["Time"] = ds_k.Time
+#     applied = (wrap(ds, label, *args, **kwargs) for label, ds in gb)
+#     res_ds = xr.concat(
+#         applied, dim="k", data_vars="minimal", coords="minimal", compat="no_conflicts"
+#     )
 
-    if "Time" in res_ds.dims:
-        res_ds["N"] = ds_k.N
-        missing = [coord for coord in ds_k.coords if coord not in ("Time", indexname, "k")]
-        for coord in missing:
-            res_ds.coords[coord] = ("k",), da.from_delayed(
-                get_from_delayed(delayed_res, coord), shape=(len_k,), dtype=ds_k.coords[coord].dtype
-            )
-    return res_ds
+#     return res_ds
 
 
-@delayed
-def get_from_delayed(delayed: Delayed, name: Hashable) -> np.ndarray:
-    return delayed[name].data
+# def groupby_index(
+#     ds: xr.Dataset,
+#     indexname: str,
+#     fn: Union[str, Callable],
+#     meta: Union[xr.DataArray, xr.Dataset],
+#     nchunk: int = None,
+# ) -> xr.Dataset:
+#     if nchunk is None:
+#         nchunk = len(ds.chunks)
+
+#     if isinstance(meta, xr.DataArray):
+#         meta = meta.to_dataset()
+
+#     chunked_todo = np.array_split(ds.coords[indexname].data, nchunk)
+
+#     res_list = [chunked_select_and_apply(ds, chunk, fn, indexname, meta)
+#                 for chunk in chunked_todo]
+#     res_dim = [
+#         xr.concat(
+#             [data.drop_dims([d for d in data.dims if d != dim]) for data in res_list],
+#             dim=str(dim)
+#         )
+#         for dim in res_list[0].dims
+#     ]
+#     res = xr.merge(res_dim)
+#     res.attrs = ds.attrs
+#     res.attrs["sort"] = indexname
+#     return res
 
 
-@delayed
-def delayed_chunked_select_and_apply(
-    ds: xr.Dataset, chunk: Sequence[int], fn: Callable, indexname: str
-) -> xr.Dataset:
-    idx = np.insert(ds.N.cumsum().values[:-1], 0, 0)
+# def chunked_select_and_apply(ds, chunk, fn, indexname, meta: xr.Dataset) -> xr.Dataset:
+#     ds.coords["k"] = da.arange(len(ds.k))
 
-    res = [select_and_apply(ds, k, idx, fn, indexname) for k in chunk]
+#     idx = np.insert(ds.N.cumsum().values[:-1], 0, 0)
+#     mask = chunk.min() <= ds.N
+#     idx_k = (chunk + idx[mask][:, np.newaxis]).flatten()
 
-    res_ds = xr.concat(res, dim="k", data_vars="minimal", coords="minimal", compat="no_conflicts")
+#     ds_k = ds.sel({"k": idx_k, indexname: chunk, "Time": ds.Time[mask]})
 
-    return res_ds
+#     delayed_res: Delayed = delayed_chunked_select_and_apply(ds_k, chunk, fn, indexname)
+
+#     res_ds = meta.copy()
+#     len_k = 1
+#     if "Time" in meta.dims:
+#         len_k *= ds_k.Time.size
+#     if indexname in meta.dims:
+#         len_k *= ds_k[indexname].size
+
+#     for var in meta.data_vars:
+#         if indexname in meta[var].dims:
+#             res_ds[var] = (indexname,), da.from_delayed(
+#                 get_from_delayed(delayed_res, var),
+#                 shape=(ds_k[indexname].size,),
+#                 dtype=meta[var].dtype,
+#             )
+#             res_ds[indexname] = ds_k[indexname]
+#         if "Time" in meta[var].dims:
+#             res_ds[var] = ("k",), da.from_delayed(
+#                 get_from_delayed(delayed_res, var), shape=(len_k,), dtype=meta[var].dtype
+#             )
+#             res_ds["Time"] = ds_k.Time
+
+#     if "Time" in res_ds.dims:
+#         res_ds["N"] = ds_k.N
+#         missing = [coord for coord in ds_k.coords if coord not in ("Time", indexname, "k")]
+#         for coord in missing:
+#             res_ds.coords[coord] = ("k",), da.from_delayed(
+#                 get_from_delayed(delayed_res, coord),
+#                 shape=(len_k,),
+#                 dtype=ds_k.coords[coord].dtype
+#             )
+#     return res_ds
 
 
-def select_and_apply(
-    ds: xr.Dataset, k: int, idx: np.ndarray, fn: Callable, indexname: str
-) -> xr.Dataset:
-    to_drop = [str(coord) for coord in ds.coords if coord not in ("Time", indexname)]
-    mask = k <= ds.N
-    ds_k = ds.sel({"k": k + idx[mask], indexname: [k]})
-
-    without_coords = ds_k.drop_vars(["N"] + to_drop).rename({"k": "Time"})
-
-    res = fn(without_coords)
-
-    if isinstance(res, xr.DataArray):
-        res = res.to_dataset()
-    for var, data in res.data_vars.items():
-        if not data.dims:
-            res[var] = data.expand_dims({indexname: [k]})
-
-    if "Time" in res.dims:
-        res = res.rename_dims({"Time": "k"}).assign_coords(Time=ds_k.Time)
-        res["N"] = ds_k.N
-        for removed in to_drop:
-            res.coords[removed] = ds_k.coords[removed]
-
-    return res
+# @delayed
+# def get_from_delayed(delayed: Delayed, name: Hashable) -> np.ndarray:
+#     return delayed[name].data
 
 
-@njit(nogil=True, cache=True)
-def groupby_index_in_block(
-    npagg: np.ndarray,
-    time: np.ndarray,
-    naggs: np.ndarray,
-    nsph: np.ndarray,
-    sph_time: np.ndarray,
-    sph_label: np.ndarray,
-    arrs: Tuple[np.ndarray, ...],
-    fn,
-) -> np.ndarray:
-    res = np.empty((npagg.size, 6), dtype=np.float64)
-    npcum = nsph.cumsum()
-    kagg = 0
-    for i, (t, nagg) in enumerate(zip(time, naggs)):
+# @delayed
+# def delayed_chunked_select_and_apply(
+#     ds: xr.Dataset, chunk: Sequence[int], fn: Callable, indexname: str
+# ) -> xr.Dataset:
+#     idx = np.insert(ds.N.cumsum().values[:-1], 0, 0)
 
-        start = npcum[i - 1] if i > 0 else 0
-        end = npcum[i]
+#     res = [select_and_apply(ds, k, idx, fn, indexname) for k in chunk]
 
-        l_sph_time = sph_time[start:end]
-        l_sph_label = sph_label[start:end]
-        l_arrs = [arr[start:end] for arr in arrs]
+#     res_ds = xr.concat(res, dim="k", data_vars="minimal", coords="minimal", compat="no_conflicts")
 
-        for l_agg in np.arange(nagg):
-            subset = np.empty((npagg[kagg], len(arrs)), dtype=np.float64)
-            ksph = 0
+#     return res_ds
 
-            for j, (sph_t, sph_l) in enumerate(zip(l_sph_time, l_sph_label)):
-                if sph_t == t and sph_l == l_agg:
-                    subset[ksph] = [l_arr[j] for l_arr in l_arrs]
-                    ksph += 1
-            res[kagg] = fn(subset)
-            kagg += 1
-    return res
+
+# def select_and_apply(
+#     ds: xr.Dataset, k: int, idx: np.ndarray, fn: Callable, indexname: str
+# ) -> xr.Dataset:
+#     to_drop = [str(coord) for coord in ds.coords if coord not in ("Time", indexname)]
+#     mask = k <= ds.N
+#     ds_k = ds.sel({"k": k + idx[mask], indexname: [k]})
+
+#     without_coords = ds_k.drop_vars(["N"] + to_drop).rename({"k": "Time"})
+
+#     res = fn(without_coords)
+
+#     if isinstance(res, xr.DataArray):
+#         res = res.to_dataset()
+#     for var, data in res.data_vars.items():
+#         if not data.dims:
+#             res[var] = data.expand_dims({indexname: [k]})
+
+#     if "Time" in res.dims:
+#         res = res.rename_dims({"Time": "k"}).assign_coords(Time=ds_k.Time)
+#         res["N"] = ds_k.N
+#         for removed in to_drop:
+#             res.coords[removed] = ds_k.coords[removed]
+
+#     return res
+
+
+# @njit(nogil=True, cache=True)
+# def groupby_index_in_block(
+#     npagg: np.ndarray,
+#     time: np.ndarray,
+#     naggs: np.ndarray,
+#     nsph: np.ndarray,
+#     sph_time: np.ndarray,
+#     sph_label: np.ndarray,
+#     arrs: Tuple[np.ndarray, ...],
+#     fn,
+# ) -> np.ndarray:
+#     res = np.empty((npagg.size, 6), dtype=np.float64)
+#     npcum = nsph.cumsum()
+#     kagg = 0
+#     for i, (t, nagg) in enumerate(zip(time, naggs)):
+
+#         start = npcum[i - 1] if i > 0 else 0
+#         end = npcum[i]
+
+#         l_sph_time = sph_time[start:end]
+#         l_sph_label = sph_label[start:end]
+#         l_arrs = [arr[start:end] for arr in arrs]
+
+#         for l_agg in np.arange(nagg):
+#             subset = np.empty((npagg[kagg], len(arrs)), dtype=np.float64)
+#             ksph = 0
+
+#             for j, (sph_t, sph_l) in enumerate(zip(l_sph_time, l_sph_label)):
+#                 if sph_t == t and sph_l == l_agg:
+#                     subset[ksph] = [l_arr[j] for l_arr in l_arrs]
+#                     ksph += 1
+#             res[kagg] = fn(subset)
+#             kagg += 1
+#     return res

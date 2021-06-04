@@ -212,6 +212,18 @@ def test_sortby_useless_sort(dask):
     assert sorted_data.attrs["sort"] == ["Time", "Label", "data"]
 
 
+@pytest.mark.parametrize("dask", [0, 5])
+def test_sortby_usefull_sort(dask):
+    data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
+
+    sorted_data = sortby(data, ["Time", "Label", "data"])
+    sorted_data = sortby(sorted_data, ["Time", "data"])
+    assert sorted_data.attrs["sort"] == ["Time", "data", "Label"]
+
+    ref = sortby(data, ["Time", "data", "Label"])
+    assert sorted_data.identical(ref)
+
+
 @pytest.mark.parametrize("nt", [1, 29])
 def test_sortby_no_compute(nt):
     data = generate_dummy_aggregates_data(nt=nt, dask=5)
