@@ -22,13 +22,14 @@ Tools
 """
 
 from .dask_tools import JupyterDaskDistribute, dask_distribute, progress_compute
-from .dataframe import groupby_agg, xarray_to_ddframe, xarray_to_frame
+from .dataframe import groupby_agg, groupby_apply, xarray_to_ddframe, xarray_to_frame
 from .sorting import sortby
 
 __all__ = [
     "progress_compute",
     "dask_distribute",
     "JupyterDaskDistribute",
+    "groupby_apply",
     "groupby_agg",
     "xarray_to_frame",
     "xarray_to_ddframe",

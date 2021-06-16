@@ -23,7 +23,7 @@ import pytest
 import xarray as xr
 
 from pymcac.tools.core.dask_tools import not_aligned_rechunk
-from pymcac.tools.core.dataframe import groupby_agg
+from pymcac.tools.core.dataframe import groupby_agg, groupby_apply, xarray_to_frame
 from pymcac.tools.core.groupby import groupby2, groupby_aggregate
 
 # from pymcac.tools.core.dataframe import groupby_apply
@@ -33,6 +33,24 @@ from .generator import generate_dummy_aggregates_data, generate_dummy_data
 from .test_dask import raise_if_computed
 from .test_data import check_data
 
+
+def pd_cumsum(df):
+    res = df.copy()
+    res["data2"] = res["data"].cumsum()
+    return res
+
+def pd_cumsum_inplace(df):
+    res = df.copy()
+    res["data"] = res["data"].cumsum()
+    return res
+
+def pd_duplicate_new_frame(df):
+    res = df.copy()
+    res["data2"] = res["data"]
+    return res
+
+def pd_duplicate_new_series(df):
+    return pd_duplicate_new_frame(df)["data2"]
 
 def custom_mean_pd(df):
     return df.mean()
@@ -49,6 +67,13 @@ custom_mean_dd = dd.Aggregation(
     finalize=lambda count, sum: sum / count,
 )
 
+###################################
+######## using dataframes #########
+###################################
+
+# *********************************
+# ********* aggregation ***********
+# *********************************
 
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
@@ -90,7 +115,8 @@ def test_groupby_agg_new_var(dask, full):
         aggregates = aggregates.data
     aggregates.attrs["sort"] = ["Time", "Label"]
 
-    sorted_data = sortby(test.data, ["Time", "Label"])
+    sorted_data = sortby(test.data2, ["Time", "Label"])
+    sorted_data.name = "data"
 
     assert sorted_data.identical(aggregates)
 
@@ -179,6 +205,145 @@ def test_groupby_agg_no_compute():
     groupby_agg(aggregates, "trigger", [("data", "sum", "data")], index_arrays=da.arange(10))
     groupby_agg(aggregates, "Np", [("trigger", "sum", "trigger")], index_arrays=da.arange(10))
 
+
+# *********************************
+# ************ apply **************
+# *********************************
+
+@pytest.mark.parametrize("dask", [0, 5])
+@pytest.mark.parametrize("full", [True, False])
+@pytest.mark.parametrize("sort_info", [True, False])
+def test_groupby_apply_no_change(dask, full, sort_info):
+    aggregates = generate_dummy_aggregates_data(
+        nt=29, nagg=31, dask=dask, full=full, sort_info=sort_info
+    )
+    print(aggregates)
+
+    test = groupby_apply(aggregates, ["Time", "Label"], np.sum, "data", {"data": float})
+    check_data(test)
+    print(test)
+
+    sorted_data = sortby(test, ["Time", "Label"])
+    check_data(sorted_data)
+
+    if full:
+        aggregates = aggregates.data
+    aggregates.attrs["sort"] = ["Time", "Label"]
+    assert sorted_data.identical(aggregates)
+
+
+@pytest.mark.parametrize("dask", [0, 5])
+@pytest.mark.parametrize("full", [True, False])
+def test_groupby_apply_new_frame(dask, full):
+    aggregates = generate_dummy_aggregates_data(
+        nt=29, nagg=31, dask=dask, full=full, sort_info=True
+    )
+
+    test = groupby_apply(aggregates, ["Time", "Label"], pd_duplicate_new_frame, "data", {"data": float, "data2": float})
+    check_data(test)
+    assert np.allclose(test.data, test.data2)
+
+    if full:
+        aggregates = aggregates.data
+    aggregates.attrs["sort"] = ["Time", "Label"]
+
+    sorted_data = sortby(test.data, ["Time", "Label"])
+
+    assert sorted_data.identical(aggregates)
+
+@pytest.mark.parametrize("dask", [0, 5])
+@pytest.mark.parametrize("full", [True, False])
+def test_groupby_apply_new_series(dask, full):
+    aggregates = generate_dummy_aggregates_data(
+        nt=29, nagg=31, dask=dask, full=full, sort_info=True
+    )
+
+    test = groupby_apply(aggregates, ["Time", "Label"], pd_duplicate_new_series, "data", {"data2": float})
+    check_data(test)
+    assert np.allclose(test, aggregates.data)
+
+    if full:
+        aggregates = aggregates.data
+    aggregates.attrs["sort"] = ["Time", "Label"]
+
+    sorted_data = sortby(test, ["Time", "Label"])
+    sorted_data.name = "data"
+
+    assert sorted_data.identical(aggregates)
+
+@pytest.mark.parametrize("inplace", [True, False])
+@pytest.mark.parametrize("dask", [0, 5])
+@pytest.mark.parametrize("full", [True, False])
+@pytest.mark.parametrize("nt", [1, 29])
+@pytest.mark.parametrize("nagg", [1, 31])
+def test_groupby_apply(inplace, dask, full, nt, nagg):
+    if nt == 1 and nagg == 1:
+        return
+    aggregates = generate_dummy_aggregates_data(nt=nt, nagg=nagg, dask=dask, full=full)
+    if isinstance(aggregates, xr.DataArray):
+        aggregates = aggregates.to_dataset()
+    chunks = aggregates.chunks
+    aggregates["Np"] = aggregates.data.dims, np.random.randint(1, 10, aggregates.data.size)
+    aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
+
+    if inplace:
+        fn = pd_cumsum_inplace
+        meta = {"data": float}
+    else:
+        fn = pd_cumsum
+        meta = {"data": float, "data2": float}
+
+    cols = ["Np"] + list(meta.keys())
+
+    print(f"{aggregates=}")
+
+    res_ds = groupby_apply(aggregates, "Np", fn, "data", meta, sort=False)
+    print(f"{res_ds=}")
+    print(f"{sortby(res_ds, ['Np', 'data'])=}")
+
+    res_df = (
+        xarray_to_frame(res_ds, multi=False)
+        .reset_index()[cols]
+        .sort_values(cols)
+        )
+    print(f"{res_df=}")
+
+    ref = (
+        xarray_to_frame(aggregates, multi=False)
+        .reset_index()
+        .groupby(by="Np", sort=False).apply(fn)
+        .reset_index(drop=True)[cols]
+        .sort_values(cols)
+        )
+    print(f"{ref=}")
+
+    assert np.allclose(res_df.values, ref.values)
+
+
+@pytest.mark.parametrize("inplace", [True, False])
+def test_groupby_apply_no_compute(inplace):
+    aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=5)
+    chunks = aggregates.chunks
+    aggregates["Np"] = ("k",), np.random.randint(1, 10, aggregates.sizes["k"])
+    aggregates["trigger"] = ("k",), da.from_delayed(
+        raise_if_computed(), dtype=int, shape=(aggregates.sizes["k"],)
+    )
+    aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
+
+    if inplace:
+        fn = pd_cumsum_inplace
+        meta = {"data": float}
+    else:
+        fn = pd_cumsum
+        meta = {"data": float, "data2": float}
+
+    groupby_apply(aggregates, "trigger", fn, "data", meta)
+    groupby_apply(aggregates, "Np", fn, "trigger", meta)
+
+
+###################################
+############ manually  ############
+###################################
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_groupby_aggregate_reduction(dask):

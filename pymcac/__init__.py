@@ -34,6 +34,7 @@ from .tools import (
     dask_distribute,
     discretize,
     groupby_agg,
+    groupby_apply,
     inertia,
     mobility_diameter,
     progress_compute,

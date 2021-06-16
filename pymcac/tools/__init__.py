@@ -26,6 +26,7 @@ from .core import (
     JupyterDaskDistribute,
     dask_distribute,
     groupby_agg,
+    groupby_apply,
     progress_compute,
     sortby,
     xarray_to_ddframe,
