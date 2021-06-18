@@ -39,18 +39,22 @@ def pd_cumsum(df):
     res["data2"] = res["data"].cumsum()
     return res
 
+
 def pd_cumsum_inplace(df):
     res = df.copy()
     res["data"] = res["data"].cumsum()
     return res
+
 
 def pd_duplicate_new_frame(df):
     res = df.copy()
     res["data2"] = res["data"]
     return res
 
+
 def pd_duplicate_new_series(df):
     return pd_duplicate_new_frame(df)["data2"]
+
 
 def custom_mean_pd(df):
     return df.mean()
@@ -74,6 +78,7 @@ custom_mean_dd = dd.Aggregation(
 # *********************************
 # ********* aggregation ***********
 # *********************************
+
 
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
@@ -210,6 +215,7 @@ def test_groupby_agg_no_compute():
 # ************ apply **************
 # *********************************
 
+
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
 @pytest.mark.parametrize("sort_info", [True, False])
@@ -239,7 +245,13 @@ def test_groupby_apply_new_frame(dask, full):
         nt=29, nagg=31, dask=dask, full=full, sort_info=True
     )
 
-    test = groupby_apply(aggregates, ["Time", "Label"], pd_duplicate_new_frame, "data", {"data": float, "data2": float})
+    test = groupby_apply(
+        aggregates,
+        ["Time", "Label"],
+        pd_duplicate_new_frame,
+        "data",
+        {"data": float, "data2": float},
+    )
     check_data(test)
     assert np.allclose(test.data, test.data2)
 
@@ -251,6 +263,7 @@ def test_groupby_apply_new_frame(dask, full):
 
     assert sorted_data.identical(aggregates)
 
+
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
 def test_groupby_apply_new_series(dask, full):
@@ -258,7 +271,9 @@ def test_groupby_apply_new_series(dask, full):
         nt=29, nagg=31, dask=dask, full=full, sort_info=True
     )
 
-    test = groupby_apply(aggregates, ["Time", "Label"], pd_duplicate_new_series, "data", {"data2": float})
+    test = groupby_apply(
+        aggregates, ["Time", "Label"], pd_duplicate_new_series, "data", {"data2": float}
+    )
     check_data(test)
     assert np.allclose(test, aggregates.data)
 
@@ -270,6 +285,7 @@ def test_groupby_apply_new_series(dask, full):
     sorted_data.name = "data"
 
     assert sorted_data.identical(aggregates)
+
 
 @pytest.mark.parametrize("inplace", [True, False])
 @pytest.mark.parametrize("dask", [0, 5])
@@ -301,20 +317,17 @@ def test_groupby_apply(inplace, dask, full, nt, nagg):
     print(f"{res_ds=}")
     print(f"{sortby(res_ds, ['Np', 'data'])=}")
 
-    res_df = (
-        xarray_to_frame(res_ds, multi=False)
-        .reset_index()[cols]
-        .sort_values(cols)
-        )
+    res_df = xarray_to_frame(res_ds, multi=False).reset_index()[cols].sort_values(cols)
     print(f"{res_df=}")
 
     ref = (
         xarray_to_frame(aggregates, multi=False)
         .reset_index()
-        .groupby(by="Np", sort=False).apply(fn)
+        .groupby(by="Np", sort=False)
+        .apply(fn)
         .reset_index(drop=True)[cols]
         .sort_values(cols)
-        )
+    )
     print(f"{ref=}")
 
     assert np.allclose(res_df.values, ref.values)
@@ -344,6 +357,7 @@ def test_groupby_apply_no_compute(inplace):
 ###################################
 ############ manually  ############
 ###################################
+
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_groupby_aggregate_reduction(dask):

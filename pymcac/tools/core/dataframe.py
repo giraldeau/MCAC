@@ -382,9 +382,7 @@ def groupby_agg(
         if f"k{dim}" in res.coords and dim in ds.coords:
             res = res.assign_coords({dim: ds[dim]})
     for dim in ("Time", "Label", "Num"):
-        if (f"k{dim}" in res.coords
-             and f"n{dim}" in ds.coords
-             and ds[f"n{dim}"].dims[0] in res.dims):
+        if f"k{dim}" in res.coords and f"n{dim}" in ds.coords and ds[f"n{dim}"].dims[0] in res.dims:
             res = res.assign_coords({f"n{dim}": ds[f"n{dim}"].compute()})
 
     datavars = res.data_vars.keys()
@@ -417,12 +415,12 @@ def index_serie_to_index_array(index_serie, lengths):
 def groupby_apply(
     ds: xr.Dataset,
     by: Union[str, List[str]],
-    fn: Union[str, Callable],
+    fn: Callable,
     name_in: Union[str, List[str]],
     meta_out: Dict[str, Any] = None,
     sort: bool = True,
     index_arrays=None,
-    length: int =None,
+    length: int = None,
     **kwargs,
 ) -> Union[xr.DataArray, xr.Dataset]:
     """
@@ -484,7 +482,7 @@ def groupby_apply(
     )
 
     coords = [str(coord) for coord in ds_only_k.coords.keys()]
-    content = list(ds_only_k.data_vars.keys()) + coords
+    content = [str(var) for var in ds_only_k.data_vars.keys()] + coords
     keep = list(set(name_in + by + coords))
     remove = [var for var in content if var not in keep]
 
@@ -493,8 +491,11 @@ def groupby_apply(
 
     coords_meta = {coord: ds_only_k[coord].dtype for coord in coords}
     meta_by = {b: ds_only_k[b].dtype for b in by if b not in coords}
+    if meta_out is None:
+        meta_out = {}
     meta_out = {**meta_by, **meta_out}
     meta = {**coords_meta, **meta_out}
+
     @wraps(fn)
     def fn_(df, *args, **kwargs):
         if k != "k":
@@ -523,7 +524,7 @@ def groupby_apply(
         res_df = df_gb.apply(fn_, meta=meta, **kwargs)
 
         lengths = (ds[name_in[0]].size,) if length is None else length
-        
+
         for name_out in meta_out:
             res[name_out] = (k,), res_df[name_out].to_dask_array(lengths)
         for coord in coords:
@@ -550,9 +551,7 @@ def groupby_apply(
         if f"k{dim}" in res.coords and dim in ds.coords:
             res = res.assign_coords({dim: ds[dim]})
     for dim in ("Time", "Label", "Num"):
-        if (f"k{dim}" in res.coords
-             and f"n{dim}" in ds.coords
-             and ds[f"n{dim}"].dims[0] in res.dims):
+        if f"k{dim}" in res.coords and f"n{dim}" in ds.coords and ds[f"n{dim}"].dims[0] in res.dims:
             res = res.assign_coords({f"n{dim}": ds[f"n{dim}"].compute()})
 
     datavars = list(res.data_vars.keys())
