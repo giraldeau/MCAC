@@ -69,6 +69,7 @@ __all__ = [
     "dask_distribute",
     "JupyterDaskDistribute",
     "groupby_agg",
+    "groupby_apply",
     "xarray_to_frame",
     "xarray_to_ddframe",
     "mobility_diameter",

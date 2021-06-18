@@ -22,7 +22,7 @@ Read the MCAC output files
 """
 
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterable, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -81,15 +81,13 @@ class MCAC:
                 self._times = self.advancement.index.values
             except FileNotFoundError:
                 files = sorted(list(self.dir.glob("Aggregats*.xmf")))
-                self._times = np.unique(np.fromiter(
-                    (
-                        time
-                        for file in files
-                        for time in H5Reader(file).read_time()
-                    ),
-                    dtype=float,
-                ))
-
+                self._times = np.unique(
+                    np.fromiter(
+                        (time for file in files for time in H5Reader(file).read_time()),
+                        dtype=float,
+                    )
+                )
+        self._times = cast(np.ndarray, self._times)
         return self._times
 
     @property
@@ -131,7 +129,7 @@ class MCAC:
         variables: Iterable[str] = None,
         tmax: float = None,
         nt: int = None,
-        time_steps: Iterable[float] = None,
+        time_steps: np.ndarray = None,
     ) -> xr.Dataset:
         """
         Read the selected data from the aggregates files
@@ -139,7 +137,9 @@ class MCAC:
         The result is a large xarray+dask dataset
         """
         files = sorted(list(self.dir.glob("Aggregats*.xmf")))
-        xaggregates = self.read_data(files, indexname="Label", chunksize=50, tmax=tmax, nt=nt, time_steps=time_steps)
+        xaggregates = self.read_data(
+            files, indexname="Label", chunksize=50, tmax=tmax, nt=nt, time_steps=time_steps
+        )
         chunks = xaggregates.Rg.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
         xaggregates = aligned_rechunk(xaggregates, Time=len(chunks[0]))
 
@@ -224,7 +224,7 @@ class MCAC:
         variables: Iterable[str] = None,
         tmax: float = None,
         nt: int = None,
-        time_steps: Iterable[float] = None,
+        time_steps: np.ndarray = None,
     ) -> xr.Dataset:
         """
         Read the selected data from the spheres files
@@ -296,7 +296,7 @@ class MCAC:
         chunksize: int = None,
         tmax: float = None,
         nt: int = None,
-        time_steps: Iterable[float] = None,
+        time_steps: np.ndarray = None,
     ) -> xr.Dataset:
         """
         Merge the data of all the files into one large dataset
@@ -308,9 +308,8 @@ class MCAC:
                 time_steps = np.linspace(self.times[0], tmax, nt)
 
         if time_steps is not None:
-            idx = np.unique((self.times<time_steps[:,np.newaxis]).argmin(axis=1))
+            idx = np.unique((self.times < time_steps[:, np.newaxis]).argmin(axis=1))
             time_steps = self.times[idx]
-
 
         if time_steps is None:
             if tmax is not None:

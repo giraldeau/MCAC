@@ -22,7 +22,7 @@ Read the hdf5 part of MCAC output files
 """
 
 from pathlib import Path
-from typing import Dict, Sequence, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union, cast
 
 import numpy as np
 
@@ -60,14 +60,20 @@ class H5Reader:
 
         We need info from the xmf file, so this file is read
         """
-        return cls(filename).read(indexname=indexname, times=times, chunksize=chunksize, sparse=sparse)
+        return cls(filename).read(
+            indexname=indexname, times=times, chunksize=chunksize, sparse=sparse
+        )
 
     def read_time(self) -> np.ndarray:
         h5_groups = self.xdmf_reader.extract_h5_groups()
         return np.sort(np.fromiter(h5_groups.keys(), dtype=float))
 
     def read(
-        self, indexname: str = "Num", times: np.ndarray = None, chunksize: int = None, sparse: bool = False
+        self,
+        indexname: str = "Num",
+        times: np.ndarray = None,
+        chunksize: int = None,
+        sparse: bool = False,
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
         """
         Read the h5 file into a mulitple dask arrays (lazy)
@@ -85,7 +91,8 @@ class H5Reader:
             times = all_times
         else:
             times = np.intersect1d(times, all_times)
-        
+        times = cast(np.ndarray, times)
+
         if chunksize is None:
             chunksize = len(times)
         nchunk = min(max(len(times) // chunksize, 1), len(times))

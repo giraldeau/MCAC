@@ -16,8 +16,8 @@
 #:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import pytest
 import numpy as np
+import pytest
 
 from pymcac import validation_data_path
 from pymcac.reader.mcac_reader import MCAC
@@ -52,7 +52,6 @@ def test_read_metadata():
     assert ref == metadata
 
 
-
 @pytest.mark.parametrize("variables", [None, ["Rg", "Volume"]])
 @pytest.mark.parametrize("tmax", [False, True])
 @pytest.mark.parametrize("nt", [False, True])
@@ -85,10 +84,9 @@ def test_read_xaggregate(variables, tmax, nt, time_steps):
     if tmax:
         assert xaggregate.Time.values[-1] == _tmax
     if time_steps:
-        idx = np.unique((sim.times<_time_steps[:,np.newaxis]).argmin(axis=1))
+        idx = np.unique((sim.times < _time_steps[:, np.newaxis]).argmin(axis=1))
         _time_steps = sim.times[idx]
         assert np.allclose(xaggregate.Time.values, _time_steps)
-
 
 
 @pytest.mark.parametrize("variables", [None, ["Radius", "Label"]])
@@ -123,19 +121,9 @@ def test_read_xspheres(variables, tmax, nt, time_steps):
     if tmax:
         assert xspheres.Time.values[-1] == _tmax
     if time_steps:
-        idx = np.unique((sim.times<_time_steps[:,np.newaxis]).argmin(axis=1))
+        idx = np.unique((sim.times < _time_steps[:, np.newaxis]).argmin(axis=1))
         _time_steps = sim.times[idx]
         assert np.allclose(xspheres.Time.values, _time_steps)
-
-
-def test_read_xdata():
-    sim = MCAC(validation_data_path / "pytest_data")
-    xaggregates = sim.xaggregates
-    xspheres = sim.xspheres
-    check_data(xspheres)
-    check_data(xaggregates)
-    check_consistency(xspheres, xaggregates)
-
 
 
 @pytest.mark.parametrize("variables_sph", [None, ["Radius", "Label"]])
@@ -176,10 +164,11 @@ def test_read_xdata(variables_sph, variables_agg, tmax, nt, time_steps):
         assert xspheres.Time.values[-1] == _tmax
         assert xaggregates.Time.values[-1] == _tmax
     if time_steps:
-        idx = np.unique((sim.times<_time_steps[:,np.newaxis]).argmin(axis=1))
+        idx = np.unique((sim.times < _time_steps[:, np.newaxis]).argmin(axis=1))
         _time_steps = sim.times[idx]
         assert np.allclose(xspheres.Time.values, _time_steps)
         assert np.allclose(xaggregates.Time.values, _time_steps)
+
 
 # def test_read_xaggregate(nt, nobj, data_type, dask, full):
 #     if data_type == "aggregates":

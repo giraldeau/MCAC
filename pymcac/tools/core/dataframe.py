@@ -20,21 +20,17 @@
 """
 Tools to mimic the pandas API
 """
-import warnings
+from functools import wraps
 from itertools import chain
 from typing import Any, Callable, Dict, Hashable, List, Mapping, Tuple, Union, cast
-from functools import wraps
 
 import dask.array as da
 import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from tqdm import tqdm
-from xarray.core.utils import K
 
 from .dask_tools import progress_compute
-from .sorting import sortby
 
 
 def xarray_to_ddframe(
