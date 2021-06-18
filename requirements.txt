@@ -19,6 +19,10 @@ cloudpickle
 xarray
 numba
 distributed
+bokeh
+jupyter
+notebook
+jupyterlab
 
 ipykernel
 
