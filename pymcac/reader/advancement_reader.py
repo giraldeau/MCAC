@@ -24,7 +24,7 @@ Read the advancement file of MCAC output files
 from pathlib import Path
 from typing import Union
 
-import dask.dataframe as dd
+import pandas as pd
 
 
 class AdvancementReader:
@@ -38,19 +38,32 @@ class AdvancementReader:
         self.filename = filename
 
     @classmethod
-    def read_advancement(cls, dir: Union[str, Path]) -> dd.DataFrame:
+    def read_advancement(cls, dir: Union[str, Path]) -> pd.DataFrame:
         """
         Read the advancement file
         """
         return cls(Path(dir) / "advancement.dat").advancement
 
     @property
-    def advancement(self) -> dd.DataFrame:
+    def advancement(self) -> pd.DataFrame:
         """
         Read the advancement file
         """
-        return dd.read_csv(
-            self.filename,
-            sep=" ",
-            names=["Time", "concentration", "volume_fraction", "avg_npp", "temperature", "BoxSize"],
-        ).set_index("Time")
+        df = (
+            pd.read_csv(
+                self.filename,
+                sep=" ",
+                names=[
+                    "Time",
+                    "concentration",
+                    "volume_fraction",
+                    "avg_npp",
+                    "temperature",
+                    "BoxVolume",
+                ],
+            )
+            .groupby(by="Time", sort=True)
+            .last()
+        )
+
+        return df
