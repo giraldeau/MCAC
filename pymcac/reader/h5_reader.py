@@ -40,17 +40,19 @@ class H5Reader:
     Object containing all functions necessary to read a h5 file
     """
 
-    __slots__ = ("filename",)
+    __slots__ = ("filename", "xdmf_reader")
 
     def __init__(self, filename: Union[str, Path]) -> None:
         self.filename = Path(filename).with_suffix(".h5")
+        self.xdmf_reader = XdmfReader(self.filename)
 
     @classmethod
     def read_file(
         cls,
         filename: Union[str, Path],
-        chunksize: int = None,
         indexname: str = "Num",
+        times: np.ndarray = None,
+        chunksize: int = None,
         sparse: bool = False,
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
         """
@@ -58,10 +60,14 @@ class H5Reader:
 
         We need info from the xmf file, so this file is read
         """
-        return cls(filename).read(indexname=indexname, chunksize=chunksize, sparse=sparse)
+        return cls(filename).read(indexname=indexname, times=times, chunksize=chunksize, sparse=sparse)
+
+    def read_time(self) -> np.ndarray:
+        h5_groups = self.xdmf_reader.extract_h5_groups()
+        return np.sort(np.fromiter(h5_groups.keys(), dtype=float))
 
     def read(
-        self, indexname: str = "Num", chunksize: int = None, sparse: bool = False
+        self, indexname: str = "Num", times: np.ndarray = None, chunksize: int = None, sparse: bool = False
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
         """
         Read the h5 file into a mulitple dask arrays (lazy)
@@ -69,13 +75,17 @@ class H5Reader:
         We need info from the xmf file, so this file is read
         """
 
-        h5_groups = XdmfReader(self.filename).extract_h5_groups()
-        sizes = XdmfReader(self.filename).extract_sizes()
+        h5_groups = self.xdmf_reader.extract_h5_groups()
+        sizes = self.xdmf_reader.extract_sizes()
 
         # max_npart = max(sizes.values())
 
-        times = np.sort(np.fromiter(h5_groups.keys(), dtype=float))
-
+        all_times = self.read_time()
+        if times is None:
+            times = all_times
+        else:
+            times = np.intersect1d(times, all_times)
+        
         if chunksize is None:
             chunksize = len(times)
         nchunk = min(max(len(times) // chunksize, 1), len(times))

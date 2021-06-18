@@ -22,7 +22,7 @@ Read the MCAC output files
 """
 
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Sequence, Tuple, Union, cast
+from typing import Dict, Iterable, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -47,13 +47,13 @@ class MCAC:
     This object read the simulation results from MCAC
     """
 
-    __slots__ = ("dir", "_metadata", "_advancement", "times")
+    __slots__ = ("dir", "_metadata", "_advancement", "_times")
 
     def __init__(self, datadir: Union[str, Path]) -> None:
         self.dir = Path(datadir)
         self._metadata: Optional[Dict[str, Union[bool, float]]] = None
-        self._advancement: dd.DataFrame = None
-        self.times: Optional[np.ndarray] = None
+        self._advancement: pd.DataFrame = None
+        self._times: Optional[np.ndarray] = None
 
     @property
     def metadata(self) -> Dict[str, Union[bool, float]]:
@@ -72,7 +72,28 @@ class MCAC:
         return self._metadata
 
     @property
-    def advancement(self) -> dd.DataFrame:
+    def times(self) -> np.ndarray:
+        """
+        Read the metadata of the simulation from one of the files
+        """
+        if self._times is None:
+            try:
+                self._times = self.advancement.index.values
+            except FileNotFoundError:
+                files = sorted(list(self.dir.glob("Aggregats*.xmf")))
+                self._times = np.unique(np.fromiter(
+                    (
+                        time
+                        for file in files
+                        for time in H5Reader(file).read_time()
+                    ),
+                    dtype=float,
+                ))
+
+        return self._times
+
+    @property
+    def advancement(self) -> pd.DataFrame:
         """
         Read the advancement file of the simulation
         """
@@ -88,11 +109,7 @@ class MCAC:
 
         The result is a large xarray+dask dataset
         """
-        files = sorted(list(self.dir.glob("Aggregats*.xmf")))
-
-        _xaggregates = self.read_data(files, indexname="Label", chunksize=500)
-        chunks = _xaggregates.Rg.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
-        return aligned_rechunk(_xaggregates, Time=len(chunks[0]))
+        return self.get_xaggregates()
 
     # @property
     # def sparse_xaggregates(self) -> xr.Dataset:
@@ -109,15 +126,30 @@ class MCAC:
     #         var.data = var.data.rechunk(chunks)
     #     return _xaggregates
 
-    def get_xaggregates(self, variables: Iterable[str] = None) -> xr.Dataset:
+    def get_xaggregates(
+        self,
+        variables: Iterable[str] = None,
+        tmax: float = None,
+        nt: int = None,
+        time_steps: Iterable[float] = None,
+    ) -> xr.Dataset:
         """
         Read the selected data from the aggregates files
 
         The result is a large xarray+dask dataset
         """
-        if variables:
-            return self.xaggregates[list(variables)]
-        return self.xaggregates
+        files = sorted(list(self.dir.glob("Aggregats*.xmf")))
+        xaggregates = self.read_data(files, indexname="Label", chunksize=50, tmax=tmax, nt=nt, time_steps=time_steps)
+        chunks = xaggregates.Rg.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
+        xaggregates = aligned_rechunk(xaggregates, Time=len(chunks[0]))
+
+        if not variables:
+            return xaggregates
+
+        coords = xaggregates.coords
+        xaggregates = xaggregates[list(variables)].assign_coords(coords)
+
+        return xaggregates
 
     # noinspection PyUnusedFunction
     @property
@@ -171,10 +203,7 @@ class MCAC:
 
         The result is a large xarray+dask dataset
         """
-        files = sorted(list(self.dir.glob("Spheres*.xmf")))
-        _xspheres = self.read_data(files, chunksize=500)
-        chunks = _xspheres.Radius.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
-        return aligned_rechunk(_xspheres, Time=len(chunks[0]))
+        return self.get_xspheres()
 
     # @property
     # def sparse_xspheres(self) -> xr.Dataset:
@@ -190,15 +219,31 @@ class MCAC:
     #         var.data = var.data.rechunk(chunks)
     #     return _xspheres
 
-    def get_xspheres(self, variables: Iterable[str] = None) -> xr.Dataset:
+    def get_xspheres(
+        self,
+        variables: Iterable[str] = None,
+        tmax: float = None,
+        nt: int = None,
+        time_steps: Iterable[float] = None,
+    ) -> xr.Dataset:
         """
         Read the selected data from the spheres files
 
         The result is a large xarray+dask dataset
         """
-        if variables:
-            return self.xspheres[list(variables)]
-        return self.xspheres
+
+        files = sorted(list(self.dir.glob("Spheres*.xmf")))
+        _xspheres = self.read_data(files, chunksize=50, tmax=tmax, nt=nt, time_steps=time_steps)
+        chunks = _xspheres.Radius.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
+        xspheres = aligned_rechunk(_xspheres, Time=len(chunks[0]))
+
+        if not variables:
+            return xspheres
+
+        coords = xspheres.coords
+        xspheres = xspheres[list(variables)].assign_coords(coords)
+
+        return xspheres
 
     @property
     def ddspheres(self) -> dd.DataFrame:
@@ -245,33 +290,47 @@ class MCAC:
         return xarray_to_frame(self.get_xspheres(variables))
 
     def read_data(
-        self, files: Sequence[Union[str, Path]], indexname: str = "Num", chunksize: int = None
+        self,
+        files: Sequence[Union[str, Path]],
+        indexname: str = "Num",
+        chunksize: int = None,
+        tmax: float = None,
+        nt: int = None,
+        time_steps: Iterable[float] = None,
     ) -> xr.Dataset:
         """
         Merge the data of all the files into one large dataset
         """
+        if time_steps is None:
+            if nt is not None:
+                if tmax is None:
+                    tmax = self.times[-1]
+                time_steps = np.linspace(self.times[0], tmax, nt)
 
-        # files = files[:1]
+        if time_steps is not None:
+            idx = np.unique((self.times<time_steps[:,np.newaxis]).argmin(axis=1))
+            time_steps = self.times[idx]
+
+
+        if time_steps is None:
+            if tmax is not None:
+                nt = (self.times <= tmax).sum()
+            else:
+                nt = len(self.times)
+            time_steps = self.times[:nt]
 
         datas = {
             time: data
             for file in files
             for time, data in H5Reader.read_file(
-                file, indexname=indexname, chunksize=chunksize
+                file, indexname=indexname, times=time_steps, chunksize=chunksize
             ).items()
         }
-        self.times = np.fromiter((time for times in datas.keys() for time in times), dtype=float)
-        self.times = cast(np.ndarray, self.times)
 
         first_datas = next(iter(datas.values()))
         columns = first_datas.keys()
 
         reversed_datas = {col: [datas[time][col] for time in datas.keys()] for col in columns}
-        # i = 0
-        # for ichunk, time in enumerate(datas.keys()):
-        #     reversed_datas["iTime"][ichunk] = reversed_datas["iTime"][ichunk] + i
-        #     reversed_datas["kiTime"][ichunk] = reversed_datas["kiTime"][ichunk] + i
-        #     i += len(time)
         del datas
 
         data_vars = {}
@@ -281,57 +340,64 @@ class MCAC:
                 continue
             data = da.concatenate(data_t)
 
-            if data.size == len(self.times):
+            if data.size == len(time_steps):
                 dims = ("Time",)
             else:
                 dims = ("k",)
 
-            if col in ("Time", "nTime", "kTime", indexname, "n" + indexname):  # "iTime", "kiTime"
+            if col in ("Time", "nTime", "kTime", indexname, "n" + indexname):
                 coords[col] = xr.DataArray(data, dims=dims, name=col)
             else:
                 data_vars[col] = xr.DataArray(data, dims=dims, name=col)
 
         coords["k" + indexname] = coords.pop(indexname)
+
+        # to_persist = ("Time", "kTime", "k" + indexname, "n" + indexname)
+        # for k, persisted in zip(to_persist,
+        #                         dask.persist(*(coords[k] for k in to_persist))):
+        #     coords[k] = persisted
+
         coords[indexname] = xr.DataArray(
             da.arange(coords["k" + indexname].max() + 1), dims=indexname, name=indexname
         )
 
-        # to_persist = ("Time", "kTime", indexname, "k" + indexname)
-        # for k, persisted in zip(to_persist,
-        #                         dask.persist(*(coords[k] for k in to_persist))):
-        #     coords[k] = persisted
-        # data_vars["n"+indexname] = data_vars["n"+indexname].persist()
-
         nmax = int(coords["n" + indexname].max())  # .compute())
-        # Nt = da.from_delayed(
-        #     compute_Nt(data_vars["n"+indexname]),
-        #     shape=(nmax,),
-        #     dtype=np.int64,
-        #     meta=np.empty((nmax,), np.int64),
-        # ).persist()
-        # data_vars["nTime"] = xr.DataArray(Nt, dims=indexname, name="nTime")
 
         for nt_data in reversed_datas["nTime"]:
             nt_data.resize((nmax,), refcheck=False)
         Nt = sum(reversed_datas["nTime"])
         coords["nTime"] = xr.DataArray(Nt, dims=indexname, name="nTime")
 
-        # tmax = da.from_array(coords["Time"][data_vars["nTime"] - 1], chunks=-1)
-        # data_vars["tmax"] = xr.DataArray(tmax, dims=indexname, name="tmax")
-        # itmax = da.from_array(coords["iTime"][data_vars["nTime"] - 1].values, chunks=-1)
-        # data_vars["itmax"] = xr.DataArray(itmax, dims=indexname, name="itmax")
+        # to_persist = ("nTime", indexname)
+        # for k, persisted in zip(to_persist,
+        #                         dask.persist(*(coords[k] for k in to_persist))):
+        #     coords[k] = persisted
 
         ds = xr.Dataset(data_vars, coords, attrs={"sort": ["Time", indexname]})  # type: ignore
 
         if "BoxSize" in ds.data_vars and "k" in ds.BoxSize.dims:
             BoxSize = ds.BoxSize
             ds = ds.drop_vars("BoxSize")
-            BoxSize = groupby_agg(BoxSize, by="Time", agg=[("BoxSize", "first", "BoxSize")])
+            BoxSize = groupby_agg(
+                BoxSize,
+                by="Time",
+                agg=[("BoxSize", "first", "BoxSize")],
+                sort=True,
+                index_arrays=ds.Time,
+            )
             ds["BoxSize"] = BoxSize.chunk({"Time": ds.chunks["Time"]})
 
-        for col in self.advancement.columns:
-            if col not in ds.data_vars:
-                ds[col] = ("Time",), self.advancement[col]
+        if "BoxSize" in ds.data_vars:
+            BoxSize = ds.BoxSize
+            ds = ds.drop_vars("BoxSize")
+            ds["BoxVolume"] = BoxSize ** 3
+
+        try:
+            for col in self.advancement.columns:
+                if col not in ds.data_vars:
+                    ds[col] = ("Time",), self.advancement[col][time_steps]
+        except FileNotFoundError:
+            pass
 
         return ds
 

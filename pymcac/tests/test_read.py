@@ -16,6 +16,8 @@
 #:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import pytest
+import numpy as np
 
 from pymcac import validation_data_path
 from pymcac.reader.mcac_reader import MCAC
@@ -50,22 +52,134 @@ def test_read_metadata():
     assert ref == metadata
 
 
-def test_read_xaggregate():
-    xaggregates = MCAC(validation_data_path / "pytest_data").xaggregates
-    check_data(xaggregates)
+
+@pytest.mark.parametrize("variables", [None, ["Rg", "Volume"]])
+@pytest.mark.parametrize("tmax", [False, True])
+@pytest.mark.parametrize("nt", [False, True])
+@pytest.mark.parametrize("time_steps", [False, True])
+def test_read_xaggregate(variables, tmax, nt, time_steps):
+    sim = MCAC(validation_data_path / "pytest_data")
+
+    _tmax = sim.times[len(sim.times) // 2]
+    _nt = 3
+    _time_steps = np.linspace(sim.times[0], _tmax, _nt)
+
+    kwargs = {}
+    if variables:
+        kwargs["variables"] = variables
+    if tmax:
+        kwargs["tmax"] = _tmax
+    if nt:
+        kwargs["nt"] = _nt
+    if time_steps:
+        kwargs["time_steps"] = _time_steps
+    print(kwargs)
+
+    xaggregate = sim.get_xaggregates(**kwargs)
+    check_data(xaggregate)
+
+    if variables:
+        assert list(xaggregate.data_vars.keys()) == variables
+    if nt:
+        assert len(xaggregate.Time) == _nt
+    if tmax:
+        assert xaggregate.Time.values[-1] == _tmax
+    if time_steps:
+        idx = np.unique((sim.times<_time_steps[:,np.newaxis]).argmin(axis=1))
+        _time_steps = sim.times[idx]
+        assert np.allclose(xaggregate.Time.values, _time_steps)
 
 
-def test_read_xspheres():
-    xspheres = MCAC(validation_data_path / "pytest_data").xspheres
+
+@pytest.mark.parametrize("variables", [None, ["Radius", "Label"]])
+@pytest.mark.parametrize("tmax", [False, True])
+@pytest.mark.parametrize("nt", [False, True])
+@pytest.mark.parametrize("time_steps", [False, True])
+def test_read_xspheres(variables, tmax, nt, time_steps):
+    sim = MCAC(validation_data_path / "pytest_data")
+
+    _tmax = sim.times[len(sim.times) // 2]
+    _nt = 3
+    _time_steps = np.linspace(sim.times[0], _tmax, _nt)
+
+    kwargs = {}
+    if variables:
+        kwargs["variables"] = variables
+    if tmax:
+        kwargs["tmax"] = _tmax
+    if nt:
+        kwargs["nt"] = _nt
+    if time_steps:
+        kwargs["time_steps"] = _time_steps
+    print(kwargs)
+
+    xspheres = sim.get_xspheres(**kwargs)
     check_data(xspheres)
+
+    if variables:
+        assert list(xspheres.data_vars.keys()) == variables
+    if nt:
+        assert len(xspheres.Time) == _nt
+    if tmax:
+        assert xspheres.Time.values[-1] == _tmax
+    if time_steps:
+        idx = np.unique((sim.times<_time_steps[:,np.newaxis]).argmin(axis=1))
+        _time_steps = sim.times[idx]
+        assert np.allclose(xspheres.Time.values, _time_steps)
 
 
 def test_read_xdata():
     sim = MCAC(validation_data_path / "pytest_data")
     xaggregates = sim.xaggregates
     xspheres = sim.xspheres
+    check_data(xspheres)
+    check_data(xaggregates)
     check_consistency(xspheres, xaggregates)
 
+
+
+@pytest.mark.parametrize("variables_sph", [None, ["Radius", "Label"]])
+@pytest.mark.parametrize("variables_agg", [None, ["Rg", "Np"]])
+@pytest.mark.parametrize("tmax", [False, True])
+@pytest.mark.parametrize("nt", [False, True])
+@pytest.mark.parametrize("time_steps", [False, True])
+def test_read_xdata(variables_sph, variables_agg, tmax, nt, time_steps):
+    sim = MCAC(validation_data_path / "pytest_data")
+
+    _tmax = sim.times[len(sim.times) // 2]
+    _nt = 3
+    _time_steps = np.linspace(sim.times[0], _tmax, _nt)
+
+    kwargs = {}
+    if tmax:
+        kwargs["tmax"] = _tmax
+    if nt:
+        kwargs["nt"] = _nt
+    if time_steps:
+        kwargs["time_steps"] = _time_steps
+    print(kwargs)
+
+    xspheres = sim.get_xspheres(variables=variables_sph, **kwargs)
+    xaggregates = sim.get_xaggregates(variables=variables_agg, **kwargs)
+    check_data(xspheres)
+    check_data(xaggregates)
+    check_consistency(xspheres, xaggregates)
+
+    if variables_sph:
+        assert list(xspheres.data_vars.keys()) == variables_sph
+    if variables_agg:
+        assert list(xaggregates.data_vars.keys()) == variables_agg
+    if nt:
+        assert len(xspheres.Time) == _nt
+        assert len(xaggregates.Time) == _nt
+    if tmax:
+        assert xspheres.Time.values[-1] == _tmax
+        assert xaggregates.Time.values[-1] == _tmax
+    if time_steps:
+        idx = np.unique((sim.times<_time_steps[:,np.newaxis]).argmin(axis=1))
+        _time_steps = sim.times[idx]
+        assert np.allclose(xspheres.Time.values, _time_steps)
+        assert np.allclose(xaggregates.Time.values, _time_steps)
 
 # def test_read_xaggregate(nt, nobj, data_type, dask, full):
 #     if data_type == "aggregates":
