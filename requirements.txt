@@ -23,7 +23,6 @@ bokeh
 jupyter
 notebook
 jupyterlab
-
 ipykernel
 
 pytest
@@ -32,6 +31,7 @@ pytest-timeout
 pytest-cov
 pytest-sugar
 pytest-icdiff
+pytest-xdist[psutil]
 
 cpplint 
 mypy
