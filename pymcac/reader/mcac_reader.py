@@ -161,14 +161,18 @@ class MCAC:
         """
         return self.get_ddaggregates()
 
-    def get_ddaggregates(self, variables: Tuple[str, ...] = tuple()) -> dd.DataFrame:
+    def get_ddaggregates(self,
+        variables: Iterable[str] = None,
+        tmax: float = None,
+        nt: int = None,
+        time_steps: np.ndarray = None) -> dd.DataFrame:
         """
         Read the selected data from the aggregates files
 
         The result is a large dask dataframe indexed with time
         """
 
-        ds = self.get_xaggregates(variables)
+        ds = self.get_xaggregates(variables, tmax, nt, time_steps)
         df = xarray_to_ddframe(ds)
 
         chunk_limits = np.cumsum((0, *ds.chunks[0]), dtype=int)
@@ -187,14 +191,18 @@ class MCAC:
         """
         return self.get_aggregates()
 
-    def get_aggregates(self, variables: Tuple[str, ...] = tuple()) -> pd.DataFrame:
+    def get_aggregates(self,
+        variables: Iterable[str] = None,
+        tmax: float = None,
+        nt: int = None,
+        time_steps: np.ndarray = None) -> pd.DataFrame:
         """
         Read the selected data from the aggregates files
 
         The result is a large panda multiindex dataframe
         in the form data.loc[(time, label), attribute]
         """
-        return xarray_to_frame(self.get_xaggregates(variables))
+        return xarray_to_frame(self.get_xaggregates(variables, tmax, nt, time_steps))
 
     @property
     def xspheres(self) -> xr.Dataset:
@@ -254,14 +262,19 @@ class MCAC:
         """
         return self.get_ddspheres()
 
-    def get_ddspheres(self, variables: Tuple[str, ...] = tuple()) -> dd.DataFrame:
+    def get_ddspheres(
+        self,
+        variables: Iterable[str] = None,
+        tmax: float = None,
+        nt: int = None,
+        time_steps: np.ndarray = None) -> dd.DataFrame:
         """
         Read the selected data from the spheres files
 
         The result is a large dask dataframe indexed with time
         """
 
-        ds = self.get_xspheres(variables)
+        ds = self.get_xspheres(variables, tmax, nt, time_steps)
         df = xarray_to_ddframe(ds)
 
         chunk_limits = np.cumsum((0, *ds.chunks[0]), dtype=int)
@@ -280,14 +293,19 @@ class MCAC:
         """
         return self.get_spheres()
 
-    def get_spheres(self, variables: Tuple[str, ...] = tuple()) -> pd.DataFrame:
+    def get_spheres(
+        self,
+        variables: Iterable[str] = None,
+        tmax: float = None,
+        nt: int = None,
+        time_steps: np.ndarray = None) -> pd.DataFrame:
         """
         Read the selected data from the spheres files
 
         The result is a large panda multiindex dataframe
         in the form data.loc[(time, label), attribute]
         """
-        return xarray_to_frame(self.get_xspheres(variables))
+        return xarray_to_frame(self.get_xspheres(variables, tmax, nt, time_steps))
 
     def read_data(
         self,
