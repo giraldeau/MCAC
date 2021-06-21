@@ -2,7 +2,6 @@
 build-*
 *.autosave
 *venv*
-.vscode
 cmake-build-*
 
 # Byte-compiled / optimized / DLL files
@@ -144,3 +143,6 @@ bin
 ext
 ext_bin
 artifacts
+validation/*_data
+.coverage
+tmp/

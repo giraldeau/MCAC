@@ -1,0 +1,15 @@
+{
+    "recommendations": [
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+        "ms-python.python",
+        "visualstudioexptteam.vscodeintellicode",
+        "gitlab.gitlab-workflow",
+        "ms-python.vscode-pylance",
+        "ms-vsliveshare.vsliveshare-pack",
+        "mhutchie.git-graph",
+        "ms-vscode.cpptools",
+        "timonwong.shellcheck",
+        "tcwalther.cython"
+    ]
+}
