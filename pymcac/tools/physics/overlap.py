@@ -48,9 +48,9 @@ def overlapping(Spheres: xr.Dataset, Aggregates: xr.Dataset) -> Union[xr.DataArr
 
 
 @njit(nogil=True, cache=True)
-def overlap_in_one_agg(data: np.ndarray) -> Tuple[np.float64, ...]:
-    x, y, z, r = data
-
+def overlap_in_one_agg(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, r: np.ndarray
+) -> Tuple[np.float64, ...]:
     n = x.size
 
     tot_coll = np.float64(0.0)
