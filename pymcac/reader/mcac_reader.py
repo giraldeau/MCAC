@@ -161,11 +161,13 @@ class MCAC:
         """
         return self.get_ddaggregates()
 
-    def get_ddaggregates(self,
+    def get_ddaggregates(
+        self,
         variables: Iterable[str] = None,
         tmax: float = None,
         nt: int = None,
-        time_steps: np.ndarray = None) -> dd.DataFrame:
+        time_steps: np.ndarray = None,
+    ) -> dd.DataFrame:
         """
         Read the selected data from the aggregates files
 
@@ -191,11 +193,13 @@ class MCAC:
         """
         return self.get_aggregates()
 
-    def get_aggregates(self,
+    def get_aggregates(
+        self,
         variables: Iterable[str] = None,
         tmax: float = None,
         nt: int = None,
-        time_steps: np.ndarray = None) -> pd.DataFrame:
+        time_steps: np.ndarray = None,
+    ) -> pd.DataFrame:
         """
         Read the selected data from the aggregates files
 
@@ -267,7 +271,8 @@ class MCAC:
         variables: Iterable[str] = None,
         tmax: float = None,
         nt: int = None,
-        time_steps: np.ndarray = None) -> dd.DataFrame:
+        time_steps: np.ndarray = None,
+    ) -> dd.DataFrame:
         """
         Read the selected data from the spheres files
 
@@ -298,7 +303,8 @@ class MCAC:
         variables: Iterable[str] = None,
         tmax: float = None,
         nt: int = None,
-        time_steps: np.ndarray = None) -> pd.DataFrame:
+        time_steps: np.ndarray = None,
+    ) -> pd.DataFrame:
         """
         Read the selected data from the spheres files
 
