@@ -320,7 +320,10 @@ def groupby_agg(
 
     relevent_dims = {str(dim) for var in ds.data_vars.values() for dim in var.dims}
     if len(relevent_dims) > 1:
-        raise ValueError("You cannot groupby_agg with mixed shape Dataset")
+        if "k" in relevent_dims:
+            relevent_dims = {"k"}
+        else:
+            raise ValueError("You cannot groupby_agg with mixed shape Dataset")
     if not relevent_dims:
         raise ValueError("Nothing to group, your arrays are 0d")
     [k] = relevent_dims
@@ -382,7 +385,7 @@ def groupby_agg(
             res = res.assign_coords({f"n{dim}": ds[f"n{dim}"].compute()})
 
     datavars = res.data_vars.keys()
-    if len(datavars) == 1:
+    if len(datavars) == 1 and len(res.dims) == 1:
         [datavar] = datavars
         res = res[datavar]
 
@@ -467,7 +470,10 @@ def groupby_apply(
 
     relevent_dims = {str(dim) for var in ds.data_vars.values() for dim in var.dims}
     if len(relevent_dims) > 1:
-        raise ValueError("You cannot groupby_apply with mixed shape Dataset")
+        if "k" in relevent_dims:
+            relevent_dims = {"k"}
+        else:
+            raise ValueError("You cannot groupby_apply with mixed shape Dataset")
     if not relevent_dims:
         raise ValueError("Nothing to group, your arrays are 0d")
     [k] = relevent_dims
@@ -551,7 +557,7 @@ def groupby_apply(
             res = res.assign_coords({f"n{dim}": ds[f"n{dim}"].compute()})
 
     datavars = list(res.data_vars.keys())
-    if len(datavars) == 1:
+    if len(datavars) == 1 and len(res.dims) == 1:
         [data_var] = datavars
         res = res[data_var]
 

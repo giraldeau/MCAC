@@ -87,18 +87,15 @@ def test_groupby_agg_no_change(dask, full, sort_info):
     aggregates = generate_dummy_aggregates_data(
         nt=29, nagg=31, dask=dask, full=full, sort_info=sort_info
     )
-    # print(aggregates)
+    # print(aggregates.compute())
 
     test = groupby_agg(aggregates, ["Time", "Label"], [("data", "sum", "data")])
-    # print(test)
     check_data(test)
 
     sorted_data = sortby(test, ["Time", "Label"])
     # print(sorted_data)
-    check_data(sorted_data)
+    # print(sorted_data.compute())
 
-    if full:
-        aggregates = aggregates.data
     aggregates.attrs["sort"] = ["Time", "Label"]
     assert sorted_data.identical(aggregates)
 
@@ -223,17 +220,17 @@ def test_groupby_apply_no_change(dask, full, sort_info):
     aggregates = generate_dummy_aggregates_data(
         nt=29, nagg=31, dask=dask, full=full, sort_info=sort_info
     )
-    print(aggregates)
+    # print(aggregates)
 
     test = groupby_apply(aggregates, ["Time", "Label"], np.sum, "data", {"data": float})
     check_data(test)
-    print(test)
+    # print(test)
 
     sorted_data = sortby(test, ["Time", "Label"])
     check_data(sorted_data)
 
-    if full:
-        aggregates = aggregates.data
+    # if full:
+    #     aggregates = aggregates.data
     aggregates.attrs["sort"] = ["Time", "Label"]
     assert sorted_data.identical(aggregates)
 
@@ -275,10 +272,12 @@ def test_groupby_apply_new_series(dask, full):
         aggregates, ["Time", "Label"], pd_duplicate_new_series, "data", {"data2": float}
     )
     check_data(test)
-    assert np.allclose(test, aggregates.data)
 
     if full:
+        test = test.data2
         aggregates = aggregates.data
+    assert np.allclose(test, aggregates.data)
+
     aggregates.attrs["sort"] = ["Time", "Label"]
 
     sorted_data = sortby(test, ["Time", "Label"])
@@ -367,8 +366,9 @@ def test_groupby_aggregate_reduction(dask):
     check_data(test)
     # print(test)
 
-    ref = groupby_agg(spheres, ["Time", "Label"], [("data", np.mean, "data")])  # .to_dataset()
-    sorted_ref = sortby(ref, ["Time", "Label"])
+    ref = groupby_agg(spheres, ["Time", "Label"], [("data", np.mean, "data")])
+    sorted_ref = sortby(ref, ["Time", "Label"]).data
+    # print(sorted_ref)
 
     assert np.allclose(test, sorted_ref)
 
@@ -434,7 +434,7 @@ def test_groupby2_aggregate(dask):
     assert np.allclose(test, ref)
 
     ref = groupby_agg(spheres, ["Time", "Label"], [("data", "mean", "data")])
-    sorted_ref = sortby(ref, ["Time", "Label"])
+    sorted_ref = sortby(ref, ["Time", "Label"]).data
     assert np.allclose(test, sorted_ref)
 
 
