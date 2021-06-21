@@ -93,6 +93,7 @@ flake8:
       - pyproject.toml
       - .docker/Dockerfile.gfortran
   needs: []
+  allow_failure: true
 
 mypy:
   image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
