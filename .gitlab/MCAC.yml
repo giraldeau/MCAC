@@ -44,6 +44,7 @@ ifort-Debug:
     paths:
       - bin/Debug/MCAC
       - ext_bin
+  allow_failure: true
 
 ifort-Release:
   stage: Build
@@ -59,3 +60,4 @@ ifort-Release:
     paths:
       - bin/Release/MCAC
       - ext_bin
+  allow_failure: true
