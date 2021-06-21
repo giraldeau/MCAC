@@ -398,6 +398,18 @@ class MCAC:
         except FileNotFoundError:
             pass
 
+        if "BoxVolume" not in ds.data_vars:
+            print("Warning, the box volume might not be accurate")
+            V0 = self.metadata["L"] ** 3
+            N0 = self.metadata["N []"]
+            if indexname == "Num":
+                N = ds["nNum"]
+            else:
+                N = groupby_agg(
+                    ds, "Time", [("N", "sum", "Np")], index_arrays=ds.Time, length=len(time_steps)
+                )
+            ds["BoxVolume"] = V0 * N / N0
+
         return ds
 
     # def read_data_sparse(
