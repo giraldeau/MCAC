@@ -129,3 +129,35 @@ def _dm_equation(
         3 * np.pi * mu_g + f_agg * cunningham_prime / dm,
         -f_agg * cunningham_prime2 / dm ** 2,
     )
+
+
+if __name__ == "__main__":
+    import numpy as np
+
+    from pymcac import MCAC, validation_data_path
+
+    simu = MCAC(validation_data_path / "pytest_data/")
+
+    T_g = 1_700  # temperature in K
+    P_g = 101_300  # pressure in Pa
+
+    # gas mean free path and viscosity
+    lambda_g = (
+        66.5e-9 * (101_300 / P_g) * (T_g / 293.15) * (1 + 110 / 293.15) / (1 + 110 / T_g)
+    )  # in m
+    mu_g = 18.203e-6 * (293.15 + 110) / (T_g + 110) * (T_g / 293.15) ** 1.5  # in Ps*s
+
+    # for Cunningham slip correction factor: Cc
+    A1 = 1.142
+    A2 = 0.558
+    A3 = 0.999
+
+    # Read all data
+    Aggregates = simu.xaggregates
+    dm = mobility_diameter(
+        Aggregates.f_agg, A1=A1, A2=A2, A3=A3, lambda_g=lambda_g, mu_g=mu_g
+    ).compute()
+
+    print(
+        f"mobility diameter: min={float(dm.min())}, mean={float(dm.mean())}, max={float(dm.max())}"
+    )

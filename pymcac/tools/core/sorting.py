@@ -108,16 +108,6 @@ def custom_sortby(ds: Union[xr.DataArray, xr.Dataset], by: Union[str, List[str]]
             if "k" in coord.dims:
                 coord.data = chunk_slice(coord.data, chunked_slice)
 
-        # for dim in ds.dims:
-        #     if dim == "k":
-        #         continue
-        #     chunks = by_chunks if dim == by[0] else -1
-        #     for v, var in res.data_vars.items():
-        #         if dim in var.dims:
-        #             if var.chunks is None:
-        #                 var.data = da.from_array(var.data, chunks=chunks)
-        #             else:
-        #                 var.data = var.data.rechunk(chunks)
         for c, coord in res.coords.items():
             if c in ("nTime", "nLabel", "nNum"):
                 if by[0] in coord.dims:

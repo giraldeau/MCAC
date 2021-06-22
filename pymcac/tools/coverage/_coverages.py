@@ -72,33 +72,30 @@ def coverages(
     return coverages_cython(npp, X, Y, Z, R, nprocs)
 
 
-# if __name__ == "__main__":
-#     from pathlib import Path
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import numpy as np
 
-#     import matplotlib.pyplot as plt
-#     import numpy as np
+    from pymcac import MCAC, validation_data_path
 
-#     from pymcac import MCAC
+    simu = MCAC(validation_data_path / "pytest_data/")
 
-#     # The folder with all .h5 and .xmf files
-#     data_dir = Path("python-analysis/output_dir/")
+    # Read all data
+    Spheres, Aggregates = simu.spheres, simu.aggregates
 
-# # Read all data
-# Spheres, Aggregates = MCAC(data_dir).read()
+    # Filter out aggregates that have only one spheres
+    Aggregates = Aggregates[Aggregates["Np"] > 1].copy()
 
-# # Filter out aggregates that have only one spheres
-# Aggregates = Aggregates[Aggregates["Np"] > 1].copy()
+    # Compute the overlapping coefficient for all the aggregates
+    Aggregates["cov"] = coverages(Spheres, Aggregates)
 
-# # Compute the overlapping coefficient for all the aggregates
-# Aggregates["cov"] = coverages(Spheres, Aggregates)
+    # Compute the mean overlapping coefficient for each time step
+    time_cov = Aggregates["cov"].groupby(by="Time").agg(np.mean)
 
-# # Compute the mean overlapping coefficient for each time step
-# time_cov = Aggregates["cov"].groupby(by="Time").agg(np.mean)
-
-# # Plot the evolution of the overlapping coefficient in time.
-# fig, ax = plt.subplots()
-# ax.loglog(time_cov)
-# ax.set_xlabel("Time (s)", fontsize=9)
-# ax.set_ylabel("Overlapping coefficient", fontsize=9)
-# plt.suptitle("Time evolution of the overlapping coefficient", fontsize=11)
-# plt.show()
+    # Plot the evolution of the overlapping coefficient in time.
+    fig, ax = plt.subplots()
+    ax.loglog(time_cov)
+    ax.set_xlabel("Time (s)", fontsize=9)
+    ax.set_ylabel("Overlapping coefficient", fontsize=9)
+    plt.suptitle("Time evolution of the overlapping coefficient", fontsize=11)
+    plt.show()

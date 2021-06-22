@@ -168,31 +168,3 @@ def test_read_xdata(variables_sph, variables_agg, tmax, nt, time_steps):
         _time_steps = sim.times[idx]
         assert np.allclose(xspheres.Time.values, _time_steps)
         assert np.allclose(xaggregates.Time.values, _time_steps)
-
-
-# def test_read_xaggregate(nt, nobj, data_type, dask, full):
-#     if data_type == "aggregates":
-#         data = generate_dummy_aggregates_data(
-#             nt=nt, nagg=nobj, sort_info=True, dask=dask, full=full
-#         )
-#     elif data_type == "spheres":
-#         data = generate_dummy_spheres_data(nt=nt, nsph=nobj, sort_info=True, dask=dask, full=full)
-#     else:
-#         raise ValueError(f"data_type {data_type} not understood")
-
-#     check_data(data)
-
-
-# @pytest.mark.parametrize("nt", [1, 3])
-# @pytest.mark.parametrize("nagg", [1, 5])
-# @pytest.mark.parametrize("dask", [0, 1, 2])
-# @repeat(10)
-# def test_generate_both(nt, nagg, dask):
-#     aggregates, spheres = generate_dummy_data(nt=nt, nagg=nagg, sort_info=True, dask=dask)
-
-#     check_data(aggregates)
-#     check_data(spheres)
-#     check_consistency(spheres, aggregates)
-
-
-# # TODO hypothesis

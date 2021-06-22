@@ -22,7 +22,7 @@ Read the MCAC output files
 """
 
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Sequence, Tuple, Union, cast
+from typing import Dict, Iterable, Optional, Sequence, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -108,21 +108,6 @@ class MCAC:
         The result is a large xarray+dask dataset
         """
         return self.get_xaggregates()
-
-    # @property
-    # def sparse_xaggregates(self) -> xr.Dataset:
-    #     """
-    #     Read all the data from the aggregates files
-
-    #     The result is a large xarray+dask+sparse dataset
-    #     """
-    #     files = sorted(list(self.dir.glob("Aggregats*.xmf")))
-
-    #     _xaggregates = self.read_data_sparse(files, indexname="Label", chunksize=32)
-    #     chunks = _xaggregates.Rg.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
-    #     for var in _xaggregates.values():
-    #         var.data = var.data.rechunk(chunks)
-    #     return _xaggregates
 
     def get_xaggregates(
         self,
@@ -216,20 +201,6 @@ class MCAC:
         The result is a large xarray+dask dataset
         """
         return self.get_xspheres()
-
-    # @property
-    # def sparse_xspheres(self) -> xr.Dataset:
-    #     """
-    #     Read all the data from the spheres files
-
-    #     The result is a large xarray+dask+sparse dataset
-    #     """
-    #     files = sorted(list(self.dir.glob("Spheres*.xmf")))
-    #     _xspheres = self.read_data_sparse(files, chunksize=500)
-    #     chunks = _xspheres.Radius.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
-    #     for var in _xspheres.values():
-    #         var.data = var.data.rechunk(chunks)
-    #     return _xspheres
 
     def get_xspheres(
         self,
@@ -437,111 +408,6 @@ class MCAC:
             ds["BoxVolume"] = V0 * N / N0
 
         return ds
-
-    # def read_data_sparse(
-    #     self, files: Sequence[Union[str, Path]], indexname: str = "Num", chunksize: int = None
-    # ) -> xr.Dataset:
-    #     """
-    #     Merge the data of all the files into one large sparse dataset
-    #     """
-    #     import sparse
-
-    #     # files = files[:1]
-
-    #     datas = {
-    #         time: data
-    #         for file in files
-    #         for time, data in H5Reader.read_file(
-    #             file, indexname=indexname, chunksize=chunksize, sparse=True
-    #         ).items()
-    #     }
-    #     self.times = np.fromiter((time for times in datas.keys() for time in times), dtype=float)
-    #     # test = self.times.size == np.unique(self.times).size
-
-    #     max_npart = max(s for times_chunk, data in datas.items() for s in data["size"])
-
-    #     for time, data in datas.items():
-    #         shape = len(time), max_npart
-    #         size = data["size"]
-    #         del data["size"]
-    #         if indexname in data:
-    #             del data[indexname]
-    #         del data["Time"]
-
-    #         nnz = sum(size)
-    #         it_coord = ((it, ip) for it, t in enumerate(time) for ip in range(size[it]))
-
-    #         coords = da.from_delayed(
-    #             compute_coord(it_coord, dask_key_name=f"coords for {time} (delayed)"),
-    #             dtype="i4",
-    #             shape=(2, nnz),
-    #             name=f"coords for {time} (data)",
-    #             meta=np.empty((2, nnz), "i4"),
-    #         )
-
-    #         for col in data:
-    #             data[col] = da.from_delayed(
-    #                 to_sparse(
-    #                     coords, data[col], shape, dask_key_name=f"{col} for {time} (delayed)"
-    #                 ),
-    #                 dtype=data[col].dtype,
-    #                 shape=shape,
-    #                 name=f"{col} for {time} (data)",
-    #                 meta=sparse.COO.from_numpy(np.eye(1)),
-    #             )
-
-    #     first_datas = next(iter(datas.values()))
-    #     columns = first_datas.keys()
-
-    #     reversed_datas = {col: [datas[time][col] for time in datas.keys()] for col in columns}
-    #     concatenated_datas = {
-    #         cols: da.concatenate(data_t) for cols, data_t in reversed_datas.items()
-    #     }
-
-    #     data_vars = {}
-    #     coords = {"time": self.times, indexname: range(max_npart)}
-    #     for col, data in concatenated_datas.items():
-    #         index: Tuple[str, ...]
-    #         if col in ("BoxSize",):
-    #             index = ("time",)
-    #             data_ = data[:, 0].map_blocks(  # type: ignore
-    #                 lambda x: x.todense(), dtype=data.dtype  # type: ignore
-    #             )
-    #         else:
-    #             index = ("time", indexname)
-    #             data_ = data
-    #         data_vars[col] = index, data_
-    #     return xr.Dataset(data_vars, coords)  # type: ignore
-
-
-@delayed
-def compute_coord(it_coord) -> np.ndarray:
-    """
-    Compute coords for sparse dataset
-    """
-    return np.fromiter(it_coord, dtype="i4,i4").view(np.int32).reshape(-1, 2).T
-
-
-@delayed
-def to_sparse(coords: da.Array, data: da.Array, shape: Tuple[int, ...]):
-    """
-    Transform an 1d array into a sparse 2d array
-    """
-    import sparse
-
-    fill_value = np.nan
-    try:
-        np.array([fill_value], dtype=data.dtype)
-    except ValueError:
-        fill_value = 0
-    return sparse.COO(
-        coords=coords,
-        data=data,
-        shape=shape,
-        has_duplicates=False,
-        sorted=True,
-        fill_value=fill_value,
-    )
 
 
 @delayed

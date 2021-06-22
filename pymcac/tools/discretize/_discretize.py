@@ -124,17 +124,14 @@ def mkgrid(
     return x, y, z
 
 
-# if __name__ == "__main__":
-# from pathlib import Path
+if __name__ == "__main__":
+    from pymcac import MCAC, validation_data_path
 
-# from pymcac import MCAC
+    simu = MCAC(validation_data_path / "pytest_data/")
 
-# # The folder with all .h5 and .xmf files
-# data_dir = Path("python-analysis/output_dir/")
+    # Read all data
+    Spheres, Aggregates = simu.spheres, simu.aggregates
 
-# # Read all data
-# Spheres, Aggregates = MCAC(data_dir).read()
+    last_agg = Aggregates.iloc[-1]
 
-# last_agg = Aggregates.iloc[-1]
-
-# discretize(Spheres, last_agg)
+    discretize(Spheres, last_agg)

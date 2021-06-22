@@ -520,8 +520,6 @@ def groupby_apply(
     res: Union[xr.DataArray, xr.Dataset] = xr.Dataset()
     if dask:
         df = xarray_to_ddframe(ds_only_k).repartition(npartitions=1)
-        # if k != "k":
-        #     df = df.reset_index()
         df_gb = df.groupby(by=by, sort=sort)
         res_df = df_gb.apply(fn_, meta=meta, **kwargs)
 

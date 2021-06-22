@@ -57,9 +57,6 @@ def repeat(n_repetition):
 
 
 def check_dims(ds):
-    # assert "k" in ds.dims, "Missing the dimension k"
-    # assert "Time" in ds.dims
-    # assert ("Num" in ds.dims) or ("Label" in ds.dims)
     assert set(ds.dims).issubset({"k", "Label", "Num", "Time"}), "At least one dim is unknown"
 
     for coord in ds.coords.values():
@@ -95,11 +92,6 @@ def check_vars(ds):
         if "Time" in ds.dims:
             assert f"n{idx_name}" in coords, f"Missing n{idx_name}"
             assert ds[f"n{idx_name}"].dims[0] == "Time", f"n{idx_name} dimension should be Time"
-
-    # if "sort" in ds.attrs:
-    #     for sort_idx in ds.attrs["sort"]:
-    #         assert not sort_idx.startswith("k")
-    #         assert sort_idx in ds.coords
 
 
 def check_sorted(ds):
@@ -296,6 +288,3 @@ def test_generate_both(nt, nagg, dask):
     check_data(aggregates)
     check_data(spheres)
     check_consistency(spheres, aggregates)
-
-
-# TODO hypothesis

@@ -101,15 +101,17 @@ Or give me the aggregates array so I can compute it for you"""
             f.write("\n")
 
 
-# if __name__ == "__main__":
-# from pymcac import MCAC
+if __name__ == "__main__":
+    from pathlib import Path
 
-# # The folder with all .h5 and .xmf files
-# data_dir = Path("python-analysis/output_dir/")
+    from pymcac import MCAC
 
-# Read all data
-# Spheres, Aggregates = MCAC(data_dir).read()
+    # The folder with all .h5 and .xmf files
+    simu = MCAC(Path("python-analysis/output_dir/"))
 
-# last_agg = Aggregates.iloc[-1]
+    # Read all data
+    Spheres, Aggregates = simu.spheres, simu.aggregates
 
-# export_ddscat(Spheres, last_agg, aggregates=Aggregates, type_limits=[-0.2, 0.0])
+    last_agg = Aggregates.iloc[-1]
+
+    export_ddscat(Spheres, last_agg, aggregates=Aggregates, type_limits=[-0.2, 0.0])

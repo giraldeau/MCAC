@@ -272,13 +272,12 @@ class Parallel:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    from pymcac import MCAC
+    from pymcac import MCAC, validation_data_path
 
-    # The folder with all .h5 and .xmf files
-    MCACSimulation = MCAC("examples_data/classic/")
+    simu = MCAC(validation_data_path / "pytest_data/")
 
     # Read all data
-    Spheres, Aggregates = MCACSimulation.spheres, MCACSimulation.aggregates
+    Spheres, Aggregates = simu.spheres, simu.aggregates
 
     last_agg = Aggregates.iloc[-1]
 

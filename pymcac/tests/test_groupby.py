@@ -24,9 +24,7 @@ import xarray as xr
 
 from pymcac.tools.core.dask_tools import not_aligned_rechunk
 from pymcac.tools.core.dataframe import groupby_agg, groupby_apply, xarray_to_frame
-from pymcac.tools.core.groupby import groupby2, groupby_aggregate
-
-# from pymcac.tools.core.dataframe import groupby_apply
+from pymcac.tools.core.groupby import groupby_aggregate
 from pymcac.tools.core.sorting import sortby
 
 from .generator import generate_dummy_aggregates_data, generate_dummy_data
@@ -388,73 +386,3 @@ def test_groupby_aggregate_no_compute():
     spheres = not_aligned_rechunk(spheres, chunks=chunks)
 
     groupby_aggregate(spheres, aggregates, np.mean, "trigger")
-
-
-@pytest.mark.parametrize("dask", [0, 5])
-def test_groupby2_on_dim(dask):
-    aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
-
-    test = groupby2(aggregates, "Label", "mean")
-    check_data(test)
-
-    ref = groupby_agg(aggregates, "Label", [("data", "mean", "data")])
-    assert np.allclose(test, ref)
-
-
-@pytest.mark.parametrize("dask", [0, 5])
-def test_groupby2_not_on_dim(dask):
-    aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
-    chunks = aggregates.chunks
-    aggregates["Np"] = ("k",), np.random.randint(1, 10, aggregates.sizes["k"])
-    aggregates = not_aligned_rechunk(aggregates, chunks=chunks)
-
-    test = groupby2(aggregates, "Np", "mean")
-    ref = groupby_agg(aggregates, "Np", [("data", "mean", "data")])
-
-    assert np.allclose(test, ref)
-
-
-@pytest.mark.parametrize("dask", [0, 5])
-def test_groupby2_aggregate(dask):
-    aggregates, spheres = generate_dummy_data(nt=29, nagg=31, nsph=37, dask=dask)
-
-    template = aggregates["data"].rename(kLabel="Label")
-
-    test = groupby2(
-        spheres,
-        "Time",
-        op="map",
-        op_args=(groupby2,),
-        op_kwargs={"args": ("Label", "mean"), "keep_coord": "kTime"},
-        template=template,
-    )
-    check_data(test)
-
-    ref = groupby_aggregate(spheres, aggregates, np.mean, "data")
-    assert np.allclose(test, ref)
-
-    ref = groupby_agg(spheres, ["Time", "Label"], [("data", "mean", "data")])
-    sorted_ref = sortby(ref, ["Time", "Label"]).data
-    assert np.allclose(test, sorted_ref)
-
-
-@pytest.mark.skip(reason="NOT IMPLEMENTED")
-def test_groupby():
-    # def groupby(ds: xr.Dataset,
-    #                  group: str,
-    #                  func,
-    #                  meta,
-    #                  *args,
-    #                  nchunk: int = None,
-    #                  **kwargs) -> xr.Dataset:
-    assert True
-
-
-@pytest.mark.skip(reason="NOT IMPLEMENTED")
-def test_groupby_index():
-    # def groupby_index(ds: xr.Dataset,
-    #                        indexname: str,
-    #                        fn,
-    #                        meta,
-    #                        nchunk: int = None) -> xr.Dataset:
-    assert True

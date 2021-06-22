@@ -50,7 +50,7 @@ try:
 except ModuleNotFoundError:
     VERSION = "Unknown"
 
-validation_data_path = Path(__file__).parent.parent / "validation"
+validation_data_path: Path = Path(__file__).parent.parent / "validation"
 
 ncores = psutil.cpu_count(logical=False)
 os.environ["OMP_NUM_THREADS"] = os.environ.get("OMP_NUM_THREADS", str(ncores))

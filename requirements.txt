@@ -24,6 +24,7 @@ jupyter
 notebook
 jupyterlab
 ipykernel
+ipympl
 
 pytest
 pytest-html

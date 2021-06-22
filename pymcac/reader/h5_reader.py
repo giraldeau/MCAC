@@ -25,8 +25,6 @@ from pathlib import Path
 from typing import Dict, Sequence, Tuple, Union, cast
 
 import numpy as np
-
-# import cupy as cp
 from dask import array as da
 from dask import delayed
 from h5py import File as h5File
@@ -53,27 +51,20 @@ class H5Reader:
         indexname: str = "Num",
         times: np.ndarray = None,
         chunksize: int = None,
-        sparse: bool = False,
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
         """
         Read the h5 file into a mulitple dask arrays (lazy)
 
         We need info from the xmf file, so this file is read
         """
-        return cls(filename).read(
-            indexname=indexname, times=times, chunksize=chunksize, sparse=sparse
-        )
+        return cls(filename).read(indexname=indexname, times=times, chunksize=chunksize)
 
     def read_time(self) -> np.ndarray:
         h5_groups = self.xdmf_reader.extract_h5_groups()
         return np.sort(np.fromiter(h5_groups.keys(), dtype=float))
 
     def read(
-        self,
-        indexname: str = "Num",
-        times: np.ndarray = None,
-        chunksize: int = None,
-        sparse: bool = False,
+        self, indexname: str = "Num", times: np.ndarray = None, chunksize: int = None
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
         """
         Read the h5 file into a mulitple dask arrays (lazy)
@@ -83,8 +74,6 @@ class H5Reader:
 
         h5_groups = self.xdmf_reader.extract_h5_groups()
         sizes = self.xdmf_reader.extract_sizes()
-
-        # max_npart = max(sizes.values())
 
         all_times = self.read_time()
         if times is None:
@@ -126,43 +115,25 @@ class H5Reader:
             if "ll_box" in times_chunk_data:
                 times_chunk_data["BoxSize"] = times_chunk_data.pop("ll_box")
 
-            if sparse:
-                raise NotImplementedError()
-                # times_chunk_data["Time"] = np.fromiter(
-                #     (time for time in times_chunk), dtype=np.float64
-                # )
-                # times_chunk_data[indexname] = np.arange(max_npart)
-                # times_chunk_data["size"] = np.fromiter(
-                #     (sizes[time] for time in times_chunk), dtype=np.int64
-                # )
-            else:
-                times_chunk_data["Time"] = np.fromiter(
-                    (time for time in times_chunk), dtype=np.float64
-                )
-                # times_chunk_data["iTime"] = da.arange(
-                #     len(times_chunk), dtype=np.int64, chunks=-1
-                # ).persist()
-                times_chunk_data["n" + indexname] = np.fromiter(
-                    (sizes[time] for time in times_chunk), dtype=np.int64
-                )
-                times_chunk_data["kTime"] = np.concatenate(
-                    [np.full(sizes[time], time) for time in times_chunk]
-                )
-                # times_chunk_data["kiTime"] = da.concatenate(
-                #     [da.full(sizes[time], i, chunks=-1) for i, time in enumerate(times_chunk)]
-                # ).not_aligned_rechunk(-1)
-                times_chunk_data[indexname] = np.concatenate(
-                    [np.arange(sizes[time]) for time in times_chunk]
-                )
+            times_chunk_data["Time"] = np.fromiter((time for time in times_chunk), dtype=np.float64)
+            times_chunk_data["n" + indexname] = np.fromiter(
+                (sizes[time] for time in times_chunk), dtype=np.int64
+            )
+            times_chunk_data["kTime"] = np.concatenate(
+                [np.full(sizes[time], time) for time in times_chunk]
+            )
+            times_chunk_data[indexname] = np.concatenate(
+                [np.arange(sizes[time]) for time in times_chunk]
+            )
 
-                times_chunk_data["nTime"] = compute_nTime(
-                    times_chunk_data["n" + indexname]
-                ).copy()  # .compute())
+            times_chunk_data["nTime"] = compute_nTime(
+                times_chunk_data["n" + indexname]
+            ).copy()  # .compute())
 
-                # to_persist = ("Time", "n"+indexname, "kTime", "nTime", indexname)
-                # for k, persisted in zip(to_persist,
-                #                         dask.persist(*(times_chunk_data[k] for k in to_persist))):
-                #     times_chunk_data[k] = persisted
+            # to_persist = ("Time", "n"+indexname, "kTime", "nTime", indexname)
+            # for k, persisted in zip(to_persist,
+            #                         dask.persist(*(times_chunk_data[k] for k in to_persist))):
+            #     times_chunk_data[k] = persisted
 
             data[times_chunk] = times_chunk_data
         return data
@@ -194,7 +165,6 @@ class H5Reader:
             name=f"{groups} ({attrib})\n from {self.filename} (data)",
             meta=np.empty(shape, dtype),
         )
-        # meta=cp.empty(shape, dtype))
 
         if len(columns) == 1:
             return {columns[0]: data}
@@ -227,7 +197,6 @@ def read_h5_arrays(
             res[start:end, ...] = np.reshape(data, part_shape)
 
     return res.T
-    # return cp.array(res)
 
 
 @njit(nogil=True, cache=True)

@@ -95,3 +95,17 @@ def overlap_in_one_agg(
     n_c_avg = np.mean(n_c_i)
 
     return cij_av, cij_median, Cij_v30, Cij_v20, tot_coll, n_c_avg
+
+
+if __name__ == "__main__":
+    import numpy as np
+
+    from pymcac import MCAC, validation_data_path
+
+    simu = MCAC(validation_data_path / "pytest_data/")
+
+    # Read all data
+    Spheres, Aggregates = simu.xspheres, simu.xaggregates
+    overlap = overlapping(Spheres.compute(), Aggregates.compute()).compute()
+
+    print(overlap)
