@@ -30,9 +30,9 @@ gfortran-Release:
       - ext_bin
       - build # for coverage analysis
 
-ifort-Debug:
+intel-Debug:
   stage: Build
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-ifort
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-intel
   script:
     - pwd
     - ls -l
@@ -46,9 +46,9 @@ ifort-Debug:
       - ext_bin
   allow_failure: true
 
-ifort-Release:
+intel-Release:
   stage: Build
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-ifort
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-intel
   script:
     - pwd
     - ls -l
