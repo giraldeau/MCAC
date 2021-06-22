@@ -19,15 +19,8 @@ RUN apt-get -qq update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+COPY requirements.txt /builds/MCAC/MCAC/
 RUN pip install --no-cache-dir -U pip wheel setuptools \
-    && pip install --no-cache-dir -U \
-        # linter dependencies
-        black isort flake8 pyproject-flake8 mypy pylint cpplint\
-        # tests dependencies
-        pytest pytest-html pytest-timeout pytest-cov pytest-sugar pytest-icdiff \
-        # PyMCAC dependencies
-        numpy setuptools_scm setuptools matplotlib scipy h5py pandas \
-        dask cython scikit-image lxml tqdm toolz fsspec>=0.3.3 scikit-learn psutil \
-        cachey cloudpickle xarray numba distributed
+    && pip install --no-cache-dir -U -r /builds/MCAC/MCAC/requirements.txt
         
 ENV dockerfile_version="${GIT_COMMIT}"

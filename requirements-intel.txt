@@ -5,18 +5,14 @@ dask[complete]
 pandas
 matplotlib
 h5py
-cython
-numba
-numexpr
+#cython
+#numba
+#numexpr
 bottleneck
 scipy
 scikit-image
 scikit-learn
 lxml
-tqdm
-jupyterlab
-ipykernel
-ipympl
 
 pytest
 pytest-html
@@ -25,12 +21,3 @@ pytest-cov
 pytest-sugar
 pytest-icdiff
 pytest-xdist[psutil]
-
-cpplint 
-mypy
-black
-isort
-flake8
-pyproject-flake8
-pylint
-cmakelang

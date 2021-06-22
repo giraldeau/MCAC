@@ -60,16 +60,9 @@ RUN "./HDF5-${HDF5_VERSION}-Linux.sh" --skip-license --prefix="/opt/local/hdf5/H
     && rm "HDF5-${HDF5_VERSION}-Linux.sh"
 ENV HDF5_DIR="/opt/local/hdf5/HDF5-${HDF5_VERSION}-Linux/HDF_Group/HDF5/${HDF5_VERSION}/share/cmake"
 
+COPY requirements-intel.txt /builds/MCAC/MCAC/
 RUN pip install --no-cache-dir -U pip wheel setuptools \
-    && pip install --no-cache-dir -U \
-        # linter dependencies
-        black isort flake8 pyproject-flake8 mypy pylint \
-        # tests dependencies
-        pytest pytest-html pytest-timeout pytest-cov pytest-sugar pytest-icdiff \
-        # PyMCAC dependencies
-        numpy setuptools_scm setuptools matplotlib scipy h5py pandas \
-        dask cython scikit-image lxml tqdm toolz fsspec>=0.3.3 scikit-learn psutil \
-        cachey cloudpickle xarray numba distributed
+    && pip install --no-cache-dir -U -r /builds/MCAC/MCAC/requirements-intel.txt
         
 ENV FC=ifort \
     dockerfile_version="${GIT_COMMIT}"

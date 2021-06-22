@@ -4,6 +4,8 @@
 # Allow files and directories
 !.git
 !.docker
+!requirements.txt
+!requirements-intel.txt
 
 # Ignore unnecessary files inside allowed directories
 # This should go after the allowed directories

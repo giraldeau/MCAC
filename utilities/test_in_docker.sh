@@ -2,7 +2,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 GIT_COMMIT=$(git log -1 --pretty=%h)
-COMPILATOR=ifort
+COMPILATOR=intel
 #COMPILATOR=gfortran
 
 bash "${SCRIPT_DIR}/update_docker.sh"

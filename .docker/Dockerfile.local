@@ -1,6 +1,6 @@
 # Copyright (c) Contributors to the mcac Project. All rights reserved.
 
-ARG COMPILATOR=ifort
+ARG COMPILATOR=intel
 
 FROM mvdan/shfmt:v3.2.0-alpine AS shfmt
 FROM gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-${COMPILATOR}
