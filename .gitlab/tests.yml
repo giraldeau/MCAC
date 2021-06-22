@@ -30,6 +30,7 @@ pymcac_tests:
   before_script:
     - echo "dockerfile_version=${dockerfile_version}"
   script:
+    - pip install --no-use-pep517 -e .
     - pytest --cov=pymcac/ --cov-report=xml --junitxml=artifacts/pytest.xml
     - coverage xml
   only:
