@@ -163,6 +163,27 @@ If you need SBL, you'll have to add this option to cmake
 
      cmake .. -DBoost_INCLUDE_DIR=/usr/include/boost169
 
+If you need SBL in pyMCAC, you'll need to apply this:
+
+```diff
+diff --git a/setup.py b/setup.py
+index 34f2b92..e8bad37 100644
+--- a/setup.py
++++ b/setup.py
+@@ -25,8 +25,9 @@ sbl = Extension(name='pymcac.tools.volume_surface.sbl_wrapper',
+                          'pymcac/tools/volume_surface/SBLVolumeSurface.cpp'],
+                 include_dirs=['pymcac/tools/volume_surface',
+                               "ext_bin/sbl/include",
+-                              "/opt/cgal/include"],
+-                library_dirs=["/opt/cgal/lib64"],
++                              "ext_bin/cgal/include",
++                              "/usr/include/boost169"],
++                library_dirs=["ext_bin/cgal/lib64"],
+                 extra_compile_args=["-fopenmp", "-O3", "-frounding-math", "-DNDEBUG"],
+                 libraries=["mpfr", "gmp"],
+                 extra_link_args=["-fopenmp"],
+```
+
 ### Myria
 
 You'll need the following module

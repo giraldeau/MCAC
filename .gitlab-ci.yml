@@ -27,6 +27,14 @@ stages:
   - Test
 
 include:
+  - template: Code-Quality.gitlab-ci.yml
   - local: .gitlab/MCAC.yml
   - local: .gitlab/pyMCAC.yml
   - local: .gitlab/tests.yml
+
+
+code_quality:
+  stage: Test
+  artifacts:
+    paths: [gl-code-quality-report.json]
+
