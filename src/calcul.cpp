@@ -158,13 +158,17 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             }
         }
 
+        if(physicalmodel.u_sg >= 0.0) {
+            if (split) std::cout << "splitting occured, but not during oxydation";
+            if (disappear) std::cout << "disappearing occured, but not during oxydation";
+        }
+
         //$ Merge
         bool merge = false;
-        if (contact) {
-            if (!physicalmodel.individual_surf_reactions || !(split || disappear)) {
-                //$ Aggregates in contact are reunited;
-                merge = aggregates.merge(next_contact);
-            }
+        if (contact && physicalmodel.u_sg >= 0) {
+            //$ Aggregates in contact are reunited;
+            merge = aggregates.merge(next_contact);
+        }
 
         //$ Update
         if (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling) {
