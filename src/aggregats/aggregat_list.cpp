@@ -378,7 +378,6 @@ bool AggregatList::croissance_surface(const double dt, const size_t index) {
         setpointers();
         return true;
     } else {
-        list[index]->update();
         return false;
     }
 }

@@ -165,23 +165,25 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 //$ Aggregates in contact are reunited;
                 merge = aggregates.merge(next_contact);
             }
-        }
 
-        //$ Update if not already done
-        if (!merge && !split && !disappear &&
-           (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling)) {
+        //$ Update
+        if (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling) {
             if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
-                if (physicalmodel.individual_surf_reactions) {
+                if (physicalmodel.individual_surf_reactions && !merge && !split && !disappear) {
+                    //$ Update already done if merge or split (and not necessary if disappear)
                     aggregates[num_agg]->update();
-                } else { 
+                } else {
+                    //$ Updating twice num_agg if merge or split (already done)
                     for (const auto &agg : aggregates) {
                         agg->update();
                     }
                 }
             } else {
-                if (physicalmodel.individual_surf_reactions) {
+                if (physicalmodel.individual_surf_reactions && !merge && !split && !disappear) {
+                    //$ Update already done if merge or split (and not necessary if disappear)
                     aggregates[num_agg]->update_partial();
                 } else { 
+                    //$ Updating twice num_agg if merge or split (already done)
                     for (const auto &agg : aggregates) {
                         agg->update_partial();
                     }
