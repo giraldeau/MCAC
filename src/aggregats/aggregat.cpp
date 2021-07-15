@@ -210,15 +210,17 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
 }
 bool Aggregate::croissance_surface(double dt) {
     myspheres.croissance_surface(dt);
-    for (const auto& sphere : myspheres) {
-        if (sphere->get_radius() <= physicalmodel->rp_min_oxid) {
-            remove_sphere(sphere->get_index());
-            if (myspheres.size() == 0) {
-                return  true;
-            }
+
+    for (auto sphere = myspheres.begin(); sphere != myspheres.end(); ) {
+        if ((*sphere)->get_radius() <= physicalmodel->rp_min_oxid) {
+            auto index = std::distance(myspheres.begin(), sphere);
+            remove_sphere((*sphere)->get_index());
+            sphere = myspheres.begin() + index;
+        } else {
+            sphere++ ;
         }
     }
-    return false;
+    return myspheres.size() == 0;
 }
 
 //###################################################################################################################
