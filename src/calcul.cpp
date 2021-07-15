@@ -160,8 +160,10 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ Merge
         bool merge = false;
         if (contact) {
-            //$ Aggregates in contact are reunited;
-            merge = aggregates.merge(next_contact);
+            if (!(split || disappear)) {
+                //$ Aggregates in contact are reunited;
+                merge = aggregates.merge(next_contact);
+            }
         }
 
         //$ Update if not already done

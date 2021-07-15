@@ -281,6 +281,7 @@ bool Aggregate::croissance_surface(double dt) {
     for (const auto& sphere : myspheres) {
         if (sphere->get_radius() <= physicalmodel->rp_min_oxid) {
             remove_sphere(sphere->get_index());
+            return  true;
             if (myspheres.size() == 0) {
                 return  true;
             }
