@@ -379,6 +379,7 @@ void PhysicalModel::print() const {
     }
     if (with_flame_coupling) {
         std::cout << " With flame coupling" << std::endl
+                  << "  initial time =" << time << std::endl
                   << "  flame_file: " << flame_file << std::endl;
     } else {
         std::cout << " Without flame coupling" << std::endl;
