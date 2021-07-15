@@ -160,7 +160,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ Merge
         bool merge = false;
         if (contact) {
-            if (!(split || disappear)) {
+            if (!physicalmodel.individual_surf_reactions || !(split || disappear)) {
                 //$ Aggregates in contact are reunited;
                 merge = aggregates.merge(next_contact);
             }
