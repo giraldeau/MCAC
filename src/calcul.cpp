@@ -56,7 +56,6 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
         if (physicalmodel.n_iter_without_event % physicalmodel.write_between_event_frequency == 0) {
-            // When there is oxidation we save info with a certain frequency only
             if (total_events % physicalmodel.write_events_frequency == 0){
                 aggregates.spheres.save();
                 aggregates.save();
@@ -64,9 +63,9 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             }
         }
         if (event) {
-            if (aggregates.size() <= multiply_threshold &&
-                    physicalmodel.with_domain_duplication &&
-                    !(physicalmodel.u_sg < 0.0)) {
+            if (physicalmodel.with_domain_duplication &&
+                aggregates.size() <= multiply_threshold &&
+                !(physicalmodel.u_sg < 0.0)) {
                 std::cout << "Duplication : " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates";
                 aggregates.duplication();
@@ -166,21 +165,24 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             }
         }
 
-        //$ Update if not already done
-        if (!merge && !split && !disappear &&
-           (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling)) {
+        //$ Update
+        if (physicalmodel.with_surface_reactions || physicalmodel.with_flame_coupling) {
             if (physicalmodel.n_iter_without_event % physicalmodel.full_aggregate_update_frequency == 0) {
-                if (physicalmodel.individual_surf_reactions) {
+                if (physicalmodel.individual_surf_reactions && !merge && !split && !disappear) {
+                    //$ Update already done if merge or split (and not necessary if disappear)
                     aggregates[num_agg]->update();
-                } else { 
+                } else {
+                    //$ Updating twice num_agg if merge or split (already done)
                     for (const auto &agg : aggregates) {
                         agg->update();
                     }
                 }
             } else {
-                if (physicalmodel.individual_surf_reactions) {
+                if (physicalmodel.individual_surf_reactions && !merge && !split && !disappear) {
+                    //$ Update already done if merge or split (and not necessary if disappear)
                     aggregates[num_agg]->update_partial();
                 } else { 
+                    //$ Updating twice num_agg if merge or split (already done)
                     for (const auto &agg : aggregates) {
                         agg->update_partial();
                     }
@@ -228,6 +230,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                       << " CPU="     << std::setw(4) << elapse << "s"
                       << " contact=" << std::setw(4) << contact
                       << " split="   << std::setw(4) << split
+                      << " disappear="   << std::setw(4) << disappear
                       << " nucleation="   << std::setw(4) << nucleation << " - " << std::setw(4) << monomers_to_add
                       << " after "   << std::setw(4) << current_n_iter_without_event << " it"
                       << " total_events " << std::setw(4) <<  total_events

@@ -50,12 +50,12 @@ private:
     double *dg_over_dp;
     double *overlapping;            // Average overlapping coefficient
     double *coordination_number;    // Average coordination number
-    double *d_m;                     // Mobility diameter
-    double *CH_ratio;                // Carbon/Hydrogen ratio
+    double *d_m;                    // Mobility diameter
+    double *CH_ratio;               // Carbon/Hydrogen ratio
     int electric_charge;            // Total agg. electric charge
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
-    double bulk_density;
+    double bulk_density;            // mean density of the aggregate
 
 #ifdef FULL_INTERNAL_DISTANCES
     std::vector<std::vector<double> > distances;
@@ -100,7 +100,7 @@ public:
     void set_verlet(Verlet *) noexcept;
     void unset_verlet() noexcept;
     void set_proper_time(double newtime) noexcept;
-    void set_bulk_density() noexcept;
+    void set_bulk_density();
     void set_CH_ratio() noexcept;
     void time_forward(double deltatemps) noexcept;
     void set_position(const std::array<double, 3> &position) noexcept;
@@ -108,9 +108,8 @@ public:
     bool croissance_surface(double dt);
     //    void init();
     void init(size_t new_label,
-              size_t sphere_index);
-    void nucleation(size_t new_label,
-                    size_t sphere_index);
+              size_t sphere_index,
+              bool nucleation);
     void init(const PhysicalModel &,
               SphereList *,
               Verlet *,

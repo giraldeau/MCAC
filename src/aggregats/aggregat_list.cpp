@@ -74,7 +74,7 @@ void AggregatList::add(size_t n) {
     for (size_t i = 0; i < n; i++) {
         size_t i_agg = initial_n_agg + i;
         size_t i_sph = initial_n_sph + i;
-        list[i_agg]->nucleation(i_agg, i_sph);
+        list[i_agg]->init(i_agg, i_sph, true);
     }
     refresh();
 }
@@ -355,30 +355,24 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) con
 }
 bool AggregatList::croissance_surface(double dt) {
     bool removed_aggregate(false);
-    auto aggregate = list.begin();
-    while (aggregate != list.end()) {
+    for (auto aggregate = list.begin(); aggregate != list.end(); ) {
         auto index = std::distance(list.begin(), aggregate);
-        auto next = list.begin() + index + 1;
-        if ((*aggregate)->croissance_surface(dt)) {
+        if (croissance_surface(dt, size_t(index))) {
             removed_aggregate = true;
-            // This aggregate has no spheres anymore
-            remove(size_t(index));
-            setpointers();
-            std::cout << " removed by croissance_surface: aggregate= " << (*aggregate)->get_label() << "/ total= " << list.size() << std::endl;
-            next = list.begin() + index;
+            aggregate = list.begin() + index;
+        } else {
+            aggregate++ ;
         }
-        aggregate = next;
     }
     return removed_aggregate;
 }
 bool AggregatList::croissance_surface(const double dt, const size_t index) {
     if (list[index]->croissance_surface(dt)){
+        std::cout << " removed by croissance_surface: num_agg= " << index << "/ total= " << list.size() << std::endl;
         remove(index);
         setpointers();
-        std::cout << " removed by croissance_surface: num_agg= " << index << "/ total= " << list.size() << std::endl;
         return true;
     } else {
-        list[index]->update();
         return false;
     }
 }

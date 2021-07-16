@@ -68,7 +68,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
 
     //Initialize the aggregates
     for (size_t i = 0; i < size(); i++) {
-        list[i]->init(i, i);
+        list[i]->init(i, i, false);
     }
     refresh();
 

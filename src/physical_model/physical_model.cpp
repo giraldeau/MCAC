@@ -45,9 +45,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     mean_diameter(30.),
     dispersion_diameter(1.0),
     mean_massic_radius(0.),
+    mass_nuclei(0.0),
     mean_diameter_nucleation(5.0),
     dispersion_diameter_nucleation(1.0),
-    mass_nuclei(0.0),
     friction_exponnant(0.),
     time(0.),
     volume_fraction(1e-3),
@@ -88,7 +88,9 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     with_external_potentials(false),
     with_dynamic_random_charges(false),
     with_electric_charges(false),
-    with_maturity(false){
+    with_maturity(false),
+    flame(),
+    intpotential_info(){
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -231,7 +233,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number concentration
     aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
-    monomer_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
+    monomer_concentration = aggregate_concentration;
 
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
@@ -474,6 +476,30 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
            + b * gaz_mean_free_path / r * std::exp(-c * r / gaz_mean_free_path);
 }
 
+[[gnu::pure]]  double PhysicalModel::random_diameter(double _mean_diameter,
+                                                     double _dispersion_diameter) const {
+    //random size
+    double diameter = 0;
+    switch(monomeres_initialisation_type) {
+    case MonomeresInitialisationMode::NORMAL_INITIALISATION:
+        diameter = random_normal(_mean_diameter, _dispersion_diameter);
+        break;
+    case MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION:
+        if (_dispersion_diameter < 1.0) {
+            throw InputError("dispersion_diameter cannot be lower than 1");
+        }
+        diameter = _mean_diameter * std::pow(_dispersion_diameter,
+                                            std::sqrt(2.) * inverf(2. * random() - 1.0));
+        break;
+    case MonomeresInitialisationMode::INVALID_INITIALISATION:
+    default:
+        throw InputError("Monomere initialisation mode unknown");
+    }
+    if (diameter <= 0) {
+        diameter = _mean_diameter;
+    }
+    return diameter * 1E-9;
+}
 
 //############################# Fonctions pour le calcul du diamètre de mobilité ################################
 

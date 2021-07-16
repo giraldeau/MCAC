@@ -116,8 +116,7 @@ void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
         update_verlet();
     }
 }
-void Aggregate::set_bulk_density() noexcept {
-    double newdensity(0.0);
+void Aggregate::set_bulk_density() {
     /*
     double dpp_nm = (*dp)*1e+09;
     if (physicalmodel->with_maturity){
@@ -131,16 +130,15 @@ void Aggregate::set_bulk_density() noexcept {
     */
     if (physicalmodel->with_maturity){
         set_CH_ratio();
-        newdensity = _bulk_density_young+
+        bulk_density = _bulk_density_young+
                 (_bulk_density_mature-_bulk_density_young)/(_CH_mature-_CH_young) *
                 ((*CH_ratio)-_CH_young);
     } else {
-        newdensity = physicalmodel->density;
+        bulk_density = physicalmodel->density;
     }
-    if (newdensity < _bulk_density_young || newdensity > _bulk_density_mature){
-        throw InputError("Problem with bulk density: " + std::to_string(newdensity));
+    if (bulk_density < _bulk_density_young || bulk_density > _bulk_density_mature){
+        throw InputError("Problem with bulk density: " + std::to_string(bulk_density));
     }
-    bulk_density = newdensity;
 }
 void Aggregate::set_CH_ratio() noexcept {
     const double a(4.0), b(1.0);
@@ -162,69 +160,21 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
     }
 }
 void Aggregate::init(size_t new_label,
-                     size_t sphere_index) {
+                     size_t sphere_index,
+                     bool nucleation) {
     //initialize data
     set_proper_time(physicalmodel->time);
 
     //random size
-    double diameter = 0;
-    if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        diameter = random_normal(physicalmodel->mean_diameter,physicalmodel->dispersion_diameter);
-    } else if (physicalmodel->monomeres_initialisation_type
-               == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-        if (physicalmodel->dispersion_diameter >= 1.0) {
-            diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
-                                                               std::sqrt(2.) * inverf(2. * random() - 1.0));
-        } else {
-            throw InputError("dispersion_diameter cannot be lower than 1");
-        }
+    double diameter;
+    if (nucleation) {
+        diameter = physicalmodel->random_diameter(physicalmodel->mean_diameter_nucleation,
+                                                  physicalmodel->dispersion_diameter_nucleation);
     } else {
-        throw InputError("Monomere initialisation mode unknown");
+        diameter = physicalmodel->random_diameter(physicalmodel->mean_diameter,
+                                                  physicalmodel->dispersion_diameter);
     }
-    if (diameter <= 0) {
-        diameter = physicalmodel->mean_diameter;
-    }
-    diameter *= 1E-9;
-    for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
-        //random position
-        std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
-                                      random() * physicalmodel->box_lenght,
-                                      random() * physicalmodel->box_lenght}};
-        if (external_storage->test_free_space(newpos, diameter * 0.5)) {
-            init(*external_storage->physicalmodel,
-                 &external_storage->spheres,
-                 &external_storage->verlet,
-                 external_storage->physicalmodel->time,
-                 new_label, sphere_index, newpos, diameter);
-            return;
-        }
-    }
-    throw TooDenseError();
-}
-void Aggregate::nucleation(size_t new_label,
-                           size_t sphere_index) {
-    //initialize data
-    set_proper_time(physicalmodel->time);
 
-    //random size
-    double diameter = 0;
-    if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        diameter = random_normal(physicalmodel->mean_diameter_nucleation,physicalmodel->dispersion_diameter_nucleation);
-    } else if (physicalmodel->monomeres_initialisation_type
-               == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-        if (physicalmodel->dispersion_diameter_nucleation >= 1.0) {
-            diameter = physicalmodel->mean_diameter_nucleation * std::pow(physicalmodel->dispersion_diameter_nucleation,
-                                                               std::sqrt(2.) * inverf(2. * random() - 1.0));
-        } else {
-            throw InputError("dispersion_diameter_nucleation cannot be lower than 1");
-        }
-    } else {
-        throw InputError("Monomere initialisation mode unknown");
-    }
-    if (diameter <= 0) {
-        diameter = physicalmodel->mean_diameter_nucleation;
-    }
-    diameter *= 1E-9;
     for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
         //random position
         std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
@@ -278,22 +228,17 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
 }
 bool Aggregate::croissance_surface(double dt) {
     myspheres.croissance_surface(dt);
-    // Dynamic loop
-    auto sphere = myspheres.begin();
-    while (sphere != myspheres.end()) {
-        auto index = std::distance(myspheres.begin(), sphere);
-        auto next = myspheres.begin() + index + 1;
+
+    for (auto sphere = myspheres.begin(); sphere != myspheres.end(); ) {
         if ((*sphere)->get_radius() <= physicalmodel->rp_min_oxid) {
+            auto index = std::distance(myspheres.begin(), sphere);
             remove_sphere((*sphere)->get_index());
-            setpointers();
-            next = myspheres.begin() + index;
+            sphere = myspheres.begin() + index;
+        } else {
+            sphere++ ;
         }
-        sphere = next;
     }
-    if (myspheres.size() == 0) {
-        return  true;
-    }
-    return false;
+    return myspheres.size() == 0;
 }
 
 //###################################################################################################################
@@ -436,7 +381,7 @@ void Aggregate::compute_volume_surface() {
         *overlapping = 0.0; // average overlapping and coord. numbers updated here
         double c_v30(0.0), c_v20(0.0), c_s10(0.0);
         double vp_sum(0.0), sp_sum(0.0);
-        int intersections(0);
+        size_t intersections(0);
         for (size_t i = 0; i < n_spheres; i++) {
             // loop over the neighbor list
             for (const auto &it : distances[i]) {
@@ -457,9 +402,9 @@ void Aggregate::compute_volume_surface() {
             intersections += distances[i].size();
         }
         if (intersections > 0) {
-            c_s10 /= static_cast<double>(sp_sum);
-            c_v20 /= static_cast<double>(vp_sum);
-            c_v30 /= static_cast<double>(vp_sum);
+            c_s10 /= sp_sum;
+            c_v20 /= vp_sum;
+            c_v30 /= vp_sum;
             double min_coordination_number = 2 * (1.0 - 1.0 / static_cast<double>(n_spheres));
             *overlapping /= static_cast<double>(intersections);
             *coordination_number = static_cast<double>(intersections) / static_cast<double>(n_spheres);

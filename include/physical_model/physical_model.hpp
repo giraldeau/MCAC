@@ -73,6 +73,7 @@ public:
 
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
+    [[gnu::pure]] double random_diameter(double mean_diameter, double dispersion_diameter) const;
     [[gnu::pure]] double grow(double r, double dt) const;
     [[gnu::pure]] double friction_exponent(double sphere_radius) const;
     [[gnu::pure]] double friction_coeff(double aggregate_volume, double sphere_volume, double sphere_radius) const;
