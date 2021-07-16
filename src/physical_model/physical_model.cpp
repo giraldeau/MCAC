@@ -262,7 +262,6 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
             std::cout << "The simulation is finished by the flame coupling" << std::endl;
             return true;
         }
-        return false;
     }
     if (number_of_aggregates <= number_of_aggregates_limit) {
         std::cout << "We reach the AggMin condition" << std::endl << std::endl;
