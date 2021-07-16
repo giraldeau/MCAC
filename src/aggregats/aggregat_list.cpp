@@ -278,7 +278,7 @@ AggregateContactInfo AggregatList::distance_to_next_contact(const size_t source,
     for (auto suspect : filtered_neighborhood) { //For every aggregate that could be in contact
         auto[suspect_distance, id] = suspect;
 
-        if ( closest_contact.distance <= 1e-15) {
+        if ( closest_contact.distance <= 0.) {
             // cannot be closest than that
             break;
         }
@@ -368,7 +368,6 @@ bool AggregatList::croissance_surface(double dt) {
 }
 bool AggregatList::croissance_surface(const double dt, const size_t index) {
     if (list[index]->croissance_surface(dt)){
-        std::cout << " removed by croissance_surface: num_agg= " << index << "/ total= " << list.size() << std::endl;
         remove(index);
         setpointers();
         return true;

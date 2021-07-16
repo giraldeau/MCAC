@@ -723,7 +723,7 @@ void Aggregate::update_distances_and_overlapping() noexcept {
             distances[j][i] = dist;
 #endif
             // if in contact (with some tolerence)
-            if (dist <= (1. + 1e-10) * (myspheres[i]->get_radius() + myspheres[j]->get_radius())) {
+            if (dist <= (1. + _COORDINATION_EPSILON) * (myspheres[i]->get_radius() + myspheres[j]->get_radius())) {
 #ifndef FULL_INTERNAL_DISTANCES
                 distances[i][j] = dist;
                 // distances are symetric !

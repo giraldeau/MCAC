@@ -124,5 +124,7 @@ const double _CH_mature = 10;
 const double _CH_young = 1.1;
 const double _bulk_density_mature = 1800;
 const double _bulk_density_young = 1200;
+const double _CONTACT_EPSILON = 1e-28;
+const double _COORDINATION_EPSILON = 1e-10;
 }  //namespace mcac
 #endif //INCLUDE_CONSTANTS_HPP

@@ -86,7 +86,7 @@ namespace mcac {
     double dist_contact = std::pow(sphere_1.get_radius() + sphere_2.get_radius(), 2);
 
     // 1e-28 is for rounding error (1e-14 ^ 2)
-    return (distance - dist_contact <= 1e-28);
+    return (distance - dist_contact <= _CONTACT_EPSILON);
 }
 }  // namespace mcac
 
