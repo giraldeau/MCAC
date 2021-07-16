@@ -2,35 +2,37 @@
 # coding=utf-8
 """Compile and install pymcac"""
 import sys
-from subprocess import run, CalledProcessError
+from subprocess import CalledProcessError, run
 
-from setuptools import setup as setup
+import numpy as np
 from setuptools import Extension as Extension
+from setuptools import setup as setup
 
 setup()
 
-# noinspection PyPep8
-import numpy as np
-
-coverage = Extension(name='pymcac.tools.coverage.coverages_cython',
-                     sources=['pymcac/tools/coverage/coverages_cython.pyx'],
-                     include_dirs=[np.get_include()],
-                     extra_compile_args=["-fopenmp", "-O3"],
-                     extra_link_args=["-fopenmp"])
+coverage = Extension(
+    name="pymcac.tools.coverage.coverages_cython",
+    sources=["pymcac/tools/coverage/coverages_cython.pyx"],
+    include_dirs=[np.get_include()],
+    extra_compile_args=["-fopenmp", "-O3"],
+    extra_link_args=["-fopenmp"],
+)
 # noinspection PyUnusedName
 coverage.cython_c_in_temp = True
 
-sbl = Extension(name='pymcac.tools.volume_surface.sbl_wrapper',
-                sources=['pymcac/tools/volume_surface/sbl_wrapper.pyx',
-                         'pymcac/tools/volume_surface/SBLVolumeSurface.cpp'],
-                include_dirs=['pymcac/tools/volume_surface',
-                              "ext_bin/sbl/include",
-                              "/opt/cgal/include"],
-                library_dirs=["/opt/cgal/lib64"],
-                extra_compile_args=["-fopenmp", "-O3", "-frounding-math", "-DNDEBUG"],
-                libraries=["mpfr", "gmp"],
-                extra_link_args=["-fopenmp"],
-                language="c++")
+sbl = Extension(
+    name="pymcac.tools.volume_surface.sbl_wrapper",
+    sources=[
+        "pymcac/tools/volume_surface/sbl_wrapper.pyx",
+        "pymcac/tools/volume_surface/SBLVolumeSurface.cpp",
+    ],
+    include_dirs=["pymcac/tools/volume_surface", "ext_bin/sbl/include", "/opt/cgal/include"],
+    library_dirs=["/opt/cgal/lib64"],
+    extra_compile_args=["-fopenmp", "-O3", "-frounding-math", "-DNDEBUG"],
+    libraries=["mpfr", "gmp"],
+    extra_link_args=["-fopenmp"],
+    language="c++",
+)
 # noinspection PyUnusedName
 sbl.cython_c_in_temp = True
 
@@ -61,5 +63,4 @@ except CalledProcessError:
 else:
     # Add the version from git
     # --------------------------------
-    setup(use_scm_version={'write_to': 'pymcac/version.py',
-			   "fallback_version": "UNKNOWN"})
+    setup(use_scm_version={"write_to": "pymcac/version.py", "fallback_version": "UNKNOWN"})

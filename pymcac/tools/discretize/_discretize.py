@@ -3,17 +3,17 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -28,15 +28,16 @@ import pandas as pd
 from scipy.special import erf
 
 
-def discretize(spheres: pd.DataFrame,
-               aggregate: Optional[pd.Series] = None,
-               resolution: int = 128,
-               alphagangue: float = 0.4) -> Tuple[np.ndarray,
-                                                             Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def discretize(
+    spheres: pd.DataFrame,
+    aggregate: Optional[pd.Series] = None,
+    resolution: int = 128,
+    alphagangue: float = 0.4,
+) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
-        Discretize the aggregate in a grid
+    Discretize the aggregate in a grid
 
-        alphagangue is a parameter allowing some gangue around the aggregate
+    alphagangue is a parameter allowing some gangue around the aggregate
     """
 
     cols = ["Posx", "Posy", "Posz", "Radius"]
@@ -52,14 +53,13 @@ def discretize(spheres: pd.DataFrame,
     return discretize_spherelist(spherelist, resolution, alphagangue)
 
 
-def discretize_spherelist(spheres: np.ndarray,
-                          resolution: int = 128,
-                          alphagangue: float = 0.4) -> Tuple[np.ndarray,
-                                                             Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+def discretize_spherelist(
+    spheres: np.ndarray, resolution: int = 128, alphagangue: float = 0.4
+) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
-        Discretize a list of spheres in a grid
+    Discretize a list of spheres in a grid
 
-        alphagangue is a parameter allowing some gangue around the aggregate
+    alphagangue is a parameter allowing some gangue around the aggregate
     """
 
     xbounds, ybounds, zbounds = surrounding_box(spheres)
@@ -77,7 +77,7 @@ def discretize_spherelist(spheres: np.ndarray,
         # centering on 0
         data -= 0.5
     else:
-        data = - np.ones_like(x)*np.inf
+        data = -np.ones_like(x) * np.inf
         # noinspection PyTypeChecker
         for posx, posy, posz, radius in spheres:
             d = (posx - x) ** 2 + (posy - y) ** 2 + (posz - z) ** 2
@@ -86,11 +86,11 @@ def discretize_spherelist(spheres: np.ndarray,
     return data > 0, (x, y, z)
 
 
-def surrounding_box(spheres: np.ndarray) -> Tuple[Tuple[float, float],
-                                                  Tuple[float, float],
-                                                  Tuple[float, float]]:
+def surrounding_box(
+    spheres: np.ndarray,
+) -> Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]]:
     """
-        compute dimensions of the surrounding box
+    compute dimensions of the surrounding box
     """
     rmax = spheres[:, 3].max()
     xmin, xmax = spheres[:, 0].min() - rmax, spheres[:, 0].max() + rmax
@@ -100,12 +100,14 @@ def surrounding_box(spheres: np.ndarray) -> Tuple[Tuple[float, float],
     return (xmin, xmax), (ymin, ymax), (zmin, zmax)
 
 
-def mkgrid(xbounds: Tuple[float, float],
-           ybounds: Tuple[float, float],
-           zbounds: Tuple[float, float],
-           resolution: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def mkgrid(
+    xbounds: Tuple[float, float],
+    ybounds: Tuple[float, float],
+    zbounds: Tuple[float, float],
+    resolution: int,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-        compute dimensions of the surrounding box
+    compute dimensions of the surrounding box
     """
     xmin, xmax = xbounds
     ymin, ymax = ybounds
@@ -113,25 +115,23 @@ def mkgrid(xbounds: Tuple[float, float],
 
     # create a grid of the requested resolution
     # noinspection Mypy
-    x, y, z = np.mgrid[xmin:xmax:resolution*1j,
-                       ymin:ymax:resolution*1j,
-                       zmin:zmax:resolution*1j]
+    x, y, z = np.mgrid[
+        xmin : xmax : resolution * 1j,  # type:ignore
+        ymin : ymax : resolution * 1j,  # type:ignore
+        zmin : zmax : resolution * 1j,  # type:ignore
+    ]
 
     return x, y, z
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-    import numpy as np
-    from pymcac import MCAC
+    from pymcac import MCAC, validation_data_path
 
-    # The folder with all .h5 and .xmf files
-    data_dir = Path("python-analysis/output_dir/")
+    simu = MCAC(validation_data_path / "pytest_data/")
 
     # Read all data
-    Spheres, Aggregates = MCAC(data_dir).read()
+    Spheres, Aggregates = simu.spheres, simu.aggregates
 
     last_agg = Aggregates.iloc[-1]
 
     discretize(Spheres, last_agg)
-

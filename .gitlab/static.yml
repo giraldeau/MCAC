@@ -1,0 +1,187 @@
+cpplint:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+  stage: Static Analysis
+  before_script:
+    - echo "dockerfile_version=${dockerfile_version}"
+  script:
+    - cpplint --recursive src include
+  only:
+    changes:
+      - src/**/*
+      - include/**/*
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  needs: []
+  allow_failure: true
+
+cppcheck:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+  stage: Static Analysis
+  before_script:
+    - echo "dockerfile_version=${dockerfile_version}"
+  script:
+    - pip install -U  cppcheck
+    - cppcheck --enable=all --inconclusive -I include src
+  only:
+    changes:
+      - src/**/*
+      - include/**/*
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  needs: []
+  allow_failure: true
+
+# clang-check clang-format
+
+black:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+  stage: Static Analysis
+  before_script:
+    - echo "dockerfile_version=${dockerfile_version}"
+  script:
+    - pip install -U black
+    - black . --check --diff
+  only:
+    changes:
+      - pymcac/**/*.py
+      - validation/**/*.py
+      - examples/**/*.py
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  needs: []
+
+isort:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+  stage: Static Analysis
+  before_script:
+    - echo "dockerfile_version=${dockerfile_version}"
+  script:
+    - pip install -U isort
+    - isort . --check --diff
+  only:
+    changes:
+      - pymcac/**/*.py
+      - validation/**/*.py
+      - examples/**/*.py
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  needs: []
+
+flake8:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+  stage: Static Analysis
+  before_script:
+    - echo "dockerfile_version=${dockerfile_version}"
+  script:
+    - pip install -U flake8 pyproject-flake8
+    - pflake8
+  only:
+    changes:
+      - pymcac/**/*.py
+      - validation/**/*.py
+      - examples/**/*.py
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  needs: []
+  allow_failure: true
+
+mypy:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+  stage: Static Analysis
+  script:
+    - pip install -U pylint
+    - mypy pymcac
+  only:
+    changes:
+      - pymcac/**/*.py
+      - validation/**/*.py
+      - examples/**/*.py
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  needs: []
+
+pylint:
+  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+  stage: Static Analysis
+  script:
+    - pip install -U pylint
+    - pylint -d C0301 pymcac
+  only:
+    changes:
+      - pymcac/**/*.py
+      - validation/**/*.py
+      - examples/**/*.py
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - .docker/Dockerfile.gfortran
+  needs: []
+  allow_failure: true
+
+cmake-format:
+  image: cheshirekow/cmake-format
+  stage: Static Analysis
+  script:
+    - pip install -U cmakelang
+    - cmake-format --check CMakeLists.txt cmake/**/*.cmake
+  only:
+    changes:
+      - cmake/**/*.cmake
+      - CMakeLists.txt
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+  needs: []
+
+cmake-lint:
+  image: cheshirekow/cmake-format
+  stage: Static Analysis
+  script:
+    - pip install -U cmakelang
+    - cmake-lint CMakeLists.txt cmake/**/*.cmake
+  only:
+    changes:
+      - cmake/**/*.cmake
+      - CMakeLists.txt
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+  needs: []
+
+shell check:
+  image: koalaman/shellcheck-alpine:stable
+  stage: Static Analysis
+  before_script:
+    - shellcheck --version
+  script:
+    - shellcheck utilities/*.sh
+  only:
+    changes:
+      - utilities/**/*.sh
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+  needs: []
+
+shfmt:
+  image: mvdan/shfmt:v3.2.0-alpine
+  stage: Static Analysis
+  before_script:
+    - shfmt -version
+  script:
+    - shfmt -i 2 -ci -d utilities
+  only:
+    changes:
+      - utilities/**/*.sh
+      - .gitlab/static.yml
+      - .gitlab-ci.yml
+  needs: []

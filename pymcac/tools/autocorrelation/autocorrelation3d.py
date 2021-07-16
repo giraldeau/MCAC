@@ -3,17 +3,17 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -21,29 +21,31 @@
 Compute the normalized 3d autocorrelation graph of an aggregate
 """
 
-from typing import Optional, Callable, Tuple, Sequence, Any
-import multiprocessing as mp
 import ctypes
+import multiprocessing as mp
 import os
 from queue import Empty
+from typing import Any, Callable, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
-import numpy as np
 
 from pymcac.tools.volume_surface import volume_surface
 
 
-def autocorrelation3d(spheres: pd.DataFrame,
-                      aggregate: Optional[pd.Series] = None,
-                      nradius: int = 32,
-                      nsamples: int = 16,
-                      repart: Callable = np.geomspace,
-                      start: Optional[float] = None,
-                      end: Optional[float] = None,
-                      nprocs: Optional[int] = None) -> Tuple[np.ndarray, np.ndarray]:
+def autocorrelation3d(
+    spheres: pd.DataFrame,
+    aggregate: Optional[pd.Series] = None,
+    nradius: int = 32,
+    nsamples: int = 16,
+    repart: Callable = np.geomspace,
+    start: Optional[float] = None,
+    end: Optional[float] = None,
+    nprocs: Optional[int] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-        Compute the normalized 3d autocorrelation graph of an aggregate
+    Compute the normalized 3d autocorrelation graph of an aggregate
     """
 
     cols = ["Posx", "Posy", "Posz", "Radius"]
@@ -85,13 +87,12 @@ def autocorrelation3d(spheres: pd.DataFrame,
     return radius[1:], volumes[1:]
 
 
-def parallel_volumes_autoco(spheres: np.ndarray,
-                            lradius: Sequence[float],
-                            nsamples: int,
-                            nprocs: Optional[int] = None) -> np.ndarray:
-    """ Compute all the volumes needed for the autocorrelation
+def parallel_volumes_autoco(
+    spheres: np.ndarray, lradius: np.ndarray, nsamples: int, nprocs: Optional[int] = None
+) -> np.ndarray:
+    """Compute all the volumes needed for the autocorrelation
 
-        including the volume of the initial aggregate
+    including the volume of the initial aggregate
     """
     # prepare output array
     volumes = np.zeros(len(lradius))
@@ -118,13 +119,11 @@ def parallel_volumes_autoco(spheres: np.ndarray,
     return volumes
 
 
-def par_volumes_autoco(q: mp.Queue,
-                       r: mp.Queue,
-                       spheres: np.ndarray) -> None:
+def par_volumes_autoco(q: mp.Queue, r: mp.Queue, spheres: np.ndarray) -> None:
     """
-        This code will be executed by each process
+    This code will be executed by each process
 
-        Pick one job and do it
+    Pick one job and do it
     """
     first = True
 
@@ -149,12 +148,10 @@ def par_volumes_autoco(q: mp.Queue,
                 break
 
 
-def seq_volumes_autoco(spheres: np.ndarray,
-                       lradius: Sequence[float],
-                       nsamples: int) -> np.ndarray:
-    """ Compute all the volumes needed for the autocorrelation
+def seq_volumes_autoco(spheres: np.ndarray, lradius: np.ndarray, nsamples: int) -> np.ndarray:
+    """Compute all the volumes needed for the autocorrelation
 
-        including the volume of the initial aggregate
+    including the volume of the initial aggregate
     """
     # prepare output array
     volumes = np.zeros(len(lradius))
@@ -182,18 +179,16 @@ def seq_volumes_autoco(spheres: np.ndarray,
 
 
 def random_vector() -> np.ndarray:
-    """ Return a random vector on the unit sphere"""
+    """Return a random vector on the unit sphere"""
     theta = np.random.uniform(0, 2 * np.pi)
     phi = np.arccos(1 - 2 * np.random.uniform(0, 1))
 
-    return np.array([np.sin(phi) * np.cos(theta),
-                     np.sin(phi) * np.sin(theta),
-                     np.cos(phi)])
+    return np.array([np.sin(phi) * np.cos(theta), np.sin(phi) * np.sin(theta), np.cos(phi)])
 
 
 def translated_union(vec: np.ndarray, spheres: np.ndarray) -> np.ndarray:
     """
-        Compute the union of an aggegate and a translated copy of itself
+    Compute the union of an aggegate and a translated copy of itself
     """
     nspheres = spheres.shape[0]
 
@@ -208,11 +203,11 @@ def translated_union(vec: np.ndarray, spheres: np.ndarray) -> np.ndarray:
 
 def single_volume_autoco(radius: float, spheres: np.ndarray) -> float:
     """
-        Compute the volume needed for the autocorrelation
+    Compute the volume needed for the autocorrelation
 
-        Except for the initial volume (i == 0),
-        compute the union of an aggegate and a translated copy of itself
-        in a random direction
+    Except for the initial volume (i == 0),
+    compute the union of an aggegate and a translated copy of itself
+    in a random direction
 
     """
     if abs(radius) == 0:
@@ -228,20 +223,12 @@ def single_volume_autoco(radius: float, spheres: np.ndarray) -> float:
 
 class Parallel:
     """
-        A context to do parallel computation
+    A context to do parallel computation
     """
-    __slots__ = ("target",
-                 "nprocs",
-                 "_shared_array",
-                 "shared_array",
-                 "qin",
-                 "qout",
-                 "processes")
 
-    def __init__(self,
-                 target: Callable,
-                 array: np.ndarray,
-                 nprocs: Optional[int] = None) -> None:
+    __slots__ = ("target", "nprocs", "_shared_array", "shared_array", "qin", "qout", "processes")
+
+    def __init__(self, target: Callable, array: np.ndarray, nprocs: Optional[int] = None) -> None:
         self.target = target
         self.nprocs = nprocs
 
@@ -254,17 +241,17 @@ class Parallel:
         self.shared_array = self.shared_array.reshape(array.shape)
         self.shared_array[:] = array
 
-        self.qin = mp.Queue()
-        self.qout = mp.Queue()
+        self.qin: mp.Queue = mp.Queue()
+        self.qout: mp.Queue = mp.Queue()
 
-        self.processes = [mp.Process(target=target,
-                                     args=(self.qin, self.qout,
-                                           self.shared_array))
-                          for _ in range(self.nprocs)]
+        self.processes = [
+            mp.Process(target=target, args=(self.qin, self.qout, self.shared_array))
+            for _ in range(self.nprocs)
+        ]
 
     def __enter__(self) -> "Parallel":
         """
-            Start the processes
+        Start the processes
         """
         for p in self.processes:
             p.start()
@@ -272,7 +259,7 @@ class Parallel:
 
     def __exit__(self, exception_type: Any, exception_value: Any, traceback: Any) -> None:
         """
-            End the processes
+        End the processes
         """
         # first kill them just in case
         for p in self.processes:
@@ -283,22 +270,19 @@ class Parallel:
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-    import numpy as np
     import matplotlib.pyplot as plt
-    from pymcac import MCAC
-    from pymcac import autocorrelation3d
 
-    # The folder with all .h5 and .xmf files
-    MCACSimulation = MCAC("examples_data/classic/")
+    from pymcac import MCAC, validation_data_path
+
+    simu = MCAC(validation_data_path / "pytest_data/")
 
     # Read all data
-    Spheres, Aggregates = MCACSimulation.spheres, MCACSimulation.aggregates
-    
+    Spheres, Aggregates = simu.spheres, simu.aggregates
+
     last_agg = Aggregates.iloc[-1]
 
     _radius, _volumes = autocorrelation3d(Spheres, last_agg)
 
     plt.figure()
-    plt.loglog(_radius, _volumes, '-o')
+    plt.loglog(_radius, _volumes, "-o")
     plt.show()

@@ -2,7 +2,6 @@
 build-*
 *.autosave
 *venv*
-.vscode
 cmake-build-*
 
 # Byte-compiled / optimized / DLL files
@@ -137,9 +136,13 @@ dmypy.json
 *.xmf
 
 # Custom
-.idea
+.idea*
 dask-worker-space
 pymcac/version.py
 bin
 ext
 ext_bin
+artifacts
+validation/*_data
+.coverage
+tmp/

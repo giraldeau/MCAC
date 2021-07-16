@@ -1,0 +1,26 @@
+# Copyright (c) Contributors to the mcac Project. All rights reserved.
+
+FROM python:3.8-buster
+
+ARG GIT_COMMIT="unspecified"
+LABEL version="${GIT_COMMIT}"
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get -qq update \
+    && apt-get upgrade -yqq \
+    && apt-get install -yqq --no-install-recommends \
+        # MCAC dependencies
+        make cmake extra-cmake-modules g++ git \
+        libhdf5-dev libmpfr-dev libgmp-dev libboost-dev libunwind-dev libtiff-dev \
+        libopenblas-dev liblapack-dev libxml2-dev libxslt1-dev \
+        # linter dependencies
+        cppcheck \
+    # reduce layer size
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /builds/MCAC/MCAC/
+RUN pip install --no-cache-dir -U pip wheel setuptools \
+    && pip install --no-cache-dir -U -r /builds/MCAC/MCAC/requirements.txt
+        
+ENV dockerfile_version="${GIT_COMMIT}"

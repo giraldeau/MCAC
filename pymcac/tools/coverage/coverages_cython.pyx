@@ -10,9 +10,12 @@ Compute the overlapping coefficient COV
 """
 
 import numpy as np
+
 cimport numpy as np
 from libc.math cimport sqrt
+
 # noinspection PyUnresolvedReferences
+
 from cython.parallel import prange
 
 
@@ -61,8 +64,8 @@ def coverages_cython(const long[::1]& Aggs,
     cdef Py_ssize_t nsph = len(X)
     cdef Py_ssize_t nAgg = len(Aggs)
 
-    cdef double[::1] res = np.empty(nAgg, dtype=np.double)
-    cdef long[::1] isph = np.empty(nAgg, dtype=np.int)
+    cdef double[::1] res = np.empty(nAgg, dtype=float)
+    cdef long[::1] isph = np.empty(nAgg, dtype=int)
 
     cdef Py_ssize_t iisph = 0
     cdef Py_ssize_t iagg
@@ -104,7 +107,7 @@ def label_argsort(const long[::1]& nspheres,
     """
     cdef Py_ssize_t ntime = nspheres.shape[0]
     cdef Py_ssize_t ndata = values.shape[0]
-    cdef long[::1] idx = np.empty(ndata, dtype=np.int)
+    cdef long[::1] idx = np.empty(ndata, dtype=int)
     cdef Py_ssize_t itime, i
     cdef long start, end
 

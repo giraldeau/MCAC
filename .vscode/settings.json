@@ -1,0 +1,104 @@
+{
+    "cmake.configureArgs": [
+        "-DWITH_IO=ON",
+        "-DWITH_PYTHON=OFF",
+        "-DDEBUG_MCAC=ON"
+    ],
+    "cmake.buildEnvironment": {
+        "LANG": "C"
+    },
+    "cmake.testEnvironment": {
+        "LANG": "C"
+    },
+    "cmake.configureEnvironment": {
+        "LANG": "C"
+    },
+    "cmake.environment": {
+        "LANG": "C"
+    },
+    "files.exclude": {
+        ".eggs": true,
+        ".idea*": true,
+        ".pytest_cache": true,
+        ".mypy_cache": true,
+        ".ipynb_checkpoints": true,
+        "dask-worker-space": true,
+        "ext": true,
+        "ext_bin": true,
+        "htmlcov": true,
+        "pymcac.egg-info": true,
+        "build": true,
+        "venv": true,
+        "**/*.orig": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/vgcore.*": true,
+        "**/*.h5": true,
+        "**/*.xmf": true,
+        "**/*.so": true,
+        ".coverage": true
+    },
+    "search.exclude": {
+        ".eggs": true,
+        ".idea*": true,
+        ".pytest_cache": true,
+        ".mypy_cache": true,
+        ".ipynb_checkpoints": true,
+        "dask-worker-space": true,
+        "ext": true,
+        "ext_bin": true,
+        "htmlcov": true,
+        "pymcac.egg-info": true,
+        "build": true,
+        "venv": true,
+        "tmp": true,
+        "bin": true,
+        "examples_data": true,
+        "validataion/*_data": true,
+        "**/*.orig": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/vgcore.*": true,
+        "**/*.h5": true,
+        "**/*.xmf": true,
+        "**/*.so": true,
+        ".coverage": true
+    },
+    "files.associations": {
+        "*.cpp": "cpp",
+        "*.hpp": "cpp",
+    },
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/include/**",
+        "${workspaceFolder}/src/**"
+    ],
+    "C_Cpp.default.browse.path": [
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/src"
+    ],
+    "C_Cpp.intelliSenseEngineFallback": "Enabled",
+    "C_Cpp.default.browse.limitSymbolsToIncludedHeaders": false,
+    "C_Cpp.vcpkg.enabled": false,
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.cStandard": "c17",
+    "C_Cpp.default.defines": [
+        "DEBUG_MCAC",
+        "WITH_HDF5"
+    ],
+    "cmake.buildTask": true,
+    "terminal.integrated.scrollback": 10000,
+    "gitlab.instanceUrl": "https://gitlab.coria-cfd.fr",
+    "python.formatting.provider": "black",
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [
+        "max-line-length=100",
+        "extend-exclude=\"tmp, venv, ext, ext_bin, cmake-format.py\"",
+        "extend-ignore = \"E203,\""
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true,
+}

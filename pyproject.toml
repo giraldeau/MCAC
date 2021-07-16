@@ -1,0 +1,27 @@
+[tool.pytest.ini_options]
+timeout = 120
+addopts = "-n auto --html=artifacts/pytest.html --self-contained-html --cov=pymcac/ --cov-report=html:artifacts/coverage"
+testpaths = [
+    "pymcac",
+]
+
+[tool.black]
+line-length = 100
+extend-exclude = "tmp"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 100
+extend_skip = [
+    "tmp",
+    "ext",
+    "ext_bin",
+    ]
+skip_gitignore = true
+
+[tool.flake8]
+max-line-length = 100
+extend-exclude="tmp, venv, ext, ext_bin, cmake-format.py"
+extend-ignore = "E203,"
+show_source = "true"
