@@ -18,6 +18,7 @@
 #include "calcul.hpp"
 #include "tools/tools.hpp"
 #include "tools/contact_info.hpp"
+#include "spheres/sphere.hpp"
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -36,6 +37,9 @@ static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggrega
             << " " << aggregates.get_avg_npp()
             << " " << physicalmodel.temperature
             << " " << physicalmodel.box_volume
+            << " " << physicalmodel.monomer_concentration
+            << " " << physicalmodel.u_sg
+            << " " << physicalmodel.flux_nucleation
             << std::endl;
     outfile.close();
 }
@@ -53,21 +57,16 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
         if (physicalmodel.n_iter_without_event % physicalmodel.write_between_event_frequency == 0) {
-            if(physicalmodel.u_sg < 0.0) {
-                // When there is oxidation we save info with a certain frequency only
-                if (total_events % physicalmodel.write_events_frequency_oxid == 0){
-                    aggregates.spheres.save();
-                    aggregates.save();
-                    save_advancement(physicalmodel, aggregates);
-                }
-            } else {
+            if (total_events % physicalmodel.write_events_frequency == 0){
                 aggregates.spheres.save();
                 aggregates.save();
                 save_advancement(physicalmodel, aggregates);
             }
         }
         if (event) {
-            if (aggregates.size() <= multiply_threshold) {
+            if (physicalmodel.with_domain_duplication &&
+                aggregates.size() <= multiply_threshold &&
+                !(physicalmodel.u_sg < 0.0)) {
                 std::cout << "Duplication : " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates";
                 aggregates.duplication();
@@ -159,8 +158,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         }
 
         if(physicalmodel.u_sg >= 0.0) {
-            if (split) std::cout << "splitting occured, but not during oxydation";
-            if (disappear) std::cout << "disappearing occured, but not during oxydation";
+            if (split) std::cout << "splitting occured, but not during oxydation" << std::endl;
+            if (disappear) std::cout << "disappearing occured, but not during oxydation" << std::endl;
         }
 
         //$ Merge
@@ -235,6 +234,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                       << " CPU="     << std::setw(4) << elapse << "s"
                       << " contact=" << std::setw(4) << contact
                       << " split="   << std::setw(4) << split
+                      << " disappear="   << std::setw(4) << disappear
                       << " nucleation="   << std::setw(4) << nucleation << " - " << std::setw(4) << monomers_to_add
                       << " after "   << std::setw(4) << current_n_iter_without_event << " it"
                       << " total_events " << std::setw(4) <<  total_events
@@ -243,7 +243,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ Update physical model
         if (event
             || physicalmodel.with_surface_reactions) {
-            physicalmodel.update(aggregates.size(), aggregates.get_total_volume());
+            physicalmodel.update(aggregates.size(), aggregates.spheres.size(), aggregates.get_total_volume());
         }
         if (physicalmodel.with_flame_coupling) {
             physicalmodel.update_from_flame();

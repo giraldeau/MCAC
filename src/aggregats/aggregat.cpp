@@ -25,7 +25,7 @@
 #include "exceptions.hpp"
 #include "arvo/arvo_mcac_call.hpp"
 #include <iostream>
-
+#include <string.h>
 
 namespace mcac {
 /* getters */
@@ -116,6 +116,36 @@ void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
         update_verlet();
     }
 }
+void Aggregate::set_bulk_density() {
+    /*
+    double dpp_nm = (*dp)*1e+09;
+    if (physicalmodel->with_maturity){
+        newdensity = (-4.30e-04)*std::pow(dpp_nm,4) +
+                (9.12e-02)*std::pow(dpp_nm,3) +
+                (-3.01e+00)*std::pow(dpp_nm,2) +
+                (4.33e+01)*(dpp_nm) + 1.37e+03;
+    } else {
+        newdensity = physicalmodel->density;
+    }
+    */
+    if (physicalmodel->with_maturity){
+        set_CH_ratio();
+        bulk_density = _bulk_density_young+
+                (_bulk_density_mature-_bulk_density_young)/(_CH_mature-_CH_young) *
+                ((*CH_ratio)-_CH_young);
+                throw InputError("Problem with bulk density: " + std::to_string(bulk_density));
+    } else {
+        bulk_density = physicalmodel->density;
+    }
+    if (bulk_density < _bulk_density_young || bulk_density > _bulk_density_mature){
+        throw InputError("Problem with bulk density: " + std::to_string(bulk_density));
+    }
+}
+void Aggregate::set_CH_ratio() noexcept {
+    const double a(4.0), b(1.0);
+    double dpp_nm = (*dp)*1e+09;
+    *CH_ratio = 0.5*(std::erf((dpp_nm-a)/b)+1.0)*(_CH_mature-_CH_young)+_CH_young;
+}
 void Aggregate::translate(std::array<double, 3> vector) noexcept {
     // move the aggregate
     set_position(get_position() + vector);
@@ -131,32 +161,21 @@ void Aggregate::translate(std::array<double, 3> vector) noexcept {
     }
 }
 void Aggregate::init(size_t new_label,
-                     size_t sphere_index) {
+                     size_t sphere_index,
+                     bool nucleation) {
     //initialize data
     set_proper_time(physicalmodel->time);
 
     //random size
-    double diameter = 0;
-    if (physicalmodel->monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        diameter = random_normal(physicalmodel->mean_diameter,physicalmodel->dispersion_diameter);
-    } else if (physicalmodel->monomeres_initialisation_type
-               == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-        // TODO: CHECK WICH ONE TO KEEP
-        if (physicalmodel->dispersion_diameter >= 1.0) {
-            // diameter = std::pow(physicalmodel->mean_diameter,
-            //                     std::sqrt(2.) * std::log(physicalmodel->dispersion_diameter) * inverf(2. * random() - 1.0));
-            diameter = physicalmodel->mean_diameter * std::pow(physicalmodel->dispersion_diameter,
-                                                               std::sqrt(2.) * inverf(2. * random() - 1.0));
-        } else {
-            throw InputError("dispersion_diameter cannot be lower than 1");
-        }
+    double diameter;
+    if (nucleation) {
+        diameter = physicalmodel->random_diameter(physicalmodel->mean_diameter_nucleation,
+                                                  physicalmodel->dispersion_diameter_nucleation);
     } else {
-        throw InputError("Monomere initialisation mode unknown");
+        diameter = physicalmodel->random_diameter(physicalmodel->mean_diameter,
+                                                  physicalmodel->dispersion_diameter);
     }
-    if (diameter <= 0) {
-        diameter = physicalmodel->mean_diameter;
-    }
-    diameter *= 1E-9;
+
     for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
         //random position
         std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
@@ -242,12 +261,14 @@ void Aggregate::update_partial() noexcept {
     *dp = 2 * (*dp) / double(n_spheres);
     vol_pp = vol_pp / double(n_spheres);
 
+    set_bulk_density();
+
     //$ Determination of the friction coefficient
     *f_agg = physicalmodel->friction_coeff(*agregat_volume, vol_pp, 0.5 * (*dp));
     *d_m = physicalmodel->mobility_diameter(*agregat_volume, vol_pp, 0.5 * (*dp));
 
     // Momentum relaxation time and lpm (persistent distance)
-    double masse = physicalmodel->density * (*agregat_volume);
+    double masse = bulk_density * (*agregat_volume);
     double relax_time = mcac::PhysicalModel::relax_time(masse, *f_agg);
     *time_step = 3. * relax_time;
     double diffusivity = physicalmodel->diffusivity(*f_agg);
@@ -361,7 +382,7 @@ void Aggregate::compute_volume_surface() {
         *overlapping = 0.0; // average overlapping and coord. numbers updated here
         double c_v30(0.0), c_v20(0.0), c_s10(0.0);
         double vp_sum(0.0), sp_sum(0.0);
-        int intersections(0);
+        size_t intersections(0);
         for (size_t i = 0; i < n_spheres; i++) {
             // loop over the neighbor list
             for (const auto &it : distances[i]) {
@@ -382,9 +403,9 @@ void Aggregate::compute_volume_surface() {
             intersections += distances[i].size();
         }
         if (intersections > 0) {
-            c_s10 /= static_cast<double>(sp_sum);
-            c_v20 /= static_cast<double>(vp_sum);
-            c_v30 /= static_cast<double>(vp_sum);
+            c_s10 /= sp_sum;
+            c_v20 /= vp_sum;
+            c_v30 /= vp_sum;
             double min_coordination_number = 2 * (1.0 - 1.0 / static_cast<double>(n_spheres));
             *overlapping /= static_cast<double>(intersections);
             *coordination_number = static_cast<double>(intersections) / static_cast<double>(n_spheres);
@@ -650,6 +671,8 @@ void Aggregate::print() const noexcept {
     std::cout << "    Delta t           : " << *time_step << std::endl;
     std::cout << "    Volume            : " << *agregat_volume << std::endl;
     std::cout << "    Surface           : " << *agregat_surface << std::endl;
+    std::cout << "    C/H ratio         : " << *CH_ratio << std::endl;
+    std::cout << "    bulk density      : " << bulk_density << std::endl;
     std::cout << "    Position          : " << *x << " " << *y << " " << *z << std::endl;
     std::cout << "    Proper time       : " << *proper_time << std::endl;
     myspheres.print();

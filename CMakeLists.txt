@@ -18,7 +18,8 @@ externalproject_add(
     INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL
     GIT_REPOSITORY https://github.com/microsoft/GSL.git
     GIT_TAG main
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL -DGSL_TEST=OFF
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/GSL
+               -DGSL_TEST=OFF
                -DCMAKE_BUILD_TYPE=Release
     EXCLUDE_FROM_ALL ON
 )

@@ -34,9 +34,10 @@ public:
     double flux_nucleation,nucleation_accum;     // Nucleation flux [#/m^3-flame/s], accumulated nucleation [#]
     double pressure, temperature, gaz_mean_free_path, viscosity, density;
     double mean_diameter, dispersion_diameter;
+    double mass_nuclei, mean_diameter_nucleation, dispersion_diameter_nucleation;
     double mean_massic_radius, friction_exponnant;
     double time;
-    double volume_fraction, box_lenght,box_volume, aggregate_concentration;
+    double volume_fraction, box_lenght,box_volume, aggregate_concentration, monomer_concentration;
     double rp_min_oxid;     // Minimum d_pp below which the particle disappear
     size_t n_verlet_divisions;
     PickMethods pick_method;
@@ -51,12 +52,13 @@ public:
     size_t number_of_aggregates_limit;
     int n_iter_without_event_limit;
     int random_seed;
-    size_t write_events_frequency_oxid;
+    size_t write_events_frequency;
     size_t write_between_event_frequency;
     size_t full_aggregate_update_frequency;
     bool finished_by_flame;
     std::experimental::filesystem::path output_dir;
     std::string flame_file,interpotential_file;
+    bool with_domain_duplication;
     bool with_nucleation;
     bool with_collisions;
     bool with_surface_reactions;
@@ -65,11 +67,13 @@ public:
     bool individual_surf_reactions;
     bool with_potentials,with_external_potentials,with_dynamic_random_charges;
     bool with_electric_charges;
+    bool with_maturity;
     FlameCoupling flame;
     Interpotential intpotential_info;
 
     explicit PhysicalModel(const std::string &fichier_param);
     [[gnu::pure]] double cunningham(double r) const;
+    [[gnu::pure]] double random_diameter(double mean_diameter, double dispersion_diameter) const;
     [[gnu::pure]] double grow(double r, double dt) const;
     [[gnu::pure]] double friction_exponent(double sphere_radius) const;
     [[gnu::pure]] double friction_coeff(double aggregate_volume, double sphere_volume, double sphere_radius) const;
@@ -78,7 +82,7 @@ public:
     [[gnu::pure]] double mobility_diameter(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     [[gnu::pure]] int get_random_charge(double mobility_diameter) const;
     void print() const;
-    void update(size_t n_aggregates, double total_volume) noexcept;
+    void update(size_t n_aggregates, size_t n_monomers, double total_volume) noexcept;
     void nucleation(double dt) noexcept;
     void update_from_flame();
     void update_temperature(double new_temperature) noexcept;

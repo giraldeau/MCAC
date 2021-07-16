@@ -41,6 +41,7 @@ void Aggregate::setpointers() noexcept {
     overlapping = &(*storage)[AggregatesFields::AGGREGAT_OVERLAPPING][index_in_storage];
     coordination_number = &(*storage)[AggregatesFields::AGGREGAT_COORDINATION_NUMBER][index_in_storage];
     d_m = &(*storage)[AggregatesFields::AGGREGAT_D_M][index_in_storage];
+    CH_ratio = &(*storage)[AggregatesFields::AGGREGAT_CH_RATIO][index_in_storage];
 }
 Aggregate::Aggregate() noexcept:
     ElemStorage<AggregatesFields::AGGREGAT_NFIELDS, AggregatList>(),
@@ -63,9 +64,11 @@ Aggregate::Aggregate() noexcept:
     overlapping(nullptr),
     coordination_number(nullptr),
     d_m(nullptr),
+    CH_ratio(nullptr),
     electric_charge(0),
     n_spheres(0),
     label(0),
+    bulk_density(0.),
     distances(),
     distances_center(),
     volumes(),
@@ -96,9 +99,11 @@ Aggregate::Aggregate(AggregatList *aggregat_list, size_t newlabel) noexcept:
     overlapping(nullptr),
     coordination_number(nullptr),
     d_m(nullptr),
+    CH_ratio(nullptr),
     electric_charge(0),
     n_spheres(0),
     label(newlabel),
+    bulk_density(0.),
     distances(),
     distances_center(),
     volumes(),
@@ -133,9 +138,11 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list, size_t
     overlapping(nullptr),
     coordination_number(nullptr),
     d_m(nullptr),
+    CH_ratio(nullptr),
     electric_charge(0),
     n_spheres(other.n_spheres),
     label(other.label),
+    bulk_density(other.bulk_density),
     distances(other.distances),
     distances_center(other.distances_center),
     volumes(other.volumes),

@@ -74,7 +74,7 @@ void AggregatList::add(size_t n) {
     for (size_t i = 0; i < n; i++) {
         size_t i_agg = initial_n_agg + i;
         size_t i_sph = initial_n_sph + i;
-        list[i_agg]->init(i_agg, i_sph);
+        list[i_agg]->init(i_agg, i_sph, true);
     }
     refresh();
 }
@@ -356,14 +356,9 @@ bool AggregatList::test_free_space(std::array<double, 3> pos, double radius) con
 bool AggregatList::croissance_surface(double dt) {
     bool removed_aggregate(false);
     for (auto aggregate = list.begin(); aggregate != list.end(); ) {
-        if ((*aggregate)->croissance_surface(dt)) {
-            auto index = std::distance(list.begin(), aggregate);
-            // This aggregate has no spheres anymore
-            std::cout << " removed by croissance_surface: aggregate= " << (*aggregate)->get_label() << "/ total= " << list.size() << std::endl;
-            remove(size_t(index));
-            setpointers();
+        auto index = std::distance(list.begin(), aggregate);
+        if (croissance_surface(dt, size_t(index))) {
             removed_aggregate = true;
-
             aggregate = list.begin() + index;
         } else {
             aggregate++ ;
