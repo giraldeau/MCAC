@@ -295,7 +295,7 @@ static double volume_alpha_correction(const double coordination_number,
                         - c_30 * difference_coordination * 0.62741833
                         - pow(difference_coordination, 1.5) * 0.00332425;
     correction = std::min(std::max(correction, 0.0), 1.0);
-    return std::max(1.0 - correction, alpha_vs_extreme);
+    return 1.0 - correction;
 }
 static double surface_alpha_correction(const double coordination_number,
                                        const double c_10,
@@ -305,7 +305,7 @@ static double surface_alpha_correction(const double coordination_number,
                         - std::pow(c_10, 2) * difference_coordination * 0.70132500
                         - std::pow(difference_coordination, 2) * 0.00450000;
     correction = std::min(std::max(correction, 0.0), 1.0);
-    return std::max(1.0 - correction, alpha_vs_extreme);
+    return 1.0 - correction;
 }
 //####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
 void Aggregate::compute_volume_surface() {
@@ -409,8 +409,10 @@ void Aggregate::compute_volume_surface() {
             double min_coordination_number = 2 * (1.0 - 1.0 / static_cast<double>(n_spheres));
             *overlapping /= static_cast<double>(intersections);
             *coordination_number = static_cast<double>(intersections) / static_cast<double>(n_spheres);
-            *agregat_volume *= volume_alpha_correction(*coordination_number, c_v20, c_v30, min_coordination_number);
-            *agregat_surface *= surface_alpha_correction(*coordination_number, c_s10, min_coordination_number);
+            *agregat_volume *= std::max(alpha_vs_extreme,
+                                        volume_alpha_correction(*coordination_number, c_v20, c_v30, min_coordination_number));
+            *agregat_surface *= std::max(alpha_vs_extreme,
+                                         surface_alpha_correction(*coordination_number, c_s10, min_coordination_number));
         }
     }
     if (*agregat_volume <= 0 || *agregat_surface <= 0) {
