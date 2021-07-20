@@ -295,7 +295,7 @@ static double volume_alpha_correction(const double coordination_number,
                         - c_30 * difference_coordination * 0.62741833
                         - pow(difference_coordination, 1.5) * 0.00332425;
     correction = std::min(std::max(correction, 0.0), 1.0);
-    return 1.0 - correction;
+    return std::max(1.0 - correction, alpha_vs_extreme);
 }
 static double surface_alpha_correction(const double coordination_number,
                                        const double c_10,
@@ -305,7 +305,7 @@ static double surface_alpha_correction(const double coordination_number,
                         - std::pow(c_10, 2) * difference_coordination * 0.70132500
                         - std::pow(difference_coordination, 2) * 0.00450000;
     correction = std::min(std::max(correction, 0.0), 1.0);
-    return 1.0 - correction;
+    return std::max(1.0 - correction, alpha_vs_extreme);
 }
 //####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
 void Aggregate::compute_volume_surface() {
