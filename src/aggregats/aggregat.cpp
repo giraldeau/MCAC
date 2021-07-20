@@ -215,6 +215,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     (*spheres)[sphere_index]->init_val(position, sphere_diameter * 0.5);
     myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
+    alpha_vs_extreme = 1.0/static_cast<double>(n_spheres);
     *d_m = sphere_diameter;
     // random initial charge
     if (physicalmodel->with_electric_charges) {
@@ -519,6 +520,7 @@ bool Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     // merge the spheresLists
     myspheres.merge(other->myspheres);
     n_spheres = myspheres.size();
+    alpha_vs_extreme = 1.0/static_cast<double>(n_spheres);
     //update_distances_and_overlapping();
     update();
     return true;
@@ -616,6 +618,7 @@ void Aggregate::remove_sphere(const size_t &id) noexcept {
     }
     external_storage->spheres.remove(id);
     n_spheres = myspheres.size();
+    alpha_vs_extreme = 1.0/static_cast<double>(n_spheres);
     if (n_spheres > 0) {
         std::array<double, 3> refpos = myspheres[0]->get_position();
         for (const auto &sph : myspheres) {
