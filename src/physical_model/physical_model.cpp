@@ -328,6 +328,8 @@ void PhysicalModel::print() const {
     }
     if (individual_surf_reactions) {
         std::cout << " With individual surf. reactions" << std::endl;
+        std::cout << "   - (!) Parameter full_aggregate_update_frequency recomended to be =1, now is " <<
+                     full_aggregate_update_frequency << std::endl;
     } else {
         std::cout << " Without individual surf. reactions" << std::endl;
     }
