@@ -51,6 +51,7 @@ pymcac_tests:
     reports:
       junit: artifacts/pytest.xml
       cobertura: coverage.xml
+  coverage: ^TOTAL.+?(\d+\%)$
   needs: ["pytest_data"]
   dependencies:
     - pytest_data
