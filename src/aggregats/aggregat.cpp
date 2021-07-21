@@ -133,11 +133,11 @@ void Aggregate::set_bulk_density() {
         bulk_density = _bulk_density_young+
                 (_bulk_density_mature-_bulk_density_young)/(_CH_mature-_CH_young) *
                 ((*CH_ratio)-_CH_young);
+        if (bulk_density < _bulk_density_young || bulk_density > _bulk_density_mature){
+            throw InputError("Problem with bulk density: " + std::to_string(bulk_density));
+        }
     } else {
         bulk_density = physicalmodel->density;
-    }
-    if (bulk_density < _bulk_density_young || bulk_density > _bulk_density_mature){
-        throw InputError("Problem with bulk density: " + std::to_string(bulk_density));
     }
 }
 void Aggregate::set_CH_ratio() noexcept {
