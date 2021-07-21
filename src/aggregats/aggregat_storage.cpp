@@ -143,6 +143,7 @@ Aggregate::Aggregate(const Aggregate &other, AggregatList *aggregat_list, size_t
     CH_ratio(nullptr),
     electric_charge(0),
     n_spheres(other.n_spheres),
+    alpha_vs_extreme(other.alpha_vs_extreme),
     label(other.label),
     bulk_density(other.bulk_density),
     distances(other.distances),
