@@ -33,6 +33,7 @@ pymcac_tests:
     - pip install --no-use-pep517 -e .
     - pytest --cov=pymcac/ --cov-report=xml --junitxml=artifacts/pytest.xml
     - coverage xml
+    - coverage report
   only:
     changes:
       - src/**/*
