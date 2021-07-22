@@ -55,6 +55,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     box_volume(0.),
     aggregate_concentration(0.0),
     monomer_concentration(0.0),
+    total_surface_concent(0.0),
+    total_volume_concent(0.0),
     rp_min_oxid(0.166e-09),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),

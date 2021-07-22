@@ -239,7 +239,10 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         //$ Update physical model
         if (event
             || physicalmodel.with_surface_reactions) {
-            physicalmodel.update(aggregates.size(), aggregates.spheres.size(), aggregates.get_total_volume());
+            physicalmodel.update(aggregates.size(),
+                                 aggregates.spheres.size(),
+                                 aggregates.get_total_volume(),
+                                 aggregates.get_total_surface());
         }
         if (physicalmodel.with_flame_coupling) {
             physicalmodel.update_from_flame();
