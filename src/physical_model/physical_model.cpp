@@ -416,10 +416,12 @@ void PhysicalModel::print() const {
     }
     std::cout << std::endl;
 }
-void PhysicalModel::update(size_t n_aggregates, size_t n_monomers, double total_volume) noexcept {
+void PhysicalModel::update(size_t n_aggregates, size_t n_monomers, double new_total_volume, double new_total_surface) noexcept {
+    total_volume_concent = new_total_volume / box_volume;
+    total_surface_concent = new_total_surface / box_volume;
     aggregate_concentration = static_cast<double>(n_aggregates) / box_volume;
     monomer_concentration = static_cast<double>(n_monomers) / box_volume;
-    volume_fraction = total_volume / box_volume;
+    volume_fraction = new_total_volume / box_volume;
 }
 void PhysicalModel::nucleation(double dt) noexcept {
     double delta_nucl = flux_nucleation * box_volume * dt;
