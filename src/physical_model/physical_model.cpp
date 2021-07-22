@@ -467,9 +467,11 @@ void PhysicalModel::update_from_flame() {
     update_temperature(*previous_temp + t * (*next_temp - *previous_temp) / dt);
 
     // 2. surface growth velocity (dRp/dt)
-    auto next_u_sg = flame.u_sg.begin() + (next_t - flame.t_res.begin());
-    auto previous_u_sg = flame.u_sg.begin() + (previous_t - flame.t_res.begin());
-    u_sg = *previous_u_sg + t * (*next_u_sg - *previous_u_sg) / dt;
+    auto next_J_sg = flame.J_sg.begin() + (next_t - flame.t_res.begin());
+    auto previous_J_sg = flame.J_sg.begin() + (previous_t - flame.t_res.begin());
+    auto J_sg = *previous_J_sg + t * (*next_J_sg - *previous_J_sg) / dt;
+    flux_surfgrowth = J_sg/total_surface_concent;
+    u_sg = flux_surfgrowth/density;
 
     // 3. nucleation flux (dN_pp/dt)
     auto next_J_nucl = flame.J_nucl.begin() + (next_t - flame.t_res.begin());
