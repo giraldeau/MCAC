@@ -32,6 +32,13 @@ namespace mcac {
     }
     return total_volume;
 }
+[[gnu::pure]]  double AggregatList::get_total_surface() const {
+    double total_surface(0.0);
+    for (const auto& agg : list) {
+        total_surface += *agg->agregat_surface;
+    }
+    return total_surface;
+}
 [[gnu::pure]] double AggregatList::get_avg_npp() const {
     return avg_npp;
 }
