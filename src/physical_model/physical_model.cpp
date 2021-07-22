@@ -211,6 +211,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         std::cout << "WARNING: You should select a volsurf_method in order to take correctly in account" << std::endl
                   << "         Overlap induced by surface reactions" << std::endl;
     }
+    double tot_volume_pp(0.0), tot_surface_pp(0.0);
     if (monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
@@ -220,6 +221,15 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
                                            + 6 * std::pow(mean_diameter, 2) * std::pow(dispersion_diameter, 2)
                                            + 3 * std::pow(dispersion_diameter, 4))
                              / (std::pow(mean_diameter, 3) + 3 * mean_diameter * std::pow(dispersion_diameter, 2));
+        // Total volume/surface pp: Moran, J., , et al. Powder Tech, 2018, vol. 330, p. 67-79.
+        double mean_radius = 0.5 * mean_diameter * 1E-9;
+        double dispersion_radius = 0.5 * dispersion_diameter * 1E-9;
+        tot_volume_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi/3.0) * (mean_radius) *\
+                        (std::pow(mean_radius, 2) + 3.0*std::pow(dispersion_radius, 2));
+        tot_surface_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi) *\
+                        (std::pow(mean_radius, 2) + std::pow(dispersion_radius, 2));
     } else if (monomeres_initialisation_type == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
@@ -227,6 +237,14 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
                               1. / 3.);
         mean_massic_radius = 0.5 * mean_diameter * 1E-9
                              * std::exp(1.5 * std::pow(std::log(dispersion_diameter), 2));  // Hatch-Choate
+        // Total volume/surface pp: Moran, J., , et al. Powder Tech, 2018, vol. 330, p. 67-79.
+        double mean_radius = 0.5 * mean_diameter * 1E-9;
+        tot_volume_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi/3.0) * std::pow(mean_radius, 3) *\
+                        std::exp(4.5 * std::pow(std::log(dispersion_diameter), 2));
+        tot_surface_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi) * std::pow(mean_radius, 2) *\
+                        std::exp(2 * std::pow(std::log(dispersion_diameter), 2));
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
