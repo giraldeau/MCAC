@@ -154,6 +154,12 @@ void AggregatList::duplication() {
     for (const auto& agg : list) {
         agg->set_verlet(&verlet);
     }
+
+    //$ Update Physical model
+    physicalmodel->update(size(),
+                          spheres.size(),
+                          get_total_volume(),
+                          get_total_surface());
 }
 InterPotentialRegime AggregatList::check_InterPotentialRegime(AggregateContactInfo contact_info) {
     auto moving_sphere = contact_info.moving_sphere.lock();
