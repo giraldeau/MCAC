@@ -38,7 +38,7 @@ public:
     double mean_massic_radius, friction_exponnant;
     double time;
     double volume_fraction, box_lenght,box_volume, aggregate_concentration, monomer_concentration;
-    double total_surface,total_volume;
+    double total_surface_concent,total_volume_concent;
     double rp_min_oxid;     // Minimum d_pp below which the particle disappear
     size_t n_verlet_divisions;
     PickMethods pick_method;
@@ -83,7 +83,7 @@ public:
     [[gnu::pure]] double mobility_diameter(double aggregate_volume, double sphere_volume, double sphere_radius) const;
     [[gnu::pure]] int get_random_charge(double mobility_diameter) const;
     void print() const;
-    void update(size_t n_aggregates, size_t n_monomers, double total_volume) noexcept;
+    void update(size_t n_aggregates, size_t n_monomers, double new_total_volume, double new_total_surface) noexcept;
     void nucleation(double dt) noexcept;
     void update_from_flame();
     void update_temperature(double new_temperature) noexcept;
