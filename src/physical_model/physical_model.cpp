@@ -251,9 +251,11 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     box_volume = std::pow(box_lenght,3);
     update_temperature(temperature);
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
-    // Particle number concentration
-    aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
+    // Particle number, volume, and surface area concentration
+    aggregate_concentration = static_cast<double>(n_monomeres) / box_volume;
     monomer_concentration = aggregate_concentration;
+    total_surface_concent = tot_surface_pp / box_volume;
+    total_volume_concent = tot_volume_pp / box_volume;
 
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
