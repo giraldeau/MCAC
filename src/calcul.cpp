@@ -42,6 +42,15 @@ static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggrega
             << std::endl;
     outfile.close();
 }
+void print_bool(bool the_bool, int witdh, std::string txt)
+{
+    if (the_bool) {
+        std::cout << std::setw(witdh / 2 + witdh % 2) << "X" << std::setw(witdh / 2 + 3) << " | ";
+        // std::cout << std::setw(witdh) << txt << " | ";
+    } else {
+        std::cout << std::setw(witdh + 3) << " | ";
+    }
+}
 /********************************************************************************
 * Calcul: The main function of MCAC
 ********************************************************************************/
@@ -220,21 +229,35 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
 
         //$ Show progress
         if (event) {
+            if (total_events % 20 == 1) {
+                std::cout << std::setw(8) << "#"
+                          << " | " << std::setw(9) << "Npp_avg"
+                          << " | " << std::setw(8) << "NAgg"
+                          << " | " << std::setw(10) << "Time"
+                          << " | " << std::setw(10) << "CPU"
+                          << " | " << std::setw(7) << "contact"
+                          << " | " << std::setw(5) << "merge"
+                          << " | " << std::setw(5) << "split"
+                          << " | " << std::setw(9) << "disappear"
+                          << " | " << std::setw(10) << "nucleation"
+                          << " | " << std::setw(8) << "after" << std::endl;
+            }
             clock_t now = clock();
             double elapse = double(now - physicalmodel.cpu_start) / CLOCKS_PER_SEC;
             std::cout.precision(3);
-            std::cout << std::scientific << std::boolalpha;
-            std::cout << " Npp_avg=" << std::setw(4) << aggregates.get_avg_npp()
-                      << " NAgg="    << std::setw(4) << aggregates.size()
-                      << " Time="    << std::setw(4) << physicalmodel.time << "s"
-                      << " CPU="     << std::setw(4) << elapse << "s"
-                      << " contact=" << std::setw(4) << contact
-                      << " split="   << std::setw(4) << split
-                      << " disappear="   << std::setw(4) << disappear
-                      << " nucleation="   << std::setw(4) << nucleation << " - " << std::setw(4) << monomers_to_add
-                      << " after "   << std::setw(4) << current_n_iter_without_event << " it"
-                      << " total_events " << std::setw(4) <<  total_events
-                      << std::endl;
+            std::cout << std::scientific;
+            std::cout << std::setw(8) << total_events << " | " << std::setw(8)
+                      << aggregates.get_avg_npp() << " | " << std::setw(8) << aggregates.size()
+                      << " | " << std::setw(8) << physicalmodel.time << "s"
+                      << " | " << std::setw(8) << elapse << "s"
+                      << " | ";
+            print_bool(contact, 7, "contact");
+            print_bool(merge, 5, "merge");
+            print_bool(split, 5, "split");
+            print_bool(disappear, 9, "disappear");
+
+            std::cout << std::setw(10) << monomers_to_add << " | " << std::setw(8)
+                      << current_n_iter_without_event << std::endl;
         }
         //$ Update physical model
         if (event
