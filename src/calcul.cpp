@@ -57,7 +57,8 @@ void print_bool(bool the_bool, int witdh, std::string txt)
 void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     // contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool event(true);
-    size_t multiply_threshold = aggregates.size() / 8;
+    size_t duplication_threshold = aggregates.size() / 8;
+    size_t reduction_threshold = aggregates.size() * 8;
     size_t total_events(0);
 
     physicalmodel.print();
@@ -73,13 +74,23 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         }
         if (event) {
             if (physicalmodel.with_domain_duplication &&
-                aggregates.size() <= multiply_threshold &&
+                aggregates.size() <= duplication_threshold &&
                 !(physicalmodel.u_sg < 0.0)) {
                 std::cout << "Duplication : " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates";
                 aggregates.duplication();
-                multiply_threshold = aggregates.size() / 8;
+                duplication_threshold = aggregates.size() / 8;
                 std::cout << " duplicated into " << aggregates.spheres.size()
+                          << " spheres in " << aggregates.size() << " aggregates" << std::endl;
+            }
+
+            if (physicalmodel.with_domain_reduction &&
+                aggregates.size() >= reduction_threshold) {
+                std::cout << "Reduction : " << aggregates.spheres.size()
+                          << " spheres in " << aggregates.size() << " aggregates";
+                aggregates.reduction();
+                reduction_threshold = aggregates.size() * 8;
+                std::cout << " reduced to " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates" << std::endl;
             }
         }

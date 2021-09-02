@@ -56,6 +56,7 @@ public:
     void refresh();
     void sort_time_steps(double factor);
     void duplication();
+    void reduction();
     bool split();
     bool split(const size_t numagg);
     bool merge(AggregateContactInfo contact_info);

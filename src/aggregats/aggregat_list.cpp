@@ -148,6 +148,105 @@ void AggregatList::duplication() {
         agg->set_verlet(&verlet);
     }
 }
+void AggregatList::reduction() {
+
+    //$ update box
+    physicalmodel->box_lenght /= 2;
+    physicalmodel->box_volume = std::pow(physicalmodel->box_lenght,3);
+
+    //$ remove aggregates outside the box
+    auto aggregate = list.begin();
+    while (aggregate != list.end()) {
+        auto index = std::distance(list.begin(), aggregate);
+
+        auto[x, y, z] = (*aggregate)->get_position();
+
+        if (x>physicalmodel->box_lenght || 
+            y>physicalmodel->box_lenght || 
+            z>physicalmodel->box_lenght) {
+
+            auto nspheres = (*aggregate)->size();
+            while (nspheres > 0) {
+                auto sphere = (*aggregate)->myspheres.begin() + nspheres - 1;
+                remove_sphere((*sphere)->get_index());
+                nspheres--;
+            }
+            spheres.setpointers();
+            setpointers();
+
+            aggregate = list.begin() + index;
+        } else {
+            aggregate = list.begin() + index + 1;
+        }
+    }
+
+    //$ update Verlet
+    for (const auto& agg : list) {
+        agg->unset_verlet();
+    }
+    verlet = Verlet(physicalmodel->n_verlet_divisions, physicalmodel->box_lenght);
+    for (const auto& agg : list) {
+        agg->set_verlet(&verlet);
+    }
+
+    //$ remove aggregates that collide with others due to new periodicity
+    aggregate = list.begin();
+    while (aggregate != list.end()) {
+        auto index = std::distance(list.begin(), aggregate);
+
+        auto[x, y, z] = (*aggregate)->get_position();
+
+        double dist_x = physicalmodel->box_lenght - x;
+        double dist_y = physicalmodel->box_lenght - y;
+        double dist_z = physicalmodel->box_lenght - z;
+
+        double rmax = (*aggregate)->get_rmax();
+        bool new_contact = false;
+        // only if the aggregate is straddling the new periodicity limits
+        if (dist_x < rmax || dist_y < rmax || dist_z < rmax) {
+
+            // Use Verlet to reduce search of potential collision
+            std::vector<size_t> neighborhood(get_neighborhood(index, {0., 0., 0.}, 0.));
+
+            // Assimilate Aggregate as sphere to drasticly speed-up search
+            std::multimap<double, size_t> filtered_neighborhood(filter_neighborhood(index, {0., 0., 0.}, neighborhood, 0.));
+
+            //$ loop on the agregates potentially in contact
+            for (auto suspect : filtered_neighborhood) {
+                auto[suspect_distance, id] = suspect;
+
+                if (contact(**aggregate, *list[id])) {
+                    auto[other_x, other_y, other_z] = list[id]->get_position();
+                    bool over_x = (other_x - physicalmodel->box_lenght/2) * (x - physicalmodel->box_lenght/2) < 0;
+                    bool over_y = (other_y - physicalmodel->box_lenght/2) * (y - physicalmodel->box_lenght/2) < 0;
+                    bool over_z = (other_z - physicalmodel->box_lenght/2) * (z - physicalmodel->box_lenght/2) < 0;
+
+                    new_contact = over_x || over_y || over_z;   
+                }
+                if (new_contact) {
+                    break;
+                }
+            }
+        }
+
+        if (new_contact) {
+            std::cout << " WARNING: removing aggregate during reduction due to new overlap" << std::endl;
+
+            auto nspheres = (*aggregate)->size();
+            while (nspheres > 0) {
+                auto sphere = (*aggregate)->myspheres.begin() + nspheres - 1;
+                remove_sphere((*sphere)->get_index());
+                nspheres--;
+            }
+            spheres.setpointers();
+            setpointers();
+
+            aggregate = list.begin() + index;
+        } else {
+            aggregate = list.begin() + index + 1;
+        }
+    }
+}
 InterPotentialRegime AggregatList::check_InterPotentialRegime(AggregateContactInfo contact_info) {
     auto moving_sphere = contact_info.moving_sphere.lock();
     auto other_sphere = contact_info.other_sphere.lock();
