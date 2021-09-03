@@ -424,7 +424,7 @@ void PhysicalModel::update(size_t n_aggregates, size_t n_monomers, double total_
 }
 void PhysicalModel::nucleation(double dt) noexcept {
     double delta_nucl = flux_nucleation * box_volume * dt;
-    nucleation_accum += delta_nucl *100;
+    nucleation_accum += delta_nucl;
 }
 void PhysicalModel::update_from_flame() {
     auto next_t = std::upper_bound(flame.t_res.begin(), flame.t_res.end(), time);
