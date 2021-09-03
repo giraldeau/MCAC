@@ -79,7 +79,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 std::cout << "Duplication : " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates";
                 aggregates.duplication();
-                duplication_threshold = aggregates.size() / 8;
+                //duplication_threshold = aggregates.size() / 8;
+                //reduction_threshold = aggregates.size() * 8;
                 std::cout << " duplicated into " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates" << std::endl;
             }
@@ -89,7 +90,8 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 std::cout << "Reduction : " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates";
                 aggregates.reduction();
-                reduction_threshold = aggregates.size() * 8;
+                //duplication_threshold = aggregates.size() / 8;
+                //reduction_threshold = aggregates.size() * 8;
                 std::cout << " reduced to " << aggregates.spheres.size()
                           << " spheres in " << aggregates.size() << " aggregates" << std::endl;
             }
