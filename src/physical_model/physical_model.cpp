@@ -72,6 +72,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
     random_seed(-1),
+    write_Delta_t(1e+06),
     write_events_frequency(1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
@@ -174,6 +175,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
     // output
+    inipp::extract(ini.sections["output"]["write_Delta_t"], write_Delta_t);
     inipp::extract(ini.sections["output"]["write_events_frequency"], write_events_frequency);
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
@@ -336,6 +338,7 @@ void PhysicalModel::print() const {
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_lenght << " (m)" << std::endl
               << " FV                              : " << volume_fraction << " (-)" << std::endl
+              << " write_Delta_t                   : " << write_Delta_t*(1e+03) << " (ms)" << std::endl
               << " write_between_event_frequency   : " << write_between_event_frequency << std::endl
               << " write_events_frequency          : " << write_events_frequency << std::endl;
     if (with_domain_duplication) {

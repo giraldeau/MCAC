@@ -49,6 +49,7 @@ public:
     size_t n_iter_without_event;
     clock_t cpu_start;
     double cpu_limit, physical_time_limit;
+    double write_Delta_t;
     int mean_monomere_per_aggregate_limit;
     size_t number_of_aggregates_limit;
     int n_iter_without_event_limit;

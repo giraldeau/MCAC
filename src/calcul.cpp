@@ -50,6 +50,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     bool event(true);
     size_t multiply_threshold = aggregates.size() / 8;
     size_t total_events(0);
+    size_t write_phys_time_int(0);
 
     physicalmodel.print();
 
@@ -61,6 +62,13 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 aggregates.save();
                 save_advancement(physicalmodel, aggregates);
             }
+        }
+        size_t flo = floor(physicalmodel.time/physicalmodel.write_Delta_t);
+        if (flo > write_phys_time_int){
+            write_phys_time_int = flo;
+            aggregates.spheres.save();
+            aggregates.save();
+            save_advancement(physicalmodel, aggregates);
         }
         if (event) {
             if (physicalmodel.with_domain_duplication &&
