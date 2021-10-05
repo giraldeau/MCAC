@@ -431,11 +431,13 @@ void Aggregate::compute_mass_center() noexcept {
     std::array<double, 3> r{0., 0., 0.};
 
     //$ For the Spheres i in Agg Id
+    double sum_volume(0.0);
     for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of the position of the center of mass
         r += myspheres[i]->get_relative_position() * volumes[i];
+        sum_volume += volumes[i];
     }
-    r /= *agregat_volume;
+    r /= sum_volume;
     for (size_t i = 0; i < _loopsize; i++) {
         std::array<double, 3> diff{myspheres[i]->get_relative_position() - r};
         distances_center[i] = std::sqrt(std::pow(diff[0], 2) + std::pow(diff[1], 2) + std::pow(diff[2], 2));
@@ -464,14 +466,16 @@ void Aggregate::compute_giration_radius() noexcept {
     // they are used  used in the final formula of the Radius of Gyration
     double arg(0.);
     double brg(0.);
+    double sum_volume(0.0);
     const size_t _loopsize(n_spheres);
     for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of Rg
         arg = arg + volumes[i] * std::pow(sphere_distance_center(i), 2); // distance to the gravity center
         brg = brg + volumes[i] * std::pow(myspheres[i]->get_radius(), 2);
+        sum_volume += volumes[i];
     }
-    *rg = std::sqrt(std::abs((arg + 3. / 5. * brg) / (*agregat_volume)));
-    *agregat_volume = std::abs(*agregat_volume);
+    *rg = std::sqrt(std::abs((arg + 3. / 5. * brg) / sum_volume));
+    //*agregat_volume = std::abs(*agregat_volume);
 }
 //#####################################################################################################################
 
