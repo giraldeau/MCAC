@@ -289,23 +289,31 @@ void Aggregate::update() noexcept {
 static double volume_alpha_correction(const double coordination_number,
                                       const double c_20,
                                       const double c_30,
-                                      const double min_coordination_number) noexcept {
+                                      const double min_coordination_number,
+                                      const double alpha_vs_extreme) noexcept {
     double difference_coordination = std::abs(coordination_number - min_coordination_number);
     double correction = 0.25 * (3.0 * c_20 - c_30) * coordination_number
                         - c_30 * difference_coordination * 0.62741833
                         - pow(difference_coordination, 1.5) * 0.00332425;
-    correction = std::min(std::max(correction, 0.0), 1.0);
-    return 1.0 - correction;
+    if (correction < 0.0) {correction = 1.0;};
+    correction = std::min(correction, 1.0);
+    double alpha_v = 1.0 - correction;
+    alpha_v = std::max(alpha_v, alpha_vs_extreme);
+    return alpha_v;
 }
 static double surface_alpha_correction(const double coordination_number,
                                        const double c_10,
-                                       const double min_coordination_number) noexcept {
+                                       const double min_coordination_number,
+                                       const double alpha_vs_extreme) noexcept {
     double difference_coordination = std::abs(coordination_number - min_coordination_number);
     double correction = 0.5 * c_10 * coordination_number
-                        - std::pow(c_10, 2) * difference_coordination * 0.70132500
-                        - std::pow(difference_coordination, 2) * 0.00450000;
-    correction = std::min(std::max(correction, 0.0), 1.0);
-    return 1.0 - correction;
+                        - std::pow(c_10, 2) * difference_coordination * 0.29611
+                        - std::pow(difference_coordination, 2) * 0.00155632;
+    if (correction < 0.0) {correction = 1.0;};
+    correction = std::min(correction, 1.0);
+    double alpha_s = 1.0 - correction;
+    alpha_s = std::max(alpha_s, alpha_vs_extreme);
+    return alpha_s;
 }
 //####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
 void Aggregate::compute_volume_surface() {
@@ -409,10 +417,9 @@ void Aggregate::compute_volume_surface() {
             double min_coordination_number = 2 * (1.0 - 1.0 / static_cast<double>(n_spheres));
             *overlapping /= static_cast<double>(intersections);
             *coordination_number = static_cast<double>(intersections) / static_cast<double>(n_spheres);
-            *agregat_volume *= std::max(alpha_vs_extreme,
-                                        volume_alpha_correction(*coordination_number, c_v20, c_v30, min_coordination_number));
-            *agregat_surface *= std::max(alpha_vs_extreme,
-                                         surface_alpha_correction(*coordination_number, c_s10, min_coordination_number));
+
+            *agregat_volume *= volume_alpha_correction(*coordination_number, c_v20, c_v30, min_coordination_number, alpha_vs_extreme);
+            *agregat_surface *= surface_alpha_correction(*coordination_number, c_s10, min_coordination_number, alpha_vs_extreme);
         }
     }
     if (*agregat_volume <= 0 || *agregat_surface <= 0) {
