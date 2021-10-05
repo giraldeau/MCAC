@@ -60,6 +60,9 @@ class AdvancementReader:
                     "avg_npp",
                     "temperature",
                     "BoxVolume",
+                    "monomer_concentration",
+                    "u_sg",
+                    "flux_nucleation",
                 ],
             )
             .groupby(by="Time", sort=True)

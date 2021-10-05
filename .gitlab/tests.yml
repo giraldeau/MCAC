@@ -33,6 +33,7 @@ pymcac_tests:
     - pip install --no-use-pep517 -e .
     - pytest --cov=pymcac/ --cov-report=xml --junitxml=artifacts/pytest.xml
     - coverage xml
+    - coverage report
   only:
     changes:
       - src/**/*
@@ -51,6 +52,7 @@ pymcac_tests:
     reports:
       junit: artifacts/pytest.xml
       cobertura: coverage.xml
+  coverage: /^TOTAL.+?(\d+\%)$/
   needs: ["pytest_data"]
   dependencies:
     - pytest_data

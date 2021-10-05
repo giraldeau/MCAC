@@ -22,6 +22,7 @@
 
 
 namespace mcac {
+void print_bool(bool the_bool, int witdh, std::string txt);
 void calcul(PhysicalModel &, AggregatList &);
 }  // namespace mcac
 
