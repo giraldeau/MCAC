@@ -295,6 +295,7 @@ static double volume_alpha_correction(const double coordination_number,
     double correction = 0.25 * (3.0 * c_20 - c_30) * coordination_number
                         - c_30 * difference_coordination * 0.62741833
                         - pow(difference_coordination, 1.5) * 0.00332425;
+    // NOTE: correction parameters are obtained by post-processing fit
     if (correction < 0.0) {correction = 1.0;};
     correction = std::min(correction, 1.0);
     double alpha_v = 1.0 - correction;
@@ -309,6 +310,7 @@ static double surface_alpha_correction(const double coordination_number,
     double correction = 0.5 * c_10 * coordination_number
                         - std::pow(c_10, 2) * difference_coordination * 0.29611
                         - std::pow(difference_coordination, 2) * 0.00155632;
+    // NOTE: correction parameters are obtained by post-processing fit
     if (correction < 0.0) {correction = 1.0;};
     correction = std::min(correction, 1.0);
     double alpha_s = 1.0 - correction;
