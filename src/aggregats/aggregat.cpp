@@ -258,8 +258,8 @@ void Aggregate::update_partial() noexcept {
         vol_pp += myspheres[i]->get_volume();
         *dp += myspheres[i]->get_radius();
     }
-    *dp = 2 * (*dp) / double(n_spheres);
-    vol_pp = vol_pp / double(n_spheres);
+    *dp = 2 * (*dp) / static_cast<double>(n_spheres);
+    vol_pp = vol_pp / static_cast<double>(n_spheres);
 
     set_bulk_density();
 
