@@ -70,7 +70,7 @@ typedef CGAL::Algebraic_kernel_for_spheres_2_3<FT>           AK;
 typedef CGAL::Spherical_kernel_3<KE, AK>                     SK;
 
 typedef SBL::GT::T_Union_of_balls_surface_volume_3<Alpha_complex, SK>    Union_of_balls_surface_volume_3;
-const double SBL_EPSILON = 1e-10
+const double SBL_EPSILON = 1e-10;
 
 namespace mcac {
 std::pair<std::vector<double>, std::vector<double>> compute_volume_surface_sbl(const SphereList &spherelist) {
