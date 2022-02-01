@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """Compile and install pymcac"""
-import sys
-from subprocess import CalledProcessError, run
+from Cython.Build import cythonize
 
-import numpy as np
-from setuptools import Extension as Extension
-from setuptools import setup as setup
-
-setup()
+from numpy.distutils.core import Extension, setup
 
 coverage = Extension(
     name="pymcac.tools.coverage.coverages_cython",
-    sources=["pymcac/tools/coverage/coverages_cython.pyx"],
-    include_dirs=[np.get_include()],
+    sources=[
+        "pymcac/tools/coverage/coverages_cython.pyx",
+    ],
+    include_dirs=["pyarcher/libraries/surface_operators/src"],
     extra_compile_args=["-fopenmp", "-O3"],
     extra_link_args=["-fopenmp"],
 )
-# noinspection PyUnusedName
-coverage.cython_c_in_temp = True
+(coverage,) = cythonize(coverage, build_dir="build")
 
 sbl = Extension(
     name="pymcac.tools.volume_surface.sbl_wrapper",
@@ -33,34 +29,6 @@ sbl = Extension(
     extra_link_args=["-fopenmp"],
     language="c++",
 )
-# noinspection PyUnusedName
-sbl.cython_c_in_temp = True
+(sbl,) = cythonize(sbl, build_dir="build")
 
-try:
-    # Build the cython extension
-    # --------------------------
-    setup(ext_modules=[coverage])
-except BaseException as e:
-    print("\n################### ERROR ##################################", file=sys.stderr)
-    print("Unable to compile the coverage library", file=sys.stderr)
-    print(e, file=sys.stderr)
-    print("################### ERROR ##################################\n", file=sys.stderr)
-
-try:
-    # Build the cython extension
-    # --------------------------
-    setup(ext_modules=[sbl])
-except BaseException as e:
-    print("\n################### ERROR ##################################", file=sys.stderr)
-    print("Unable to compile the sbl wrapper", file=sys.stderr)
-    print(e, file=sys.stderr)
-    print("################### ERROR ##################################\n", file=sys.stderr)
-
-try:
-    run(["git", "branch"], check=True)
-except CalledProcessError:
-    setup()
-else:
-    # Add the version from git
-    # --------------------------------
-    setup(use_scm_version={"write_to": "pymcac/version.py", "fallback_version": "UNKNOWN"})
+setup(ext_modules=[coverage, sbl])

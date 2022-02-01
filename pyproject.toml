@@ -1,3 +1,14 @@
+[build-system]
+build-backend = 'setuptools.build_meta'
+requires = [
+    "setuptools>=45",
+    "wheel>=0.31",
+    "setuptools_scm>=6",
+    "cython>=0.29", # requred to compile cython extension
+    "numpy>=1.19,<1.21", # required to compile f2py extension (limited by numba)
+    "tomli<2.0.0" # to silence a minor warning
+    ]
+
 [tool.pytest.ini_options]
 timeout = 120
 addopts = "-n auto --html=artifacts/pytest.html --self-contained-html --cov=pymcac/ --cov-report=html:artifacts/coverage"
@@ -17,6 +28,7 @@ extend_skip = [
     "tmp",
     "ext",
     "ext_bin",
+    "venv",
     ]
 skip_gitignore = true
 
