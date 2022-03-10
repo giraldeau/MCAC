@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -36,6 +33,7 @@ class H5Reader:
     __slots__ = ("filename", "xdmf_reader")
 
     def __init__(self, filename: Union[str, Path]) -> None:
+        """Init."""
         self.filename = Path(filename).with_suffix(".h5")
         self.xdmf_reader = XdmfReader(self.filename)
 
@@ -47,24 +45,24 @@ class H5Reader:
         times: np.ndarray = None,
         chunksize: int = None,
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
-        """Read the h5 file into a multiple dask arrays (lazy)
+        """Read the h5 file into a multiple dask arrays (lazy).
 
         We need info from the xmf file, so this file is read
         """
         return cls(filename).read(indexname=indexname, times=times, chunksize=chunksize)
 
     def read_time(self) -> np.ndarray:
+        """Extract time from h5."""
         h5_groups = self.xdmf_reader.extract_h5_groups()
         return np.sort(np.fromiter(h5_groups.keys(), dtype=float))
 
     def read(
         self, indexname: str = "Num", times: np.ndarray = None, chunksize: int = None
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
-        """Read the h5 file into a multiple dask arrays (lazy)
+        """Read the h5 file into a multiple dask arrays (lazy).
 
         We need info from the xmf file, so this file is read
         """
-
         h5_groups = self.xdmf_reader.extract_h5_groups()
         sizes = self.xdmf_reader.extract_sizes()
 
@@ -134,7 +132,7 @@ class H5Reader:
     def read_multiple_array(
         self, groups: Sequence[str], attrib: str, size: int
     ) -> Dict[str, da.Array]:
-        """Read multiple blocks of the h5 file into a dask array (lazy)"""
+        """Read multiple blocks of the h5 file into a dask array (lazy)."""
         dtype = h5File(self.filename, "r")[groups[0]].dtype
         shape: Tuple[int, ...] = (size,)
         columns: Tuple[str, ...] = (attrib,)
@@ -170,7 +168,6 @@ def read_h5_arrays(
     varname: str = "Unknown",
 ) -> np.ndarray:
     """Read multiple blocks of data."""
-
     # print(f"reading {varname} in {filename} ({datasets})")
 
     nvars = np.product(final_shape[:-1], dtype=int)
@@ -192,4 +189,5 @@ def read_h5_arrays(
 
 @njit(nogil=True, cache=True)
 def compute_nTime(N):
+    """Count the number of element per timestep."""
     return np.bincount(N)[:0:-1].cumsum()[::-1]

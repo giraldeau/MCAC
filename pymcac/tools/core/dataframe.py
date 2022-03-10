@@ -2,21 +2,19 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tools to mimic the pandas API."""
+
 from functools import wraps
 from itertools import chain
 from typing import Any, Callable, Dict, Hashable, List, Mapping, Tuple, Union, cast
@@ -109,11 +107,10 @@ def xarray_to_ddframe(
             # triggers an error about multi-indexes, even if only one
             # dimension is passed
             df = df.set_index(dim_order)
-    else:
-        if len(ds.dims) == 1:
-            index = df.index
-            [index.name] = ds.dims
-            df.index = index
+    elif len(ds.dims) == 1:
+        index = df.index
+        [index.name] = ds.dims
+        df.index = index
 
     return df
 
@@ -122,7 +119,6 @@ def ddframe_to_xarray(
     df: dd.DataFrame, lengths: Tuple[int] = None
 ) -> Union[xr.DataArray, xr.Dataset]:
     """Convert a dask.dataframe.DataFrame into an xarray.Dataset."""
-
     if lengths is None:
         lengths = tuple(
             df.index.map_partitions(len, enforce_metadata=False).compute()
@@ -195,7 +191,6 @@ def xarray_to_frame(ds: Union[xr.DataArray, xr.Dataset], multi=True) -> pd.DataF
 
 def frame_to_xarray(df: pd.DataFrame, full: bool = True) -> Union[xr.DataArray, xr.Dataset]:
     """Convert a pandas.DataFrame into an xarray.Dataset."""
-
     if df.index.is_monotonic_increasing:
         sort = [c for c in df.index.names if c != "k"]
 
@@ -243,6 +238,7 @@ def frame_to_xarray(df: pd.DataFrame, full: bool = True) -> Union[xr.DataArray, 
 
 
 def try_extracting_index(index_arrays, length):
+    """try_extracting_index."""
     known_indexes = True
     for i, index_array in enumerate(index_arrays):
         if isinstance(index_array, xr.DataArray):
@@ -387,6 +383,7 @@ def groupby_agg(
 
 
 def index_series_to_index_array(index_series, lengths):
+    """index_series_to_index_array."""
     index_frame = index_series.to_frame()
 
     index_arrays = []
@@ -444,7 +441,6 @@ def groupby_apply(
     -------
     xarray.Dataset
     """
-
     if isinstance(by, str):
         by = [by]
     if isinstance(index_arrays, tuple):

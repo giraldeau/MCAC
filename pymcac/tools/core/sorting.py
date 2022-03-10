@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -28,6 +25,7 @@ from pymcac.tools.core.various import get_idx_name
 
 
 def sort_on_dask_array(ds, by):
+    """Check if we are sorting on a dask array."""
     if ds.chunks is None:
         return False
 
@@ -45,6 +43,7 @@ def sort_on_dask_array(ds, by):
 
 
 def sortby(ds: xr.Dataset, by: Union[str, List[str]], force=False, nchunk=None):
+    """Sort a dataset."""
     if isinstance(by, str):
         by = [by]
 
@@ -77,6 +76,7 @@ def sortby(ds: xr.Dataset, by: Union[str, List[str]], force=False, nchunk=None):
 
 
 def custom_sortby(ds: Union[xr.DataArray, xr.Dataset], by: Union[str, List[str]], nchunk=None):
+    """Sort a dataset the hard way."""
     res = ds.copy(deep=False)
     was_a_dataarray = False
     if isinstance(res, xr.DataArray):
@@ -123,6 +123,7 @@ def custom_sortby(ds: Union[xr.DataArray, xr.Dataset], by: Union[str, List[str]]
 
 
 def get_chunk_idx(ds, idx, nchunk, by):
+    """Get chunked index."""
     idx_name = get_idx_name(ds)
     if idx_name is not None:
         if by == "Time" and f"n{idx_name}" in ds.coords:
@@ -134,6 +135,7 @@ def get_chunk_idx(ds, idx, nchunk, by):
 
 
 def chunk_idx(idx, nchunk, align_by=None):
+    """Chunk an index eventually aligned on another."""
     chunks = (
         tuple(idx.size // nchunk + 1 for _ in range(idx.size % nchunk))
         + tuple(idx.size // nchunk for _ in range(idx.size % nchunk, nchunk)),
@@ -162,12 +164,14 @@ def chunk_idx(idx, nchunk, align_by=None):
 
 
 def chunk_slice(arr, chunked_slice):
+    """chunk_slice."""
     chunks, chunks_idx = chunked_slice
     chunked_arr = arr.rechunk(-1)[chunks]
     return da.map_blocks(lambda x, y: x[y], chunked_arr, chunks_idx, dtype=arr.dtype)
 
 
 def from_argsort(ds, by):
+    """Get the index from argsort."""
     dask = sort_on_dask_array(ds, by)
 
     idx = None
@@ -186,12 +190,11 @@ def from_argsort(ds, by):
 
         if idx is None or not dask:
             source_data = source_data.data
+        elif source_data.chunks is not None:
+            source_data = source_data.data.rechunk(-1)
         else:
-            if source_data.chunks is not None:
-                source_data = source_data.data.rechunk(-1)
-            else:
-                source_data = da.from_array(source_data.data, chunks=-1)
-                raise ValueError("Not tested")
+            source_data = da.from_array(source_data.data, chunks=-1)
+            raise ValueError("Not tested")
 
         if idx is not None:
             source_data = source_data[idx]
@@ -224,4 +227,5 @@ def from_argsort(ds, by):
 
 @delayed
 def argsort(data: np.ndarray) -> np.ndarray:
+    """Wrap argsort to make it lazy."""
     return data.argsort(kind="stable")

@@ -2,19 +2,19 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Check if data have all the expected properties."""
+
 from functools import wraps
 
 import dask.array as da
@@ -44,6 +44,8 @@ def is_sorted(a):
 
 
 def repeat(n_repetition):
+    """Decorate a test to repeat it."""
+
     def decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
@@ -56,6 +58,7 @@ def repeat(n_repetition):
 
 
 def check_dims(ds):
+    """Check that dims are known."""
     assert set(ds.dims).issubset({"k", "Label", "Num", "Time"}), "At least one dim is unknown"
 
     for coord in ds.coords.values():
@@ -72,7 +75,7 @@ def check_vars(ds):
     """Check that all the mandatory variables are here."""
     coords = set(ds.coords)
     idx_name = get_idx_name(ds)
-    assert idx_name in ("Num", "Label", None), f"{idx_name} is unknown"
+    assert idx_name in {"Num", "Label", None}, f"{idx_name} is unknown"
 
     if "Time" in ds.dims:
         assert ds.Time.dims[0] == "Time", "Time dimension should be Time"
@@ -94,7 +97,7 @@ def check_vars(ds):
 
 
 def check_sorted(ds):
-    """check that coords are sorted and that sort info is relevant."""
+    """Check that coords are sorted and that sort info is relevant."""
 
     def sorted_coords(ds):
         for c, coord in ds.coords.items():
@@ -126,6 +129,7 @@ def check_sorted(ds):
 
 
 def check_internal_kconsistency(ds):
+    """Check internal consistency."""
     if "k" not in ds.dims:
         return
 
@@ -160,6 +164,7 @@ def check_internal_kconsistency(ds):
 
 
 def check_consistency(spheres, aggregates):
+    """Check that sphere and aggregates are consistent with each other."""
     spheres_time = spheres.coords.get("Time", None)
     aggregates_time = aggregates.coords.get("Time", None)
     if (spheres_time is not None) or (aggregates_time is not None):
@@ -196,6 +201,7 @@ def check_consistency(spheres, aggregates):
 
 
 def check_dask_consistency(ds):
+    """Check that chunks are correctly aligned."""
     if isinstance(ds, xr.DataArray):
         chunk = ds.chunks if "k" in ds.dims else None
         for coord in ds.coords.values():
@@ -208,8 +214,7 @@ def check_dask_consistency(ds):
     idx_name = get_idx_name(ds)
 
     for dim in ("k", "Time", idx_name):
-        chunk = ds.chunks.get(dim, None)
-        if chunk is not None:
+        if (chunk := ds.chunks.get(dim, None)) is not None:
             chunk = (chunk,)
 
         if dim == "k":
@@ -239,6 +244,7 @@ def check_dask_consistency(ds):
 
 
 def check_data(ds, aligned=True):
+    """Check everything about a data."""
     assert isinstance(ds, (xr.Dataset, xr.DataArray))
 
     print(ds)
@@ -265,6 +271,7 @@ def check_data(ds, aligned=True):
 @pytest.mark.parametrize("full", [True, False])
 @repeat(10)
 def test_generate(nt, nobj, data_type, dask, full):
+    """Test to generate all sort of data."""
     if data_type == "aggregates":
         data = generate_dummy_aggregates_data(
             nt=nt, nagg=nobj, sort_info=True, dask=dask, full=full
@@ -282,6 +289,7 @@ def test_generate(nt, nobj, data_type, dask, full):
 @pytest.mark.parametrize("dask", [0, 1, 2])
 @repeat(10)
 def test_generate_both(nt, nagg, dask):
+    """Test to generate consistent spheres and aggregates."""
     aggregates, spheres = generate_dummy_data(nt=nt, nagg=nagg, sort_info=True, dask=dask)
 
     check_data(aggregates)

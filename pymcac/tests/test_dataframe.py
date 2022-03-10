@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Test dataframe related tools."""
 import dask.array as da
 import pytest
 import xarray as xr
@@ -36,6 +35,7 @@ from .test_dask import raise_if_computed
 @pytest.mark.parametrize("dask", [0, 1, 2])
 @pytest.mark.parametrize("full", [True, False])
 def test_xarray_to_ddframe(nt, nobj, data_type, dask, full):
+    """Test xarray to dask dataframe conversion."""
     if data_type == "aggregates":
         data = generate_dummy_aggregates_data(nt=nt, nagg=nobj, dask=dask, full=full)
     elif data_type == "spheres":
@@ -59,6 +59,7 @@ def test_xarray_to_ddframe(nt, nobj, data_type, dask, full):
 
 
 def test_xarray_to_ddframe_no_compute():
+    """Test xarray to dask dataframe conversion is lazy."""
     data = generate_dummy_aggregates_data()
 
     data["trigger"] = ("k",), da.from_delayed(
@@ -73,6 +74,7 @@ def test_xarray_to_ddframe_no_compute():
 @pytest.mark.parametrize("dask", [0, 1, 2])
 @pytest.mark.parametrize("full", [True, False])
 def test_xarray_to_frame(nt, nobj, data_type, dask, full):
+    """Test xarray to pandas dataframe conversion."""
     if data_type == "aggregates":
         data = generate_dummy_aggregates_data(
             nt=nt, nagg=nobj, sort_info=True, dask=dask, full=full
@@ -108,6 +110,7 @@ def test_xarray_to_frame(nt, nobj, data_type, dask, full):
 @pytest.mark.parametrize("data_type", ["aggregates", "spheres"])
 @pytest.mark.parametrize("dask", [0, 1, 2])
 def test_ddframe_to_xarray(nt, nobj, data_type, dask):
+    """Test dask dataframe to xarray conversion."""
     if data_type == "aggregates":
         data = generate_dummy_aggregates_data(nt=nt, nagg=nobj, dask=dask, full=False)
     elif data_type == "spheres":
@@ -129,6 +132,7 @@ def test_ddframe_to_xarray(nt, nobj, data_type, dask):
 
 @pytest.mark.parametrize("dask", [0, 1, 2])
 def test_ddframe_to_xarray_no_compute(dask):
+    """Test dask dataframe to xarray conversion is lazy."""
     data = generate_dummy_aggregates_data(dask=dask)
 
     df = xarray_to_ddframe(data)
@@ -149,6 +153,7 @@ def test_ddframe_to_xarray_no_compute(dask):
 @pytest.mark.parametrize("dask", [0, 1, 2])
 @pytest.mark.parametrize("full", [True, False])
 def test_frame_to_xarray(nt, nobj, data_type, dask, full):
+    """Test pandas dataframe to xarray conversion."""
     if data_type == "aggregates":
         data = generate_dummy_aggregates_data(
             nt=nt, nagg=nobj, sort_info=True, dask=dask, full=full

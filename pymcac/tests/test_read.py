@@ -2,19 +2,19 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Check reader."""
+
 import numpy as np
 import pytest
 
@@ -25,6 +25,7 @@ from .test_data import check_consistency, check_data
 
 
 def test_read_metadata():
+    """Check metadata is correctly read."""
     metadata = MCAC(validation_data_path / "pytest_data").metadata
 
     ref = {
@@ -56,6 +57,7 @@ def test_read_metadata():
 @pytest.mark.parametrize("nt", [False, True])
 @pytest.mark.parametrize("time_steps", [False, True])
 def test_read_xaggregate(variables, tmax, nt, time_steps):
+    """Check aggregates are correctly read."""
     sim = MCAC(validation_data_path / "pytest_data")
 
     _tmax = sim.times[len(sim.times) // 2]
@@ -93,6 +95,7 @@ def test_read_xaggregate(variables, tmax, nt, time_steps):
 @pytest.mark.parametrize("nt", [False, True])
 @pytest.mark.parametrize("time_steps", [False, True])
 def test_read_xspheres(variables, tmax, nt, time_steps):
+    """Check spheres are correctly read."""
     sim = MCAC(validation_data_path / "pytest_data")
 
     _tmax = sim.times[len(sim.times) // 2]
@@ -131,6 +134,7 @@ def test_read_xspheres(variables, tmax, nt, time_steps):
 @pytest.mark.parametrize("nt", [False, True])
 @pytest.mark.parametrize("time_steps", [False, True])
 def test_read_xdata(variables_sph, variables_agg, tmax, nt, time_steps):
+    """Check spheres and aggregates are correctly read."""
     sim = MCAC(validation_data_path / "pytest_data")
 
     _tmax = sim.times[len(sim.times) // 2]

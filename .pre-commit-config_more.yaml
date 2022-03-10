@@ -2,12 +2,6 @@
 # Here are some test that are not satisfied yet or that need additional dependency
 repos:
     # TODO: fix the errors
-    - repo: https://github.com/pycqa/pydocstyle
-      rev: 6.1.1
-      hooks:
-          - id: pydocstyle
-            additional_dependencies: [toml]
-    # TODO: fix the errors
     - repo: https://gitlab.com/daverona/pre-commit/cpp
       rev: 0.8.0
       hooks:
@@ -18,13 +12,7 @@ repos:
       rev: v2.12.2
       hooks:
           - id: pylint
-    # TODO: fix the errors
-    - repo: https://github.com/pycqa/flake8
-      rev: 4.0.1
-      hooks:
-          - id: flake8
-            entry: pflake8
-            additional_dependencies: [pyproject-flake8, flake8-copyright]
+            exclude: (?x)^( cmake-format.py )$
     # TODO: need additional system dependency (cppcheck clang-format)
     - repo: https://gitlab.com/daverona/pre-commit/cpp
       rev: 0.8.0
@@ -37,3 +25,4 @@ repos:
       hooks:
           - id: shellcheck
           - id: shfmt
+            args: [-i 2 -ci]

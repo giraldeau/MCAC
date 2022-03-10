@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -35,7 +32,6 @@ def discretize(
 
     alphagangue is a parameter allowing some gangue around the aggregate
     """
-
     cols = ["Posx", "Posy", "Posz", "Radius"]
 
     if aggregate is not None:
@@ -56,7 +52,6 @@ def discretize_spherelist(
 
     alphagangue is a parameter allowing some gangue around the aggregate
     """
-
     xbounds, ybounds, zbounds = surrounding_box(spheres)
 
     (x, y, z) = mkgrid(xbounds, ybounds, zbounds, resolution)
@@ -84,7 +79,7 @@ def discretize_spherelist(
 def surrounding_box(
     spheres: np.ndarray,
 ) -> Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float]]:
-    """compute dimensions of the surrounding box."""
+    """Compute dimensions of the surrounding box."""
     rmax = spheres[:, 3].max()
     xmin, xmax = spheres[:, 0].min() - rmax, spheres[:, 0].max() + rmax
     ymin, ymax = spheres[:, 1].min() - rmax, spheres[:, 1].max() + rmax
@@ -99,7 +94,7 @@ def mkgrid(
     zbounds: Tuple[float, float],
     resolution: int,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """compute dimensions of the surrounding box."""
+    """Compute dimensions of the surrounding box."""
     xmin, xmax = xbounds
     ymin, ymax = ybounds
     zmin, zmax = zbounds

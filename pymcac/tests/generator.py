@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Check the data generator."""
 
 import dask.array as da
 import numpy as np
@@ -103,7 +102,6 @@ def generate_dummy_spheres_data(
     tstart=5.0, tend=10.0, nt=3, nsph=7, aggregates=None, sort_info=False, dask=0, full=True
 ):
     """Generate dummy spheres data with minimal data."""
-
     assert tstart <= tend
     assert nt > 0
     assert nsph > 0
@@ -221,7 +219,6 @@ def generate_dummy_spheres_data(
 
 def generate_dummy_data(tstart=5.0, tend=10.0, nt=3, nagg=5, nsph=7, sort_info=False, dask=0):
     """Generate dummy data with minimal data."""
-
     assert nagg <= nsph
 
     aggregates = generate_dummy_aggregates_data(
@@ -249,6 +246,7 @@ def generate_dummy_data(tstart=5.0, tend=10.0, nt=3, nagg=5, nsph=7, sort_info=F
 
 
 def compute_Np_from_Label(spheres):
+    """Compute the number of sphere per aggregate from label."""
     spheres_df = spheres.Label.to_dataframe()
     if "kTime" in spheres:
         Np = spheres_df.groupby(["kTime", "Label"], sort=True).size()
@@ -258,6 +256,7 @@ def compute_Np_from_Label(spheres):
 
 
 def compute_Label_from_Np(aggregates):
+    """Compute labels from the number of spheres per aggregate."""
     if not aggregates.Np.dims:
         aggregates = aggregates.expand_dims("None")
     aggregates_df = aggregates.Np.to_dataframe()

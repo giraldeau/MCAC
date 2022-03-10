@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# Copyright (C) 2021 CORIA
+
+"""Import MCAC data into blender.
+
+OUT OF DATE
+"""
+
 from pathlib import Path
 
 import bmesh
@@ -9,7 +17,7 @@ from pymcac import MCAC
 
 
 def get_data():
-
+    """Read MCAC data."""
     # The folder with all .h5 and .xmf files
     data_dir = Path("output_dir")
 

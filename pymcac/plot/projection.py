@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -53,8 +50,7 @@ def view_proj_disc(
     projdir: str = "z",
     reduce: Callable = np.sum,
 ) -> None:
-    """Plot a 2d projection of the discretized aggregate in the direction x, y
-    or z.
+    """Plot a 2d projection of the discretized aggregate.
 
     if reduce is np.sum (or np.mean) the aggregate will be "transparent"
     if reduce is np.max  the aggregate will be fully opaque

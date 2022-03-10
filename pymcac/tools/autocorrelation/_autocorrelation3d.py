@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -42,7 +39,6 @@ def autocorrelation3d(
     nprocs: Optional[int] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Compute the normalized 3d autocorrelation graph of an aggregate."""
-
     cols = ["Posx", "Posy", "Posz", "Radius"]
     if aggregate is not None:
         # Get the spheres of the given aggregate
@@ -93,7 +89,7 @@ def parallel_volumes_autoco(
     volumes = np.zeros(len(lradius))
 
     # useless to make a contiguous copy, Process will do it
-    with Parallel(par_volumes_autoco, spheres, nprocs) as p:
+    with Parallel(worker_job, spheres, nprocs) as p:
 
         # Put work inside the queue
         njobs = 0
@@ -114,11 +110,8 @@ def parallel_volumes_autoco(
     return volumes
 
 
-def par_volumes_autoco(q: mp.Queue, r: mp.Queue, spheres: np.ndarray) -> None:
-    """This code will be executed by each process.
-
-    Pick one job and do it
-    """
+def worker_job(q: mp.Queue, r: mp.Queue, spheres: np.ndarray) -> None:
+    """Pick one job and do it."""
     first = True
 
     # Each process must have a different random seed
@@ -216,6 +209,7 @@ class Parallel:
     __slots__ = ("target", "nprocs", "_shared_array", "shared_array", "qin", "qout", "processes")
 
     def __init__(self, target: Callable, array: np.ndarray, nprocs: Optional[int] = None) -> None:
+        """Init."""
         self.target = target
         self.nprocs = nprocs
 

@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -36,6 +33,7 @@ class XdmfReader:
     __slots__ = ("filename", "xml", "metadata", "h5_groups")
 
     def __init__(self, filename: Union[str, Path]) -> None:
+        """Init."""
         self.filename = Path(filename).with_suffix(".xmf")
         self.xml = None
         self.metadata: Optional[Union[bool, float]] = None
@@ -52,14 +50,15 @@ class XdmfReader:
     def parse_xml(self) -> None:
         """Parse xml file."""
         parser = etree.XMLParser(remove_blank_text=True)
-        for data in open(str(self.filename)):
-            parser.feed(data)
+        with open(str(self.filename), encoding="utf8") as f:
+            for data in f:
+                parser.feed(data)
         self.xml = parser.close()
 
     @staticmethod
     def bool_from_any(s: str) -> bool:
-        """convert printable to boolean."""
-        return str(s).lower() in ["true", "1", "t", "y", "yes", "oui"]
+        """Convert printable to boolean."""
+        return str(s).lower() in {"true", "1", "t", "y", "yes", "oui"}
 
     def extract_metadata(self) -> Dict[str, Union[bool, float]]:
         """Extract metadata from xml."""
@@ -68,8 +67,7 @@ class XdmfReader:
 
         metadata = {}
         for element in self.xml.iter("Information"):
-            key = element.get("Name")
-            if key in ["Copyright", "Physics"]:
+            if (key := element.get("Name")) in {"Copyright", "Physics"}:
                 continue
             value = element.get("Value")
             if "Active" in key:
@@ -90,7 +88,7 @@ class XdmfReader:
                 continue
             time = float(step.find("Time").get("Value"))
 
-            h5_groups.setdefault(time, dict())
+            h5_groups.setdefault(time, {})
             h5_groups[time]["Positions"] = (
                 step.find("Geometry").getchildren()[0].text.split(":")[-1]
             )
@@ -111,7 +109,7 @@ class XdmfReader:
             time = float(step.find("Time").get("Value"))
 
             for attrib in step.findall("Attribute"):
-                if attrib.get("Name") in ("BoxSize", "Time"):
+                if attrib.get("Name") in {"BoxSize", "Time"}:
                     continue
                 size = attrib.getchildren()[0].get("Dimensions")
                 sizes[time] = int(size)

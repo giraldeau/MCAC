@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -33,8 +30,10 @@ from pymcac.tools.core.various import get_idx_name
 
 
 def progress_compute(*dfs):
-    """Compute the given dataframe, array, dataarray or datasets showing a
-    progress bar."""
+    """Show a progress bar while computing the given data.
+
+    Data can be dataframe, array, dataarray or datasets.
+    """
     scheduler = get_scheduler()
     # distribute = "Client" in type(scheduler).__name__ and hasattr(scheduler, "get")
     distribute = "Client" in str(scheduler)
@@ -86,15 +85,20 @@ def dask_distribute(n_workers=None, threads_per_worker=1, report="", jupyter=Fal
 
 
 class JupyterDaskDistribute:
+    """dask_distribute that can be started/stopped."""
+
     def __init__(self, n_workers=None, threads_per_worker=1, report=""):
+        """Init."""
         self.gen = dask_distribute(
             n_workers=n_workers, threads_per_worker=threads_per_worker, report=report
         ).gen
 
     def start(self):
+        """Start the dask_distribute context."""
         return next(self.gen)
 
     def stop(self):
+        """Stop the dask_distribute context."""
         try:
             next(self.gen)
         except StopIteration:
@@ -102,7 +106,7 @@ class JupyterDaskDistribute:
 
 
 def not_aligned_rechunk(ds, chunks=None, **chunks_dict):
-    # syntaxic sugar
+    """Rechunck datarray without taking care about aligning the chunks."""
     if chunks is None:
         chunks = {}
     chunks = {**chunks, **chunks_dict}
@@ -110,8 +114,7 @@ def not_aligned_rechunk(ds, chunks=None, **chunks_dict):
     for var in ds.values():
         if var.dims:
             [dim] = var.dims
-            var_chunks = chunks.get(dim, None)
-            if var_chunks is not None:
+            if (var_chunks := chunks.get(dim, None)) is not None:
                 if var.chunks is None:
                     var.data = da.from_array(var.data, chunks=var_chunks)
                 else:
@@ -123,8 +126,7 @@ def not_aligned_rechunk(ds, chunks=None, **chunks_dict):
             [dim] = coord.dims
             if c == dim:
                 continue
-            coord_chunks = chunks.get(dim, None)
-            if coord_chunks is not None:
+            if (coord_chunks := chunks.get(dim, None)) is not None:
                 if coord.chunks is None:
                     coord.data = da.from_array(coord.data, chunks=coord_chunks)
                 else:
@@ -135,6 +137,7 @@ def not_aligned_rechunk(ds, chunks=None, **chunks_dict):
 
 
 def _infer_on(chunks, attrs):
+    """Infer on what align the chunks."""
     if len(chunks) == 1:
         [on] = chunks
         if on != "k":
@@ -147,6 +150,7 @@ def _infer_on(chunks, attrs):
 
 
 def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
+    """Rechunck datarray taking care that chunks are aligned on an index."""
     # syntaxic sugar
     if chunks is None:
         chunks = {}

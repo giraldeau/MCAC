@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -35,8 +32,7 @@ def mobility_diameter(f_agg: xr.DataArray, **kwargs) -> xr.DataArray:
         return xr.apply_ufunc(
             _vectorized_compute_dm, f_agg, kwargs=kwargs, dask="parallelized", output_dtypes=[float]
         )
-    else:
-        return xr.apply_ufunc(_vectorized_compute_dm, f_agg, kwargs=kwargs)
+    return xr.apply_ufunc(_vectorized_compute_dm, f_agg, kwargs=kwargs)
 
 
 def _vectorized_compute_dm(vect_f_agg: np.ndarray, x0: float = 1e-8, **kwargs) -> np.ndarray:
@@ -51,7 +47,7 @@ def _compute_dm(f_agg: float, x0: float = 1e-8, **kwargs) -> float:
     """Compute the mobility diameter based on f_agg."""
     dm_params = ["A1", "A2", "A3", "lambda_g", "mu_g"]
     params = [kwargs[k] for k in dm_params]
-    kwargs = {k: kwargs[k] for k in kwargs if k not in dm_params}
+    kwargs = {k: v for k, v in kwargs.items() if k not in dm_params}
 
     dm_norm = x0
     x0 /= dm_norm
@@ -82,7 +78,7 @@ def _normalized_dm_equation(
     lambda_g: float = 5e-7,
     mu_g: float = 6e-5,
 ):
-    """Normalized version of the mobility diameter equation.
+    """Solve the normalized version of the mobility diameter equation.
 
     The default values are purely indicative
     """

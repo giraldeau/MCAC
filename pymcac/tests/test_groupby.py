@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Test the groupby functions."""
+
 import dask.array as da
 import dask.dataframe as dd
 import numpy as np
@@ -32,32 +32,38 @@ from .test_data import check_data
 
 
 def pd_cumsum(df):
+    """Cumsum written for pandas."""
     res = df.copy()
     res["data2"] = res["data"].cumsum()
     return res
 
 
 def pd_cumsum_inplace(df):
+    """Inplace Cumsum written for pandas."""
     res = df.copy()
     res["data"] = res["data"].cumsum()
     return res
 
 
 def pd_duplicate_new_frame(df):
+    """Duplicate a column of a pandas dataframe."""
     res = df.copy()
     res["data2"] = res["data"]
     return res
 
 
 def pd_duplicate_new_series(df):
+    """Duplicate a column of a pandas dataframe into a new series."""
     return pd_duplicate_new_frame(df)["data2"]
 
 
 def custom_mean_pd(df):
+    """Mean written for pandas."""
     return df.mean()
 
 
 def noop_pd(df):
+    """Do nothing."""
     return df
 
 
@@ -68,9 +74,9 @@ custom_mean_dd = dd.Aggregation(
     finalize=lambda count, sum: sum / count,
 )
 
-###################################
-######## using dataframes #########
-###################################
+# ##################################
+# ####### using dataframes #########
+# ##################################
 
 # *********************************
 # ********* aggregation ***********
@@ -81,6 +87,7 @@ custom_mean_dd = dd.Aggregation(
 @pytest.mark.parametrize("full", [True, False])
 @pytest.mark.parametrize("sort_info", [True, False])
 def test_groupby_agg_no_change(dask, full, sort_info):
+    """Check an aggregation on one element."""
     aggregates = generate_dummy_aggregates_data(
         nt=29, nagg=31, dask=dask, full=full, sort_info=sort_info
     )
@@ -100,6 +107,7 @@ def test_groupby_agg_no_change(dask, full, sort_info):
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
 def test_groupby_agg_new_var(dask, full):
+    """Check an aggregation on a new var."""
     aggregates = generate_dummy_aggregates_data(
         nt=29, nagg=31, dask=dask, full=full, sort_info=True
     )
@@ -127,6 +135,7 @@ def test_groupby_agg_new_var(dask, full):
 @pytest.mark.parametrize("nt", [1, 29])
 @pytest.mark.parametrize("nagg", [1, 31])
 def test_groupby_agg(sort, fn, dask, full, nt, nagg):
+    """test_groupby_agg."""
     if nt == 1 and nagg == 1:
         return
     aggregates = generate_dummy_aggregates_data(nt=nt, nagg=nagg, dask=dask, full=full)
@@ -172,6 +181,7 @@ def test_groupby_agg(sort, fn, dask, full, nt, nagg):
 
 @pytest.mark.parametrize("dask_index", [True, False])
 def test_groupby_agg_with_index(dask_index):
+    """test_groupby_agg_with_index."""
     aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=50)
     chunks = aggregates.chunks
     aggregates["Np"] = ("k",), np.random.randint(1, 10, aggregates.sizes["k"])
@@ -191,6 +201,7 @@ def test_groupby_agg_with_index(dask_index):
 
 
 def test_groupby_agg_no_compute():
+    """test_groupby_agg_no_compute."""
     aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=5)
     chunks = aggregates.chunks
     aggregates["Np"] = ("k",), np.random.randint(1, 10, aggregates.sizes["k"])
@@ -214,6 +225,7 @@ def test_groupby_agg_no_compute():
 @pytest.mark.parametrize("full", [True, False])
 @pytest.mark.parametrize("sort_info", [True, False])
 def test_groupby_apply_no_change(dask, full, sort_info):
+    """test_groupby_apply_no_change."""
     aggregates = generate_dummy_aggregates_data(
         nt=29, nagg=31, dask=dask, full=full, sort_info=sort_info
     )
@@ -235,6 +247,7 @@ def test_groupby_apply_no_change(dask, full, sort_info):
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
 def test_groupby_apply_new_frame(dask, full):
+    """test_groupby_apply_new_frame."""
     aggregates = generate_dummy_aggregates_data(
         nt=29, nagg=31, dask=dask, full=full, sort_info=True
     )
@@ -261,6 +274,7 @@ def test_groupby_apply_new_frame(dask, full):
 @pytest.mark.parametrize("dask", [0, 5])
 @pytest.mark.parametrize("full", [True, False])
 def test_groupby_apply_new_series(dask, full):
+    """test_groupby_apply_new_series."""
     aggregates = generate_dummy_aggregates_data(
         nt=29, nagg=31, dask=dask, full=full, sort_info=True
     )
@@ -289,6 +303,7 @@ def test_groupby_apply_new_series(dask, full):
 @pytest.mark.parametrize("nt", [1, 29])
 @pytest.mark.parametrize("nagg", [1, 31])
 def test_groupby_apply(inplace, dask, full, nt, nagg):
+    """test_groupby_apply."""
     if nt == 1 and nagg == 1:
         return
     aggregates = generate_dummy_aggregates_data(nt=nt, nagg=nagg, dask=dask, full=full)
@@ -331,6 +346,7 @@ def test_groupby_apply(inplace, dask, full, nt, nagg):
 
 @pytest.mark.parametrize("inplace", [True, False])
 def test_groupby_apply_no_compute(inplace):
+    """test_groupby_apply_no_compute."""
     aggregates = generate_dummy_aggregates_data(nt=29, nagg=31, dask=5)
     chunks = aggregates.chunks
     aggregates["Np"] = ("k",), np.random.randint(1, 10, aggregates.sizes["k"])
@@ -350,13 +366,14 @@ def test_groupby_apply_no_compute(inplace):
     groupby_apply(aggregates, "Np", fn, "trigger", meta)
 
 
-###################################
-############ manually  ############
-###################################
+# ##################################
+# ########### manually  ############
+# ##################################
 
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_groupby_aggregate_reduction(dask):
+    """test_groupby_aggregate_reduction."""
     aggregates, spheres = generate_dummy_data(nt=29, nagg=31, nsph=37, dask=dask)
 
     test = groupby_aggregate(spheres, aggregates, np.mean, "data")  # .compute()
@@ -373,10 +390,12 @@ def test_groupby_aggregate_reduction(dask):
 @pytest.mark.skip(reason="NOT IMPLEMENTED")
 @pytest.mark.parametrize("dask", [0, 5])
 def test_groupby_aggregate_not_reduction(dask):
+    """test_groupby_aggregate_not_reduction."""
     assert False
 
 
 def test_groupby_aggregate_no_compute():
+    """test_groupby_aggregate_no_compute."""
     aggregates, spheres = generate_dummy_data(nt=29, nagg=31, nsph=37, dask=5)
     chunks = spheres.chunks
     spheres["trigger"] = ("k",), da.from_delayed(

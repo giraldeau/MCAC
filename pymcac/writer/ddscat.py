@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -71,7 +68,7 @@ Or give me the aggregates array so I can compute it for you"""
 
     aeff = (3 * volume / (4 * np.pi)) ** (1 / 3)
 
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf8") as f:
         f.write(f"Param alpha : {alphagangue:9.2e},")
         f.write(f" Cov : {aggregate['cov']:9.2e},")
         f.write(f" Rg (nm): {aggregate.Rg:9.2e},")

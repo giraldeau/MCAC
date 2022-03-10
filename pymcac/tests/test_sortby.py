@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
+
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Test the sortby functions."""
+
 import dask.array as da
 import pytest
 
@@ -29,6 +30,7 @@ from .test_data import check_data
 @pytest.mark.parametrize("nagg", [1, 31])
 @pytest.mark.parametrize("full", [True, False])
 def test_sortby_nothing_to_do(dask, nagg, full):
+    """Check that sortby does not touch the data if already sorted."""
     data = generate_dummy_aggregates_data(nt=29, nagg=nagg, dask=dask, sort_info=True, full=full)
     sorted_data = sortby(data, "Time")
 
@@ -46,6 +48,7 @@ def test_sortby_nothing_to_do(dask, nagg, full):
 @pytest.mark.parametrize("nagg", [1, 31])
 @pytest.mark.parametrize("full", [True, False])
 def test_sortby_no_change(dask, nagg, full):
+    """Check that sorting already sorted data leaves it sorted."""
     data = generate_dummy_aggregates_data(nt=29, nagg=nagg, dask=dask, full=full)
     sorted_data = sortby(data, "Time")
 
@@ -58,9 +61,8 @@ def test_sortby_no_change(dask, nagg, full):
         assert "Label" not in sorted_data.chunks
         if "k" in data.chunks:
             assert len(sorted_data.chunks["k"]) == len(data.chunks["k"])
-    else:
-        if sorted_data.chunks is not None:
-            assert len(sorted_data.chunks) == len(data.chunks)
+    elif sorted_data.chunks is not None:
+        assert len(sorted_data.chunks) == len(data.chunks)
 
     data.attrs["sort"] = ["Time"]
     assert sorted_data.identical(data)
@@ -79,6 +81,7 @@ def test_sortby_no_change(dask, nagg, full):
 @pytest.mark.parametrize("nt", [1, 29])
 @pytest.mark.parametrize("full", [True, False])
 def test_sortby_Label(dask, nt, full):
+    """Check sortby Label."""
     data = generate_dummy_aggregates_data(nt=nt, nagg=31, dask=dask, full=full)
     sorted_data = sortby(data, "Label")
 
@@ -89,9 +92,8 @@ def test_sortby_Label(dask, nt, full):
             assert "Label" in sorted_data.chunks
         if "k" in data.chunks:
             assert len(sorted_data.chunks["k"]) == len(data.chunks["k"])
-    else:
-        if sorted_data.chunks is not None:
-            assert len(sorted_data.chunks) == len(data.chunks)
+    elif sorted_data.chunks is not None:
+        assert len(sorted_data.chunks) == len(data.chunks)
 
     assert "Label" == sorted_data.attrs["sort"][0]
 
@@ -109,6 +111,7 @@ def test_sortby_Label(dask, nt, full):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_sortby_two(dask):
+    """Check sortby Time and Label in one call."""
     data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
     sorted_data = sortby(data, ["Time", "Label"])
 
@@ -128,6 +131,7 @@ def test_sortby_two(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_sortby_two_seq(dask):
+    """Check sortby Time and Label in two call."""
     data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
 
     Label_sorted_data = sortby(data, "Label")
@@ -148,6 +152,7 @@ def test_sortby_two_seq(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_sortby_other(dask):
+    """Check sortby on data."""
     data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
 
     sorted_data = sortby(data, "data")
@@ -166,6 +171,7 @@ def test_sortby_other(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_sortby_dim_and_other(dask):
+    """Check sortby on Time and data."""
     data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
     sorted_data = sortby(data, ["Time", "data"])
 
@@ -191,6 +197,7 @@ def test_sortby_dim_and_other(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_sortby_other_and_back(dask):
+    """Check sortby on data and back on Time and label."""
     data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
 
     sorted_data = sortby(data, "data")
@@ -203,6 +210,7 @@ def test_sortby_other_and_back(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_sortby_useless_sort(dask):
+    """Check `by` optimization."""
     data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
 
     by = ["Time", "Label", "data"] + ["data", "Label", "Time"]
@@ -213,6 +221,7 @@ def test_sortby_useless_sort(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_sortby_usefull_sort(dask):
+    """Check sort memory."""
     data = generate_dummy_aggregates_data(nt=29, nagg=31, dask=dask)
 
     sorted_data = sortby(data, ["Time", "Label", "data"])
@@ -225,6 +234,7 @@ def test_sortby_usefull_sort(dask):
 
 @pytest.mark.parametrize("nt", [1, 29])
 def test_sortby_no_compute(nt):
+    """Check sortby is lazy."""
     data = generate_dummy_aggregates_data(nt=nt, dask=5)
     chunks = data.chunks
     data["trigger"] = data.data.dims, da.from_delayed(

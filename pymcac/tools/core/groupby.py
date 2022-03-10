@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -49,10 +46,10 @@ def groupby_aggregate(
         agg_names_in = [agg_names_in]
 
     for i, name_in in enumerate(sph_names_in):
-        if name_in in ("Time", "Num"):
+        if name_in in {"Time", "Num"}:
             sph_names_in[i] = "k" + name_in
     for i, name_in in enumerate(agg_names_in):
-        if name_in in ("Time", "Label"):
+        if name_in in {"Time", "Label"}:
             agg_names_in[i] = "k" + name_in
 
     if set(agg_names_in) & set(agg_names_in):
@@ -84,11 +81,11 @@ def groupby_aggregate(
     ]
 
     argin_string = (
-        "x" + ", x".join(map(str, range(len(arrs_in) + 1))) + ", fn, nout, intermediate_dtype"
+        "x" + ", x".join(str(i) for i in range(len(arrs_in) + 1)) + ", fn, nout, intermediate_dtype"
     )
     argout_string = (
         "x0, (x"
-        + ", x".join(map(str, range(1, len(arrs_in) + 1)))
+        + ", x".join(str(i) for i in range(1, len(arrs_in) + 1))
         + ",), fn, nout, intermediate_dtype"
     )
 
@@ -105,8 +102,8 @@ def groupby_aggregate(
     )
 
     res_ds: Union[xr.DataArray, xr.Dataset] = xr.Dataset()
-    for i, (col, dtype) in enumerate(meta_out.items()):
-        res_ds[col] = ("k",), res[i, :].astype(dtype)
+    for i, (col, r_dtype) in enumerate(meta_out.items()):
+        res_ds[col] = ("k",), res[i, :].astype(r_dtype)
 
     if reduction:
         res_ds = res_ds.assign_coords(Aggregates.coords)
@@ -124,6 +121,7 @@ def groupby_aggregate(
 def groupby_aggregate_in_block(
     npagg: np.ndarray, arrs: Tuple[np.ndarray, ...], fn, nout, intermediate_dtype
 ) -> np.ndarray:
+    """Apply an aggregate function in a block."""
     res = np.empty((nout, npagg.size), dtype=intermediate_dtype)
     start = 0
     for iagg, nsph in enumerate(npagg):

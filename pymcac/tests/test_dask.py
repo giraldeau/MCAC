@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#:
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Test dask related tools."""
+
 from itertools import chain
 
 import dask.array as da
@@ -29,6 +29,7 @@ from .test_data import check_dask_consistency, check_data
 
 
 def identical(ds1, ds2):
+    """Check identity of values and chunks."""
     if not ds1.identical(ds2):
         return False
     if not ds1.chunks == ds2.chunks:
@@ -37,6 +38,7 @@ def identical(ds1, ds2):
 
 
 def check_chunks(chunks, target):
+    """Check if correctly chunks."""
     assert max(chunks) == target
     assert min(chunks) > 0
     assert target in chunks
@@ -44,6 +46,7 @@ def check_chunks(chunks, target):
 
 @pytest.mark.parametrize("dask", [0, 1, 2])
 def test_not_aligned_rechunk_no_change(dask):
+    """Check not_aligned_rechunk with same chunks."""
     data = generate_dummy_aggregates_data(dask=dask)
 
     no_change = not_aligned_rechunk(data, chunks=data.chunks)
@@ -53,6 +56,7 @@ def test_not_aligned_rechunk_no_change(dask):
 @pytest.mark.parametrize("dask", [0, 1, 2])
 @pytest.mark.parametrize("dim", ["k", "Time", "Label"])
 def test_not_aligned_rechunk_one_chunk(dask, dim):
+    """Check not_aligned_rechunk with one chunks."""
     data = generate_dummy_aggregates_data(dask=dask)
 
     one_chunked = not_aligned_rechunk(data, chunks={dim: 3})
@@ -67,9 +71,10 @@ def test_not_aligned_rechunk_one_chunk(dask, dim):
 @pytest.mark.parametrize("dask", [0, 1, 2])
 @pytest.mark.parametrize("dims", [("k", "Time"), ("Time", "Label")])
 def test_not_aligned_rechunk_two_chunk(dask, dims):
+    """Check not_aligned_rechunk with two chunks in one call."""
     data = generate_dummy_aggregates_data(nt=5, dask=dask)
 
-    chunks = {dim: n for dim, n in zip(dims, (3, 4))}
+    chunks = dict(zip(dims, (3, 4)))
     two_chunked = not_aligned_rechunk(data, chunks=chunks)
 
     assert identical(data.compute(), two_chunked.compute())
@@ -83,9 +88,10 @@ def test_not_aligned_rechunk_two_chunk(dask, dims):
 @pytest.mark.parametrize("dask", [0, 1, 2])
 @pytest.mark.parametrize("dims", [("k", "Time"), ("Time", "Label")])
 def test_not_aligned_rechunk_two_chunk_seq(dask, dims):
+    """Check not_aligned_rechunk with two chunks in two calls."""
     data = generate_dummy_aggregates_data(nt=5, dask=dask)
 
-    chunks = {dim: n for dim, n in zip(dims, (3, 4))}
+    chunks = dict(zip(dims, (3, 4)))
     two_chunked = not_aligned_rechunk(data, chunks=chunks)
     chunk0, chunk1 = ({dim: n} for dim, n in chunks.items())
     two_chunked_seq = not_aligned_rechunk(not_aligned_rechunk(data, chunks=chunk0), chunks=chunk1)
@@ -95,8 +101,8 @@ def test_not_aligned_rechunk_two_chunk_seq(dask, dims):
     check_data(two_chunked_seq, aligned=False)
 
 
-@pytest.mark.parametrize("dims", [("k", "Time"), ("Time", "Label")])
-def test_not_aligned_rechunk_multi(dims):
+def test_not_aligned_rechunk_multi():
+    """Check not_aligned_rechunk with multiple chunks."""
     data = generate_dummy_aggregates_data(nt=5)
 
     multi_chunk = data.copy()
@@ -117,6 +123,7 @@ def test_not_aligned_rechunk_multi(dims):
 
 
 def test_not_aligned_rechunk_no_compute():
+    """Check not_aligned_rechunk is lazy."""
     data = generate_dummy_aggregates_data()
 
     data["trigger"] = ("k",), da.from_delayed(
@@ -127,6 +134,7 @@ def test_not_aligned_rechunk_no_compute():
 
 @pytest.mark.parametrize("dask", [1, 2])
 def test_aligned_rechunk_idempotent(dask):
+    """Check aligned_rechunk with already aligned chunks."""
     data = generate_dummy_aggregates_data(sort_info=True, dask=dask)
     rechunked = aligned_rechunk(data, Time=max(data.chunks["Time"]))
     assert identical(data, rechunked)
@@ -135,6 +143,7 @@ def test_aligned_rechunk_idempotent(dask):
 
 @pytest.mark.parametrize("dask", [1, 2])
 def test_aligned_rechunk_infer_on(dask):
+    """Check aligned_rechunk `on` inference`."""
     data = generate_dummy_aggregates_data(sort_info=True, dask=dask)
     rechunked = aligned_rechunk(data)
     assert identical(data, rechunked)
@@ -143,6 +152,7 @@ def test_aligned_rechunk_infer_on(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_aligned_rechunk_time(dask):
+    """Check aligned_rechunk on time."""
     data_unchunked = generate_dummy_aggregates_data(sort_info=True, dask=dask)
     data_chunked = aligned_rechunk(data_unchunked, Time=2)
     assert identical(data_unchunked.compute(), data_chunked.compute())
@@ -153,6 +163,7 @@ def test_aligned_rechunk_time(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_aligned_rechunk_label(dask):
+    """Check aligned_rechunk on label."""
     data_unchunked = sortby(generate_dummy_aggregates_data(dask=dask), "Label")
     check_data(data_unchunked)
     data_chunked = aligned_rechunk(data_unchunked, Label=2)
@@ -164,6 +175,7 @@ def test_aligned_rechunk_label(dask):
 
 @pytest.mark.parametrize("dask", [0, 5])
 def test_aligned_rechunk_other(dask):
+    """Check aligned_rechunk on random data."""
     aggregates = generate_dummy_aggregates_data(dask=dask)
     if dask:
         chunks = aggregates.chunks
@@ -192,6 +204,7 @@ def test_aligned_rechunk_other(dask):
 
 
 def test_aligned_rechunk_args():
+    """Check aligned_rechunk args parsing."""
     data_unchunked = generate_dummy_aggregates_data()
     data_chunked = aligned_rechunk(data_unchunked, Time=2)
     data_chunked2 = aligned_rechunk(data_unchunked, "Time", Time=2)
@@ -205,6 +218,7 @@ def test_aligned_rechunk_args():
 
 
 def test_aligned_rechunk_mixed():
+    """test_aligned_rechunk_mixed."""
     data_unchunked = generate_dummy_aggregates_data()
 
     k_chunked = aligned_rechunk(data_unchunked, "Time", k=3)
@@ -216,6 +230,7 @@ def test_aligned_rechunk_mixed():
 
 
 def test_aligned_rechunk_no_compute():
+    """Check aligned_rechunk lazy."""
     data = generate_dummy_aggregates_data()
 
     data["trigger"] = ("k",), da.from_delayed(
@@ -226,4 +241,5 @@ def test_aligned_rechunk_no_compute():
 
 @delayed
 def raise_if_computed():
+    """Raise if called."""
     raise ValueError("I should never be computed")

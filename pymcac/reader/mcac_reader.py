@@ -2,17 +2,14 @@
 
 # MCAC
 # Copyright (C) 2020 CORIA
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -26,8 +23,6 @@ import pandas as pd
 import xarray as xr
 from dask import array as da
 from dask import dataframe as dd
-from dask import delayed
-from numba import njit
 
 from pymcac.tools.core.dask_tools import aligned_rechunk
 from pymcac.tools.core.dataframe import groupby_agg, xarray_to_ddframe, xarray_to_frame
@@ -45,6 +40,7 @@ class MCAC:
     __slots__ = ("dir", "_metadata", "_advancement", "_times")
 
     def __init__(self, datadir: Union[str, Path]) -> None:
+        """Init."""
         self.dir = Path(datadir)
         self._metadata: Optional[Dict[str, Union[bool, float]]] = None
         self._advancement: pd.DataFrame = None
@@ -143,7 +139,6 @@ class MCAC:
 
         The result is a large dask dataframe indexed with time
         """
-
         ds = self.get_xaggregates(variables, tmax, nt, time_steps)
         df = xarray_to_ddframe(ds)
 
@@ -195,7 +190,6 @@ class MCAC:
 
         The result is a large xarray+dask dataset
         """
-
         files = sorted(list(self.dir.glob("Spheres*.xmf")))
         _xspheres = self.read_data(files, chunksize=50, tmax=tmax, nt=nt, time_steps=time_steps)
         chunks = _xspheres.Radius.data.rechunk(block_size_limit=CHUNKSIZE * 1024 * 1024).chunks
@@ -228,7 +222,6 @@ class MCAC:
 
         The result is a large dask dataframe indexed with time
         """
-
         ds = self.get_xspheres(variables, tmax, nt, time_steps)
         df = xarray_to_ddframe(ds)
 
@@ -383,9 +376,3 @@ class MCAC:
             ds["BoxVolume"] = V0 * N / N0
 
         return ds
-
-
-@delayed
-@njit(nogil=True, cache=True)
-def compute_Nt(N):
-    return np.bincount(N)[:0:-1].cumsum()[::-1]
