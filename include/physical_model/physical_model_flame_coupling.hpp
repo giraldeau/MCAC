@@ -34,8 +34,8 @@ public:
     std::vector<double> fv;                      ///< soot volume fraction [-]
     std::vector<double> dp_gav;                  ///< primary particle geometric avg. diameter [m]
     std::vector<double> dp_gSTD;                 ///< primary particle geometric std.
-    std::vector<double> u_sg;                    ///< surface growth velocity [m/s]
-    std::vector<double> J_nucl;                  ///< nucleation mas flux [#/s]
+    std::vector<double> J_sg;                    ///< surface growth flux [kg/m^3/s]
+    std::vector<double> J_nucl;                  ///< nucleation mas flux [kg/m^3/s]
     /// Constructor
     FlameCoupling();
     explicit FlameCoupling(const std::string &flame_file);

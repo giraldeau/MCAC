@@ -56,6 +56,7 @@ private:
     size_t n_spheres;               // Number of spheres
     size_t label;                   // Uniq label of the aggregat
     double bulk_density;            // mean density of the aggregate
+    double alpha_vs_extreme;        // extreme value of alpha_v and alpha_s
 
 #ifdef FULL_INTERNAL_DISTANCES
     std::vector<std::vector<double> > distances;

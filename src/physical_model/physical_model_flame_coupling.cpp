@@ -31,7 +31,7 @@ FlameCoupling::FlameCoupling() :
     fv(),
     dp_gav(),
     dp_gSTD(),
-    u_sg(),
+    J_sg(),
     J_nucl() {
 }
 /********************************************************************************
@@ -46,8 +46,8 @@ FlameCoupling::FlameCoupling(const std::string &flame_file) : FlameCoupling() {
     }
     std::ifstream ext_FILE;
     ext_FILE.open(flame_file, std::ifstream::in);
-    //WE ASUME: External DATA CONTAINS 7 COLUMNS AS: [t_res,T,fv,dp_Gav,dp_gstd,u_sg,J_nucl]
-    std::cout << "t_res, T, fv, dp_Gav, dp_gstd, u_sg, J_nucl" << std::endl;
+    //WE ASUME: External DATA CONTAINS 7 COLUMNS AS: [t_res,T,fv,dp_Gav,dp_gstd,J_sg,J_nucl]
+    std::cout << "t_res, T, fv, dp_Gav, dp_gstd, J_sg, J_nucl" << std::endl;
     std::array<double, 7> line;
     while (ext_FILE >> line[0] >> line[1] >> line[2] >> line[3] >> line[4] >> line[5] >> line[6]) {
         // becareful with the units in the imput file! -> input-file should be in SI units
@@ -56,7 +56,7 @@ FlameCoupling::FlameCoupling(const std::string &flame_file) : FlameCoupling() {
         fv.push_back(line[2]);
         dp_gav.push_back(line[3]);
         dp_gSTD.push_back(line[4]);
-        u_sg.push_back(line[5]);
+        J_sg.push_back(line[5]);
         J_nucl.push_back(line[6]);
         std::cout << line[0] << " " << line[1] << " " << line[2] << " " <<
                      line[3] << " " << line[4] << " " << line[5] << " " << line[6] << std::endl;

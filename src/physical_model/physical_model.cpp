@@ -55,6 +55,8 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     box_volume(0.),
     aggregate_concentration(0.0),
     monomer_concentration(0.0),
+    total_surface_concent(0.0),
+    total_volume_concent(0.0),
     rp_min_oxid(0.166e-09),
     n_verlet_divisions(10),
     pick_method(PickMethods::PICK_RANDOM),
@@ -70,6 +72,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
     random_seed(-1),
+    write_Delta_t(1e+06),
     write_events_frequency(1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
@@ -174,6 +177,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
     // output
+    inipp::extract(ini.sections["output"]["write_Delta_t"], write_Delta_t);
     inipp::extract(ini.sections["output"]["write_events_frequency"], write_events_frequency);
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
@@ -211,6 +215,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         std::cout << "WARNING: You should select a volsurf_method in order to take correctly in account" << std::endl
                   << "         Overlap induced by surface reactions" << std::endl;
     }
+    double tot_volume_pp(0.0), tot_surface_pp(0.0);
     if (monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
@@ -220,6 +225,15 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
                                            + 6 * std::pow(mean_diameter, 2) * std::pow(dispersion_diameter, 2)
                                            + 3 * std::pow(dispersion_diameter, 4))
                              / (std::pow(mean_diameter, 3) + 3 * mean_diameter * std::pow(dispersion_diameter, 2));
+        // Total volume/surface pp: Moran, J., , et al. Powder Tech, 2018, vol. 330, p. 67-79.
+        double mean_radius = 0.5 * mean_diameter * 1E-9;
+        double dispersion_radius = 0.5 * dispersion_diameter * 1E-9;
+        tot_volume_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi/3.0) * (mean_radius) *\
+                        (std::pow(mean_radius, 2) + 3.0*std::pow(dispersion_radius, 2));
+        tot_surface_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi) *\
+                        (std::pow(mean_radius, 2) + std::pow(dispersion_radius, 2));
     } else if (monomeres_initialisation_type == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
         box_lenght = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
@@ -227,15 +241,25 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
                               1. / 3.);
         mean_massic_radius = 0.5 * mean_diameter * 1E-9
                              * std::exp(1.5 * std::pow(std::log(dispersion_diameter), 2));  // Hatch-Choate
+        // Total volume/surface pp: Moran, J., , et al. Powder Tech, 2018, vol. 330, p. 67-79.
+        double mean_radius = 0.5 * mean_diameter * 1E-9;
+        tot_volume_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi/3.0) * std::pow(mean_radius, 3) *\
+                        std::exp(4.5 * std::pow(std::log(dispersion_diameter), 2));
+        tot_surface_pp = static_cast<double>(n_monomeres) *\
+                        (4.0*_pi) * std::pow(mean_radius, 2) *\
+                        std::exp(2 * std::pow(std::log(dispersion_diameter), 2));
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
     box_volume = std::pow(box_lenght,3);
     update_temperature(temperature);
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
-    // Particle number concentration
-    aggregate_concentration = static_cast<double>(n_monomeres) / std::pow(box_lenght, 3);
+    // Particle number, volume, and surface area concentration
+    aggregate_concentration = static_cast<double>(n_monomeres) / box_volume;
     monomer_concentration = aggregate_concentration;
+    total_surface_concent = tot_surface_pp / box_volume;
+    total_volume_concent = tot_volume_pp / box_volume;
 
     std::ofstream os(output_dir / "params.ini");
     ini.generate(os);
@@ -316,6 +340,7 @@ void PhysicalModel::print() const {
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_lenght << " (m)" << std::endl
               << " FV                              : " << volume_fraction << " (-)" << std::endl
+              << " write_Delta_t                   : " << write_Delta_t*(1e+03) << " (ms)" << std::endl
               << " write_between_event_frequency   : " << write_between_event_frequency << std::endl
               << " write_events_frequency          : " << write_events_frequency << std::endl;
     if (with_domain_duplication) {
@@ -335,6 +360,10 @@ void PhysicalModel::print() const {
     }
     if (individual_surf_reactions) {
         std::cout << " With individual surf. reactions" << std::endl;
+        if (full_aggregate_update_frequency>1){
+            std::cout << "   - WARNING: Parameter full_aggregate_update_frequency is " <<
+                         full_aggregate_update_frequency << " (recomended =1)" << std::endl;
+        }
     } else {
         std::cout << " Without individual surf. reactions" << std::endl;
     }
@@ -417,10 +446,12 @@ void PhysicalModel::print() const {
     }
     std::cout << std::endl;
 }
-void PhysicalModel::update(size_t n_aggregates, size_t n_monomers, double total_volume) noexcept {
+void PhysicalModel::update(size_t n_aggregates, size_t n_monomers, double new_total_volume, double new_total_surface) noexcept {
+    total_volume_concent = new_total_volume / box_volume;
+    total_surface_concent = new_total_surface / box_volume;
     aggregate_concentration = static_cast<double>(n_aggregates) / box_volume;
     monomer_concentration = static_cast<double>(n_monomers) / box_volume;
-    volume_fraction = total_volume / box_volume;
+    volume_fraction = new_total_volume / box_volume;
 }
 void PhysicalModel::nucleation(double dt) noexcept {
     double delta_nucl = flux_nucleation * box_volume * dt;
@@ -446,9 +477,11 @@ void PhysicalModel::update_from_flame() {
     update_temperature(*previous_temp + t * (*next_temp - *previous_temp) / dt);
 
     // 2. surface growth velocity (dRp/dt)
-    auto next_u_sg = flame.u_sg.begin() + (next_t - flame.t_res.begin());
-    auto previous_u_sg = flame.u_sg.begin() + (previous_t - flame.t_res.begin());
-    u_sg = *previous_u_sg + t * (*next_u_sg - *previous_u_sg) / dt;
+    auto next_J_sg = flame.J_sg.begin() + (next_t - flame.t_res.begin());
+    auto previous_J_sg = flame.J_sg.begin() + (previous_t - flame.t_res.begin());
+    auto J_sg = *previous_J_sg + t * (*next_J_sg - *previous_J_sg) / dt;
+    flux_surfgrowth = J_sg/total_surface_concent;
+    u_sg = flux_surfgrowth/density;
 
     // 3. nucleation flux (dN_pp/dt)
     auto next_J_nucl = flame.J_nucl.begin() + (next_t - flame.t_res.begin());

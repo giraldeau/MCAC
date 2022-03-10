@@ -133,11 +133,11 @@ void Aggregate::set_bulk_density() {
         bulk_density = _bulk_density_young+
                 (_bulk_density_mature-_bulk_density_young)/(_CH_mature-_CH_young) *
                 ((*CH_ratio)-_CH_young);
+        if (bulk_density < _bulk_density_young || bulk_density > _bulk_density_mature){
+            throw InputError("Problem with bulk density: " + std::to_string(bulk_density));
+        }
     } else {
         bulk_density = physicalmodel->density;
-    }
-    if (bulk_density < _bulk_density_young || bulk_density > _bulk_density_mature){
-        throw InputError("Problem with bulk density: " + std::to_string(bulk_density));
     }
 }
 void Aggregate::set_CH_ratio() noexcept {
@@ -215,6 +215,7 @@ void Aggregate::init(const PhysicalModel &new_physicalmodel,
     (*spheres)[sphere_index]->init_val(position, sphere_diameter * 0.5);
     myspheres = SphereList(spheres, {sphere_index});
     n_spheres = myspheres.size();
+    alpha_vs_extreme = 1.0/static_cast<double>(n_spheres);
     *d_m = sphere_diameter;
     // random initial charge
     if (physicalmodel->with_electric_charges) {
@@ -257,8 +258,8 @@ void Aggregate::update_partial() noexcept {
         vol_pp += myspheres[i]->get_volume();
         *dp += myspheres[i]->get_radius();
     }
-    *dp = 2 * (*dp) / double(n_spheres);
-    vol_pp = vol_pp / double(n_spheres);
+    *dp = 2 * (*dp) / static_cast<double>(n_spheres);
+    vol_pp = vol_pp / static_cast<double>(n_spheres);
 
     set_bulk_density();
 
@@ -288,23 +289,33 @@ void Aggregate::update() noexcept {
 static double volume_alpha_correction(const double coordination_number,
                                       const double c_20,
                                       const double c_30,
-                                      const double min_coordination_number) noexcept {
+                                      const double min_coordination_number,
+                                      const double alpha_vs_extreme) noexcept {
     double difference_coordination = std::abs(coordination_number - min_coordination_number);
     double correction = 0.25 * (3.0 * c_20 - c_30) * coordination_number
                         - c_30 * difference_coordination * 0.62741833
                         - pow(difference_coordination, 1.5) * 0.00332425;
-    correction = std::min(std::max(correction, 0.0), 1.0);
-    return 1.0 - correction;
+    // NOTE: correction parameters are obtained by post-processing fit
+    if (correction < 0.0) {correction = 1.0;};
+    correction = std::min(correction, 1.0);
+    double alpha_v = 1.0 - correction;
+    alpha_v = std::max(alpha_v, alpha_vs_extreme);
+    return alpha_v;
 }
 static double surface_alpha_correction(const double coordination_number,
                                        const double c_10,
-                                       const double min_coordination_number) noexcept {
+                                       const double min_coordination_number,
+                                       const double alpha_vs_extreme) noexcept {
     double difference_coordination = std::abs(coordination_number - min_coordination_number);
     double correction = 0.5 * c_10 * coordination_number
-                        - std::pow(c_10, 2) * difference_coordination * 0.70132500
-                        - std::pow(difference_coordination, 2) * 0.00450000;
-    correction = std::min(std::max(correction, 0.0), 1.0);
-    return 1.0 - correction;
+                        - std::pow(c_10, 2) * difference_coordination * 0.29611
+                        - std::pow(difference_coordination, 2) * 0.00155632;
+    // NOTE: correction parameters are obtained by post-processing fit
+    if (correction < 0.0) {correction = 1.0;};
+    correction = std::min(correction, 1.0);
+    double alpha_s = 1.0 - correction;
+    alpha_s = std::max(alpha_s, alpha_vs_extreme);
+    return alpha_s;
 }
 //####### Calculation of the volume, surface, center of mass and Giration radius of gyration of an aggregate ########
 void Aggregate::compute_volume_surface() {
@@ -408,8 +419,9 @@ void Aggregate::compute_volume_surface() {
             double min_coordination_number = 2 * (1.0 - 1.0 / static_cast<double>(n_spheres));
             *overlapping /= static_cast<double>(intersections);
             *coordination_number = static_cast<double>(intersections) / static_cast<double>(n_spheres);
-            *agregat_volume *= volume_alpha_correction(*coordination_number, c_v20, c_v30, min_coordination_number);
-            *agregat_surface *= surface_alpha_correction(*coordination_number, c_s10, min_coordination_number);
+
+            *agregat_volume *= volume_alpha_correction(*coordination_number, c_v20, c_v30, min_coordination_number, alpha_vs_extreme);
+            *agregat_surface *= surface_alpha_correction(*coordination_number, c_s10, min_coordination_number, alpha_vs_extreme);
         }
     }
     if (*agregat_volume <= 0 || *agregat_surface <= 0) {
@@ -421,11 +433,14 @@ void Aggregate::compute_mass_center() noexcept {
     std::array<double, 3> r{0., 0., 0.};
 
     //$ For the Spheres i in Agg Id
+    // double sum_volume(0.0);
     for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of the position of the center of mass
         r += myspheres[i]->get_relative_position() * volumes[i];
+        // sum_volume += volumes[i];
     }
     r /= *agregat_volume;
+    // r /= sum_volume;
     for (size_t i = 0; i < _loopsize; i++) {
         std::array<double, 3> diff{myspheres[i]->get_relative_position() - r};
         distances_center[i] = std::sqrt(std::pow(diff[0], 2) + std::pow(diff[1], 2) + std::pow(diff[2], 2));
@@ -454,14 +469,17 @@ void Aggregate::compute_giration_radius() noexcept {
     // they are used  used in the final formula of the Radius of Gyration
     double arg(0.);
     double brg(0.);
+    // double sum_volume(0.0);
     const size_t _loopsize(n_spheres);
     for (size_t i = 0; i < _loopsize; i++) {
         //$ Calculation of Rg
         arg = arg + volumes[i] * std::pow(sphere_distance_center(i), 2); // distance to the gravity center
         brg = brg + volumes[i] * std::pow(myspheres[i]->get_radius(), 2);
+        // sum_volume += volumes[i];
     }
+    // *rg = std::sqrt(std::abs((arg + 3. / 5. * brg) / sum_volume));
     *rg = std::sqrt(std::abs((arg + 3. / 5. * brg) / (*agregat_volume)));
-    *agregat_volume = std::abs(*agregat_volume);
+    //*agregat_volume = std::abs(*agregat_volume);
 }
 //#####################################################################################################################
 
@@ -519,6 +537,7 @@ bool Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     // merge the spheresLists
     myspheres.merge(other->myspheres);
     n_spheres = myspheres.size();
+    alpha_vs_extreme = 1.0/static_cast<double>(n_spheres);
     //update_distances_and_overlapping();
     update();
     return true;
@@ -616,6 +635,7 @@ void Aggregate::remove_sphere(const size_t &id) noexcept {
     }
     external_storage->spheres.remove(id);
     n_spheres = myspheres.size();
+    alpha_vs_extreme = 1.0/static_cast<double>(n_spheres);
     if (n_spheres > 0) {
         std::array<double, 3> refpos = myspheres[0]->get_position();
         for (const auto &sph : myspheres) {

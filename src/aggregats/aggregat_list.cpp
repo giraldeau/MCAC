@@ -25,12 +25,19 @@
 
 
 namespace mcac {
-[[gnu::pure]]  double AggregatList::get_total_volume() const {
+[[gnu::pure]] double AggregatList::get_total_volume() const {
     double total_volume(0.0);
     for (const auto& agg : list) {
-        total_volume += *agg->agregat_volume;
+        total_volume += (*agg->agregat_volume);
     }
     return total_volume;
+}
+[[gnu::pure]] double AggregatList::get_total_surface() const {
+    double total_surface(0.0);
+    for (const auto& agg : list) {
+        total_surface += (*agg->agregat_surface);
+    }
+    return total_surface;
 }
 [[gnu::pure]] double AggregatList::get_avg_npp() const {
     return avg_npp;
@@ -147,6 +154,12 @@ void AggregatList::duplication() {
     for (const auto& agg : list) {
         agg->set_verlet(&verlet);
     }
+
+    //$ Update Physical model
+    physicalmodel->update(size(),
+                          spheres.size(),
+                          get_total_volume(),
+                          get_total_surface());
 }
 void AggregatList::reduction() {
 
@@ -246,6 +259,12 @@ void AggregatList::reduction() {
             aggregate = list.begin() + index + 1;
         }
     }
+
+    //$ Update Physical model
+    physicalmodel->update(size(),
+                          spheres.size(),
+                          get_total_volume(),
+                          get_total_surface());
 }
 InterPotentialRegime AggregatList::check_InterPotentialRegime(AggregateContactInfo contact_info) {
     auto moving_sphere = contact_info.moving_sphere.lock();
