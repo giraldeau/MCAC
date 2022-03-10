@@ -36,7 +36,7 @@ The corresponding code versions are [tagged](https://gitlab.coria-cfd.fr/MCAC/MC
 We need
  * `libhdf5` for writing our results
  * `mpfr` and `gmp` for accurate computation of sphere overlapping (Optionnal)
- * `python3.6+` for python post-processing (Optionnal)
+ * `python3.8+` for python post-processing (Optionnal)
 
 The other dependencies that may be needed will be compiled with the code
  * `libxdmf` for writing our results, if not found it will be compiled this will need `boost`
@@ -198,4 +198,3 @@ You'll need to export the use of gcc
 You'll need to add the following option to cmake
 
      cmake .. -DCMAKE_PREFIX_PATH="${LIBXML2_ROOT};/soft/library/hdf5-1.8.18-gnu-serial/" 
-

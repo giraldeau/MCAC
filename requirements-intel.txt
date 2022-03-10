@@ -1,19 +1,4 @@
-numpy
-setuptools_scm
-xarray
-dask[complete]
-pandas
-matplotlib
-h5py
-#cython
-#numba
-#numexpr
-bottleneck
-scipy
-scikit-image
-scikit-learn
-lxml
-
+# for pytest
 pytest
 pytest-html
 pytest-timeout
@@ -21,3 +6,22 @@ pytest-cov
 pytest-sugar
 pytest-icdiff
 pytest-xdist[psutil]
+
+# for pymcac
+numpy
+matplotlib
+scipy
+h5py
+pandas
+xarray[accel]
+dask[complete]
+cython
+scikit-image
+lxml
+tqdm
+toolz
+fsspec>=0.3.3
+scikit-learn
+psutil
+cachey
+cloudpickle

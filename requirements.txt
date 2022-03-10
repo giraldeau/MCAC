@@ -1,36 +1,51 @@
-numpy
-setuptools_scm
-xarray
-dask[complete]
-pandas
-matplotlib
-h5py
-cython
-numba
-numexpr
-bottleneck
-scipy
-scikit-image
-scikit-learn
-lxml
-tqdm
-jupyterlab
-ipykernel
-ipympl
+# for vscode
+fortran-language-server
+black
+mypy
+pyproject-flake8
+flake8-copyright
 
+# for linters
+pre-commit
+
+# for pytest
 pytest
 pytest-html
-pytest-timeout
 pytest-cov
+pytest-timeout
 pytest-sugar
 pytest-icdiff
 pytest-xdist[psutil]
 
-cpplint 
-mypy
-black
-isort
-flake8
-pyproject-flake8
-pylint
-cmakelang
+# for jupyter
+jupyterlab
+ipykernel
+ipyparallel
+ipympl
+RISE
+jupyter_contrib_nbextensions
+jupyter_nbextensions_configurator
+xeus-python
+jupyterlab-lsp
+python-language-server[all]
+lckr-jupyterlab-variableinspector
+nbconvert
+
+# for pymcac
+numpy
+matplotlib
+scipy
+h5py
+pandas
+xarray[accel]
+dask[complete]
+cython
+scikit-image
+lxml
+tqdm
+toolz
+fsspec>=0.3.3
+scikit-learn
+psutil
+cachey
+cloudpickle
