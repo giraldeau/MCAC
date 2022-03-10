@@ -2,47 +2,47 @@
 # Configuration de Qt 5.4.2 avec OpenCV 2.4.13   #
 # ============================================== #
 
-Attention, il faut adapter en fonction des versions de Qt et OpenCV utilisées.
+Attention, il faut adapter en fonction des versions de Qt et OpenCV utilisÃ©es.
 
-Étape 1 : Executer "opencv-2.4.13"  dans "Programmes_a_installer"
-	  ou Télécharger OpenCV à l'aide du lien ci-contre : "http://opencv.org/downloads.html".
-	  Choisir la version la plus récente (2.4.13) et cliquer sur "OpenCV for Windows".
+Ã‰tape 1 : Executer "opencv-2.4.13"  dans "Programmes_a_installer"
+	  ou TÃ©lÃ©charger OpenCV Ã  l'aide du lien ci-contre : "http://opencv.org/downloads.html".
+	  Choisir la version la plus rÃ©cente (2.4.13) et cliquer sur "OpenCV for Windows".
 	  L'extraire dans "C:\".
-	  Le répertoire "opencv" se crée et contient deux dossiers : "build" et "sources".
+	  Le rÃ©pertoire "opencv" se crÃ©e et contient deux dossiers : "build" et "sources".
 
 
-Étape 2 : Télécharger l'utilitaire CMake à l'adresse internet suivante : "https://cmake.org/download/" ou executer le programme dans "Programmes_a_installer".
-	  Pour cela, choisir le fichier correspondant à la plateforme Windows 64-bit dans la rubrique "Binary distributions" : "cmake-3.6.0-win64-x64.msi"
-	  L'exécuter en indiquant "Add CMake to the system PATH for all users" puis l'installer dans "C:\CMake".
-	  Le répertoire "CMake" se crée.
+Ã‰tape 2 : TÃ©lÃ©charger l'utilitaire CMake Ã  l'adresse internet suivante : "https://cmake.org/download/" ou executer le programme dans "Programmes_a_installer".
+	  Pour cela, choisir le fichier correspondant Ã  la plateforme Windows 64-bit dans la rubrique "Binary distributions" : "cmake-3.6.0-win64-x64.msi"
+	  L'exÃ©cuter en indiquant "Add CMake to the system PATH for all users" puis l'installer dans "C:\CMake".
+	  Le rÃ©pertoire "CMake" se crÃ©e.
 
-Étape 3 : Télécharger l'éditeur de chemin Path Editor à l'adresse internet suivante : "http://patheditor2.codeplex.com/" ou dans le répertoir "Programmes_a_installer"
+Ã‰tape 3 : TÃ©lÃ©charger l'Ã©diteur de chemin Path Editor Ã  l'adresse internet suivante : "http://patheditor2.codeplex.com/" ou dans le rÃ©pertoir "Programmes_a_installer"
 
 
-Étape 4 : Ouvrir l'éditeur de chemin. Ajouter les dossiers : - C:\Qt\5.4\mingw491_32\bin
+Ã‰tape 4 : Ouvrir l'Ã©diteur de chemin. Ajouter les dossiers : - C:\Qt\5.4\mingw491_32\bin
 							     - C:\Qt\Tools\mingw491_32\bin
 							     - C:\CMake\bin
 	  Si un path d'une ancienne version d'OpenCV aparait (symbole rouge), l'enlever.	
 
-Étape 5 : Créer un répertoire intitulé "opencv-mingw" dans C:\.
-	  Ouvrir CMake. L'exécutable est dans le répertoire "C:\CMake\bin". Double cliquer sur "cmake-gui".
-	  Mettre le chemin du code source à "C:\opencv\sources" et le chemin des binaires à construire à "C:\opencv-mingw".
-	  Appuyer sur le bouton "Configure". Une fenêtre pop-up s'ouvre. 
-	  Sélectionner le générateur "MinGW MakeFiles" puis cocher "Specify native compilers".
+Ã‰tape 5 : CrÃ©er un rÃ©pertoire intitulÃ© "opencv-mingw" dans C:\.
+	  Ouvrir CMake. L'exÃ©cutable est dans le rÃ©pertoire "C:\CMake\bin". Double cliquer sur "cmake-gui".
+	  Mettre le chemin du code source Ã  "C:\opencv\sources" et le chemin des binaires Ã  construire Ã  "C:\opencv-mingw".
+	  Appuyer sur le bouton "Configure". Une fenÃªtre pop-up s'ouvre. 
+	  SÃ©lectionner le gÃ©nÃ©rateur "MinGW MakeFiles" puis cocher "Specify native compilers".
 	  Cliquer sur "Next".
-	  Pour le compilateur C, sélectionner "C:\Qt\Tools\mingw491_32\bin\gcc.exe".
-	  Pour le compilateur C++, sélectionner "C:\Qt\Tools\mingw491_32\bin\g++.exe".
-	  Cliquer sur "Finish".Attendre la génération.
-	  Cocher "WITH-QT" dans la liste des éléments en rouge (sans décocher le reste) puis cliquer sur "Generate". Ensuite, fermer l'executable.
+	  Pour le compilateur C, sÃ©lectionner "C:\Qt\Tools\mingw491_32\bin\gcc.exe".
+	  Pour le compilateur C++, sÃ©lectionner "C:\Qt\Tools\mingw491_32\bin\g++.exe".
+	  Cliquer sur "Finish".Attendre la gÃ©nÃ©ration.
+	  Cocher "WITH-QT" dans la liste des Ã©lÃ©ments en rouge (sans dÃ©cocher le reste) puis cliquer sur "Generate". Ensuite, fermer l'executable.
 
-Étape 6 : Ouvrir l'invite de commande. Pour cela, cliquer sur le menu démarrer de Windows et taper "cmd" dans la barre de recherche.
+Ã‰tape 6 : Ouvrir l'invite de commande. Pour cela, cliquer sur le menu dÃ©marrer de Windows et taper "cmd" dans la barre de recherche.
 	  Dans l'invite de commande, taper la commande "cd C:\opencv-mingw" (sans les guillemets).
 	  Taper ensuite la commande "mingw32-make" (sans les guillemets).
-	  La création des librairies est longue. 
+	  La crÃ©ation des librairies est longue. 
 	  Attendre 100% puis taper la commande "mingw32-make install" (sans les guillemets).
 	  Fermer l'invite de commande.
 
 Si Qt ne fonctionne pas :
 
-Étape 7 : Copier les fichiers .dll présents dans le dossier "Librairies_a_ajouter_a_la_racine".
-	  Les coller dans le répertoire "C:\Windows".
+Ã‰tape 7 : Copier les fichiers .dll prÃ©sents dans le dossier "Librairies_a_ajouter_a_la_racine".
+	  Les coller dans le rÃ©pertoire "C:\Windows".
