@@ -14,6 +14,6 @@ add_custom_command(
 add_custom_target(
     pymcac ALL
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/venv
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/venv/bin/pip install -e ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/venv/bin/pip install -e ${CMAKE_CURRENT_SOURCE_DIR}[complete]
     COMMENT "Installing PyMCAC in the venv"
 )
