@@ -9,16 +9,31 @@ requires = [
     "tomli<2.0.0" # to silence a minor warning
     ]
 
+[tool.setuptools_scm]
+write_to = "pymcac/version.py"
+fallback_version = "0.0.0"
+
 [tool.pytest.ini_options]
 timeout = 120
 addopts = "-n auto --html=artifacts/pytest.html --self-contained-html --cov=pymcac/ --cov-report=html:artifacts/coverage"
 testpaths = [
     "pymcac",
 ]
+norecursedirs = [
+    "venv/*",
+    ".git/*",
+    "build/*",
+    "bin/*",
+    "src/*",
+    "artifacts/*",
+    "doc/*",
+    "ext/*",
+    "ext_bin/*",
+    ]
 
 [tool.black]
 line-length = 100
-extend-exclude = "tmp"
+extend-exclude = "venv|tmp|build|cmake-format.py|ext|ext_bin"
 
 [tool.isort]
 profile = "black"
@@ -29,11 +44,75 @@ extend_skip = [
     "ext",
     "ext_bin",
     "venv",
+    "build",
     ]
 skip_gitignore = true
 
 [tool.flake8]
 max-line-length = 100
-extend-exclude="tmp, venv, ext, ext_bin, cmake-format.py"
-extend-ignore = "E203,"
+inline-quotes = '"'
+copyright-check = "true"
+copyright-author = "CORIA"
+min-coverage-percents=100
+extend-exclude="tmp, venv, ext, ext_bin, cmake-format.py, build"
+extend-ignore = "E203,E741"
+select = "Q0,E,F,W,C,C4,B,B901,TAE,ANN,TC,TC1"
 show_source = "true"
+
+[tool.mypy]
+python_version = 3.8
+warn_unused_configs = true
+exclude = "EnvPymagePro|venv|tmp|build|dist"
+
+[[tool.mypy.overrides]]
+module = [
+]
+ignore_missing_imports = true
+
+[tool.pylint.master]
+ignore-paths = "pymagepro/version.py"
+jobs = 0
+py-version = 3.8
+load-plugins = [
+    "pylint.extensions.broad_try_clause",
+    "pylint.extensions.code_style",
+    "pylint.extensions.emptystring",
+    "pylint.extensions.comparetozero",
+    "pylint.extensions.confusing_elif",
+    "pylint.extensions.consider_ternary_expression",
+    "pylint.extensions.bad_builtin",
+    "pylint.extensions.mccabe",
+    "pylint.extensions.docstyle",
+    "pylint.extensions.check_elif",
+    "pylint.extensions.redefined_variable_type",
+    "pylint.extensions.overlapping_exceptions",
+    "pylint.extensions.docparams",
+    "pylint.extensions.empty_comment",
+    "pylint.extensions.set_membership",
+    "pylint.extensions.typing",
+    "pylint.extensions.while_used"
+]
+
+[tool.pylint.'MESSAGES CONTROL']
+max-line-length = 100
+disable = [
+    "too-many-arguments",
+    "invalid-name",
+    "too-many-locals",
+    "too-many-instance-attributes",
+    "too-many-branches",
+    "import-error",
+    "too-many-try-statements",
+    "c-extension-no-member",
+    "too-many-return-statements",
+    "consider-ternary-expression",
+    "compare-to-zero",
+]
+
+[tool.pylint.'TYPECHECK']
+ignored-classes = "TextFileReader"
+
+[tool.pydocstyle]
+match_dir = '^(?!(venv|.eggs|tmp|build|dist|ext|ext_bin)).*'
+match = '^(?!(version)).*.py'
+add-ignore = "D412"
