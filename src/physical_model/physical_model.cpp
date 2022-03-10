@@ -78,6 +78,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     flame_file("flame_input"),
     interpotential_file("interpotential_file"),
     with_domain_duplication(true),
+    with_domain_reduction(false),
     with_nucleation(false),
     with_collisions(true),
     with_surface_reactions(false),
@@ -148,6 +149,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
     inipp::extract(ini.sections["numerics"]["with_domain_duplication"], with_domain_duplication);
+    inipp::extract(ini.sections["numerics"]["with_domain_reduction"], with_domain_reduction);
     inipp::extract(ini.sections["numerics"]["individual_surf_reactions"], individual_surf_reactions);
     inipp::extract(ini.sections["numerics"]["with_collisions"], with_collisions);
     inipp::extract(ini.sections["numerics"]["enforce_volume_fraction"], enforce_volume_fraction);
@@ -320,6 +322,11 @@ void PhysicalModel::print() const {
         std::cout << " With domain duplication" << std::endl;
     } else {
         std::cout << " Without domain duplication" << std::endl;
+    }
+    if (with_domain_reduction) {
+        std::cout << " With domain reduction" << std::endl;
+    } else {
+        std::cout << " Without domain reduction" << std::endl;
     }
     if (random_seed < 0) {
         std::cout << " Seed random numbers: auto" << std::endl;
