@@ -1,0 +1,27 @@
+---
+# Here are some test that are not satisfied yet or that need additional dependency
+repos:
+    # TODO: fix the errors
+    - repo: https://github.com/pycqa/pylint
+      rev: v2.12.2
+      hooks:
+          - id: pylint
+    # TODO: fix the errors
+    - repo: https://github.com/pycqa/flake8
+      rev: 4.0.1
+      hooks:
+          - id: flake8
+            entry: pflake8
+            additional_dependencies: [pyproject-flake8, flake8-copyright]
+    # TODO: need additional system dependency (cppcheck clang-format)
+    - repo: https://gitlab.com/daverona/pre-commit/cpp
+      rev: 0.8.0
+      hooks:
+          - id: clang-format
+          - id: cppcheck
+    # TODO: need additional system dependency (shellcheck and shfmt)
+    - repo: https://github.com/jumanjihouse/pre-commit-hooks
+      rev: 2.1.6
+      hooks:
+          - id: shellcheck
+          - id: shfmt
