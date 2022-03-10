@@ -1,58 +1,59 @@
+---
 pytest_data:
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
-  stage: Run
-  before_script:
-    - echo "dockerfile_version=${dockerfile_version}"
-  script:
-    - cd validation
-    - ../bin/Debug/MCAC params_pytest.ini
-  artifacts:
-    paths:
-      - validation/pytest_data
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-      - .gitlab/test.yml
-      - .gitlab-ci.yml
-      - pyproject.toml
-      - .docker/Dockerfile.gfortran
-  needs: ["gfortran-Debug"]
-  dependencies:
-    - gfortran-Debug
+    image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+    stage: Run
+    before_script:
+        - echo "dockerfile_version=${dockerfile_version}"
+    script:
+        - cd validation
+        - ../bin/Debug/MCAC params_pytest.ini
+    artifacts:
+        paths:
+            - validation/pytest_data
+    only:
+        changes:
+            - src/**/*
+            - include/**/*
+            - cmake/**/*
+            - CMakeLists.txt
+            - pymcac/**/*
+            - .gitlab/test.yml
+            - .gitlab-ci.yml
+            - pyproject.toml
+            - .docker/Dockerfile.gfortran
+    needs: [gfortran-Debug]
+    dependencies:
+        - gfortran-Debug
 
 pymcac_tests:
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
-  stage: Test
-  before_script:
-    - echo "dockerfile_version=${dockerfile_version}"
-  script:
-    - pip install -e .[test]
-    - pytest --cov=pymcac/ --cov-report=xml --junitxml=artifacts/pytest.xml
-    - coverage xml
-    - coverage report
-  only:
-    changes:
-      - src/**/*
-      - include/**/*
-      - cmake/**/*
-      - CMakeLists.txt
-      - pymcac/**/*
-      - .gitlab/test.yml
-      - .gitlab-ci.yml
-      - pyproject.toml
-      - .docker/Dockerfile.gfortran
-  artifacts:
-    when: always
-    paths:
-      - artifacts/*
-    reports:
-      junit: artifacts/pytest.xml
-      cobertura: coverage.xml
-  coverage: /^TOTAL.+?(\d+\%)$/
-  needs: ["pytest_data"]
-  dependencies:
-    - pytest_data
+    image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+    stage: Test
+    before_script:
+        - echo "dockerfile_version=${dockerfile_version}"
+    script:
+        - pip install -e .[test]
+        - pytest --cov=pymcac/ --cov-report=xml --junitxml=artifacts/pytest.xml
+        - coverage xml
+        - coverage report
+    only:
+        changes:
+            - src/**/*
+            - include/**/*
+            - cmake/**/*
+            - CMakeLists.txt
+            - pymcac/**/*
+            - .gitlab/test.yml
+            - .gitlab-ci.yml
+            - pyproject.toml
+            - .docker/Dockerfile.gfortran
+    artifacts:
+        when: always
+        paths:
+            - artifacts/*
+        reports:
+            junit: artifacts/pytest.xml
+            cobertura: coverage.xml
+    coverage: /^TOTAL.+?(\d+\%)$/
+    needs: [pytest_data]
+    dependencies:
+        - pytest_data

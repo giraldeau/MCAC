@@ -3,9 +3,9 @@ Guide dinstallation de lenvironnement DLCA
 1    Installer une version récente de QtCreator
 
 
-2	Décompresser la librairie de diagonalisation Eigen dans un répertoire à créer : "C:\Program Files (x86)\Eigen\" dans lequel nous retrouverons divers sous-repertoires.
+2    Décompresser la librairie de diagonalisation Eigen dans un répertoire à créer : "C:\Program Files (x86)\Eigen\" dans lequel nous retrouverons divers sous-repertoires.
 
-3	Installer OpenCV (se référer à la notice d'installation de OpenCV avec Qt).
+3    Installer OpenCV (se référer à la notice d'installation de OpenCV avec Qt).
 
 
 
@@ -13,7 +13,7 @@ Adaptation des sources au nouvel environnement
 Tout d'abord, effacer tous les répértoirs build***
 
 
-A	Pour le programme de génération, aller dans le repertoire "Generateur_DLCA", effacer le fichier DLCA.user puis ouvrir DLCA.pro avec Qt creator.
+A    Pour le programme de génération, aller dans le repertoire "Generateur_DLCA", effacer le fichier DLCA.user puis ouvrir DLCA.pro avec Qt creator.
 Refuser de charger le fichier de configuration.
 Cliquer sur Configurer.
 
@@ -21,13 +21,13 @@ Executer le programme (flèche verte) une première fois. des repertoires sont a
 
 Une nouvelle execution contiendra les images. Ce programme s'exécutera à l'aide d'un fichier contenant les paramètres utiles à l'exécution tel que celui déposé dans le répertoire "\DLCA_sous_Qt\params.txt".
 
-B	Pour le programme de Post traitement, aller dans le repertoire "Analyse_DLCA", effacer Analyse_DLCA.user puis ouvrir analyse_DLCA.pro avec Qt creator.
+B    Pour le programme de Post traitement, aller dans le repertoire "Analyse_DLCA", effacer Analyse_DLCA.user puis ouvrir analyse_DLCA.pro avec Qt creator.
 Cliquer sur Configurer.
 Une fenetre apparait, elle permet de définir le répertoire dans lequel l'exécutable sera généré*. 
 Accepter. 
 Pour exécuter le source appuyer sur la flèche verte en bas à gauche. Il faut à nouveau indiquer le fichier de paramètres utilisé en A.
 
-C	Pour le programme d'Analyse des agrégats et d'export de ces derniers, aller dans le repertoire "Analyse_Projections2D", effacer analyse_Projection2D.user puis ouvrir analyse_Projection2D.pro avec Qt creator.
+C    Pour le programme d'Analyse des agrégats et d'export de ces derniers, aller dans le repertoire "Analyse_Projections2D", effacer analyse_Projection2D.user puis ouvrir analyse_Projection2D.pro avec Qt creator.
 Accepter le backup.
 Refuser de charger le fichier de configuration.
 Une fenetre apparait, elle permet de définir le répertoire dans lequel l'exécutable sera généré*.

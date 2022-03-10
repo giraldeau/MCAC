@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Compute gyration radius using discretisation
-"""
+"""Compute gyration radius using discretisation."""
 from typing import Optional, Tuple
 
 import numpy as np
@@ -34,8 +31,7 @@ def inertia(
     resolution: int = 128,
     alphagangue: float = 0.4,
 ) -> np.ndarray:
-    """
-    Compute gyration radius using discretisation
+    """Compute gyration radius using discretisation.
 
     alphagangue is a parameter allowing some gangue around the aggregate
     """
@@ -45,9 +41,7 @@ def inertia(
 
 
 def inertia_disc(data: np.ndarray, grid: Tuple[np.ndarray, np.ndarray, np.ndarray]) -> np.ndarray:
-    """
-    Compute gyration radius using discretisation
-    """
+    """Compute gyration radius using discretisation."""
     X, Y, Z = grid
 
     # noinspection PyTypeChecker
@@ -59,9 +53,9 @@ def inertia_disc(data: np.ndarray, grid: Tuple[np.ndarray, np.ndarray, np.ndarra
     z = Z[coords] - Z[coords].mean()
 
     tensor = np.zeros((3, 3))
-    tensor[0, 0] = (y ** 2 + z ** 2).mean()
-    tensor[1, 1] = (x ** 2 + z ** 2).mean()
-    tensor[2, 2] = (x ** 2 + y ** 2).mean()
+    tensor[0, 0] = (y**2 + z**2).mean()
+    tensor[1, 1] = (x**2 + z**2).mean()
+    tensor[2, 2] = (x**2 + y**2).mean()
 
     tensor[0, 1] = tensor[1, 0] = -(x * y).mean()
     tensor[0, 2] = tensor[2, 0] = -(x * z).mean()

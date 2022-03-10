@@ -62,7 +62,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
     writer(std::make_unique<ThreadedIO>(physicalmodel->output_dir / "Aggregats", *physicalmodel, physicalmodel->n_monomeres)),
     last_saved(0),
     spheres(*the_physical_model, physicalmodel->n_monomeres),
-    verlet(the_physical_model->n_verlet_divisions, the_physical_model->box_lenght) {
+    verlet(the_physical_model->n_verlet_divisions, the_physical_model->box_length) {
     ListStorage<AggregatesFields::AGGREGAT_NFIELDS, Aggregate>::init(physicalmodel->n_monomeres, *this);
     setpointers();
 
@@ -74,7 +74,7 @@ AggregatList::AggregatList(PhysicalModel *the_physical_model):
 
     if (physicalmodel->enforce_volume_fraction){
         double current_total_volume = get_total_volume();
-        double prescribed_total_volume = physicalmodel->volume_fraction *  std::pow(physicalmodel->box_lenght, 3);
+        double prescribed_total_volume = physicalmodel->volume_fraction *  std::pow(physicalmodel->box_length, 3);
         double correction = std::pow(prescribed_total_volume / current_total_volume, 1./3.);
 
         for (const auto & sphere: spheres) {
@@ -93,4 +93,3 @@ AggregatList::~AggregatList() noexcept {
     }
 }
 }// namespace mcac
-

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Read the MCAC output files
-"""
+"""Read the MCAC output files."""
 
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence, Union, cast
@@ -43,9 +40,7 @@ CHUNKSIZE = 1  # in Mo
 
 
 class MCAC:
-    """
-    This object read the simulation results from MCAC
-    """
+    """This object read the simulation results from MCAC."""
 
     __slots__ = ("dir", "_metadata", "_advancement", "_times")
 
@@ -57,9 +52,7 @@ class MCAC:
 
     @property
     def metadata(self) -> Dict[str, Union[bool, float]]:
-        """
-        Read the metadata of the simulation from one of the files
-        """
+        """Read the metadata of the simulation from one of the files."""
         if self._metadata is None:
             # usually spheres are smaller file to read
             files = list(self.dir.glob("Spheres*.xmf"))
@@ -73,9 +66,7 @@ class MCAC:
 
     @property
     def times(self) -> np.ndarray:
-        """
-        Read the metadata of the simulation from one of the files
-        """
+        """Read the metadata of the simulation from one of the files."""
         if self._times is None:
             try:
                 self._times = self.advancement.index.values
@@ -92,9 +83,7 @@ class MCAC:
 
     @property
     def advancement(self) -> pd.DataFrame:
-        """
-        Read the advancement file of the simulation
-        """
+        """Read the advancement file of the simulation."""
         if self._advancement is None:
             self._advancement = AdvancementReader.read_advancement(self.dir)
 
@@ -102,8 +91,7 @@ class MCAC:
 
     @property
     def xaggregates(self) -> xr.Dataset:
-        """
-        Read all the data from the aggregates files
+        """Read all the data from the aggregates files.
 
         The result is a large xarray+dask dataset
         """
@@ -116,8 +104,7 @@ class MCAC:
         nt: int = None,
         time_steps: np.ndarray = None,
     ) -> xr.Dataset:
-        """
-        Read the selected data from the aggregates files
+        """Read the selected data from the aggregates files.
 
         The result is a large xarray+dask dataset
         """
@@ -139,8 +126,7 @@ class MCAC:
     # noinspection PyUnusedFunction
     @property
     def ddaggregates(self) -> dd.DataFrame:
-        """
-        Read all the data from the aggregates files
+        """Read all the data from the aggregates files.
 
         The result is a large dask dataframe indexed with time
         """
@@ -153,8 +139,7 @@ class MCAC:
         nt: int = None,
         time_steps: np.ndarray = None,
     ) -> dd.DataFrame:
-        """
-        Read the selected data from the aggregates files
+        """Read the selected data from the aggregates files.
 
         The result is a large dask dataframe indexed with time
         """
@@ -170,11 +155,10 @@ class MCAC:
 
     @property
     def aggregates(self) -> pd.DataFrame:
-        """
-        Read all the data from the aggregates files
+        """Read all the data from the aggregates files.
 
-        The result is a large panda multiindex dataframe
-        in the form data.loc[(time, label), attribute]
+        The result is a large panda multiindex dataframe in the form
+        data.loc[(time, label), attribute]
         """
         return self.get_aggregates()
 
@@ -185,18 +169,16 @@ class MCAC:
         nt: int = None,
         time_steps: np.ndarray = None,
     ) -> pd.DataFrame:
-        """
-        Read the selected data from the aggregates files
+        """Read the selected data from the aggregates files.
 
-        The result is a large panda multiindex dataframe
-        in the form data.loc[(time, label), attribute]
+        The result is a large panda multiindex dataframe in the form
+        data.loc[(time, label), attribute]
         """
         return xarray_to_frame(self.get_xaggregates(variables, tmax, nt, time_steps))
 
     @property
     def xspheres(self) -> xr.Dataset:
-        """
-        Read all the data from the spheres files
+        """Read all the data from the spheres files.
 
         The result is a large xarray+dask dataset
         """
@@ -209,8 +191,7 @@ class MCAC:
         nt: int = None,
         time_steps: np.ndarray = None,
     ) -> xr.Dataset:
-        """
-        Read the selected data from the spheres files
+        """Read the selected data from the spheres files.
 
         The result is a large xarray+dask dataset
         """
@@ -230,8 +211,7 @@ class MCAC:
 
     @property
     def ddspheres(self) -> dd.DataFrame:
-        """
-        Read all the data from the spheres files
+        """Read all the data from the spheres files.
 
         The result is a large dask dataframe indexed with time
         """
@@ -244,8 +224,7 @@ class MCAC:
         nt: int = None,
         time_steps: np.ndarray = None,
     ) -> dd.DataFrame:
-        """
-        Read the selected data from the spheres files
+        """Read the selected data from the spheres files.
 
         The result is a large dask dataframe indexed with time
         """
@@ -261,11 +240,10 @@ class MCAC:
 
     @property
     def spheres(self) -> pd.DataFrame:
-        """
-        Read all the data from the spheres files
+        """Read all the data from the spheres files.
 
-        The result is a large panda multiindex dataframe
-        in the form data.loc[(time, label), attribute]
+        The result is a large panda multiindex dataframe in the form
+        data.loc[(time, label), attribute]
         """
         return self.get_spheres()
 
@@ -276,11 +254,10 @@ class MCAC:
         nt: int = None,
         time_steps: np.ndarray = None,
     ) -> pd.DataFrame:
-        """
-        Read the selected data from the spheres files
+        """Read the selected data from the spheres files.
 
-        The result is a large panda multiindex dataframe
-        in the form data.loc[(time, label), attribute]
+        The result is a large panda multiindex dataframe in the form
+        data.loc[(time, label), attribute]
         """
         return xarray_to_frame(self.get_xspheres(variables, tmax, nt, time_steps))
 
@@ -293,9 +270,7 @@ class MCAC:
         nt: int = None,
         time_steps: np.ndarray = None,
     ) -> xr.Dataset:
-        """
-        Merge the data of all the files into one large dataset
-        """
+        """Merge the data of all the files into one large dataset."""
         if time_steps is None:
             if nt is not None:
                 if tmax is None:
@@ -313,7 +288,7 @@ class MCAC:
                 nt = len(self.times)
             time_steps = self.times[:nt]
 
-        datas = {
+        data = {
             time: data
             for file in files
             for time, data in H5Reader.read_file(
@@ -321,28 +296,28 @@ class MCAC:
             ).items()
         }
 
-        first_datas = next(iter(datas.values()))
-        columns = first_datas.keys()
+        first_data = next(iter(data.values()))
+        columns = first_data.keys()
 
-        reversed_datas = {col: [datas[time][col] for time in datas.keys()] for col in columns}
-        del datas
+        reversed_data = {col: [data[time][col] for time in data.keys()] for col in columns}
+        del data
 
         data_vars = {}
         coords = {}
-        for col, data_t in reversed_datas.items():
+        for col, data_t in reversed_data.items():
             if col == "nTime":
                 continue
-            data = da.concatenate(data_t)
+            full_data = da.concatenate(data_t)
 
-            if data.size == len(time_steps):
+            if full_data.size == len(time_steps):
                 dims = ("Time",)
             else:
                 dims = ("k",)
 
             if col in ("Time", "nTime", "kTime", indexname, "n" + indexname):
-                coords[col] = xr.DataArray(data, dims=dims, name=col)
+                coords[col] = xr.DataArray(full_data, dims=dims, name=col)
             else:
-                data_vars[col] = xr.DataArray(data, dims=dims, name=col)
+                data_vars[col] = xr.DataArray(full_data, dims=dims, name=col)
 
         coords["k" + indexname] = coords.pop(indexname)
 
@@ -357,9 +332,9 @@ class MCAC:
 
         nmax = int(coords["n" + indexname].max())  # .compute())
 
-        for nt_data in reversed_datas["nTime"]:
+        for nt_data in reversed_data["nTime"]:
             nt_data.resize((nmax,), refcheck=False)
-        Nt = sum(reversed_datas["nTime"])
+        Nt = sum(reversed_data["nTime"])
         coords["nTime"] = xr.DataArray(Nt, dims=indexname, name="nTime")
 
         # to_persist = ("nTime", indexname)
@@ -384,7 +359,7 @@ class MCAC:
         if "BoxSize" in ds.data_vars:
             BoxSize = ds.BoxSize
             ds = ds.drop_vars("BoxSize")
-            ds["BoxVolume"] = BoxSize ** 3
+            ds["BoxVolume"] = BoxSize**3
 
         try:
             for col in self.advancement.columns:

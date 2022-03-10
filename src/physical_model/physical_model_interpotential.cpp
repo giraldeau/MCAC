@@ -51,8 +51,8 @@ Interpotential::Interpotential(const std::string &interpotential_file) : Interpo
     }
     std::ifstream ext_FILE;
     ext_FILE.open(interpotential_file, std::ifstream::in);
-    double d_temp; // just temporal auxiliar variables
-    //WE ASUME: External DATA is ordered as:
+    double d_temp; // just temporal auxiliary variables
+    //WE ASSUME: External DATA is ordered as:
     // 1st line: Fixed temperature
     ext_FILE >> fixed_Temperature;
 
@@ -196,4 +196,3 @@ std::pair<double, double> Interpotential::get_Ebar_Ewell(const double dp1, const
     return std::make_pair(interpolated_E_bar, interpolated_E_well);
 }
 }  // namespace mcac
-

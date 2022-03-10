@@ -182,4 +182,3 @@ cdef void merge(long v[], const long a[], const long low, const long mid, const 
     while k >= 0:
         v[low + k] = b[k]
         k -= 1
-

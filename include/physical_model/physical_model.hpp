@@ -37,7 +37,7 @@ public:
     double mass_nuclei, mean_diameter_nucleation, dispersion_diameter_nucleation;
     double mean_massic_radius, friction_exponnant;
     double time;
-    double volume_fraction, box_lenght,box_volume, aggregate_concentration, monomer_concentration;
+    double volume_fraction, box_length,box_volume, aggregate_concentration, monomer_concentration;
     double total_surface_concent,total_volume_concent;
     double rp_min_oxid;     // Minimum d_pp below which the particle disappear
     size_t n_verlet_divisions;
@@ -130,4 +130,3 @@ public:
 
 
 #endif //INCLUDE_PHYSICAL_MODEL_PHYSICAL_MODEL_HPP
-

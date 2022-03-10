@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Tools related to dask
-"""
+"""Tools related to dask."""
 from contextlib import contextmanager, nullcontext
 
 import dask.array as da
@@ -36,9 +33,8 @@ from pymcac.tools.core.various import get_idx_name
 
 
 def progress_compute(*dfs):
-    """
-    Compute the given dataframe, array, dataarray or datasets showing a progress bar
-    """
+    """Compute the given dataframe, array, dataarray or datasets showing a
+    progress bar."""
     scheduler = get_scheduler()
     # distribute = "Client" in type(scheduler).__name__ and hasattr(scheduler, "get")
     distribute = "Client" in str(scheduler)
@@ -60,9 +56,7 @@ def progress_compute(*dfs):
 
 @contextmanager
 def dask_distribute(n_workers=None, threads_per_worker=1, report="", jupyter=False):
-    """
-    Context for dask distribute
-    """
+    """Context for dask distribute."""
     if jupyter:
         print("Using a IPyParallel cluster seems to be a bad idea...")
         try:
@@ -212,7 +206,7 @@ def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
                 nums.cumsum() / nums.sum(), np.linspace(0, 1, nchunk, endpoint=False)
             )
             time_chunks = np.append(time_chunks, [time_chunks[-1] + nums.size - time_chunks.max()])
-            chunks = {on: tuple([chunksize for chunksize in np.diff(time_chunks) if chunksize > 0])}
+            chunks = {on: tuple(chunksize for chunksize in np.diff(time_chunks) if chunksize > 0)}
         else:
             raise ValueError("I don't understand")
 
@@ -223,10 +217,10 @@ def aligned_rechunk(ds, on=None, chunks=None, **chunks_dict):
     if isinstance(chunks[on], int):
         time_chunks = np.arange(0, vals.size + chunks[on], chunks[on])
         time_chunks[-1] = vals.size
-        chunks[on] = tuple([chunksize for chunksize in np.diff(time_chunks) if chunksize > 0])
+        chunks[on] = tuple(chunksize for chunksize in np.diff(time_chunks) if chunksize > 0)
     else:
         time_chunks = np.cumsum((0, *chunks[on]))
 
     chunksizes = [nums[start:end].sum() for start, end in zip(time_chunks[:-1], time_chunks[1:])]
-    chunks["k"] = (tuple([chunksize for chunksize in chunksizes if chunksize > 0]),)
+    chunks["k"] = (tuple(chunksize for chunksize in chunksizes if chunksize > 0),)
     return not_aligned_rechunk(ds, **chunks)

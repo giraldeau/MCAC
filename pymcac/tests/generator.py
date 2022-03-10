@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 # MCAC
 # Copyright (C) 2020 CORIA
 #
@@ -26,7 +25,7 @@ from pymcac.tools.core.dask_tools import aligned_rechunk, not_aligned_rechunk
 
 @njit
 def is_sorted(a):
-    """Check that a numpy array is sorted"""
+    """Check that a numpy array is sorted."""
     for left, right in zip(a[:-1], a[1:]):
         if left > right:
             return False
@@ -36,7 +35,7 @@ def is_sorted(a):
 def generate_dummy_aggregates_data(
     tstart=5.0, tend=10.0, nt=3, nagg=5, sort_info=False, dask=0, full=True
 ):
-    """Generate dummy aggregate data with minimal data"""
+    """Generate dummy aggregate data with minimal data."""
     assert tstart <= tend
     assert nt > 0
     assert nagg > 0
@@ -103,7 +102,7 @@ def generate_dummy_aggregates_data(
 def generate_dummy_spheres_data(
     tstart=5.0, tend=10.0, nt=3, nsph=7, aggregates=None, sort_info=False, dask=0, full=True
 ):
-    """Generate dummy spheres data with minimal data"""
+    """Generate dummy spheres data with minimal data."""
 
     assert tstart <= tend
     assert nt > 0
@@ -221,7 +220,7 @@ def generate_dummy_spheres_data(
 
 
 def generate_dummy_data(tstart=5.0, tend=10.0, nt=3, nagg=5, nsph=7, sort_info=False, dask=0):
-    """Generate dummy data with minimal data"""
+    """Generate dummy data with minimal data."""
 
     assert nagg <= nsph
 

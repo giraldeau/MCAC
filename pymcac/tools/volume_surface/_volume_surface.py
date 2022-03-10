@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Compute surface and volume of an aggregate
-"""
+"""Compute surface and volume of an aggregate."""
 import multiprocessing
 from typing import Optional, Union
 
@@ -33,9 +30,7 @@ from pymcac.tools.discretize import discretize_spherelist
 def volume_surface_sbl(
     spheres: Union[pd.DataFrame, np.ndarray], aggregate: Optional[pd.Series] = None
 ):
-    """
-    Compute surface and volume using SBL
-    """
+    """Compute surface and volume using SBL."""
     cols = ["Posx", "Posy", "Posz", "Radius"]
     if aggregate is not None:
         t, label = aggregate.name
@@ -76,8 +71,7 @@ def volume_surface_disc(
     resolution: int = 128,
     alphagangue: float = 0,
 ):
-    """
-    Compute surface and volume using discretisation
+    """Compute surface and volume using discretisation.
 
     alphagangue is a parameter allowing some gangue around the aggregate
     """

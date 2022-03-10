@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -20,8 +19,7 @@
 # type: ignore
 # TODO remove lxml
 
-"""
-Read the xdmf part of the MCAC output files
+"""Read the xdmf part of the MCAC output files.
 
 TODO do not use lxml
 """
@@ -33,9 +31,7 @@ from lxml import etree
 
 
 class XdmfReader:
-    """
-    Object containing all functions necessary to read a xdmf file
-    """
+    """Object containing all functions necessary to read a xdmf file."""
 
     __slots__ = ("filename", "xml", "metadata", "h5_groups")
 
@@ -50,15 +46,11 @@ class XdmfReader:
     def read_file(
         cls, filename: Union[str, Path]
     ) -> Tuple[Dict[str, Union[bool, float]], Dict[float, Dict[str, str]]]:
-        """
-        Read the xdmf file and return metadata and h5_groups
-        """
+        """Read the xdmf file and return metadata and h5_groups."""
         return cls(filename).read()
 
     def parse_xml(self) -> None:
-        """
-        Parse xml file
-        """
+        """Parse xml file."""
         parser = etree.XMLParser(remove_blank_text=True)
         for data in open(str(self.filename)):
             parser.feed(data)
@@ -66,13 +58,11 @@ class XdmfReader:
 
     @staticmethod
     def bool_from_any(s: str) -> bool:
-        """convert printable to boolean"""
+        """convert printable to boolean."""
         return str(s).lower() in ["true", "1", "t", "y", "yes", "oui"]
 
     def extract_metadata(self) -> Dict[str, Union[bool, float]]:
-        """
-        Extract metadata from xml
-        """
+        """Extract metadata from xml."""
         if self.xml is None:
             self.parse_xml()
 
@@ -90,9 +80,7 @@ class XdmfReader:
         return metadata
 
     def extract_h5_groups(self) -> Dict[float, Dict[str, str]]:
-        """
-        Extract which h5_group will correspond to which data
-        """
+        """Extract which h5_group will correspond to which data."""
         if self.xml is None:
             self.parse_xml()
 
@@ -112,9 +100,7 @@ class XdmfReader:
         return h5_groups
 
     def extract_sizes(self) -> Dict[float, int]:
-        """
-        Extract which h5_group will correspond to which data
-        """
+        """Extract which h5_group will correspond to which data."""
         if self.xml is None:
             self.parse_xml()
 
@@ -133,9 +119,7 @@ class XdmfReader:
         return sizes
 
     def read(self) -> Tuple[Dict[str, Union[bool, float]], Dict[float, Dict[str, str]]]:
-        """
-        Read the xdmf file and return metadata and h5_groups
-        """
+        """Read the xdmf file and return metadata and h5_groups."""
         self.metadata = self.extract_metadata()
         self.h5_groups = self.extract_h5_groups()
         return self.metadata, self.h5_groups

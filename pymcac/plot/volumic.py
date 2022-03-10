@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Plot a 3d view of the aggregate
-"""
+"""Plot a 3d view of the aggregate."""
 from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -39,8 +36,7 @@ def view_agg(
     resolution: int = 32,
     alphagangue: float = 0.4,
 ) -> None:
-    """
-    Plot a 3d view of the aggregate
+    """Plot a 3d view of the aggregate.
 
     alphagangue is a parameter allowing some gangue around the aggregate
     """
@@ -50,8 +46,7 @@ def view_agg(
 
 
 def view_agg_disc(data: np.ndarray, grid: Tuple[np.ndarray, np.ndarray, np.ndarray]) -> None:
-    """
-    Plot a 3d view of the discretized aggregate
+    """Plot a 3d view of the discretized aggregate.
 
     alphagangue is a parameter allowing some gangue around the aggregate
     """

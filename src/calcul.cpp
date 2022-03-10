@@ -42,13 +42,13 @@ static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggrega
             << std::endl;
     outfile.close();
 }
-void print_bool(bool the_bool, int witdh, std::string txt)
+void print_bool(bool the_bool, int width, std::string txt)
 {
     if (the_bool) {
-        std::cout << std::setw(witdh / 2 + witdh % 2) << "X" << std::setw(witdh / 2 + 3) << " | ";
-        // std::cout << std::setw(witdh) << txt << " | ";
+        std::cout << std::setw(width / 2 + width % 2) << "X" << std::setw(width / 2 + 3) << " | ";
+        // std::cout << std::setw(width) << txt << " | ";
     } else {
-        std::cout << std::setw(witdh + 3) << " | ";
+        std::cout << std::setw(width + 3) << " | ";
     }
 }
 /********************************************************************************
@@ -171,13 +171,13 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         if (physicalmodel.with_surface_reactions) {
             if (physicalmodel.individual_surf_reactions) {
                 disappear = aggregates.croissance_surface(deltatemps_indiv, num_agg);
-                //$ Maybe will be modified later -> spliting only happens when u_sg is negative
+                //$ Maybe will be modified later -> splitting only happens when u_sg is negative
                 if((physicalmodel.u_sg < 0.0) && !disappear) {
                     split = aggregates.split(num_agg);
                 }
             } else {
                 disappear = aggregates.croissance_surface(deltatemps);
-                // Maybe will be modified later -> spliting only happens when u_sg is negative
+                // Maybe will be modified later -> splitting only happens when u_sg is negative
                 if(physicalmodel.u_sg < 0.0) {
                     split = aggregates.split();
                 }

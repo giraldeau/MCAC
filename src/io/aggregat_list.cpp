@@ -24,13 +24,13 @@
 namespace mcac {
 #ifdef WITH_HDF5
 extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                        const std::vector<double> &formated_field);
+                                                        const std::vector<double> &formatted_field);
 extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                        const std::vector<int> &formated_field);
+                                                        const std::vector<int> &formatted_field);
 extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                        const std::vector<long> &formated_field);
+                                                        const std::vector<long> &formatted_field);
 extern template boost::shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                        const std::vector<size_t> &formated_field);
+                                                        const std::vector<size_t> &formatted_field);
 extern template boost::shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                                     const double &value);
 auto AggregatList::get_data() const {
@@ -43,7 +43,7 @@ auto AggregatList::get_data() const {
     boost::shared_ptr<XdmfTime> time = XdmfTime::New(physicalmodel->time);
     aggregats_data->setTime(time);
     aggregats_data->insert(attribute("Time", physicalmodel->time));
-    //aggregats_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
+    //aggregats_data->insert(attribute("BoxSize", physicalmodel->box_length));
 
     // Set Positions
     aggregats_data->setGeometry(the_positions(format_position()));
@@ -69,21 +69,21 @@ void AggregatList::save() {
     auto data = get_data();
     writer->write(data);
 }
-DEF_FORMATER_POSITION(AggregatList)
-DEF_FORMATER_PTR(AggregatList, rg, double)
-DEF_FORMATER_PTR(AggregatList, f_agg, double)
-DEF_FORMATER_PTR(AggregatList, lpm, double)
-DEF_FORMATER_PTR(AggregatList, time_step, double)
-DEF_FORMATER_PTR(AggregatList, rmax, double)
-DEF_FORMATER_PTR(AggregatList, agregat_volume, double)
-DEF_FORMATER_PTR(AggregatList, agregat_surface, double)
-DEF_FORMATER_PTR(AggregatList, coordination_number, double)
-DEF_FORMATER_PTR(AggregatList, proper_time, double)
-DEF_FORMATER_PTR(AggregatList, overlapping, double)
-DEF_FORMATER_PTR(AggregatList, d_m, double)
-DEF_FORMATER(AggregatList, electric_charge, int)
-DEF_FORMATER(AggregatList, n_spheres, long)
-DEF_FORMATER(AggregatList, label, long)
+DEF_FORMATTER_POSITION(AggregatList)
+DEF_FORMATTER_PTR(AggregatList, rg, double)
+DEF_FORMATTER_PTR(AggregatList, f_agg, double)
+DEF_FORMATTER_PTR(AggregatList, lpm, double)
+DEF_FORMATTER_PTR(AggregatList, time_step, double)
+DEF_FORMATTER_PTR(AggregatList, rmax, double)
+DEF_FORMATTER_PTR(AggregatList, agregat_volume, double)
+DEF_FORMATTER_PTR(AggregatList, agregat_surface, double)
+DEF_FORMATTER_PTR(AggregatList, coordination_number, double)
+DEF_FORMATTER_PTR(AggregatList, proper_time, double)
+DEF_FORMATTER_PTR(AggregatList, overlapping, double)
+DEF_FORMATTER_PTR(AggregatList, d_m, double)
+DEF_FORMATTER(AggregatList, electric_charge, int)
+DEF_FORMATTER(AggregatList, n_spheres, long)
+DEF_FORMATTER(AggregatList, label, long)
 #else
 
 
@@ -91,4 +91,3 @@ void AggregatList::save(){}
 
 #endif
 }  // namespace mcac
-

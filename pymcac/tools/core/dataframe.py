@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Tools to mimic the pandas API
-"""
+"""Tools to mimic the pandas API."""
 from functools import wraps
 from itertools import chain
 from typing import Any, Callable, Dict, Hashable, List, Mapping, Tuple, Union, cast
@@ -38,8 +35,7 @@ def xarray_to_ddframe(
     set_index: Union[bool, str] = None,
     dim_order: List[Hashable] = None,
 ) -> dd.DataFrame:
-    """
-    Convert a xarray.Dataset into a dask.dataframe.DataFrame.
+    """Convert a xarray.Dataset into a dask.dataframe.DataFrame.
 
     The dimensions, coordinates and data variables in this dataset form
     the columns of the DataFrame.
@@ -125,7 +121,7 @@ def xarray_to_ddframe(
 def ddframe_to_xarray(
     df: dd.DataFrame, lengths: Tuple[int] = None
 ) -> Union[xr.DataArray, xr.Dataset]:
-    """Convert a dask.dataframe.DataFrame into an xarray.Dataset"""
+    """Convert a dask.dataframe.DataFrame into an xarray.Dataset."""
 
     if lengths is None:
         lengths = tuple(
@@ -155,8 +151,7 @@ def ddframe_to_xarray(
 
 
 def xarray_to_frame(ds: Union[xr.DataArray, xr.Dataset], multi=True) -> pd.DataFrame:
-    """
-    Convert a xarray.Dataset into a pandas.DataFrame.
+    """Convert a xarray.Dataset into a pandas.DataFrame.
 
     Compute the dataset and transform is as a pandas.DataFrame:
      * the dimensions and coordinates forms a multi_index
@@ -199,7 +194,7 @@ def xarray_to_frame(ds: Union[xr.DataArray, xr.Dataset], multi=True) -> pd.DataF
 
 
 def frame_to_xarray(df: pd.DataFrame, full: bool = True) -> Union[xr.DataArray, xr.Dataset]:
-    """Convert a pandas.DataFrame into an xarray.Dataset"""
+    """Convert a pandas.DataFrame into an xarray.Dataset."""
 
     if df.index.is_monotonic_increasing:
         sort = [c for c in df.index.names if c != "k"]
@@ -282,8 +277,7 @@ def groupby_agg(
     index_arrays=None,
     length: int = None,
 ) -> Union[xr.DataArray, xr.Dataset]:
-    """
-    Mimic the groupby().agg mechanism of pandas using dask dataframe
+    """Mimic the groupby().agg mechanism of pandas using dask dataframe.
 
     The result have *one* chunk per variable (`split_out` is not supported)
     This will trigger some computation if `index_arrays` and `length` are not given
@@ -318,15 +312,15 @@ def groupby_agg(
     if isinstance(ds, xr.DataArray):
         ds = ds.to_dataset(promote_attrs=True)
 
-    relevent_dims = {str(dim) for var in ds.data_vars.values() for dim in var.dims}
-    if len(relevent_dims) > 1:
-        if "k" in relevent_dims:
-            relevent_dims = {"k"}
+    relevant_dims = {str(dim) for var in ds.data_vars.values() for dim in var.dims}
+    if len(relevant_dims) > 1:
+        if "k" in relevant_dims:
+            relevant_dims = {"k"}
         else:
             raise ValueError("You cannot groupby_agg with mixed shape Dataset")
-    if not relevent_dims:
+    if not relevant_dims:
         raise ValueError("Nothing to group, your arrays are 0d")
-    [k] = relevent_dims
+    [k] = relevant_dims
 
     ds_only_k = ds.drop_dims([dim for dim in ds.dims if dim != k])
     ds_only_k = ds_only_k.rename(
@@ -343,8 +337,8 @@ def groupby_agg(
     known_indexes, index_arrays, lengths = try_extracting_index(index_arrays, length)
     if dask:
         if sort and not known_indexes:
-            index_serie = xarray_to_ddframe(ds_only_k[by]).groupby(by=by, sort=sort).first().index
-            index_arrays, lengths = index_serie_to_index_array(index_serie, lengths)
+            index_series = xarray_to_ddframe(ds_only_k[by]).groupby(by=by, sort=sort).first().index
+            index_arrays, lengths = index_series_to_index_array(index_series, lengths)
             known_indexes = True
 
         df_gb = xarray_to_ddframe(ds_only_k).groupby(by=by, sort=sort)
@@ -355,11 +349,11 @@ def groupby_agg(
 
     res: Union[xr.DataArray, xr.Dataset] = xr.Dataset()
     for name_out, fn, name_in in agg:
-        serie = df_gb[name_in].agg(fn)
+        series = df_gb[name_in].agg(fn)
 
         if not res.coords:
             if not known_indexes:
-                index_arrays, lengths = index_serie_to_index_array(serie.index, lengths)
+                index_arrays, lengths = index_series_to_index_array(series.index, lengths)
             if len(by) == 1:
                 res.coords[index] = (index,), index_arrays[0]
             else:
@@ -367,9 +361,9 @@ def groupby_agg(
                     res.coords[coord] = (index,), index_array
 
         if dask:
-            res[name_out] = (index,), serie.to_dask_array(lengths)
+            res[name_out] = (index,), series.to_dask_array(lengths)
         else:
-            res[name_out] = (index,), serie.values
+            res[name_out] = (index,), series.values
 
     if "k" in res.dims:
         for coord_ in res.coords:
@@ -392,8 +386,8 @@ def groupby_agg(
     return res
 
 
-def index_serie_to_index_array(index_serie, lengths):
-    index_frame = index_serie.to_frame()
+def index_series_to_index_array(index_series, lengths):
+    index_frame = index_series.to_frame()
 
     index_arrays = []
     for i, coord in enumerate(index_frame.columns):
@@ -422,8 +416,7 @@ def groupby_apply(
     length: int = None,
     **kwargs,
 ) -> Union[xr.DataArray, xr.Dataset]:
-    """
-    Mimic the groupby().apply mechanism of pandas using dask dataframe
+    """Mimic the groupby().apply mechanism of pandas using dask dataframe.
 
     The result have *one* chunk per variable
     This will trigger some computation if `index_arrays` and `length` are not given
@@ -468,15 +461,15 @@ def groupby_apply(
     if isinstance(ds, xr.DataArray):
         ds = ds.to_dataset(promote_attrs=True)
 
-    relevent_dims = {str(dim) for var in ds.data_vars.values() for dim in var.dims}
-    if len(relevent_dims) > 1:
-        if "k" in relevent_dims:
-            relevent_dims = {"k"}
+    relevant_dims = {str(dim) for var in ds.data_vars.values() for dim in var.dims}
+    if len(relevant_dims) > 1:
+        if "k" in relevant_dims:
+            relevant_dims = {"k"}
         else:
             raise ValueError("You cannot groupby_apply with mixed shape Dataset")
-    if not relevent_dims:
+    if not relevant_dims:
         raise ValueError("Nothing to group, your arrays are 0d")
-    [k] = relevent_dims
+    [k] = relevant_dims
 
     ds_only_k = ds.drop_dims([dim for dim in ds.dims if dim != k])
     ds_only_k = ds_only_k.rename(

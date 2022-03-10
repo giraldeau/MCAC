@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Read the hdf5 part of MCAC output files
-"""
+"""Read the hdf5 part of MCAC output files."""
 
 from pathlib import Path
 from typing import Dict, Sequence, Tuple, Union, cast
@@ -34,9 +31,7 @@ from .xdmf_reader import XdmfReader  # type: ignore
 
 
 class H5Reader:
-    """
-    Object containing all functions necessary to read a h5 file
-    """
+    """Object containing all functions necessary to read a h5 file."""
 
     __slots__ = ("filename", "xdmf_reader")
 
@@ -52,8 +47,7 @@ class H5Reader:
         times: np.ndarray = None,
         chunksize: int = None,
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
-        """
-        Read the h5 file into a mulitple dask arrays (lazy)
+        """Read the h5 file into a multiple dask arrays (lazy)
 
         We need info from the xmf file, so this file is read
         """
@@ -66,8 +60,7 @@ class H5Reader:
     def read(
         self, indexname: str = "Num", times: np.ndarray = None, chunksize: int = None
     ) -> Dict[Tuple[float], Dict[str, Union[da.Array, np.ndarray]]]:
-        """
-        Read the h5 file into a mulitple dask arrays (lazy)
+        """Read the h5 file into a multiple dask arrays (lazy)
 
         We need info from the xmf file, so this file is read
         """
@@ -141,9 +134,7 @@ class H5Reader:
     def read_multiple_array(
         self, groups: Sequence[str], attrib: str, size: int
     ) -> Dict[str, da.Array]:
-        """
-        Read multiple blocks of the h5 file into a dask array (lazy)
-        """
+        """Read multiple blocks of the h5 file into a dask array (lazy)"""
         dtype = h5File(self.filename, "r")[groups[0]].dtype
         shape: Tuple[int, ...] = (size,)
         columns: Tuple[str, ...] = (attrib,)
@@ -178,7 +169,7 @@ def read_h5_arrays(
     final_shape: Tuple[int, ...] = (-1,),
     varname: str = "Unknown",
 ) -> np.ndarray:
-    """Read multiple blocks of data"""
+    """Read multiple blocks of data."""
 
     # print(f"reading {varname} in {filename} ({datasets})")
 

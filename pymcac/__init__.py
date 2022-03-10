@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Set of Python libraries for post-processing MCAC data
-"""
+"""Set of Python libraries for post-processing MCAC data."""
 import os
 from pathlib import Path
 
@@ -29,19 +26,19 @@ from .plot import view_agg, view_proj_agg
 from .reader import MCAC
 from .tools import (
     JupyterDaskDistribute,
-    autocorrelation3d,
     coverages,
     dask_distribute,
-    discretize,
     groupby_agg,
     groupby_apply,
-    inertia,
     mobility_diameter,
     progress_compute,
-    volume_surface,
     xarray_to_ddframe,
     xarray_to_frame,
 )
+from .tools.autocorrelation import autocorrelation3d
+from .tools.discretize import discretize
+from .tools.inertia import inertia
+from .tools.volume_surface import volume_surface
 from .writer import export_ddscat
 
 try:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -37,7 +36,7 @@ from .generator import (
 
 @njit
 def is_sorted(a):
-    """Check that a numpy array is sorted"""
+    """Check that a numpy array is sorted."""
     for left, right in zip(a[:-1], a[1:]):
         if left > right:
             return False
@@ -70,7 +69,7 @@ def check_dims(ds):
 
 
 def check_vars(ds):
-    """Check that all the mandatory variables are here"""
+    """Check that all the mandatory variables are here."""
     coords = set(ds.coords)
     idx_name = get_idx_name(ds)
     assert idx_name in ("Num", "Label", None), f"{idx_name} is unknown"
@@ -95,7 +94,7 @@ def check_vars(ds):
 
 
 def check_sorted(ds):
-    """check that coords are sorted and that sort info is relevant"""
+    """check that coords are sorted and that sort info is relevant."""
 
     def sorted_coords(ds):
         for c, coord in ds.coords.items():
@@ -136,12 +135,12 @@ def check_internal_kconsistency(ds):
     if "Time" in ds.dims:
         assert set(ds.kTime.values) == set(
             ds.Time.values
-        ), "Time and kTime contains differents values"
+        ), "Time and kTime contains different values"
 
     if idx_name not in (None, "None"):
         assert set(ds[f"k{idx_name}"].values) == set(
             ds[idx_name].values
-        ), f"{idx_name} and k{idx_name} contains differents values"
+        ), f"{idx_name} and k{idx_name} contains different values"
 
     if "Time" in ds.dims and idx_name not in (None, "None"):
         assert ds.nTime.sum() == ds.sizes["k"], "the sum of nTime should be the size of k"

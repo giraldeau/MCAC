@@ -44,4 +44,3 @@ public:
 
 
 #endif //INCLUDE_PHYSICAL_MODEL_FLAME_COUPLING_HPP
-

@@ -45,10 +45,10 @@ namespace mcac {
  * ################################# distance between a sphere and a point #####################################
  * #############################################################################################################*/
 [[gnu::pure]]  double distance(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
-    return distance(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->box_lenght);
+    return distance(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->box_length);
 }
 [[gnu::pure]]  double distance_2(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
-    return distance_2(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->box_lenght);
+    return distance_2(sphere_1.get_position(), sphere_2.get_position(), sphere_1.physicalmodel->box_length);
 }
 [[gnu::pure]]  double relative_distance(const Sphere &sphere_1, const Sphere &sphere_2) noexcept {
     return relative_distance(sphere_1.get_relative_position(), sphere_2.get_relative_position());
@@ -89,4 +89,3 @@ namespace mcac {
     return (distance - dist_contact <= _CONTACT_EPSILON);
 }
 }  // namespace mcac
-

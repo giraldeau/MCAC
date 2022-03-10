@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Read the advancement file of MCAC output files
-"""
+"""Read the advancement file of MCAC output files."""
 
 from pathlib import Path
 from typing import Union
@@ -28,9 +25,8 @@ import pandas as pd
 
 
 class AdvancementReader:
-    """
-    Object containing all functions necessary to read an advancement file
-    """
+    """Object containing all functions necessary to read an advancement
+    file."""
 
     __slots__ = ("filename",)
 
@@ -39,16 +35,12 @@ class AdvancementReader:
 
     @classmethod
     def read_advancement(cls, dir: Union[str, Path]) -> pd.DataFrame:
-        """
-        Read the advancement file
-        """
+        """Read the advancement file."""
         return cls(Path(dir) / "advancement.dat").advancement
 
     @property
     def advancement(self) -> pd.DataFrame:
-        """
-        Read the advancement file
-        """
+        """Read the advancement file."""
         df = (
             pd.read_csv(
                 self.filename,

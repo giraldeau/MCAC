@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Function to compute usual physical quantities
-"""
+"""Function to compute usual physical quantities."""
 from typing import Tuple, Union
 
 import numpy as np
@@ -59,7 +56,7 @@ def overlap_in_one_agg(
     if n <= 1:
         return cij_av, cij_median, Cij_v30, Cij_v20, tot_coll, n_c_avg
 
-    v = r ** 3
+    v = r**3
 
     # worst case scenario
     Cij = np.empty((n * (n - 1) // 2, 2))
@@ -89,8 +86,8 @@ def overlap_in_one_agg(
     cij_median = np.median(cij)
 
     vij_sum: np.float64 = np.sum(vij)
-    Cij_v20 = (np.sum(vij * cij ** 2) / vij_sum) ** (1 / 2)
-    Cij_v30 = (np.sum(vij * cij ** 3) / vij_sum) ** (1 / 3)
+    Cij_v20 = (np.sum(vij * cij**2) / vij_sum) ** (1 / 2)
+    Cij_v30 = (np.sum(vij * cij**3) / vij_sum) ** (1 / 3)
 
     n_c_avg = np.mean(n_c_i)
 

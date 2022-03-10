@@ -107,7 +107,7 @@ void Aggregate::time_forward(double deltatemps) noexcept {
     *proper_time += deltatemps;
 }
 void Aggregate::set_position(const std::array<double, 3> &position) noexcept {
-    std::array<double, 3> newposition{periodic_position(position, physicalmodel->box_lenght)};
+    std::array<double, 3> newposition{periodic_position(position, physicalmodel->box_length)};
     *x = newposition[0];
     *y = newposition[1];
     *z = newposition[2];
@@ -177,9 +177,9 @@ void Aggregate::init(size_t new_label,
 
     for (size_t n_try = 0; n_try < external_storage->spheres.size(); n_try++) {
         //random position
-        std::array<double, 3> newpos{{random() * physicalmodel->box_lenght,
-                                      random() * physicalmodel->box_lenght,
-                                      random() * physicalmodel->box_lenght}};
+        std::array<double, 3> newpos{{random() * physicalmodel->box_length,
+                                      random() * physicalmodel->box_length,
+                                      random() * physicalmodel->box_length}};
         if (external_storage->test_free_space(newpos, diameter * 0.5)) {
             init(*external_storage->physicalmodel,
                  &external_storage->spheres,
@@ -243,7 +243,7 @@ bool Aggregate::croissance_surface(double dt) {
 }
 
 //###################################################################################################################
-//### Update all physical params of an aggregate except volume and surface (rayon de giration, masse, nombre de sphérules primaires) #####
+//### Update all physical params of an aggregate except volume and surface (rayon de giration, masse, nombre de sphérules primaries) #####
 void Aggregate::update_partial() noexcept {
     // This function will update the parameter of Agg
     compute_mass_center();
@@ -280,7 +280,7 @@ void Aggregate::update_partial() noexcept {
         }
     }
 }
-//### Update all physical params of an aggregate (rayon de giration, masse, nombre de sphérules primaires) #####
+//### Update all physical params of an aggregate (rayon de giration, masse, nombre de sphérules primaries) #####
 void Aggregate::update() noexcept {
     update_distances_and_overlapping();
     compute_volume_surface();
@@ -371,11 +371,11 @@ void Aggregate::compute_volume_surface() {
                                           *myspheres[j],
                                           dist);
 
-                //$ The volume and surface covered by j is substracted from those of i
+                //$ The volume and surface covered by j is subtracted from those of i
                 volumes[i] = volumes[i] - intersection.volume_1;
                 surfaces[i] = surfaces[i] - intersection.surface_1;
 
-                //$ The volume and surface covered by i is substracted from those of j
+                //$ The volume and surface covered by i is subtracted from those of j
                 volumes[j] = volumes[j] - intersection.volume_2;
                 surfaces[j] = surfaces[j] - intersection.surface_2;
             }
@@ -516,7 +516,7 @@ bool Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     std::array<double, 3> ref_root_to_contact = mysphere->get_relative_position();
     std::array<double, 3> diffcontact =
         periodic_distance(othersphere->get_position() - mysphere->get_position(),
-                          physicalmodel->box_lenght);
+                          physicalmodel->box_length);
     std::array<double, 3> other_root_to_contact = othersphere->get_relative_position();
     std::array<double, 3> diffpos = ref_root_to_contact + diffcontact - other_root_to_contact;
 
@@ -543,9 +543,9 @@ bool Aggregate::merge(std::shared_ptr<Aggregate> other, AggregateContactInfo con
     return true;
 }
 bool Aggregate::split() {
-    bool have_splitted = false;
+    bool have_split = false;
     // first identify what to split
-    std::vector<std::vector<size_t>> independant_components;
+    std::vector<std::vector<size_t>> independent_components;
     // all spheres are unvisited
     std::vector<size_t> unvisisted;
     for (size_t i = 0; i < n_spheres; ++i) {
@@ -574,13 +574,13 @@ bool Aggregate::split() {
                 }
             }
         }
-        independant_components.push_back(component);
+        independent_components.push_back(component);
     }
-    if (independant_components.size() > 1) {
-        // splitting occurs when we have at least 2 independant componnents
-        have_splitted = true;
+    if (independent_components.size() > 1) {
+        // splitting occurs when we have at least 2 independent components
+        have_split = true;
         auto initial_number_of_spheres = external_storage->spheres.size();
-        for (auto &split: independant_components) {
+        for (auto &split: independent_components) {
             // duplicate the current aggregate
             auto agg = external_storage->add(*this, *external_storage);
             agg->label = external_storage->size() - 1;
@@ -604,7 +604,7 @@ bool Aggregate::split() {
                 // change the relative position of the new aggregate
                 sph->set_relative_position(sph->get_position() - refpos);
             }
-            // we have to recompute all the caracteristic of this new aggregate
+            // we have to recompute all the characteristic of this new aggregate
             //agg->update_distances_and_overlapping();
             agg->update();
             // we have to move all the spheres (periodicity)
@@ -624,7 +624,7 @@ bool Aggregate::split() {
             }
         }
     }
-    return have_splitted;
+    return have_split;
 }
 void Aggregate::remove_sphere(const size_t &id) noexcept {
     for (size_t local_id = 0; local_id < n_spheres; local_id++) {
@@ -642,7 +642,7 @@ void Aggregate::remove_sphere(const size_t &id) noexcept {
             // change the relative position of the new aggregate
             sph->set_relative_position(sph->get_position() - refpos);
         }
-        // we have to recompute all the caracteristic of this new aggregate
+        // we have to recompute all the characteristic of this new aggregate
         //update_distances_and_overlapping();
         update();
         // we have to move all the spheres (periodicity)
@@ -697,7 +697,7 @@ void Aggregate::print() const noexcept {
     myspheres.print();
 }
 std::array<size_t, 3> Aggregate::compute_index_verlet() noexcept {
-    double step = double(physicalmodel->n_verlet_divisions) / physicalmodel->box_lenght;
+    double step = double(physicalmodel->n_verlet_divisions) / physicalmodel->box_length;
     std::array<size_t, 3> new_verlet_index{size_t(std::floor((*x) * step)),
                                            size_t(std::floor((*y) * step)),
                                            size_t(std::floor((*z) * step))};
@@ -739,14 +739,14 @@ void Aggregate::update_distances_and_overlapping() noexcept {
             double dist = relative_distance(*myspheres[i], *myspheres[j]);
 #ifdef FULL_INTERNAL_DISTANCES
             distances[i][j] = dist;
-            // distances are symetric !
+            // distances are symmetric !
             distances[j][i] = dist;
 #endif
-            // if in contact (with some tolerence)
+            // if in contact (with some tolerance)
             if (dist <= (1. + _COORDINATION_EPSILON) * (myspheres[i]->get_radius() + myspheres[j]->get_radius())) {
 #ifndef FULL_INTERNAL_DISTANCES
                 distances[i][j] = dist;
-                // distances are symetric !
+                // distances are symmetric !
                 distances[j][i] = dist;
 #endif
                 // calculate overlapping coefficient

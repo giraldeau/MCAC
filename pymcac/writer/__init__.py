@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Ecriture du fichier shape.dat pour DDSCAT
-"""
+"""Ecriture du fichier shape.dat pour DDSCAT."""
 
 from .ddscat import export_ddscat
 

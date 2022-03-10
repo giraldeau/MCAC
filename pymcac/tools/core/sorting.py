@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Tools to mimic the pandas API
-"""
+"""Tools to mimic the pandas API."""
 from typing import List, Union
 
 import dask.array as da
@@ -138,8 +135,8 @@ def get_chunk_idx(ds, idx, nchunk, by):
 
 def chunk_idx(idx, nchunk, align_by=None):
     chunks = (
-        tuple([idx.size // nchunk + 1 for _ in range(idx.size % nchunk)])
-        + tuple([idx.size // nchunk for _ in range(idx.size % nchunk, nchunk)]),
+        tuple(idx.size // nchunk + 1 for _ in range(idx.size % nchunk))
+        + tuple(idx.size // nchunk for _ in range(idx.size % nchunk, nchunk)),
     )
     chunked_idx = idx.rechunk(chunks)
 
@@ -150,9 +147,7 @@ def chunk_idx(idx, nchunk, align_by=None):
         by_chunks = np.abs(target.reshape(1, -1) - sizes.reshape(-1, 1)).argmin(axis=0) + 1
         by_chunks[0] = 0
         chunks = {
-            0: tuple(
-                [align_by[start:end].sum() for start, end in zip(by_chunks[:-1], by_chunks[1:])]
-            )
+            0: tuple(align_by[start:end].sum() for start, end in zip(by_chunks[:-1], by_chunks[1:]))
         }
         chunked_idx = idx.rechunk(chunks)
         by_chunks = (tuple(np.diff(by_chunks)),)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Tools to mimic the pandas API
-"""
+"""Tools to mimic the pandas API."""
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import dask.array as da
@@ -41,7 +38,7 @@ def groupby_aggregate(
     reduction=True,
     dtype=None,
 ) -> Union[xr.DataArray, xr.Dataset]:
-    """TODO use xarray map block and remove intermediate dtype"""
+    """TODO use xarray map block and remove intermediate dtype."""
     if not reduction:
         raise NotImplementedError
     if isinstance(sph_names_in, str):

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# coding=utf-8
-"""Compile and install pymcac"""
+"""Compile and install pymcac."""
 from pathlib import Path
 
 from Cython.Build import cythonize

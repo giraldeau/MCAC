@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,10 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Compute the normalized 3d autocorrelation graph of an aggregate
-"""
+"""Compute the normalized 3d autocorrelation graph of an aggregate."""
 
-from .autocorrelation3d import autocorrelation3d
+from ._autocorrelation3d import autocorrelation3d
 
 __all__ = ["autocorrelation3d"]

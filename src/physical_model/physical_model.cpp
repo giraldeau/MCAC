@@ -51,7 +51,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     friction_exponnant(0.),
     time(0.),
     volume_fraction(1e-3),
-    box_lenght(0.),
+    box_length(0.),
     box_volume(0.),
     aggregate_concentration(0.0),
     monomer_concentration(0.0),
@@ -217,7 +217,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     }
     double tot_volume_pp(0.0), tot_surface_pp(0.0);
     if (monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        box_lenght = mean_diameter * 1E-9 *
+        box_length = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
                               * (1. + 3. * std::pow(dispersion_diameter / mean_diameter, 2)),
                               1. / 3.);
@@ -235,7 +235,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
                         (4.0*_pi) *\
                         (std::pow(mean_radius, 2) + std::pow(dispersion_radius, 2));
     } else if (monomeres_initialisation_type == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-        box_lenght = mean_diameter * 1E-9 *
+        box_length = mean_diameter * 1E-9 *
                      std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
                               * std::exp(9. / 2. * std::pow(std::log(dispersion_diameter), 2)),
                               1. / 3.);
@@ -252,7 +252,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
-    box_volume = std::pow(box_lenght,3);
+    box_volume = std::pow(box_length,3);
     update_temperature(temperature);
     u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number, volume, and surface area concentration
@@ -338,7 +338,7 @@ void PhysicalModel::print() const {
               << "SIMULATION OPTIONS:" << std::endl
               << " Initial aggregate concentration : " << aggregate_concentration << " (#/m^3)" << std::endl
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
-              << " Box size                        : " << box_lenght << " (m)" << std::endl
+              << " Box size                        : " << box_length << " (m)" << std::endl
               << " FV                              : " << volume_fraction << " (-)" << std::endl
               << " write_Delta_t                   : " << write_Delta_t*(1e+03) << " (ms)" << std::endl
               << " write_between_event_frequency   : " << write_between_event_frequency << std::endl
@@ -362,7 +362,7 @@ void PhysicalModel::print() const {
         std::cout << " With individual surf. reactions" << std::endl;
         if (full_aggregate_update_frequency>1){
             std::cout << "   - WARNING: Parameter full_aggregate_update_frequency is " <<
-                         full_aggregate_update_frequency << " (recomended =1)" << std::endl;
+                         full_aggregate_update_frequency << " (recommended =1)" << std::endl;
         }
     } else {
         std::cout << " Without individual surf. reactions" << std::endl;
@@ -540,11 +540,11 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     return diameter * 1E-9;
 }
 
-//############################# Fonctions pour le calcul du diamètre de mobilité ################################
+//############################# Functions pour le calcul du diamètre de mobilité ################################
 
 /*
- Fonction permettant de retrouver le rayon de mobilité en régime transitoire
- On obtient le bon rayon de mobilité lorsque la fonction retourne 0
+ Function permettant de retrouver le rayon de mobilité en régime transitoire
+ On obtient le bon rayon de mobilité lorsque la function retourne 0
 */
 
 [[gnu::pure]]  double PhysicalModel::grow(double r, double dt) const {
@@ -601,4 +601,3 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     return rand_normal;
 }
 }  // namespace mcac
-

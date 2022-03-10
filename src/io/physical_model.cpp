@@ -43,7 +43,7 @@ shared_ptr<XdmfInformation> PhysicalModel::xmf_write() const {
     info->insert(xmf_format("Dpm [nm]", mean_diameter));
     info->insert(xmf_format("sigmaDpm [nm]", dispersion_diameter));
     info->insert(xmf_format("FV [ppt]", volume_fraction));
-    info->insert(xmf_format("L", box_lenght));
+    info->insert(xmf_format("L", box_length));
     info->insert(xmf_format("N []", static_cast<int>(n_monomeres)));
     return info;
 }

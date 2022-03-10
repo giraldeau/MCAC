@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Tools
-"""
+"""Tools."""
 
 from .dask_tools import JupyterDaskDistribute, dask_distribute, progress_compute
 from .dataframe import groupby_agg, groupby_apply, xarray_to_ddframe, xarray_to_frame

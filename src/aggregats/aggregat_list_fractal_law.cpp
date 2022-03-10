@@ -32,4 +32,3 @@ std::tuple<bool, double, double, double> AggregatList::get_instantaneous_fractal
     return linreg(dg_over_dps, sizes);
 }
 }// namespace mcac
-

@@ -1,24 +1,25 @@
+---
 default:
-  interruptible: true
+    interruptible: true
 
 variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  DOCKER_DRIVER: overlay2
+    PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
+    DOCKER_DRIVER: overlay2
 
 cache:
-  paths:
-    - .cache/pip
-    - venv/
-    - ext/
-    - ext_bin/
+    paths:
+        - .cache/pip
+        - venv/
+        - ext/
+        - ext_bin/
 
 stages:
-  - Build
-  - Static Analysis
-  - Run
-  - Test
+    - Build
+    - Static Analysis
+    - Run
+    - Test
 
 include:
-  - local: .gitlab/MCAC.yml
-  - local: .gitlab/static.yml
-  - local: .gitlab/tests.yml
+    - local: .gitlab/MCAC.yml
+    - local: .gitlab/static.yml
+    - local: .gitlab/tests.yml

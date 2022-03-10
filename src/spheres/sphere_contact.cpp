@@ -50,11 +50,11 @@ namespace mcac {
                                                     const double displacement_distance) noexcept {
     double dist_contact = sphere_1.get_radius() + sphere_2.get_radius();
     double dist_contact_2 = std::pow(dist_contact, 2);
-    double box_lenght = sphere_1.physicalmodel->box_lenght;
+    double box_length = sphere_1.physicalmodel->box_length;
     std::array<double, 3> pos1 = sphere_1.get_position();
     std::array<double, 3> pos2 = sphere_2.get_position();
 
-    if (distance_2(pos1, pos2, box_lenght) <= dist_contact_2) {
+    if (distance_2(pos1, pos2, box_length) <= dist_contact_2) {
         // already in contact
         return SphereContactInfo(0.);
     }
@@ -69,22 +69,22 @@ namespace mcac {
         double base = std::min(pos1[l], pos1[l] + total_displacement[l]) - dist_contact;
         double end = std::max(pos1[l], pos1[l] + total_displacement[l]) + dist_contact;
         zone_dimension[l] = end - base;
-        pos2[l] = std::fmod((pos2[l] - base), box_lenght);
+        pos2[l] = std::fmod((pos2[l] - base), box_length);
         if (pos2[l] < 0) {
-            pos2[l] += box_lenght;
+            pos2[l] += box_length;
         }
         pos2[l] += base;
 
         // we may need to check for multiple periodicity anyway
-        nper[l] = static_cast<int>(std::floor(zone_dimension[l] / box_lenght));
+        nper[l] = static_cast<int>(std::floor(zone_dimension[l] / box_length));
     }
     double res = std::numeric_limits<double>::infinity(); // infinity is too far to care
     for (int i = 0; i <= nper[0]; i++) {
         for (int j = 0; j <= nper[1]; j++) {
             for (int k = 0; k <= nper[2]; k++) {
-                std::array<double, 3> pos3{pos2[0] + i * box_lenght,
-                                           pos2[1] + j * box_lenght,
-                                           pos2[2] + k * box_lenght};
+                std::array<double, 3> pos3{pos2[0] + i * box_length,
+                                           pos2[1] + j * box_length,
+                                           pos2[2] + k * box_length};
                 std::array<double, 3> diff = pos3 - pos1;
 
                 // shortcut
@@ -138,4 +138,3 @@ namespace mcac {
     return closest_contact;
 }
 }  // namespace mcac
-

@@ -65,4 +65,3 @@ Intersection::Intersection(const Sphere &sphere_1, const Sphere &sphere_2,
     }
 }
 }  // namespace mcac
-

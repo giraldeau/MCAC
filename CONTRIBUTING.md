@@ -93,7 +93,7 @@ Please do not combine multiple feature enhancements into a single pull request.
    git merge next
    ```  
  - make a [push request](https://gitlab.coria-cfd.fr/MCAC/MCAC/branches)  
-   which will alert the main contributers and they will finish to merge your developments.
+   which will alert the main contributors and they will finish to merge your developments.
 
 
 [comment]: <> (5. Checks that the tests are still working)

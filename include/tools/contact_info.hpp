@@ -87,5 +87,3 @@ public:
 
 
 #endif //INCLUDE_TOOLS_CONTACT_INFO_HPP
-
-

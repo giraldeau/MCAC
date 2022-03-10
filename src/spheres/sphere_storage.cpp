@@ -194,4 +194,3 @@ Sphere::Sphere(const Sphere &other, SphereList *aggregat, size_t id) noexcept:
 //    return *this;
 //}
 }  // namespace mcac
-

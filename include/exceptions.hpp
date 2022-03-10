@@ -29,7 +29,7 @@ std::string Backtrace(int skip = 2);
 namespace mcac {
 class BaseException : public std::exception {
 public:
-    std::string name{"Unkown Error"};
+    std::string name{"Unknown Error"};
     std::string detail{""};
     std::string message{""};
     ErrorCodes code{ErrorCodes::UNKNOWN_ERROR};

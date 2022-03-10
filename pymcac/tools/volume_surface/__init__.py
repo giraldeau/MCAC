@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Compute surface and volume of an aggregate
-"""
+"""Compute surface and volume of an aggregate."""
 
 from ._volume_surface import volume_surface, volume_surface_disc, volume_surface_sbl
 

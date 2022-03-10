@@ -40,17 +40,17 @@ FlameCoupling::FlameCoupling() :
 ********************************************************************************/
 FlameCoupling::FlameCoupling(const std::string &flame_file) : FlameCoupling() {
     std::cout << "LOADING THE FLAME INFORMATION (as a function of time)" << std::endl;
-    std::cout << "be careful with the units in the imput file!" << std::endl;
+    std::cout << "be careful with the units in the input file!" << std::endl;
     if (!fs::exists(flame_file)) {
         throw IOError("Flame file does not exist: " + flame_file);
     }
     std::ifstream ext_FILE;
     ext_FILE.open(flame_file, std::ifstream::in);
-    //WE ASUME: External DATA CONTAINS 7 COLUMNS AS: [t_res,T,fv,dp_Gav,dp_gstd,J_sg,J_nucl]
+    //WE ASSUME: External DATA CONTAINS 7 COLUMNS AS: [t_res,T,fv,dp_Gav,dp_gstd,J_sg,J_nucl]
     std::cout << "t_res, T, fv, dp_Gav, dp_gstd, J_sg, J_nucl" << std::endl;
     std::array<double, 7> line;
     while (ext_FILE >> line[0] >> line[1] >> line[2] >> line[3] >> line[4] >> line[5] >> line[6]) {
-        // becareful with the units in the imput file! -> input-file should be in SI units
+        // becareful with the units in the input file! -> input-file should be in SI units
         t_res.push_back(line[0]);
         Temp.push_back(line[1]);
         fv.push_back(line[2]);
@@ -64,4 +64,3 @@ FlameCoupling::FlameCoupling(const std::string &flame_file) : FlameCoupling() {
     ext_FILE.close();
 }
 }  // namespace mcac
-

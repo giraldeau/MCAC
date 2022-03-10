@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Plot a 2d projection of the aggregate
-"""
+"""Plot a 2d projection of the aggregate."""
 
 from typing import Callable, Optional, Tuple
 
@@ -38,8 +35,7 @@ def view_proj_agg(
     projdir: str = "z",
     reduce: Callable = np.sum,
 ) -> None:
-    """
-    Plot a 2d projection of the aggregate in the direction x, y or z
+    """Plot a 2d projection of the aggregate in the direction x, y or z.
 
     if reduce is np.sum (or np.mean) the aggregate will be "transparent"
     if reduce is np.max  the aggregate will be fully opaque
@@ -57,8 +53,8 @@ def view_proj_disc(
     projdir: str = "z",
     reduce: Callable = np.sum,
 ) -> None:
-    """
-    Plot a 2d projection of the discretized aggregate in the direction x, y or z
+    """Plot a 2d projection of the discretized aggregate in the direction x, y
+    or z.
 
     if reduce is np.sum (or np.mean) the aggregate will be "transparent"
     if reduce is np.max  the aggregate will be fully opaque

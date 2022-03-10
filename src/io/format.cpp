@@ -58,9 +58,9 @@ shared_ptr<XdmfTime> format_time(const double &value) {
 }
 // Format filename
 std::string filename(int step, size_t n) {
-    int witdh = int(std::ceil(std::log10(static_cast<float>(n)))) + 4;
+    int width = int(std::ceil(std::log10(static_cast<float>(n)))) + 4;
     std::ostringstream filename_stream;
-    filename_stream << "_" << std::setfill('0') << std::setw(witdh) << step;
+    filename_stream << "_" << std::setfill('0') << std::setw(width) << step;
     return filename_stream.str();
 }
 }  // namespace mcac

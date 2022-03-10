@@ -2,6 +2,18 @@
 # Here are some test that are not satisfied yet or that need additional dependency
 repos:
     # TODO: fix the errors
+    - repo: https://github.com/pycqa/pydocstyle
+      rev: 6.1.1
+      hooks:
+          - id: pydocstyle
+            additional_dependencies: [toml]
+    # TODO: fix the errors
+    - repo: https://gitlab.com/daverona/pre-commit/cpp
+      rev: 0.8.0
+      hooks:
+          - id: cpplint
+            args: [--repository=.]
+    # TODO: fix the errors
     - repo: https://github.com/pycqa/pylint
       rev: v2.12.2
       hooks:

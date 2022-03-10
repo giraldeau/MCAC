@@ -76,9 +76,9 @@ void Sphere::relative_translate(const std::array<double, 3>& trans) noexcept {
 }
 void Sphere::set_position(const std::array<double, 3>& newposition) noexcept {
 
-//    *x = periodic_position(_newx,physicalmodel->box_lenght);
-//    *y = periodic_position(_newy,physicalmodel->box_lenght);
-//    *z = periodic_position(_newz,physicalmodel->box_lenght);
+//    *x = periodic_position(_newx,physicalmodel->box_length);
+//    *y = periodic_position(_newy,physicalmodel->box_length);
+//    *z = periodic_position(_newz,physicalmodel->box_length);
 
     *x = newposition[0];
     *y = newposition[1];
@@ -152,4 +152,3 @@ void Sphere::update_vol_and_surf() noexcept {
     }
 }
 }  // namespace mcac
-

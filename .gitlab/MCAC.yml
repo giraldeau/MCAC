@@ -1,63 +1,64 @@
+---
 gfortran-Debug:
-  stage: Build
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
-  script:
-    - pwd
-    - ls -l
-    - mkdir build
-    - cd build
-    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF .. 
-    - make -j
-  artifacts:
-    paths:
-      - bin/Debug/MCAC
-      - ext_bin
-      - build # for coverage analysis
+    stage: Build
+    image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+    script:
+        - pwd
+        - ls -l
+        - mkdir build
+        - cd build
+        - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
+        - make -j
+    artifacts:
+        paths:
+            - bin/Debug/MCAC
+            - ext_bin
+            - build # for coverage analysis
 
 gfortran-Release:
-  stage: Build
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
-  script:
-    - pwd
-    - ls -l
-    - mkdir build
-    - cd build
-    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
-    - make -j
-  artifacts:
-    paths:
-      - bin/Release/MCAC
-      - ext_bin
-      - build # for coverage analysis
+    stage: Build
+    image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-gfortran
+    script:
+        - pwd
+        - ls -l
+        - mkdir build
+        - cd build
+        - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
+        - make -j
+    artifacts:
+        paths:
+            - bin/Release/MCAC
+            - ext_bin
+            - build # for coverage analysis
 
 intel-Debug:
-  stage: Build
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-intel
-  script:
-    - pwd
-    - ls -l
-    - mkdir build
-    - cd build
-    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF .. 
-    - make -j
-  artifacts:
-    paths:
-      - bin/Debug/MCAC
-      - ext_bin
-  allow_failure: true
+    stage: Build
+    image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-intel
+    script:
+        - pwd
+        - ls -l
+        - mkdir build
+        - cd build
+        - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Debug -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
+        - make -j
+    artifacts:
+        paths:
+            - bin/Debug/MCAC
+            - ext_bin
+    allow_failure: true
 
 intel-Release:
-  stage: Build
-  image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-intel
-  script:
-    - pwd
-    - ls -l
-    - mkdir build
-    - cd build
-    - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
-    - make -j
-  artifacts:
-    paths:
-      - bin/Release/MCAC
-      - ext_bin
-  allow_failure: true
+    stage: Build
+    image: gitlab.univ-rouen.fr:4567/coria/archer/arbalete:mcac-gitlab-ci-intel
+    script:
+        - pwd
+        - ls -l
+        - mkdir build
+        - cd build
+        - cmake -DWITH_SBL=OFF -DCMAKE_BUILD_TYPE=Release -DDEBUG_MCAC=ON -DWITH_PYTHON=OFF ..
+        - make -j
+    artifacts:
+        paths:
+            - bin/Release/MCAC
+            - ext_bin
+    allow_failure: true

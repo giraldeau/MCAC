@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Compute the normalized 3d autocorrelation graph of an aggregate
-"""
+"""Compute the normalized 3d autocorrelation graph of an aggregate."""
 
 import ctypes
 import multiprocessing as mp
@@ -44,9 +41,7 @@ def autocorrelation3d(
     end: Optional[float] = None,
     nprocs: Optional[int] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Compute the normalized 3d autocorrelation graph of an aggregate
-    """
+    """Compute the normalized 3d autocorrelation graph of an aggregate."""
 
     cols = ["Posx", "Posy", "Posz", "Radius"]
     if aggregate is not None:
@@ -90,7 +85,7 @@ def autocorrelation3d(
 def parallel_volumes_autoco(
     spheres: np.ndarray, lradius: np.ndarray, nsamples: int, nprocs: Optional[int] = None
 ) -> np.ndarray:
-    """Compute all the volumes needed for the autocorrelation
+    """Compute all the volumes needed for the autocorrelation.
 
     including the volume of the initial aggregate
     """
@@ -111,7 +106,7 @@ def parallel_volumes_autoco(
                 if i == 0:
                     break
 
-        # Recieve result
+        # Receive result
         for _ in tqdm(range(njobs)):
             i, volume = p.qout.get()
             volumes[i] += volume
@@ -120,8 +115,7 @@ def parallel_volumes_autoco(
 
 
 def par_volumes_autoco(q: mp.Queue, r: mp.Queue, spheres: np.ndarray) -> None:
-    """
-    This code will be executed by each process
+    """This code will be executed by each process.
 
     Pick one job and do it
     """
@@ -149,7 +143,7 @@ def par_volumes_autoco(q: mp.Queue, r: mp.Queue, spheres: np.ndarray) -> None:
 
 
 def seq_volumes_autoco(spheres: np.ndarray, lradius: np.ndarray, nsamples: int) -> np.ndarray:
-    """Compute all the volumes needed for the autocorrelation
+    """Compute all the volumes needed for the autocorrelation.
 
     including the volume of the initial aggregate
     """
@@ -179,7 +173,7 @@ def seq_volumes_autoco(spheres: np.ndarray, lradius: np.ndarray, nsamples: int) 
 
 
 def random_vector() -> np.ndarray:
-    """Return a random vector on the unit sphere"""
+    """Return a random vector on the unit sphere."""
     theta = np.random.uniform(0, 2 * np.pi)
     phi = np.arccos(1 - 2 * np.random.uniform(0, 1))
 
@@ -187,9 +181,7 @@ def random_vector() -> np.ndarray:
 
 
 def translated_union(vec: np.ndarray, spheres: np.ndarray) -> np.ndarray:
-    """
-    Compute the union of an aggegate and a translated copy of itself
-    """
+    """Compute the union of an aggregate and a translated copy of itself."""
     nspheres = spheres.shape[0]
 
     # duplication
@@ -202,13 +194,10 @@ def translated_union(vec: np.ndarray, spheres: np.ndarray) -> np.ndarray:
 
 
 def single_volume_autoco(radius: float, spheres: np.ndarray) -> float:
-    """
-    Compute the volume needed for the autocorrelation
+    """Compute the volume needed for the autocorrelation.
 
-    Except for the initial volume (i == 0),
-    compute the union of an aggegate and a translated copy of itself
-    in a random direction
-
+    Except for the initial volume (i == 0), compute the union of an
+    aggregate and a translated copy of itself in a random direction
     """
     if abs(radius) == 0:
         aggregate = spheres
@@ -222,9 +211,7 @@ def single_volume_autoco(radius: float, spheres: np.ndarray) -> float:
 
 
 class Parallel:
-    """
-    A context to do parallel computation
-    """
+    """A context to do parallel computation."""
 
     __slots__ = ("target", "nprocs", "_shared_array", "shared_array", "qin", "qout", "processes")
 
@@ -250,17 +237,13 @@ class Parallel:
         ]
 
     def __enter__(self) -> "Parallel":
-        """
-        Start the processes
-        """
+        """Start the processes."""
         for p in self.processes:
             p.start()
         return self
 
     def __exit__(self, exception_type: Any, exception_value: Any, traceback: Any) -> None:
-        """
-        End the processes
-        """
+        """End the processes."""
         # first kill them just in case
         for p in self.processes:
             p.terminate()

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Function to compute usual physical quantities
-"""
+"""Function to compute usual physical quantities."""
 
 import dask.array as da
 import numpy as np
@@ -29,9 +26,7 @@ from scipy.optimize import root_scalar
 
 
 def mobility_diameter(f_agg: xr.DataArray, **kwargs) -> xr.DataArray:
-    """
-    Compute the mobility diameter based on f_agg
-    """
+    """Compute the mobility diameter based on f_agg."""
     required = {"A1", "A2", "A3", "lambda_g", "mu_g"}
     if required - set(kwargs.keys()):
         raise ValueError(f"You must provide the following physical parameters: {required}")
@@ -45,9 +40,7 @@ def mobility_diameter(f_agg: xr.DataArray, **kwargs) -> xr.DataArray:
 
 
 def _vectorized_compute_dm(vect_f_agg: np.ndarray, x0: float = 1e-8, **kwargs) -> np.ndarray:
-    """
-    Compute the mobility diameter based on f_agg
-    """
+    """Compute the mobility diameter based on f_agg."""
     res = np.empty_like(vect_f_agg)
     for i, f_agg in enumerate(vect_f_agg):
         res[i] = x0 = _compute_dm(f_agg, x0=x0, **kwargs)
@@ -55,9 +48,7 @@ def _vectorized_compute_dm(vect_f_agg: np.ndarray, x0: float = 1e-8, **kwargs) -
 
 
 def _compute_dm(f_agg: float, x0: float = 1e-8, **kwargs) -> float:
-    """
-    Compute the mobility diameter based on f_agg
-    """
+    """Compute the mobility diameter based on f_agg."""
     dm_params = ["A1", "A2", "A3", "lambda_g", "mu_g"]
     params = [kwargs[k] for k in dm_params]
     kwargs = {k: kwargs[k] for k in kwargs if k not in dm_params}
@@ -91,8 +82,7 @@ def _normalized_dm_equation(
     lambda_g: float = 5e-7,
     mu_g: float = 6e-5,
 ):
-    """
-    Normalized version of the mobility diameter equation
+    """Normalized version of the mobility diameter equation.
 
     The default values are purely indicative
     """
@@ -113,8 +103,7 @@ def _dm_equation(
     lambda_g: float = 5e-7,
     mu_g: float = 6e-5,
 ):
-    """
-    Mobility diameter equation
+    """Mobility diameter equation.
 
     The default values are purely indicative
     """
@@ -122,12 +111,12 @@ def _dm_equation(
 
     cunningham = 1 + A1 * kn + A2 * kn * np.exp(-A3 / kn)
     cunningham_prime = A1 * kn + A2 * (A3 + kn) * np.exp(-A3 / kn)
-    cunningham_prime2 = 2 * A1 * kn + A2 * (A3 ** 2 / kn + 2 * A3 + 2 * kn) * np.exp(-A3 / kn)
+    cunningham_prime2 = 2 * A1 * kn + A2 * (A3**2 / kn + 2 * A3 + 2 * kn) * np.exp(-A3 / kn)
 
     return (
         3 * np.pi * mu_g * dm - f_agg * cunningham,
         3 * np.pi * mu_g + f_agg * cunningham_prime / dm,
-        -f_agg * cunningham_prime2 / dm ** 2,
+        -f_agg * cunningham_prime2 / dm**2,
     )
 
 

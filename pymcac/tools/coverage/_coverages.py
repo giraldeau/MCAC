@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Compute the overlapping coefficient COV
-"""
+"""Compute the overlapping coefficient COV."""
 
 import os
 from typing import Optional
@@ -33,8 +30,7 @@ from .coverages_cython import coverages_cython, label_argsort
 def coverages(
     spheres: pd.DataFrame, aggregates: pd.DataFrame, nprocs: Optional[int] = None
 ) -> np.ndarray:
-    """
-    Compute the overlapping coefficient COV
+    """Compute the overlapping coefficient COV.
 
     (which may happen with surface growth)
     """

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,10 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Plot a aggregate (2d or 3d)
-
-"""
+"""Plot a aggregate (2d or 3d)"""
 
 from .projection import view_proj_agg
 from .volumic import view_agg

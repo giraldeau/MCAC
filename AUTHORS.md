@@ -3,7 +3,7 @@
 ## Maintainer
  - Alexandre Poux (alexandre.poux@coria.fr)
 
-## Core Contributers
+## Core Contributors
  - Alexandre Poux (alexandre.poux@coria.fr)  
    Technical part
 
@@ -12,4 +12,3 @@
    
  - Jérôme Yon (jerome.yon@coria.fr)  
    Scientific expertise
-

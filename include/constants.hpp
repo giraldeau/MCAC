@@ -85,7 +85,7 @@ enum InterPotentialRegime {
     STICKING,
     REPULSION,
     BOUNCING,
-    INFINIT,
+    INFINITE,
     INVALID_INTER_POTENTIAL_REGIME
 };
 enum PickMethods {

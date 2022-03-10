@@ -150,4 +150,3 @@ SphereList &SphereList::operator=(SphereList &&other) noexcept {
     return *this;
 }
 }  // namespace mcac
-

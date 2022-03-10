@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 # MCAC
 # Copyright (C) 2020 CORIA
@@ -17,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Ecriture du fichier shape.dat pour DDSCAT
-"""
+"""Ecriture du fichier shape.dat pour DDSCAT."""
 
 from pathlib import Path
 from typing import Optional, Sequence, Union
@@ -42,9 +39,7 @@ def export_ddscat(
     aggregates: Optional[pd.DataFrame] = None,
     type_limits: Sequence[float] = (0.0,),
 ) -> None:
-    """
-    Ecriture du fichier shape.dat pour DDSCAT
-    """
+    """Ecriture du fichier shape.dat pour DDSCAT."""
     if "cov" not in aggregate:
         if aggregates is None:
             raise ValueError(
@@ -84,8 +79,8 @@ Or give me the aggregates array so I can compute it for you"""
         f.write(f" aeff (nm) : {aeff:9.2e}\n")
 
         f.write(f"{nb_dipoles}\t= NAT\n")
-        f.write("1.000000 0.000000 0.000000 = targer vector a1 (in TF)\n")
-        f.write("0.000000 1.000000 0.000000 = targer vector a2 (in TF)\n")
+        f.write("1.000000 0.000000 0.000000 = target vector a1 (in TF)\n")
+        f.write("0.000000 1.000000 0.000000 = target vector a2 (in TF)\n")
 
         f.write(f"{1.}\t{1.}\t{1.}\t")
         f.write(" = lattice spacings (d_x,d_y,d_z)/d\n")

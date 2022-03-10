@@ -21,7 +21,7 @@
 #include "io/xmf_includes.hpp"
 
 
-#define DEF_FORMATER(obj, varname, type) \
+#define DEF_FORMATTER(obj, varname, type) \
   std::vector<type> obj::format_ ## varname () const \
 { \
   const size_t list_size = size(); \
@@ -32,7 +32,7 @@
   }\
   return data;\
 }
-#define DEF_FORMATER_PTR(obj, varname, type) \
+#define DEF_FORMATTER_PTR(obj, varname, type) \
   std::vector<type> obj::format_ ## varname () const \
 { \
   const size_t list_size = size(); \
@@ -43,7 +43,7 @@
   }\
   return data;\
 }
-#define DEF_FORMATER_FUNC(obj, varname, type) \
+#define DEF_FORMATTER_FUNC(obj, varname, type) \
   std::vector<type> obj::format_ ## varname () const \
 { \
   const size_t list_size = size(); \
@@ -54,7 +54,7 @@
   }\
   return data;\
 }
-#define DEF_FORMATER_POSITION(obj) \
+#define DEF_FORMATTER_POSITION(obj) \
   std::vector<double> obj::format_position () const \
 { \
   const size_t list_size = size(); \
@@ -80,4 +80,3 @@ boost::shared_ptr<XdmfTime> format_time(const double &value);
 
 #endif // WITH_HDF5
 #endif //INCLUDE_IO_FORMAT_HPP
-

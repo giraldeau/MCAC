@@ -26,11 +26,11 @@
 
 namespace mcac {
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                 const std::vector<int> &formated_field);
+                                                 const std::vector<int> &formatted_field);
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                 const std::vector<double> &formated_field);
+                                                 const std::vector<double> &formatted_field);
 extern template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                                 const std::vector<long> &formated_field);
+                                                 const std::vector<long> &formatted_field);
 extern template shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                                     const double &value);
 auto SphereList::get_data() const {
@@ -42,7 +42,7 @@ auto SphereList::get_data() const {
     // Set time
     spheres_data->setTime(format_time(physicalmodel->time));
     spheres_data->insert(attribute("Time", physicalmodel->time));
-    //spheres_data->insert(attribute("BoxSize", physicalmodel->box_lenght));
+    //spheres_data->insert(attribute("BoxSize", physicalmodel->box_length));
 
     // Set Positions
     spheres_data->setGeometry(the_positions(format_position()));
@@ -60,10 +60,10 @@ void SphereList::save() {
     auto data = get_data();
     writer->write(data);
 }
-DEF_FORMATER_POSITION(SphereList)
-DEF_FORMATER(SphereList, agg_label, long)
-DEF_FORMATER(SphereList, electric_charge, int)
-DEF_FORMATER_FUNC(SphereList, get_radius, double)
+DEF_FORMATTER_POSITION(SphereList)
+DEF_FORMATTER(SphereList, agg_label, long)
+DEF_FORMATTER(SphereList, electric_charge, int)
+DEF_FORMATTER_FUNC(SphereList, get_radius, double)
 }  // namespace mcac
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 # MCAC
 # Copyright (C) 2020 CORIA
 #
@@ -88,7 +87,7 @@ def test_not_aligned_rechunk_two_chunk_seq(dask, dims):
 
     chunks = {dim: n for dim, n in zip(dims, (3, 4))}
     two_chunked = not_aligned_rechunk(data, chunks=chunks)
-    chunk0, chunk1 = [{dim: n} for dim, n in chunks.items()]
+    chunk0, chunk1 = ({dim: n} for dim, n in chunks.items())
     two_chunked_seq = not_aligned_rechunk(not_aligned_rechunk(data, chunks=chunk0), chunks=chunk1)
     assert identical(two_chunked, two_chunked_seq)
     two_chunked_seq = not_aligned_rechunk(not_aligned_rechunk(data, chunks=chunk1), chunks=chunk0)

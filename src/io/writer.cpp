@@ -34,21 +34,21 @@ shared_ptr<XdmfTopology> the_topology() {
     particules->setType(XdmfTopologyType::Polyvertex());
     return particules;
 }
-shared_ptr<XdmfGeometry> the_positions(const std::vector<double> &formated_positions) {
-    const auto _n = unsigned(int(formated_positions.size()));
+shared_ptr<XdmfGeometry> the_positions(const std::vector<double> &formatted_positions) {
+    const auto _n = unsigned(int(formatted_positions.size()));
     shared_ptr<XdmfGeometry> positions = XdmfGeometry::New();
     positions->setType(XdmfGeometryType::XYZ());
-    positions->insert(0, formated_positions.data(), _n, 1, 1);
+    positions->insert(0, formatted_positions.data(), _n, 1, 1);
     return positions;
 }
 template<class T>
-shared_ptr<XdmfAttribute> scalar(const std::string &name, const std::vector<T> &formated_field) {
-    const auto _n = unsigned(int(formated_field.size()));
+shared_ptr<XdmfAttribute> scalar(const std::string &name, const std::vector<T> &formatted_field) {
+    const auto _n = unsigned(int(formatted_field.size()));
     shared_ptr<XdmfAttribute> xdmf_field = XdmfAttribute::New();
     xdmf_field->setName(name);
     xdmf_field->setType(XdmfAttributeType::Scalar());
     xdmf_field->setCenter(XdmfAttributeCenter::Node());
-    xdmf_field->insert(0, formated_field.data(), _n, 1, 1);
+    xdmf_field->insert(0, formatted_field.data(), _n, 1, 1);
     return xdmf_field;
 }
 template<class T>
@@ -60,11 +60,11 @@ shared_ptr<XdmfAttribute> attribute(const std::string &name, const T &value) {
     return xdmf_field;
 }
 template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                          const std::vector<double> &formated_field);
+                                          const std::vector<double> &formatted_field);
 template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                          const std::vector<int> &formated_field);
+                                          const std::vector<int> &formatted_field);
 template shared_ptr<XdmfAttribute> scalar(const std::string &name,
-                                          const std::vector<long> &formated_field);
+                                          const std::vector<long> &formatted_field);
 template shared_ptr<XdmfAttribute> attribute(const std::string &name,
                                              const double &value);
 template shared_ptr<XdmfAttribute> attribute(const std::string &name,

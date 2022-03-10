@@ -35,14 +35,14 @@ The corresponding code versions are [tagged](https://gitlab.coria-cfd.fr/MCAC/MC
 
 We need
  * `libhdf5` for writing our results
- * `mpfr` and `gmp` for accurate computation of sphere overlapping (Optionnal)
- * `python3.8+` for python post-processing (Optionnal)
+ * `mpfr` and `gmp` for accurate computation of sphere overlapping (Optional)
+ * `python3.8+` for python post-processing (Optional)
 
 The other dependencies that may be needed will be compiled with the code
  * `libxdmf` for writing our results, if not found it will be compiled this will need `boost`
- * `CGAL` and `SBL` for accurate computation of sphere overlapping (Optionnal)  
-    (`SBL` being a large repository, you can clone it separatly and give the path to cmake with `-DSBL_GIT_REP=path`)
- * multiple python packages for python post-processing (Optionnal)
+ * `CGAL` and `SBL` for accurate computation of sphere overlapping (Optional)  
+    (`SBL` being a large repository, you can clone it separately and give the path to cmake with `-DSBL_GIT_REP=path`)
+ * multiple python packages for python post-processing (Optional)
 
 Finally two other libraries will be compiled with the code:
  * `inipp` for reading input files
@@ -78,7 +78,7 @@ And recompile the compiled part that may have change
     make -j4
     cd ..
 
-If you experience troubles, you can alway destroy the `build` dir and restart the compilation from scratch 
+If you experience troubles, you can always destroy the `build` dir and restart the compilation from scratch 
 
 If you have updated your python version, you may have to remove the folder venv
 
@@ -131,9 +131,9 @@ In order to use `pymcac` you need to activate the virtual environment
 
 On the screen, it will output after every collision:
 - `NAgg` is the current number of aggregate, at first it is the number of spheres and decrease one by one
-- `Time` is the physical time (at least statisticly)
+- `Time` is the physical time (at least statistical)
 - `CPU` is the computational time (in seconds)
-- `after n it` is the nuber of time iteration without collision that precedes this one
+- `after n it` is the number of time iteration without collision that precedes this one
 
 It will also produce some **files.h5** and **files.xmf**
 
