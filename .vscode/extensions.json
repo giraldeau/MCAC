@@ -9,7 +9,10 @@
         "ms-vsliveshare.vsliveshare-pack",
         "mhutchie.git-graph",
         "ms-vscode.cpptools",
-        "timonwong.shellcheck",
-        "tcwalther.cython"
+        "tcwalther.cython",
+        "eamodio.gitlens",
+        "ms-vscode-remote.remote-ssh",
+        "analytic-signal.preview-html",
+        "techer.open-in-browser"
     ]
 }
