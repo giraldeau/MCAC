@@ -55,6 +55,8 @@
         "bin": true,
         "examples_data": true,
         "validataion/*_data": true,
+        "artifacts": true,
+        "docs": true,
         "**/*.orig": true,
         "**/__pycache__": true,
         "**/.pytest_cache": true,
