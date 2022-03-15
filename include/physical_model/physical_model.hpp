@@ -48,7 +48,8 @@ class PhysicalModel {
     size_t n_iter_without_event;
     size_t last_timestep_written;
     clock_t cpu_start;
-    double cpu_limit, physical_time_limit;
+    clock_t cpu_last_event;
+    double cpu_limit, cpu_event_limit, physical_time_limit;
     double write_Delta_t;
     int mean_monomere_per_aggregate_limit;
     size_t number_of_aggregates_limit;

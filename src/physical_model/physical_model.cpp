@@ -67,6 +67,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     last_timestep_written(0),
     cpu_start(),
     cpu_limit(-1),
+    cpu_event_limit(-1),
     physical_time_limit(-1),
     mean_monomere_per_aggregate_limit(-1),
     number_of_aggregates_limit(1),
@@ -149,6 +150,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["limits"]["number_of_aggregates"], number_of_aggregates_limit);
     inipp::extract(ini.sections["limits"]["n_iter_without_event"], n_iter_without_event_limit);
     inipp::extract(ini.sections["limits"]["cpu"], cpu_limit);
+    inipp::extract(ini.sections["limits"]["cpu_event"], cpu_event_limit);
     inipp::extract(ini.sections["limits"]["physical_time"], physical_time_limit);
     inipp::extract(ini.sections["limits"]["mean_monomere_per_aggregate"], mean_monomere_per_aggregate_limit);
     // numerics
@@ -281,9 +283,13 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         intpotential_info = Interpotential(interpotential_file);
     }
 
-    cpu_start = clock();
+    cpu_last_event = cpu_start = clock();
 }
 [[gnu::pure]] bool PhysicalModel::finished(size_t number_of_aggregates, double mean_monomere_per_aggregate) const {
+    if (fs::exists(output_dir / "STOPCODE")) {
+        std::cout << "STOPCODE" << std::endl << std::endl;
+        return true;
+    }
     if (number_of_aggregates < 1) {
         std::cout << "All the aggregates disappeared" << std::endl << std::endl;
         return true;
@@ -307,6 +313,14 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         double elapse = double(current_cpu - cpu_start) / CLOCKS_PER_SEC;
         if (elapse >= cpu_limit) {
             std::cout << "We reach the CPULimit condition" << std::endl << std::endl;
+            return true;
+        }
+    }
+    if (cpu_event_limit > 0) {
+        clock_t current_cpu = clock();
+        double elapse = double(current_cpu - cpu_last_event) / CLOCKS_PER_SEC;
+        if (elapse >= cpu_event_limit) {
+            std::cout << "We reach the CPULimitEvent condition" << std::endl << std::endl;
             return true;
         }
     }
@@ -451,12 +465,17 @@ void PhysicalModel::print() const {
               << " Aggregate update frequency: " << full_aggregate_update_frequency << std::endl
               << std::endl
               << "Ending simulation when:" << std::endl
+              << " - A file " << (output_dir / "STOPCODE") << " exists " << std::endl
               << " - There are " << number_of_aggregates_limit << " aggregats left or less" << std::endl;
     if (n_iter_without_event_limit > 0) {
         std::cout << " - It has been " << n_iter_without_event_limit << " iterations without collision" << std::endl;
     }
     if (cpu_limit > 0) {
         std::cout << " - The simulations is running for more than " << cpu_limit << " seconds" << std::endl;
+    }
+    if (cpu_event_limit > 0) {
+        std::cout << " - The simulations is running for more than " << cpu_limit << " seconds since the last event"
+                  << std::endl;
     }
     if (physical_time_limit > 0) {
         std::cout << " - The residence time is larger than " << physical_time_limit << " seconds" << std::endl;

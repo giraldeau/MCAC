@@ -235,6 +235,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
 
         //$ Show progress
         if (event) {
+            physicalmodel.cpu_last_event = clock();
             if (total_events % 20 == 1) {
                 std::cout << std::setw(8) << "#"
                           << " | " << std::setw(9) << "Npp_avg"
