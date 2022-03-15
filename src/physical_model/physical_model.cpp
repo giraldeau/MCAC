@@ -64,6 +64,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     n_time_per_file(10),
     monomeres_initialisation_type(MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION),
     n_iter_without_event(0),
+    last_timestep_written(0),
     cpu_start(),
     cpu_limit(-1),
     physical_time_limit(-1),
@@ -71,7 +72,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     number_of_aggregates_limit(1),
     n_iter_without_event_limit(-1),
     random_seed(-1),
-    write_Delta_t(1e+06),
+    write_Delta_t(-1),
     write_events_frequency(1),
     write_between_event_frequency(100),
     full_aggregate_update_frequency(1),
@@ -177,11 +178,18 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     inipp::extract(ini.sections["flame_coupling"]["with_flame_coupling"], with_flame_coupling);
     inipp::extract(ini.sections["flame_coupling"]["flame_file"], flame_file);
     // output
-    inipp::extract(ini.sections["output"]["write_Delta_t"], write_Delta_t);
-    inipp::extract(ini.sections["output"]["write_events_frequency"], write_events_frequency);
     inipp::extract(ini.sections["output"]["output_dir"], output_dir);
     inipp::extract(ini.sections["output"]["n_time_per_file"], n_time_per_file);
     inipp::extract(ini.sections["output"]["write_between_event_frequency"], write_between_event_frequency);
+    inipp::extract(ini.sections["output"]["write_events_frequency"], write_events_frequency);
+    inipp::extract(ini.sections["output"]["write_Delta_t"], write_Delta_t);
+
+    if (write_events_frequency > 1 && write_between_event_frequency > 1) {
+        std::cout << "WARNING: `write_between_event_frequency > 1` should only "
+                     "be used with "
+                     "`write_events_frequency == 1`"
+                  << std::endl;
+    }
     output_dir = extract_path(fichier_param) / output_dir;
     if (fs::exists(output_dir) && fs::is_directory(output_dir)) {
         std::string answer;
@@ -311,6 +319,25 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
                   << mean_monomere_per_aggregate_limit << std::endl;
         return true;
     }
+    return false;
+}
+bool PhysicalModel::time_to_write(size_t total_events) {
+    if (write_Delta_t > 0) {
+        size_t timestep = floor(time / write_Delta_t);
+        if (timestep > last_timestep_written) {
+            last_timestep_written = timestep;
+            return true;
+        }
+    }
+
+    if (n_iter_without_event == 0 && total_events % write_events_frequency == 0) {
+        return true;
+    }
+
+    if (n_iter_without_event > 0 && n_iter_without_event % write_between_event_frequency == 0) {
+        return true;
+    }
+
     return false;
 }
 void PhysicalModel::print() const {

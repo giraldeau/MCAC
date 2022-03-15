@@ -120,8 +120,8 @@ class PhysicalModel {
     return periodic_position;
 }
 [[gnu::const]] inline std::array<double, 3> periodic_position(std::array<double, 3> position, double dim) {
-    return {periodic_position(position[0], dim), periodic_position(position[1], dim),
-            periodic_position(position[2], dim)};
+    return {
+        periodic_position(position[0], dim), periodic_position(position[1], dim), periodic_position(position[2], dim)};
 }
 } // namespace mcac
 

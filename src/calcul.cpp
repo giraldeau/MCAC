@@ -64,16 +64,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
 
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
-        if (physicalmodel.n_iter_without_event % physicalmodel.write_between_event_frequency == 0) {
-            if (total_events % physicalmodel.write_events_frequency == 0) {
-                aggregates.spheres.save();
-                aggregates.save();
-                save_advancement(physicalmodel, aggregates);
-            }
-        }
-        size_t flo = floor(physicalmodel.time / physicalmodel.write_Delta_t);
-        if (flo > write_phys_time_int) {
-            write_phys_time_int = flo;
+        if (physicalmodel.time_to_write(total_events)) {
             aggregates.spheres.save();
             aggregates.save();
             save_advancement(physicalmodel, aggregates);
