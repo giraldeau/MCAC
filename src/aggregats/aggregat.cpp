@@ -308,8 +308,8 @@ static double surface_alpha_correction(const double coordination_number,
                                        const double alpha_vs_extreme) noexcept {
     double difference_coordination = std::abs(coordination_number - min_coordination_number);
     double correction = 0.5 * c_10 * coordination_number
-                        - std::pow(c_10, 2) * difference_coordination * 0.29611
-                        - std::pow(difference_coordination, 2) * 0.00155632;
+                        - std::pow(c_10, 2) * difference_coordination * 0.70132500
+                        - std::pow(difference_coordination, 2) * 0.00450000;
     // NOTE: correction parameters are obtained by post-processing fit
     if (correction < 0.0) {correction = 1.0;};
     correction = std::min(correction, 1.0);
