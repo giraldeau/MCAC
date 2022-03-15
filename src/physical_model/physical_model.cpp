@@ -15,18 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "constants.hpp"
 #include "physical_model/physical_model.hpp"
-#include "tools/tools.hpp"
+#include "constants.hpp"
 #include "exceptions.hpp"
+#include "tools/tools.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <inipp.h>
 #include <iostream>
-#include <algorithm>
-
 
 namespace fs = std::experimental::filesystem;
 namespace mcac {
@@ -94,7 +93,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     with_electric_charges(false),
     with_maturity(false),
     flame(),
-    intpotential_info(){
+    intpotential_info() {
     std::string default_str;
     // read the config file
     inipp::Ini<char> ini;
@@ -135,10 +134,11 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     // oxidation
     inipp::extract(ini.sections["oxidation"]["rp_min"], rp_min_oxid);
     // nucleation
-    mean_diameter_nucleation = mean_diameter;               // Equal by default unless the user provide them
-    dispersion_diameter_nucleation = dispersion_diameter;   // Equal by default unless the user provide them
-    mass_nuclei = (_pi/6.) * std::pow(mean_diameter_nucleation*(1e-09),3) * density *
-                   std::exp(std::pow(4.5*std::log(dispersion_diameter_nucleation),2));
+    // Equal by default unless the user provide them
+    mean_diameter_nucleation = mean_diameter;
+    dispersion_diameter_nucleation = dispersion_diameter;
+    mass_nuclei = (_pi / 6.) * std::pow(mean_diameter_nucleation * (1e-09), 3) * density
+                  * std::exp(std::pow(4.5 * std::log(dispersion_diameter_nucleation), 2));
     inipp::extract(ini.sections["nucleation"]["with_nucleation"], with_nucleation);
     inipp::extract(ini.sections["nucleation"]["flux"], flux_nucleation);
     inipp::extract(ini.sections["nucleation"]["mean_diameter"], mean_diameter_nucleation);
@@ -217,44 +217,41 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
     }
     double tot_volume_pp(0.0), tot_surface_pp(0.0);
     if (monomeres_initialisation_type == MonomeresInitialisationMode::NORMAL_INITIALISATION) {
-        box_length = mean_diameter * 1E-9 *
-                     std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
-                              * (1. + 3. * std::pow(dispersion_diameter / mean_diameter, 2)),
-                              1. / 3.);
-        mean_massic_radius = 0.5 * 1E-9 * (std::pow(mean_diameter, 4)
-                                           + 6 * std::pow(mean_diameter, 2) * std::pow(dispersion_diameter, 2)
-                                           + 3 * std::pow(dispersion_diameter, 4))
-                             / (std::pow(mean_diameter, 3) + 3 * mean_diameter * std::pow(dispersion_diameter, 2));
+        box_length = mean_diameter * 1E-9
+                     * std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
+                                    * (1. + 3. * std::pow(dispersion_diameter / mean_diameter, 2)),
+                                1. / 3.);
+        mean_massic_radius =
+            0.5 * 1E-9
+            * (std::pow(mean_diameter, 4) + 6 * std::pow(mean_diameter, 2) * std::pow(dispersion_diameter, 2)
+               + 3 * std::pow(dispersion_diameter, 4))
+            / (std::pow(mean_diameter, 3) + 3 * mean_diameter * std::pow(dispersion_diameter, 2));
         // Total volume/surface pp: Moran, J., , et al. Powder Tech, 2018, vol. 330, p. 67-79.
         double mean_radius = 0.5 * mean_diameter * 1E-9;
         double dispersion_radius = 0.5 * dispersion_diameter * 1E-9;
-        tot_volume_pp = static_cast<double>(n_monomeres) *\
-                        (4.0*_pi/3.0) * (mean_radius) *\
-                        (std::pow(mean_radius, 2) + 3.0*std::pow(dispersion_radius, 2));
-        tot_surface_pp = static_cast<double>(n_monomeres) *\
-                        (4.0*_pi) *\
-                        (std::pow(mean_radius, 2) + std::pow(dispersion_radius, 2));
+        tot_volume_pp = static_cast<double>(n_monomeres) * (4.0 * _pi / 3.0) * (mean_radius)
+                        * (std::pow(mean_radius, 2) + 3.0 * std::pow(dispersion_radius, 2));
+        tot_surface_pp = static_cast<double>(n_monomeres) * (4.0 * _pi)
+                         * (std::pow(mean_radius, 2) + std::pow(dispersion_radius, 2));
     } else if (monomeres_initialisation_type == MonomeresInitialisationMode::LOG_NORMAL_INITIALISATION) {
-        box_length = mean_diameter * 1E-9 *
-                     std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
-                              * std::exp(9. / 2. * std::pow(std::log(dispersion_diameter), 2)),
-                              1. / 3.);
-        mean_massic_radius = 0.5 * mean_diameter * 1E-9
-                             * std::exp(1.5 * std::pow(std::log(dispersion_diameter), 2));  // Hatch-Choate
+        box_length = mean_diameter * 1E-9
+                     * std::pow(static_cast<double>(n_monomeres) * _pi / 6. / volume_fraction
+                                    * std::exp(9. / 2. * std::pow(std::log(dispersion_diameter), 2)),
+                                1. / 3.);
+        // Hatch-Choate
+        mean_massic_radius = 0.5 * mean_diameter * 1E-9 * std::exp(1.5 * std::pow(std::log(dispersion_diameter), 2));
         // Total volume/surface pp: Moran, J., , et al. Powder Tech, 2018, vol. 330, p. 67-79.
         double mean_radius = 0.5 * mean_diameter * 1E-9;
-        tot_volume_pp = static_cast<double>(n_monomeres) *\
-                        (4.0*_pi/3.0) * std::pow(mean_radius, 3) *\
-                        std::exp(4.5 * std::pow(std::log(dispersion_diameter), 2));
-        tot_surface_pp = static_cast<double>(n_monomeres) *\
-                        (4.0*_pi) * std::pow(mean_radius, 2) *\
-                        std::exp(2 * std::pow(std::log(dispersion_diameter), 2));
+        tot_volume_pp = static_cast<double>(n_monomeres) * (4.0 * _pi / 3.0) * std::pow(mean_radius, 3)
+                        * std::exp(4.5 * std::pow(std::log(dispersion_diameter), 2));
+        tot_surface_pp = static_cast<double>(n_monomeres) * (4.0 * _pi) * std::pow(mean_radius, 2)
+                         * std::exp(2 * std::pow(std::log(dispersion_diameter), 2));
     } else {
         throw InputError("Monomere initialisation mode unknown");
     }
-    box_volume = std::pow(box_length,3);
+    box_volume = std::pow(box_length, 3);
     update_temperature(temperature);
-    u_sg = flux_surfgrowth / density;     // Surface growth velocity [m/s], u_sg=dr_p/dt
+    u_sg = flux_surfgrowth / density; // Surface growth velocity [m/s], u_sg=dr_p/dt
     // Particle number, volume, and surface area concentration
     aggregate_concentration = static_cast<double>(n_monomeres) / box_volume;
     monomer_concentration = aggregate_concentration;
@@ -293,8 +290,7 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
         std::cout << "We reach the AggMin condition" << std::endl << std::endl;
         return true;
     }
-    if (n_iter_without_event_limit > 0
-        && n_iter_without_event >= static_cast<size_t>(n_iter_without_event_limit)) {
+    if (n_iter_without_event_limit > 0 && n_iter_without_event >= static_cast<size_t>(n_iter_without_event_limit)) {
         std::cout << "We reach the WaitLimit condition" << std::endl << std::endl;
         return true;
     }
@@ -306,13 +302,11 @@ PhysicalModel::PhysicalModel(const std::string &fichier_param) :
             return true;
         }
     }
-    if (physical_time_limit > 0
-        && time >= physical_time_limit) {
+    if (physical_time_limit > 0 && time >= physical_time_limit) {
         std::cout << "We reach the Maximum physical time condition " << time << "/" << physical_time_limit << std::endl;
         return true;
     }
-    if (mean_monomere_per_aggregate_limit > 0
-        && mean_monomere_per_aggregate >= mean_monomere_per_aggregate_limit) {
+    if (mean_monomere_per_aggregate_limit > 0 && mean_monomere_per_aggregate >= mean_monomere_per_aggregate_limit) {
         std::cout << "We reach the NPP_avg_limit condition " << mean_monomere_per_aggregate << "/"
                   << mean_monomere_per_aggregate_limit << std::endl;
         return true;
@@ -340,7 +334,7 @@ void PhysicalModel::print() const {
               << " Initial Nagg                    : " << n_monomeres << " (-)" << std::endl
               << " Box size                        : " << box_length << " (m)" << std::endl
               << " FV                              : " << volume_fraction << " (-)" << std::endl
-              << " write_Delta_t                   : " << write_Delta_t*(1e+03) << " (ms)" << std::endl
+              << " write_Delta_t                   : " << write_Delta_t * (1e+03) << " (ms)" << std::endl
               << " write_between_event_frequency   : " << write_between_event_frequency << std::endl
               << " write_events_frequency          : " << write_events_frequency << std::endl;
     if (with_domain_duplication) {
@@ -360,9 +354,9 @@ void PhysicalModel::print() const {
     }
     if (individual_surf_reactions) {
         std::cout << " With individual surf. reactions" << std::endl;
-        if (full_aggregate_update_frequency>1){
-            std::cout << "   - WARNING: Parameter full_aggregate_update_frequency is " <<
-                         full_aggregate_update_frequency << " (recommended =1)" << std::endl;
+        if (full_aggregate_update_frequency > 1) {
+            std::cout << "   - WARNING: Parameter full_aggregate_update_frequency is "
+                      << full_aggregate_update_frequency << " (recommended =1)" << std::endl;
         }
     } else {
         std::cout << " Without individual surf. reactions" << std::endl;
@@ -410,7 +404,7 @@ void PhysicalModel::print() const {
         std::cout << " With surface reations" << std::endl
                   << "  flux_surfgrowth                : " << flux_surfgrowth << " (kg/m^2/s)" << std::endl
                   << "  u_sg                           : " << u_sg << " (m/s)" << std::endl
-                  << "  Minimum radius (delete PPs)    : " << rp_min_oxid * std::pow(10,9) << " (nm)" << std::endl;
+                  << "  Minimum radius (delete PPs)    : " << rp_min_oxid * std::pow(10, 9) << " (nm)" << std::endl;
     } else {
         std::cout << " Without surface reations" << std::endl;
     }
@@ -446,7 +440,10 @@ void PhysicalModel::print() const {
     }
     std::cout << std::endl;
 }
-void PhysicalModel::update(size_t n_aggregates, size_t n_monomers, double new_total_volume, double new_total_surface) noexcept {
+void PhysicalModel::update(size_t n_aggregates,
+                           size_t n_monomers,
+                           double new_total_volume,
+                           double new_total_surface) noexcept {
     total_volume_concent = new_total_volume / box_volume;
     total_surface_concent = new_total_surface / box_volume;
     aggregate_concentration = static_cast<double>(n_aggregates) / box_volume;
@@ -480,25 +477,22 @@ void PhysicalModel::update_from_flame() {
     auto next_J_sg = flame.J_sg.begin() + (next_t - flame.t_res.begin());
     auto previous_J_sg = flame.J_sg.begin() + (previous_t - flame.t_res.begin());
     auto J_sg = *previous_J_sg + t * (*next_J_sg - *previous_J_sg) / dt;
-    flux_surfgrowth = J_sg/total_surface_concent;
-    u_sg = flux_surfgrowth/density;
+    flux_surfgrowth = J_sg / total_surface_concent;
+    u_sg = flux_surfgrowth / density;
 
     // 3. nucleation flux (dN_pp/dt)
     auto next_J_nucl = flame.J_nucl.begin() + (next_t - flame.t_res.begin());
     auto previous_J_nucl = flame.J_nucl.begin() + (previous_t - flame.t_res.begin());
     double flux_nucleation_mass = *previous_J_nucl + t * (*next_J_nucl - *previous_J_nucl) / dt;
-    flux_nucleation = flux_nucleation_mass/mass_nuclei;
+    flux_nucleation = flux_nucleation_mass / mass_nuclei;
 }
 //#####################################################################################################################
 void PhysicalModel::update_temperature(double new_temperature) noexcept {
     temperature = new_temperature;
-    viscosity = _viscosity_ref
-                * (_sutterland_interpolation_constant + _temperature_ref)
+    viscosity = _viscosity_ref * (_sutterland_interpolation_constant + _temperature_ref)
                 / (_sutterland_interpolation_constant + temperature)
                 * std::pow(temperature / _temperature_ref, 1.5); // Schlichting 1979
-    gaz_mean_free_path = _fluid_mean_free_path_ref
-                         * (_pressure_ref / pressure)
-                         * (temperature / _temperature_ref)
+    gaz_mean_free_path = _fluid_mean_free_path_ref * (_pressure_ref / pressure) * (temperature / _temperature_ref)
                          * (1. + _sutterland_interpolation_constant / _temperature_ref)
                          / (1. + _sutterland_interpolation_constant / temperature); // Willeke 1976
     // Yon et al. Journal of Aerosol Science vol.87 2015 p.2837 eq.7
@@ -507,19 +501,17 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
 
 //#####################################################################################################################
 
-[[gnu::pure]]  double PhysicalModel::cunningham(double r) const {
+[[gnu::pure]] double PhysicalModel::cunningham(double r) const {
     double a = 1.142;
     double b = 0.558;
     double c = 0.999;
-    return 1.0 + a * gaz_mean_free_path / r
-           + b * gaz_mean_free_path / r * std::exp(-c * r / gaz_mean_free_path);
+    return 1.0 + a * gaz_mean_free_path / r + b * gaz_mean_free_path / r * std::exp(-c * r / gaz_mean_free_path);
 }
 
-[[gnu::pure]]  double PhysicalModel::random_diameter(double _mean_diameter,
-                                                     double _dispersion_diameter) const {
-    //random size
+[[gnu::pure]] double PhysicalModel::random_diameter(double _mean_diameter, double _dispersion_diameter) const {
+    // random size
     double diameter = 0;
-    switch(monomeres_initialisation_type) {
+    switch (monomeres_initialisation_type) {
     case MonomeresInitialisationMode::NORMAL_INITIALISATION:
         diameter = random_normal(_mean_diameter, _dispersion_diameter);
         break;
@@ -527,8 +519,7 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
         if (_dispersion_diameter < 1.0) {
             throw InputError("dispersion_diameter cannot be lower than 1");
         }
-        diameter = _mean_diameter * std::pow(_dispersion_diameter,
-                                            std::sqrt(2.) * inverf(2. * random() - 1.0));
+        diameter = _mean_diameter * std::pow(_dispersion_diameter, std::sqrt(2.) * inverf(2. * random() - 1.0));
         break;
     case MonomeresInitialisationMode::INVALID_INITIALISATION:
     default:
@@ -540,23 +531,22 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
     return diameter * 1E-9;
 }
 
-//############################# Functions pour le calcul du diamètre de mobilité ################################
+//#################### Functions pour le calcul du diamètre de mobilité ############################
 
 /*
  Function permettant de retrouver le rayon de mobilité en régime transitoire
  On obtient le bon rayon de mobilité lorsque la function retourne 0
 */
 
-[[gnu::pure]]  double PhysicalModel::grow(double r, double dt) const {
+[[gnu::pure]] double PhysicalModel::grow(double r, double dt) const {
     // Based on the molecular flux
     return r + u_sg * dt;
 }
 [[gnu::pure]] double PhysicalModel::friction_exponent(double sphere_radius) const {
     return 0.689 * (1. + std::erf(((gaz_mean_free_path / sphere_radius) + 4.454) / 10.628));
 }
-[[gnu::pure]] double PhysicalModel::friction_coeff(double aggregate_volume,
-                                                   double sphere_volume,
-                                                   double sphere_radius) const {
+[[gnu::pure]] double
+PhysicalModel::friction_coeff(double aggregate_volume, double sphere_volume, double sphere_radius) const {
     double friction_exp = friction_exponent(sphere_radius);
     double cc = cunningham(sphere_radius);
     return (6. * _pi * viscosity * sphere_radius / cc)
@@ -568,15 +558,15 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
 [[gnu::pure]] double PhysicalModel::relax_time(double masse, double f_agg) {
     return masse / f_agg;
 }
-[[gnu::pure]] double PhysicalModel::mobility_diameter(double aggregate_volume,
-                                                      double sphere_volume,
-                                                      double sphere_radius) const {
+[[gnu::pure]] double
+PhysicalModel::mobility_diameter(double aggregate_volume, double sphere_volume, double sphere_radius) const {
+    // Approximated (free molecular regime)
     double friction_exp = friction_exponent(sphere_radius);
-    double aggregate_radius = sphere_radius *
-            std::pow(aggregate_volume / sphere_volume,friction_exp/fractal_dimension/2.0); // Approximated (free molecular regime)
+    double aggregate_radius =
+        sphere_radius * std::pow(aggregate_volume / sphere_volume, friction_exp / fractal_dimension / 2.0);
     double cc_pp = cunningham(sphere_radius);
-    double cc_a = cunningham(aggregate_radius); // Approximated (free molecular regime)
-    return (cc_a / cc_pp) * 2.0*sphere_radius
+    double cc_a = cunningham(aggregate_radius);
+    return (cc_a / cc_pp) * 2.0 * sphere_radius
            * std::pow(aggregate_volume / sphere_volume, friction_exp / fractal_dimension);
 }
 [[gnu::const]] fs::path extract_path(const std::string &filename) {
@@ -591,13 +581,12 @@ void PhysicalModel::update_temperature(double new_temperature) noexcept {
 [[gnu::pure]] int PhysicalModel::get_random_charge(double d_m) const {
     // Charge distribution: M. Matti Maricq/J. Aerosol Science, 39 (2008) 141–149
     double kbT = _boltzmann * temperature;
-    double sigma_q = std::sqrt(d_m * kbT / (2.0*_dit_boltzmann_Ke_e2));
+    double sigma_q = std::sqrt(d_m * kbT / (2.0 * _dit_boltzmann_Ke_e2));
     double mean_q = 0.0;
     int rand_normal = static_cast<int>(std::round(random_normal(mean_q, sigma_q)));
 
-    rand_normal = std::min(std::max(rand_normal,
-                                    intpotential_info.get_min_charge()),
-                           intpotential_info.get_max_charge());
+    rand_normal =
+        std::min(std::max(rand_normal, intpotential_info.get_min_charge()), intpotential_info.get_max_charge());
     return rand_normal;
 }
-}  // namespace mcac
+} // namespace mcac

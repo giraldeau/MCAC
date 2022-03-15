@@ -1,49 +1,47 @@
 /*
  * MCAC
  * Copyright (C) 2020 CORIA
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "calcul.hpp"
-#include "tools/tools.hpp"
 #include "tools/contact_info.hpp"
+#include "tools/tools.hpp"
+#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <fstream>
-
 
 namespace mcac {
 /********************************************************************************
-* write time-resolved data to a text file
-********************************************************************************/
+ * write time-resolved data to a text file
+ ********************************************************************************/
 static void save_advancement(PhysicalModel &physicalmodel, AggregatList &aggregates) noexcept {
     std::ofstream outfile;
     outfile.open(physicalmodel.output_dir / "advancement.dat", std::ios_base::app);
-    outfile << physicalmodel.time
-            << " " << physicalmodel.aggregate_concentration
-            << " " << physicalmodel.volume_fraction
-            << " " << aggregates.get_avg_npp()
-            << " " << physicalmodel.temperature
-            << " " << physicalmodel.box_volume
-            << " " << physicalmodel.monomer_concentration
-            << " " << physicalmodel.u_sg
-            << " " << physicalmodel.flux_nucleation
-            << std::endl;
+    outfile << physicalmodel.time;
+    outfile << " " << physicalmodel.aggregate_concentration;
+    outfile << " " << physicalmodel.volume_fraction;
+    outfile << " " << aggregates.get_avg_npp();
+    outfile << " " << physicalmodel.temperature;
+    outfile << " " << physicalmodel.box_volume;
+    outfile << " " << physicalmodel.monomer_concentration;
+    outfile << " " << physicalmodel.u_sg;
+    outfile << " " << physicalmodel.flux_nucleation;
+    outfile << std::endl;
     outfile.close();
 }
-void print_bool(bool the_bool, int width, std::string txt)
-{
+void print_bool(bool the_bool, int width, std::string txt) {
     if (the_bool) {
         std::cout << std::setw(width / 2 + width % 2) << "X" << std::setw(width / 2 + 3) << " | ";
         // std::cout << std::setw(width) << txt << " | ";
@@ -52,8 +50,8 @@ void print_bool(bool the_bool, int width, std::string txt)
     }
 }
 /********************************************************************************
-* Calcul: The main function of MCAC
-********************************************************************************/
+ * Calcul: The main function of MCAC
+ ********************************************************************************/
 void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     // contact is initialized to true for saving the initial set of monomeres and to sort the timesteps
     bool event(true);
@@ -67,39 +65,37 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     //$ Loop on the N monomeres
     while (!physicalmodel.finished(aggregates.size(), aggregates.get_avg_npp())) {
         if (physicalmodel.n_iter_without_event % physicalmodel.write_between_event_frequency == 0) {
-            if (total_events % physicalmodel.write_events_frequency == 0){
+            if (total_events % physicalmodel.write_events_frequency == 0) {
                 aggregates.spheres.save();
                 aggregates.save();
                 save_advancement(physicalmodel, aggregates);
             }
         }
-        size_t flo = floor(physicalmodel.time/physicalmodel.write_Delta_t);
-        if (flo > write_phys_time_int){
+        size_t flo = floor(physicalmodel.time / physicalmodel.write_Delta_t);
+        if (flo > write_phys_time_int) {
             write_phys_time_int = flo;
             aggregates.spheres.save();
             aggregates.save();
             save_advancement(physicalmodel, aggregates);
         }
         if (event) {
-            if (physicalmodel.with_domain_duplication &&
-                aggregates.size() <= duplication_threshold &&
-                !(physicalmodel.u_sg < 0.0)) {
-                std::cout << "Duplication : " << aggregates.spheres.size()
-                          << " spheres in " << aggregates.size() << " aggregates";
+            if (physicalmodel.with_domain_duplication && aggregates.size() <= duplication_threshold
+                && !(physicalmodel.u_sg < 0.0)) {
+                std::cout << "Duplication : " << aggregates.spheres.size() << " spheres in " << aggregates.size()
+                          << " aggregates";
                 aggregates.duplication();
-                //duplication_threshold = aggregates.size() / 8;
-                std::cout << " duplicated into " << aggregates.spheres.size()
-                          << " spheres in " << aggregates.size() << " aggregates" << std::endl;
+                // duplication_threshold = aggregates.size() / 8;
+                std::cout << " duplicated into " << aggregates.spheres.size() << " spheres in " << aggregates.size()
+                          << " aggregates" << std::endl;
             }
 
-            if (physicalmodel.with_domain_reduction &&
-                aggregates.size() >= reduction_threshold) {
-                std::cout << "Reduction : " << aggregates.spheres.size()
-                          << " spheres in " << aggregates.size() << " aggregates";
+            if (physicalmodel.with_domain_reduction && aggregates.size() >= reduction_threshold) {
+                std::cout << "Reduction : " << aggregates.spheres.size() << " spheres in " << aggregates.size()
+                          << " aggregates";
                 aggregates.reduction();
-                //reduction_threshold = aggregates.size() * 8;
-                std::cout << " reduced to " << aggregates.spheres.size()
-                          << " spheres in " << aggregates.size() << " aggregates" << std::endl;
+                // reduction_threshold = aggregates.size() * 8;
+                std::cout << " reduced to " << aggregates.spheres.size() << " spheres in " << aggregates.size()
+                          << " aggregates" << std::endl;
             }
         }
 
@@ -122,14 +118,14 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
         double full_distance = aggregates[num_agg]->get_lpm();
 
         //$ L2 - Loop on orientations
-        std::array<double, 3> vectdir = {{0,0,0}};
+        std::array<double, 3> vectdir = {{0, 0, 0}};
         bool effective_move = false;
         double move_distance = full_distance;
         int n_try(0);
         bool contact = false;
         AggregateContactInfo next_contact;
 
-        while (!effective_move){
+        while (!effective_move) {
             //$ -- Generating a random direction --
             vectdir = random_direction();
             effective_move = true;
@@ -172,13 +168,13 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             if (physicalmodel.individual_surf_reactions) {
                 disappear = aggregates.croissance_surface(deltatemps_indiv, num_agg);
                 //$ Maybe will be modified later -> splitting only happens when u_sg is negative
-                if((physicalmodel.u_sg < 0.0) && !disappear) {
+                if ((physicalmodel.u_sg < 0.0) && !disappear) {
                     split = aggregates.split(num_agg);
                 }
             } else {
                 disappear = aggregates.croissance_surface(deltatemps);
                 // Maybe will be modified later -> splitting only happens when u_sg is negative
-                if(physicalmodel.u_sg < 0.0) {
+                if (physicalmodel.u_sg < 0.0) {
                     split = aggregates.split();
                 }
             }
@@ -209,7 +205,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
                 if (physicalmodel.individual_surf_reactions && !merge && !split && !disappear) {
                     //$ Update already done if merge or split (and not necessary if disappear)
                     aggregates[num_agg]->update_partial();
-                } else { 
+                } else {
                     //$ Updating twice num_agg if merge or split (already done)
                     for (const auto &agg : aggregates) {
                         agg->update_partial();
@@ -232,7 +228,7 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             }
         }
 
-        event = split || merge || disappear || nucleation ;
+        event = split || merge || disappear || nucleation;
         size_t current_n_iter_without_event = physicalmodel.n_iter_without_event;
         if (event) {
             physicalmodel.n_iter_without_event = 0;
@@ -265,22 +261,23 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
             double elapse = double(now - physicalmodel.cpu_start) / CLOCKS_PER_SEC;
             std::cout.precision(3);
             std::cout << std::scientific;
-            std::cout << std::setw(8) << total_events << " | " << std::setw(8)
-                      << aggregates.get_avg_npp() << " | " << std::setw(8) << aggregates.size()
-                      << " | " << std::setw(8) << physicalmodel.time << "s"
-                      << " | " << std::setw(8) << elapse << "s"
+            std::cout << std::setw(8) << total_events << " | ";
+            std::cout << std::setw(8) << aggregates.get_avg_npp() << " | ";
+            std::cout << std::setw(8) << aggregates.size() << " | ";
+            std::cout << std::setw(8) << physicalmodel.time << "s"
+                      << " | ";
+            std::cout << std::setw(8) << elapse << "s"
                       << " | ";
             print_bool(contact, 7, "contact");
             print_bool(merge, 5, "merge");
             print_bool(split, 5, "split");
             print_bool(disappear, 9, "disappear");
 
-            std::cout << std::setw(10) << monomers_to_add << " | " << std::setw(8)
-                      << current_n_iter_without_event << std::endl;
+            std::cout << std::setw(10) << monomers_to_add << " | " << std::setw(8) << current_n_iter_without_event
+                      << std::endl;
         }
         //$ Update physical model
-        if (event
-            || physicalmodel.with_surface_reactions) {
+        if (event || physicalmodel.with_surface_reactions) {
             physicalmodel.update(aggregates.size(),
                                  aggregates.spheres.size(),
                                  aggregates.get_total_volume(),
@@ -293,10 +290,10 @@ void calcul(PhysicalModel &physicalmodel, AggregatList &aggregates) {
     save_advancement(physicalmodel, aggregates);
     aggregates.spheres.save();
     aggregates.save();
-    std::cout << " Final residence time="    << std::setw(4) << physicalmodel.time << "s" << std::endl;
+    std::cout << " Final residence time=" << std::setw(4) << physicalmodel.time << "s" << std::endl;
     std::cout << "Final number of aggregates : " << aggregates.size() << std::endl;
     std::cout << "Output files saved on: " << physicalmodel.output_dir << std::endl;
     std::cout << std::endl;
     std::cout << "\nThe End\n" << std::endl;
 }
-}  // namespace mcac
+} // namespace mcac
