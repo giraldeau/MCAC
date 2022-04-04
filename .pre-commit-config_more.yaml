@@ -9,7 +9,7 @@ repos:
             args: [--repository=.]
     # TODO: fix the errors
     - repo: https://github.com/pycqa/pylint
-      rev: v2.12.2
+      rev: v2.13.4
       hooks:
           - id: pylint
             exclude: (?x)^( cmake-format.py )$

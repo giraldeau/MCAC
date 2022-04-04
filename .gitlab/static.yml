@@ -5,6 +5,7 @@ pre_commit:
     before_script:
         - echo "dockerfile_version=${dockerfile_version}"
     script:
+        - pip install -U pip wheel setuptools
         - pip install -U pre-commit
         - pre-commit run --all-files
     needs: []
@@ -15,6 +16,7 @@ more_pre_commit:
     before_script:
         - echo "dockerfile_version=${dockerfile_version}"
     script:
+        - pip install -U pip wheel setuptools
         - pip install -U pre-commit
         - pre-commit run --all-files -c '.pre-commit-config_more.yaml'
     needs: []
