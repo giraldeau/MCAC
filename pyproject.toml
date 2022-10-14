@@ -5,7 +5,7 @@ requires = [
     "wheel>=0.31",
     "setuptools_scm>=6",
     "cython>=0.29", # required to compile cython extension
-    "numpy>=1.19,<1.21", # required to compile f2py extension (limited by numba)
+    "numpy>=1.19", # required to compile f2py extension (limited by numba)
     "tomli<2.0.0" # to silence a minor warning
     ]
 
