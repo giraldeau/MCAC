@@ -92,8 +92,11 @@ def volume_surface_disc(
 
     volume = data.sum() * dvol
 
+    if data.max() <= 0.5:
+        return 0.0, 0.0
+
     # compute the 3d surface of the aggregate
-    verts, faces, *_ = measure.marching_cubes(data, 0.0, spacing=(dx, dy, dz))
+    verts, faces, *_ = measure.marching_cubes(data, 0.5, spacing=(dx, dy, dz))
 
     surface = measure.mesh_surface_area(verts, faces)
 

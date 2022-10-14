@@ -73,7 +73,7 @@ def discretize_spherelist(
             d = (posx - x) ** 2 + (posy - y) ** 2 + (posz - z) ** 2
             data = np.maximum(data, radius**2 - d)
 
-    return data > 0, (x, y, z)
+    return (data > 0).astype(float), (x, y, z)
 
 
 def surrounding_box(

@@ -37,6 +37,8 @@ def autocorrelation3d(
     start: Optional[float] = None,
     end: Optional[float] = None,
     nprocs: Optional[int] = None,
+    *args,
+    **kwargs,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Compute the normalized 3d autocorrelation graph of an aggregate."""
     cols = ["Posx", "Posy", "Posz", "Radius"]
@@ -65,9 +67,9 @@ def autocorrelation3d(
 
     # compute volumes
     if nprocs is None or nprocs > 0:
-        volumes = parallel_volumes_autoco(spheres, radius, nsamples)
+        volumes = parallel_volumes_autoco(spheres, radius, nsamples, nprocs, *args, **kwargs)
     else:
-        volumes = seq_volumes_autoco(spheres, radius, nsamples)
+        volumes = seq_volumes_autoco(spheres, radius, nsamples, *args, **kwargs)
 
     # intersection volume
     # using A∩B = A + B - A∪b
@@ -75,11 +77,19 @@ def autocorrelation3d(
     # noinspection PyTypeChecker
     volumes = 2 - volumes / (nsamples * volumes[0])
 
+    # no more contact
+    volumes[volumes < 0] = 0
+
     return radius[1:], volumes[1:]
 
 
 def parallel_volumes_autoco(
-    spheres: np.ndarray, lradius: np.ndarray, nsamples: int, nprocs: Optional[int] = None
+    spheres: np.ndarray,
+    lradius: np.ndarray,
+    nsamples: int,
+    nprocs: Optional[int] = None,
+    *args,
+    **kwargs,
 ) -> np.ndarray:
     """Compute all the volumes needed for the autocorrelation.
 
@@ -95,7 +105,7 @@ def parallel_volumes_autoco(
         njobs = 0
         for i, radius in enumerate(lradius):
             for _ in range(nsamples):
-                p.qin.put((i, radius))
+                p.qin.put((i, (radius, args, kwargs)))
                 njobs += 1
 
                 # Only compute the volume of the initial aggregate once
@@ -120,10 +130,10 @@ def worker_job(q: mp.Queue, r: mp.Queue, spheres: np.ndarray) -> None:
     while True:
         try:
             # get work
-            i, radius = q.get(block=first)
+            i, (radius, args, kwargs) = q.get(block=first)
 
             # work
-            volume = single_volume_autoco(radius, spheres)
+            volume = single_volume_autoco(radius, spheres, *args, **kwargs)
 
             # put result
             r.put((i, volume))
@@ -135,7 +145,9 @@ def worker_job(q: mp.Queue, r: mp.Queue, spheres: np.ndarray) -> None:
                 break
 
 
-def seq_volumes_autoco(spheres: np.ndarray, lradius: np.ndarray, nsamples: int) -> np.ndarray:
+def seq_volumes_autoco(
+    spheres: np.ndarray, lradius: np.ndarray, nsamples: int, *args, **kwargs
+) -> np.ndarray:
     """Compute all the volumes needed for the autocorrelation.
 
     including the volume of the initial aggregate
@@ -154,7 +166,7 @@ def seq_volumes_autoco(spheres: np.ndarray, lradius: np.ndarray, nsamples: int) 
         for i, radius in enumerate(lradius):
             for _ in range(nsamples):
 
-                volumes[i] += single_volume_autoco(radius, spheres)
+                volumes[i] += single_volume_autoco(radius, spheres, *args, **kwargs)
                 it += 1
                 progress_bar.update(it)
 
@@ -186,7 +198,7 @@ def translated_union(vec: np.ndarray, spheres: np.ndarray) -> np.ndarray:
     return duplicate
 
 
-def single_volume_autoco(radius: float, spheres: np.ndarray) -> float:
+def single_volume_autoco(radius: float, spheres: np.ndarray, *args, **kwargs) -> float:
     """Compute the volume needed for the autocorrelation.
 
     Except for the initial volume (i == 0), compute the union of an
@@ -200,7 +212,7 @@ def single_volume_autoco(radius: float, spheres: np.ndarray) -> float:
         aggregate = translated_union(vec, spheres)
 
     # compute volume with volume_surface
-    return volume_surface(aggregate)[0]
+    return volume_surface(aggregate, *args, **kwargs)[0]
 
 
 class Parallel:
