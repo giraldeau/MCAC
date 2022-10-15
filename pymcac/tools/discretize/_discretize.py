@@ -19,6 +19,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from numba import njit
 from scipy.special import erf
 
 
@@ -54,26 +55,73 @@ def discretize_spherelist(
     """
     xbounds, ybounds, zbounds = surrounding_box(spheres)
 
-    (x, y, z) = mkgrid(xbounds, ybounds, zbounds, resolution)
-
     # fill the domain : positive value if inside at least a sphere
     if alphagangue > 0:
-        data = np.zeros_like(x)
-        # noinspection PyTypeChecker
-        for posx, posy, posz, radius in spheres:
-            d = np.sqrt((posx - x) ** 2 + (posy - y) ** 2 + (posz - z) ** 2)
-            # noinspection PyTypeChecker
-            data += 0.5 * (1 + erf(-(d / radius - 1) / alphagangue))
-        # centering on 0
-        data -= 0.5
+        x, y, z, data = _gangued_discretize(
+            xbounds, ybounds, zbounds, spheres, resolution, alphagangue
+        )
     else:
-        data = -np.ones_like(x) * np.inf
-        # noinspection PyTypeChecker
-        for posx, posy, posz, radius in spheres:
-            d = (posx - x) ** 2 + (posy - y) ** 2 + (posz - z) ** 2
-            data = np.maximum(data, radius**2 - d)
+        x, y, z, data = _simple_discretize(xbounds, ybounds, zbounds, spheres, resolution)
 
     return (data > 0).astype(float), (x, y, z)
+
+
+@njit(nogil=True, cache=True)
+def _gangued_discretize(xbounds, ybounds, zbounds, spheres, resolution, alphagangue):
+    xmin, xmax = xbounds
+    ymin, ymax = ybounds
+    zmin, zmax = zbounds
+
+    x = np.linspace(xmin, xmax, resolution)
+    y = np.linspace(ymin, ymax, resolution)
+    z = np.linspace(zmin, zmax, resolution)
+
+    data = np.zeros((resolution, resolution, resolution))
+    for posx, posy, posz, radius in spheres:
+        d = (
+            (posx - x.reshape(-1, 1, 1)) ** 2
+            + (posy - y.reshape(1, -1, 1)) ** 2
+            + (posz - z.reshape(1, 1, -1)) ** 2
+        )
+        data += 0.5 * (1 + erf(-(d / radius - 1) / alphagangue))
+
+    return x, y, z, data
+
+
+@njit(nogil=True, cache=True)
+def _simple_discretize(xbounds, ybounds, zbounds, spheres, resolution):
+    xmin, xmax = xbounds
+    ymin, ymax = ybounds
+    zmin, zmax = zbounds
+
+    resolution_x = resolution / (xmax - xmin)
+    resolution_y = resolution / (ymax - ymin)
+    resolution_z = resolution / (zmax - zmin)
+
+    x = np.linspace(xmin, xmax, resolution)
+    y = np.linspace(ymin, ymax, resolution)
+    z = np.linspace(zmin, zmax, resolution)
+
+    data = np.full((resolution, resolution, resolution), -np.inf)
+    for posx, posy, posz, radius in spheres:
+
+        imin = int(np.floor((posx - radius - xmin) * resolution_x))
+        imax = int(np.ceil((posx + radius - xmin) * resolution_x)) + 1
+        jmin = int(np.floor((posy - radius - ymin) * resolution_y))
+        jmax = int(np.ceil((posy + radius - ymin) * resolution_y)) + 1
+        kmin = int(np.floor((posz - radius - zmin) * resolution_z))
+        kmax = int(np.ceil((posz + radius - zmin) * resolution_z)) + 1
+
+        d = (
+            (posx - x[imin:imax].reshape(-1, 1, 1)) ** 2
+            + (posy - y[jmin:jmax].reshape(1, -1, 1)) ** 2
+            + (posz - z[kmin:kmax].reshape(1, 1, -1)) ** 2
+        )
+        data[imin:imax, jmin:jmax, kmin:kmax] = np.maximum(
+            data[imin:imax, jmin:jmax, kmin:kmax], radius**2 - d
+        )
+
+    return x, y, z, data
 
 
 def surrounding_box(
@@ -86,28 +134,6 @@ def surrounding_box(
     zmin, zmax = spheres[:, 2].min() - rmax, spheres[:, 2].max() + rmax
 
     return (xmin, xmax), (ymin, ymax), (zmin, zmax)
-
-
-def mkgrid(
-    xbounds: Tuple[float, float],
-    ybounds: Tuple[float, float],
-    zbounds: Tuple[float, float],
-    resolution: int,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Compute dimensions of the surrounding box."""
-    xmin, xmax = xbounds
-    ymin, ymax = ybounds
-    zmin, zmax = zbounds
-
-    # create a grid of the requested resolution
-    # noinspection Mypy
-    x, y, z = np.mgrid[
-        xmin : xmax : resolution * 1j,  # type:ignore
-        ymin : ymax : resolution * 1j,  # type:ignore
-        zmin : zmax : resolution * 1j,  # type:ignore
-    ]
-
-    return x, y, z
 
 
 if __name__ == "__main__":
