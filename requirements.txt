@@ -4,6 +4,7 @@ black
 mypy
 pyproject-flake8
 flake8-copyright
+flake8
 
 # for linters
 pre-commit
@@ -27,7 +28,7 @@ jupyter_contrib_nbextensions
 jupyter_nbextensions_configurator
 xeus-python
 jupyterlab-lsp
-python-language-server[all]
+python-language-server[autopep8,flake8,pydocstyle,pylint,rope,yapf]>=0.36.0
 lckr-jupyterlab-variableinspector
 nbconvert
 
@@ -44,7 +45,7 @@ scikit-image
 lxml
 tqdm
 toolz
-fsspec>=0.3.3
+fsspec
 scikit-learn
 psutil
 cachey
