@@ -52,7 +52,7 @@ externalproject_add(
     LIST_SEPARATOR | # Use the alternate list separator
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/ext_bin/xdmf
                -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_ALT_SEP} -DBUILD_SHARED_LIBS=ON
-               -DCMAKE_BUILD_TYPE=Release
+               -DCMAKE_BUILD_TYPE=Release -Wno-dev
     EXCLUDE_FROM_ALL ON
 )
 
