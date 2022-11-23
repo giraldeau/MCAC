@@ -31,7 +31,8 @@ pymcac_tests:
     before_script:
         - echo "dockerfile_version=${dockerfile_version}"
     script:
-        - pip install -e .[test]
+        - pip install -U pip wheel setuptools
+        - pip install -U -e .[test]
         - pytest --cov=pymcac/ --cov-report=xml --junitxml=artifacts/pytest.xml
         - coverage xml
         - coverage report
