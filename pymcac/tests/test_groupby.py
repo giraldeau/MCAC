@@ -334,7 +334,7 @@ def test_groupby_apply(inplace, dask, full, nt, nagg):
     ref = (
         xarray_to_frame(aggregates, multi=False)
         .reset_index()
-        .groupby(by="Np", sort=False)
+        .groupby(by="Np", sort=False, group_keys=False)
         .apply(fn)
         .reset_index(drop=True)[cols]
         .sort_values(cols)

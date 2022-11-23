@@ -189,7 +189,9 @@ def check_consistency(spheres, aggregates):
 
     df_unsorted_labels = spheres.Label.to_dataframe()
     if spheres_time is not None:
-        df_sorted_labels = df_unsorted_labels.groupby("kTime", sort=True).apply(sort_by_label)
+        df_sorted_labels = df_unsorted_labels.groupby("kTime", sort=True, group_keys=False).apply(
+            sort_by_label
+        )
     else:
         df_sorted_labels = df_unsorted_labels.sort_values("Label")
     sorted_labels = df_sorted_labels.Label.values
