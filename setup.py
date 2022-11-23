@@ -3,8 +3,9 @@
 """Compile and install pymcac."""
 from pathlib import Path
 
+import numpy as np
 from Cython.Build import cythonize
-from numpy.distutils.core import Extension, setup
+from setuptools import Extension, setup
 
 ext_modules = []
 coverage = Extension(
@@ -12,7 +13,7 @@ coverage = Extension(
     sources=[
         "pymcac/tools/coverage/coverages_cython.pyx",
     ],
-    include_dirs=["pyarcher/libraries/surface_operators/src"],
+    include_dirs=[np.get_include(), "pyarcher/libraries/surface_operators/src"],
     extra_compile_args=["-fopenmp", "-O3"],
     extra_link_args=["-fopenmp"],
 )
@@ -26,7 +27,12 @@ if Path("ext_bin/sbl/include").exists():
             "pymcac/tools/volume_surface/sbl_wrapper.pyx",
             "pymcac/tools/volume_surface/SBLVolumeSurface.cpp",
         ],
-        include_dirs=["pymcac/tools/volume_surface", "ext_bin/sbl/include", "/opt/cgal/include"],
+        include_dirs=[
+            np.get_include(),
+            "pymcac/tools/volume_surface",
+            "ext_bin/sbl/include",
+            "/opt/cgal/include",
+        ],
         library_dirs=["/opt/cgal/lib64"],
         extra_compile_args=["-fopenmp", "-O3", "-frounding-math", "-DNDEBUG"],
         libraries=["mpfr", "gmp"],
